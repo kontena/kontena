@@ -1,1 +1,1 @@
-# Docs have been moved to [https://github/kontena/docs](https://github/kontena/docs)
+# Docs have been moved to [https://github.com/kontena/docs](https://github.com/kontena/docs)

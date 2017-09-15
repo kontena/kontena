@@ -32,6 +32,13 @@ module Kontena::Cli::Stacks
       puts "  version: #{stack['version']}"
       puts "  revision: #{stack['revision']}"
       puts "  expose: #{stack['expose'] || '-'}"
+      puts "  parent: #{stack['parent'] ? stack['parent']['name'] : '-'}"
+      if stack['children'] && !stack['children'].empty?
+        puts "  children:"
+        stack['children'].each do |child|
+          puts "    - #{child['name']}"
+        end
+      end
       puts "  services:"
       stack['services'].each do |service|
         show_service(service['id'])

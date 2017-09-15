@@ -7,4 +7,5 @@ class JobSupervisor < Celluloid::Supervision::Container
   supervise type: TelemetryJob, as: :telemetry_job
   supervise type: GridServiceHealthMonitorJob, as: :service_health_monitor_job
   supervise type: CloudWebsocketClientManager, as: :cloud_websocket_client_manager
+  supervise type: CertificateRenewJob, as: :certificate_renew_job
 end

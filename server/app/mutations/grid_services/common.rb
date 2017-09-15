@@ -91,6 +91,25 @@ module GridServices
       service_secrets
     end
 
+    # @return [Array<GridServiceCertificate>]
+    def build_grid_service_certificates(existing_certificates)
+      service_certificates = []
+      self.certificates.each do |certificate|
+        service_certificate = existing_certificates.find{ |c|
+          c.subject == certificate['subject'] && c.name == certificate['name']
+        }
+        unless service_certificate
+          service_certificate = GridServiceCertificate.new(
+              subject: certificate['subject'],
+              name: certificate['name']
+          )
+        end
+        service_certificates << service_certificate
+      end
+
+      service_certificates
+    end
+
     def build_service_volumes(existing_volumes, grid, stack)
       service_volumes = []
       self.volumes.each do |vol|
@@ -147,6 +166,18 @@ module GridServices
       end
     end
 
+    # Validates that the defined certificates exist
+    def validate_certificates
+      validate_each :certificates do |c|
+        cert = self.grid.certificates.find_by(subject: c[:subject])
+        unless cert
+          [:not_found, "Certificate #{c[:subject]} does not exist"]
+        else
+          nil
+        end
+      end
+    end
+
     # @param volume [String]
     # @return [Array{Symbol, String}] for validate_each
     def validate_volume(volume, stateful_volumes: nil)
@@ -196,6 +227,14 @@ module GridServices
               end
             end
           end
+          array :certificates do
+            hash do
+              required do
+                string :subject
+                string :name
+              end
+            end
+          end
           array :ports do
             hash do
               required do
@@ -230,6 +269,7 @@ module GridServices
           array :volumes_from do
             string
           end
+          float :cpus
           integer :cpu_shares, min: 0, max: 1024
           integer :memory
           integer :memory_swap

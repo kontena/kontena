@@ -3,7 +3,7 @@ describe Agent::NodeUnplugger do
 
   let(:grid) { Grid.create! }
   let(:connected_at) { 1.minute.ago }
-  let(:node) { grid.create_node!('test-node', connected: true, connected_at: connected_at) }
+  let(:node) { grid.create_node!('test-node', node_id: 'ABC', websocket_connection: { opened: true }, connected: true, updated: true, connected_at: connected_at) }
   let(:subject) { described_class.new(node) }
 
   context "For a connected node" do
@@ -16,8 +16,14 @@ describe Agent::NodeUnplugger do
         expect(subject).to receive(:update_node_containers)
 
         expect {
-          subject.unplug! connected_at
+          subject.unplug! connected_at, 1006, "Agent closed connection"
         }.to change{ node.reload.connected? }.from(true).to(false)
+
+        expect(node.status).to eq :offline
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.opened).to be true
+        expect(node.websocket_connection.close_code).to eq 1006
+        expect(node.websocket_connection.close_reason).to eq "Agent closed connection"
       end
     end
   end
@@ -25,7 +31,7 @@ describe Agent::NodeUnplugger do
   context "For a node that has reconnected" do
     let(:reconnected_at) { 10.seconds.ago }
 
-    let(:node) { grid.create_node!('test-node', connected: true, connected_at: reconnected_at) }
+    let(:node) { grid.create_node!('test-node', node_id: 'ABC', connected: true, updated: true, connected_at: reconnected_at) }
     let(:subject) { described_class.new(node) }
 
     before do
@@ -37,8 +43,10 @@ describe Agent::NodeUnplugger do
         expect(subject).to_not receive(:update_node_containers)
 
         expect {
-          subject.unplug! connected_at
+          subject.unplug! connected_at, 1006, ""
         }.to_not change{ node.reload.connected? }.from(true)
+
+        expect(node.status).to eq :online
       end
     end
   end

@@ -280,8 +280,8 @@ describe '/v1/grids', celluloid: true do
 
         it 'creates and returns grid node' do
           grid = david.grids.first
-
           expect {
+
             post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
             expect(response.status).to eq(201)
           }.to change{ grid.reload.host_nodes.count }.by(1)
@@ -289,6 +289,9 @@ describe '/v1/grids', celluloid: true do
           expect(json_response).to match hash_including(
             'id' => 'terminal-a/test-1',
             'name' => 'test-1',
+            'connected' => false,
+            'updated' => false,
+            'status' => 'created',
             'has_token' => true,
           )
         end
@@ -422,6 +425,37 @@ describe '/v1/grids', celluloid: true do
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(2)
       end
+    end
+
+    describe '/domain_authorizations' do
+      let(:grid) { david.grids.first }
+
+      it 'returns empty  array by default' do
+        get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['domain_authorizations'].size).to eq(0)
+      end
+
+      it 'returns all domain authorizations' do
+        grid.grid_domain_authorizations.create!(domain: 'foo.com', challenge: {:foo => :bar})
+        grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service, grid_service_deploy: GridServiceDeploy.create!(grid_service: db_service))
+        get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['domain_authorizations'].size).to eq(2)
+        expect(json_response['domain_authorizations'].find {|a| a['domain'] == 'foobar.com'}['linked_service']['id']).to eq(db_service.to_path)
+      end
+    end
+  end
+
+  describe 'POST /domain_authorizations' do
+    let(:grid) { david.grids.first }
+
+    it 'creates new authorization' do
+      auth = grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service)
+      outcome = double(:success? => true, :result => auth)
+      expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(outcome)
+      post "/v1/grids/#{grid.to_path}/domain_authorizations", {'domain' => 'foobar.com'}.to_json, request_headers
+      expect(response.status).to eq(201)
     end
   end
 

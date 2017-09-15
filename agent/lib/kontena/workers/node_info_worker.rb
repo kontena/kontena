@@ -8,9 +8,9 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observable
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
+    include Kontena::Observable::Helper
 
     attr_reader :node
 
@@ -45,7 +45,7 @@ module Kontena::Workers
     # @param [Node] node
     def on_node_info(topic, node)
       @node = node
-      update_observable(node)
+      self.observable.update(node)
     end
 
     def publish_node_info

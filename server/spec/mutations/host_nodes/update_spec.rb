@@ -1,6 +1,4 @@
 describe HostNodes::Update do
-  include AsyncMock
-
   let(:grid) { Grid.create!(name: 'test') }
   let(:node) { grid.create_node!('node-1', node_id: 'AA') }
   let(:rpc_client) { instance_double(RpcClient) }

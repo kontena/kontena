@@ -3,7 +3,6 @@ require 'celluloid'
 require_relative 'common'
 require_relative '../logging'
 require_relative '../helpers/weave_helper'
-require_relative '../helpers/port_helper'
 require_relative '../helpers/rpc_helper'
 
 module Kontena
@@ -12,7 +11,6 @@ module Kontena
       include Kontena::Logging
       include Common
       include Kontena::Helpers::WeaveHelper
-      include Kontena::Helpers::PortHelper
       include Kontena::Helpers::RpcHelper
 
       attr_reader :service_pod, :image_credentials
@@ -66,14 +64,6 @@ module Kontena
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
         self.run_hooks(service_container, 'post_start')
-
-        if service_pod.wait_for_port
-          info "waiting for port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} to respond"
-          log_service_pod_event("service:create_instance", "waiting for #{service_pod.name_for_humans} port #{service_pod.wait_for_port} to respond")
-          wait_for_port(service_container, service_pod.wait_for_port)
-          info "port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} is responding"
-          log_service_pod_event("service:create_instance", "#{service_pod.name_for_humans} port #{service_pod.wait_for_port} is responding")
-        end
 
         service_container
       end
@@ -184,16 +174,6 @@ module Kontena
         log_service_pod_event("service:create_instance", "pulling image #{name} for #{service_pod.name_for_humans}") if emit_event
         Celluloid::Actor[:image_pull_worker].ensure_image(name, service_pod.deploy_rev, image_credentials)
         log_service_pod_event("service:create_instance", "pulled image #{name} for #{service_pod.name_for_humans}") if emit_event
-      end
-
-      # @param [Docker::Container] service_container
-      # @param [Integer] port
-      def wait_for_port(service_container, port)
-        ip = service_container.overlay_ip
-        ip = '127.0.0.1' unless ip
-        Timeout.timeout(300) do
-          sleep 1 until container_port_open?(ip, port)
-        end
       end
     end
   end
