@@ -16,7 +16,7 @@ module Kontena::Cli::Stacks
     option '--values', :flag, 'Output the variable-value pairs as YAML'
 
     def execute
-      variables? ? show_variables : show_stack
+      values? ? show_variables : show_stack
     end
 
     def fetch_stack(name)
