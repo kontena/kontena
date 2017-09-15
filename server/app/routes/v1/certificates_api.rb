@@ -60,6 +60,19 @@ module V1
 
         load_grid(grid)
 
+        r.get do
+          r.on ':subject' do |subject|
+            @certificate = @grid.certificates.find_by(subject: subject)
+            if @certificate
+              response.status = 200
+              render('certificates/show')
+            else
+              response.status = 404
+              {error: 'Not found'}
+            end
+          end
+        end
+
         r.post do
           # DEPRECATED
           r.on 'authorize' do

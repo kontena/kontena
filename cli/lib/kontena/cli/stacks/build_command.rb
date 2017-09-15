@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
     banner "Build images listed in a stack file and push them to your image registry"
 
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :source, default: 'kontena.yml'
 
     option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false
     option ['--no-push'], :flag, 'Do not push images to registry', default: false
@@ -26,8 +26,8 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      require_config_file(filename)
-      stack = stack_read_and_dump(filename, name: name, values: values)
+      set_env_variables(stack_name, current_grid)
+
       services = stack['services']
 
       unless service_list.empty?

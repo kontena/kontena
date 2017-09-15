@@ -1,0 +1,8 @@
+stack: user/depstack1child2
+version: 0.0.1
+variables:
+  dep_var:
+    type: integer
+services:
+  cache:
+    image: "image:$dep_var"

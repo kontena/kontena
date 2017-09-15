@@ -464,6 +464,51 @@ describe GridServices::Create do
       end
     end
 
+    context 'with service_certificate' do
+      let :certificate do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      before do
+        certificate
+      end
+
+      it 'saves service cert' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            certificates: [
+              {subject: 'kontena.io', name: 'SSL_CERT'}
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.certificates.map{|s| s.attributes}).to match [hash_including(
+            'subject' => 'kontena.io',
+            'type' => 'env',
+            'name' => 'SSL_CERT',
+        )]
+      end
+
+      it 'fails to create service with invalid certificates' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          certificates: [
+            {subject: 'kotnena.io', name: 'SSL_CERT'}
+          ]
+        ).run
+        expect(outcome).to_not be_success
+      end
+    end
+
     it 'validates env syntax' do
       outcome = described_class.new(
         grid: grid,
