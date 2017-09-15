@@ -10,7 +10,7 @@ describe Kontena::Cli::Stacks::ShowCommand do
       subject.run(['test-stack'])
     end
 
-    context '--variables option' do
+    context '--values option' do
       let(:stack_response) do
         {
           'name' => 'stack-a',
