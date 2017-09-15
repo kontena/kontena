@@ -67,3 +67,4 @@ if grid_service.health_check && grid_service.health_check.protocol
     json.health_status grid_service.health_status
 end
 json.stop_grace_period grid_service.stop_grace_period
+json.certificates grid_service.certificates.as_json(only: [:subject, :name, :type])
