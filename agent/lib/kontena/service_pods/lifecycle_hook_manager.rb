@@ -24,6 +24,7 @@ module Kontena
             service_config = config_container(service_pod.dup, hook['cmd'])
             service_config['name'] = "#{service_config['name']}-#{SecureRandom.urlsafe_base64(5)}"
             service_container = create_container(service_config)
+            log_hook_output(service_container.id, "running pre_start hook: #{hook['cmd']}", 'stdout')
             service_container.tap(&:start).attach
             if service_container.state['ExitCode'] != 0
               raise "Failed to execute pre_start hook: #{hook['cmd']}, exit code: #{service_container.state['ExitCode']}"
@@ -44,9 +45,9 @@ module Kontena
         hooks_for('post_start').each do |hook|
           info "running post_start hook: #{hook['cmd']}"
           command = build_cmd(hook['cmd'])
-          log_hook_output(service_container.id, ["running post_start hook: #{hook['cmd']}"], 'stdout')
+          log_hook_output(service_container.id, "running post_start hook: #{hook['cmd']}", 'stdout')
           _, _, exit_code = service_container.exec(command) { |stream, chunk|
-            log_hook_output(service_container.id, [chunk], stream)
+            log_hook_output(service_container.id, chunk, stream)
           }
           if exit_code != 0
             raise "Failed to execute post_start hook: #{hook['cmd']} (exit code: #{exit_code}"
@@ -65,9 +66,9 @@ module Kontena
         hooks_for('pre_stop').each do |hook|
           info "running pre_stop hook: #{hook['cmd']}"
           command = build_cmd(hook['cmd'])
-          log_hook_output(service_container.id, ["running pre_stop hook: #{hook['cmd']}"], 'stdout')
+          log_hook_output(service_container.id, "running pre_stop hook: #{hook['cmd']}", 'stdout')
           _, _, exit_code = service_container.exec(command) { |stream, chunk|
-            log_hook_output(service_container.id, [chunk], stream)
+            log_hook_output(service_container.id, chunk, stream)
           }
           if exit_code != 0
             raise "Failed to execute pre_stop hook: #{hook['cmd']} (exit code: #{exit_code}"
@@ -107,18 +108,16 @@ module Kontena
       end
 
       # @param [String] id
-      # @param [Array<String>] lines
+      # @param [String] line
       # @param [String] type
-      def log_hook_output(id, lines, type)
-        lines.each do |chunk|
-          data = {
-              id: id,
-              time: Time.now.utc.xmlschema,
-              type: type,
-              data: chunk
-          }
-          rpc_client.async.notification('/containers/log', [data])
-        end
+      def log_hook_output(id, line, type)
+        data = [{
+          id: id,
+          time: Time.now.utc.xmlschema,
+          type: type,
+          data: line
+        }]
+        rpc_client.async.notification('/containers/log_batch', [data])
       end
 
       # @param [String] type
