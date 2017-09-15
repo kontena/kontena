@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'yaml'
 
 module Kontena::Cli::Stacks
   class ShowCommand < Kontena::Command
@@ -14,23 +15,35 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     option '--values', :flag, 'Output the variable-value pairs as YAML'
+    include Common::StackValuesToOption
 
     def execute
       values? ? show_variables : show_stack
     end
 
-    def fetch_stack(name)
-      client.get("stacks/#{current_grid}/#{name}")
+    def stack
+      @stack ||= client.get("stacks/#{current_grid}/#{name}")
     end
 
     def show_variables
-      require 'yaml'
-      stack = fetch_stack(name)
-      puts stack['variables'].to_yaml
+      puts variable_yaml
+    end
+
+    def clean_variables
+      rejected_keys = Set.new(%w(GRID STACK PARENT_STACK PLATFORM))
+      stack['variables'].reject do |key, _|
+        rejected_keys.include?(key)
+      end
+    end
+
+    def variable_yaml
+      ::YAML.dump(clean_variables)
     end
 
     def show_stack
-      stack = fetch_stack(name)
+      if values_to
+        File.write(values_to, variable_yaml)
+      end
 
       puts "#{stack['name']}:"
       puts "  created: #{stack['created_at']}"
