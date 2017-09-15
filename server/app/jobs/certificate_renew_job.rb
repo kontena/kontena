@@ -5,7 +5,7 @@ class CertificateRenewJob
   include WaitHelper
   include DistributedLocks
 
-  RENEW_INTERVAL = 1.day.to_i
+  RENEW_INTERVAL = 1.hour.to_i
 
   RENEW_TRESHOLD = 7.days
 
