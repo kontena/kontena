@@ -63,14 +63,14 @@ module Kontena::Workers
     def on_message(id, stream, chunk)
       match = chunk.match(CHUNK_REGEX)
       return unless match
-      time = DateTime.parse(match[1])
+      time = match[1]
       data = match[2]
       msg = {
         id: id,
         service: @container.service_name,
         stack: @container.stack_name,
         instance: @container.instance_number,
-        time: time.utc.xmlschema,
+        time: time,
         type: stream,
         data: data
       }
