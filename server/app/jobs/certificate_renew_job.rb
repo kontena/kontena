@@ -6,6 +6,8 @@ class CertificateRenewJob
 
   RENEW_INTERVAL = 5 * 60 # Run the renew check every 5 mins
 
+  RENEW_TRESHOLD = 7.days
+
   def initialize(perform = true)
     async.perform if perform
   end
@@ -21,15 +23,13 @@ class CertificateRenewJob
   end
 
   def renew_certificates
-    Grid.each do |grid|
-      grid.certificates.each do |cert|
-        renew_certificate(cert)
-      end
+    Certificate.where(:valid_until.lt => Time.now + RENEW_TRESHOLD).each do |cert|
+      renew_certificate(cert)
     end
   end
 
   def renew_certificate(certificate)
-    if should_renew?(certificate) && can_renew?(certificate)
+    if can_renew?(certificate)
       info "certificate renewal needed for #{certificate.subject}"
       begin
         authorize_domains(certificate)
@@ -39,10 +39,6 @@ class CertificateRenewJob
         error exc
       end
     end
-  end
-
-  def should_renew?(certificate)
-    certificate.valid_until < (Time.now + 7.days)
   end
 
   # Checks if all domains are authorized with tls-sni, we can't automate anything else for now

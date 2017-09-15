@@ -16,14 +16,16 @@ describe CertificateRenewJob, celluloid: true do
       chain: 'chain')
   }
 
-  describe '#should_renew?' do
-    it 'returns false if no need to renew' do
-      expect(subject.should_renew?(certificate)).to be_falsey
-    end
-
-    it 'returns true when need to renew' do
-      certificate.valid_until = Time.now + 6.days
-      expect(subject.should_renew?(certificate)).to be_truthy
+  describe '#renew_certificates' do
+    it 'renews only those that are going old within 7 days' do
+      cert2 = Certificate.create!(grid: grid,
+          subject: 'www.kontena.io',
+          valid_until: Time.now + 5.days,
+          private_key: 'private_key',
+          certificate: 'certificate',
+          chain: 'chain')
+      expect(subject.wrapped_object).to receive(:renew_certificate).with(cert2)
+      subject.renew_certificates
     end
   end
 
