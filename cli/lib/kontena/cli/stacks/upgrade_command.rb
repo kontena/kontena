@@ -153,6 +153,7 @@ module Kontena::Cli::Stacks
           if dry_run?
             caret "Would install new dependency #{cmd.last} as #{stackname} without --dry-run", dots: false
           else
+            caret "Installing new dependency #{cmd.last} as #{stackname}"
             Kontena.run!(cmd)
           end
         end
