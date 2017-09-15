@@ -407,7 +407,8 @@ module Kontena::Workers
     # @param container [Docker::Container]
     # @return [Docker::Container]
     def migrate_container(container)
-      Kontena::ServicePods::Migrator.migrate_container(container)
+      Kontena::ServicePods::Migrator.new(container).migrate
+      container.reload
     end
   end
 end
