@@ -368,8 +368,9 @@ module Kontena::Cli::Stacks
               if use_opto
                 opt = variables.option(var)
                 if opt.nil?
-                  if variables.find { |opt| opt.to[:env][var] }
-                    val = env[var]
+                  to_env = variables.find { |opt| opt.to[:env][var] }
+                  if to_env
+                    val = to_env.value
                   else
                     raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
                   end
