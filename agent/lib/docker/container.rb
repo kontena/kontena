@@ -109,6 +109,11 @@ module Docker
       false
     end
 
+    # @return [Boolean]
+    def autostart?
+      ['always'.freeze, 'unless-stopped'.freeze].include?(self.host_config.dig('RestartPolicy', 'Name'))
+    end
+
     # @return [String]
     def service_id
       self.labels['io.kontena.service.id'].to_s
@@ -217,6 +222,11 @@ module Docker
     # @return [Integer]
     def stop_grace_period
       (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
+    def reload
+      @cached_json = nil
+      cached_json
     end
 
     private
