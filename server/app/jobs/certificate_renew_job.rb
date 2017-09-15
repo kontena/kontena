@@ -4,7 +4,7 @@ class CertificateRenewJob
   include CurrentLeader
   include WaitHelper
 
-  RENEW_INTERVAL = 5 * 60 # Run the renew check every 5 mins
+  RENEW_INTERVAL = 1.day.to_i
 
   RENEW_TRESHOLD = 7.days
 
@@ -69,6 +69,7 @@ class CertificateRenewJob
         wait_until!("deployment of tls-sni secret is finished", timeout: 300, threshold: 20) {
           domain_auth.reload.status != :deploying
         }
+        raise "Deployment of tls-sni secret failed" if domain_auth.reload.status == :deploy_error
       else
         # No point to continue, cert renewal not gonna succeed
         raise "Domain authorization failed: #{outcome.errors.message}"

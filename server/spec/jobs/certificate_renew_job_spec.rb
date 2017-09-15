@@ -56,6 +56,15 @@ describe CertificateRenewJob, celluloid: true do
         subject.authorize_domains(certificate)
       }.to raise_error "Domain authorization failed: boom"
     end
+
+    it 'raises if tls-sni deployment fails' do
+      domain_auth = GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: service)
+      expect(domain_auth).to receive(:status).twice.and_return(:deploy_error) #once in the wait loop and once after it
+      expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => true, :result => domain_auth))
+      expect {
+        subject.authorize_domains(certificate)
+      }.to raise_error "Deployment of tls-sni secret failed"
+    end
   end
 
 end
