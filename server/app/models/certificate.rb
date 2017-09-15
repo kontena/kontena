@@ -22,14 +22,17 @@ class Certificate
     "#{self.grid.name}/#{self.subject}"
   end
 
+  # @return [String] Actual certificate and the trust chain bundled together
   def full_chain
     self.certificate + self.chain
   end
 
+  # @return [String] Fullchain and private key bundle, mainly for HAProxy
   def bundle
     self.full_chain + self.private_key
   end
 
+  # @return [Array<String>]
   def all_domains
     [self.subject] + self.alt_names.to_a
   end
