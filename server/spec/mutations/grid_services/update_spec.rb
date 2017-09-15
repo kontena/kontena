@@ -318,6 +318,7 @@ describe GridServices::Update do
           expect(outcome = subject.run).to be_success
         }.to change{service.reload.revision}.and change{service.reload.updated_at}
       end
+
       it 'removes certificate' do
         subject = described_class.new(
             grid_service: service,
@@ -330,6 +331,20 @@ describe GridServices::Update do
         }.to change{service.reload.revision}.and change{service.reload.updated_at}
 
         expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io']
+      end
+
+      it 'fails with invalid certificate' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: 'www.kotnena.io', name: 'SSL_CERT'},
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to_not be_success
+        }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+
+        expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io', 'www.kontena.io']
       end
     end
 
