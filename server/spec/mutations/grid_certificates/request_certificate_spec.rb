@@ -159,4 +159,21 @@ describe GridCertificates::RequestCertificate do
     end
   end
 
+  describe '#refresh_grid_services' do
+    let(:service) { GridService.create!(grid: grid, name: 'svc', image_name: 'redis:alpine') }
+
+    let(:another_service) { GridService.create!(grid: grid, name: 'another-svc', image_name: 'redis:alpine') }
+
+    let(:certificate) { Certificate.create!(grid: grid, subject: 'example.com', valid_until: Time.now) }
+
+    it 'updates services if needed' do
+      service.certificates << GridServiceCertificate.new(subject: certificate.subject)
+      service.save
+
+      expect {
+        subject.refresh_grid_services(certificate)
+      }.to change {service.reload.updated_at}.and not_change{another_service.reload.updated_at}
+    end
+  end
+
 end
