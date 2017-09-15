@@ -3,6 +3,7 @@ class CertificateRenewJob
   include Logging
   include CurrentLeader
   include WaitHelper
+  include DistributedLocks
 
   RENEW_INTERVAL = 1.day.to_i
 
@@ -13,12 +14,16 @@ class CertificateRenewJob
   end
 
   def perform
-    # TODO Maybe sleep a while first to allow everything else to start up before running this loop?
+    # sleep a while first to allow everything to settle down before running this loop
+    sleep 5.minutes
     info 'starting to watch certificate renewals'
-    every(RENEW_INTERVAL) do
+    loop do
       if leader?
-        renew_certificates
+        with_dlock('cert_renewal_job') {
+          renew_certificates
+        }
       end
+      sleep RENEW_INTERVAL
     end
   end
 
@@ -31,14 +36,12 @@ class CertificateRenewJob
   def renew_certificate(certificate)
     if can_renew?(certificate)
       info "certificate renewal needed for #{certificate.subject}"
-      begin
-        authorize_domains(certificate)
-        request_new_cert(certificate)
-      rescue => exc
-        error "Failed to renew certificate for #{certificate.subject}"
-        error exc
-      end
+      authorize_domains(certificate)
+      request_new_cert(certificate)
     end
+  rescue => exc
+      error "Failed to renew certificate for #{certificate.subject}"
+      error exc
   end
 
   # Checks if all domains are authorized with tls-sni, we can't automate anything else for now
