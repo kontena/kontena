@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'json'
 
 module Kontena::Cli::Stacks
   class UpgradeCommand < Kontena::Command
@@ -60,6 +61,10 @@ module Kontena::Cli::Stacks
       normalized_data
     end
 
+    def dry_msg(message)
+      puts pastel.red('DRY RUN: ') + message
+    end
+
     def merge_data(local_data, remote_data)
       merged = {}
       unless local_data.nil? || local_data.empty?
@@ -75,6 +80,66 @@ module Kontena::Cli::Stacks
         end
       end
       merged
+    end
+
+    def dry_report(merged)
+      added_services = []
+      removed_services = []
+      kept_services = {}
+      merged.each do |stackname, data|
+        if data[:remote].nil?
+          dry_msg "New stack #{stackname} would be installed to master"
+          added_services = data[:local][:stack]['services'].map { |svc| "#{stackname}/#{svc['name']}" }
+        elsif data[:local]
+          data[:local][:stack]['services'].each do |svc|
+            remote_svc = data[:remote]['services'].find { |s| s['name'] == svc['name'] }
+            if remote_svc
+              kept_services["#{stackname}/#{svc['name']}"] ||= {}
+              #kept_services["#{stackname}/#{svc['name']}"][:before] = JSON.load(JSON.dump(remote_svc)) # naughty deep clone/dup
+              #kept_services["#{stackname}/#{svc['name']}"][:after] = JSON.load(JSON.dump(svc))
+            else
+              added_services << "#{stackname}/#{svc['name']}"
+            end
+          end
+        end
+      end
+
+      merged.each do |stackname, data|
+        if data[:local].nil?
+          dry_msg "Stack  #{stackname} would be removed from master"
+          removed_services = data[:remote]['services'].map { |svc| "#{stackname}/#{svc['name']}" }
+        else
+          data[:local][:stack]['services'].each do |svc|
+            unless data[:remote]['services'].find { |s| s['name'] == svc['name'] }
+              added_services << "#{stackname}/#{svc['name']}"
+            end
+          end
+          data[:remote]['services'].each do |svc|
+            unless data[:local][:stack]['services'].find { |s| s['name'] == svc['name'] }
+              removed_services << "#{stackname}/#{svc['name']}"
+            end
+          end
+        end
+      end
+
+      unless added_services.empty?
+        dry_msg "The following services would be added to master"
+        added_services.each { |svc| puts " - #{svc}" }
+      end
+
+      unless removed_services.empty?
+        dry_msg "The following services would be removed from master"
+        removed_services.each { |svc| puts " - #{svc}" }
+      end
+
+      unless kept_services.empty?
+        dry_msg "The following services would be kept:"
+        kept_services.each do |svc_name, before_after|
+          #before = before_after[:before]
+          #after = before_after[:after]
+          puts "- #{svc_name}"
+        end
+      end
     end
 
     def execute
@@ -104,11 +169,7 @@ module Kontena::Cli::Stacks
         end
         confirm unless force?
         removes.reverse_each do |removed_stack|
-          if dry_run?
-            caret "Would remove stack #{removed_stack} without --dry-run", dots: false
-          else
-            Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
-          end
+          Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack) unless dry_run?
           merged.delete(removed_stack)
         end
       end
@@ -134,6 +195,11 @@ module Kontena::Cli::Stacks
         abort_on_validation_errors(data[:local][:loader].reader.errors, data[:local][:loader].source)
       end
 
+      if dry_run?
+        dry_report(merged)
+        return
+      end
+
       merged.reverse_each do |stackname, data|
         stack = data[:local][:stack]
         if data[:remote]
@@ -150,30 +216,16 @@ module Kontena::Cli::Stacks
 
           cmd << '--no-deploy'
           cmd << data[:local][:loader].source
-          if dry_run?
-            caret "Would install new dependency #{cmd.last} as #{stackname} without --dry-run", dots: false
-          else
-            caret "Installing new dependency #{cmd.last} as #{stackname}"
-            Kontena.run!(cmd)
-          end
+          caret "Installing new dependency #{cmd.last} as #{stackname}"
+          Kontena.run!(cmd)
         end
 
-        if deploy?
-          if dry_run?
-            caret "Would run stack deploy for #{stackname} without --dry-run", dots: false
-          else
-            Kontena.run!(['stack', 'deploy', stackname])
-          end
-        end
+        Kontena.run!(['stack', 'deploy', stackname]) if deploy?
       end
     end
 
     def update_stack(name, data)
-      if dry_run?
-        caret "Would send upgraded data to master for stack #{name} without --dry-run", dots: false
-      else
-        client.put(stack_url(name), data)
-      end
+      client.put(stack_url(name), data)
     end
 
     def stack_url(name)
