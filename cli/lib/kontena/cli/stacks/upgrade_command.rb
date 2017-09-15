@@ -19,7 +19,7 @@ module Kontena::Cli::Stacks
 
     option '--force', :flag, 'Force upgrade'
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
-    option '--dry-run', :flag, "Do not perform any uploading", hidden: true
+    option '--dry-run', :flag, "Simulate upgrade"
 
     requires_current_master
     requires_current_master_token
@@ -104,7 +104,11 @@ module Kontena::Cli::Stacks
         end
         confirm unless force?
         removes.reverse_each do |removed_stack|
-          Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
+          if dry_run?
+            caret "Would remove stack #{removed_stack} without --dry-run", dots: false
+          else
+            Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
+          end
           merged.delete(removed_stack)
         end
       end
@@ -146,17 +150,29 @@ module Kontena::Cli::Stacks
 
           cmd << '--no-deploy'
           cmd << data[:local][:loader].source
-          caret "Installing new dependency #{cmd.last} as #{stackname}"
-          Kontena.run!(cmd)
+          if dry_run?
+            caret "Would install new dependency #{cmd.last} as #{stackname} without --dry-run", dots: false
+          else
+            Kontena.run!(cmd)
+          end
         end
 
-        Kontena.run!(['stack', 'deploy', stackname]) if deploy?
+        if deploy?
+          if dry_run?
+            caret "Would run stack deploy for #{stackname} without --dry-run", dots: false
+          else
+            Kontena.run!(['stack', 'deploy', stackname])
+          end
+        end
       end
     end
 
     def update_stack(name, data)
-      return true if dry_run?
-      client.put(stack_url(name), data)
+      if dry_run?
+        caret "Would send upgraded data to master for stack #{name} without --dry-run", dots: false
+      else
+        client.put(stack_url(name), data)
+      end
     end
 
     def stack_url(name)
