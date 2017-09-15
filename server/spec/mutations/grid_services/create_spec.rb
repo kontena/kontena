@@ -495,6 +495,18 @@ describe GridServices::Create do
         )]
       end
 
+      it 'fails to create service with invalid certificates' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          certificates: [
+            {subject: 'kotnena.io', name: 'SSL_CERT'}
+          ]
+        ).run
+        expect(outcome).to_not be_success
+      end
     end
 
     it 'validates env syntax' do

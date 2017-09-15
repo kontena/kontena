@@ -32,6 +32,7 @@ module GridServices
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
       validate_secrets
+      validate_certificates
       if self.grid_service.stateful?
         if self.volumes_from && self.volumes_from.size > 0
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
