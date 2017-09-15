@@ -100,6 +100,15 @@ module Kontena
             end
           end
 
+          if service['certificates'].to_a.size > 0
+            puts "  certificates: "
+            service['certificates'].to_a.each do |c|
+              puts "    - subject: #{c['subject']}"
+              puts "      name: #{c['name']}"
+              puts "      type: #{c['type']}"
+            end
+          end
+
           if service['env'].to_a.size > 0
             puts "  env: "
             service['env'].to_a.each do |e|
