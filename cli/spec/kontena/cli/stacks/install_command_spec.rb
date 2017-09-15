@@ -42,6 +42,120 @@ describe Kontena::Cli::Stacks::InstallCommand do
       subject.run(['--no-deploy', fixture_path('kontena_v3.yml')])
     end
 
+    context 'variable value input' do
+      describe '--values-from' do
+        it 'sends stack to master, loading values from a file' do
+          expect(File).to receive(:exist?).with('values.yml').and_return(true)
+          expect(File).to receive(:read).with('values.yml').and_return(
+            YAML.dump('TEST_ENV_VAR' => 'abc', 'MYSQL_IMAGE' => 'mysqlimage', 'tag' => 'def')
+          )
+          expect(client).to receive(:post) do |path, data|
+            expect(path).to eq 'grids/test-grid/stacks'
+            expect(data).to match hash_including(
+              'services' => array_including(
+                hash_including(
+                  'name' => 'mysql',
+                  'image' => 'mysqlimage:latest',
+                  'env' => array_including(
+                    'TEST_VAR=abc'
+                  )
+                ),
+                hash_including(
+                  'name' => 'wordpress',
+                  'image' => 'wordpress:def'
+                )
+              )
+            )
+          end.and_return({})
+          subject.run(['--no-deploy', '--values-from', 'values.yml', fixture_path('stack-with-variables.yml')])
+        end
+
+        it 'sends stack to master, loading values from another stack on master' do
+          expect(File).to receive(:exist?).with('foostack').and_return(false)
+          allow(client).to receive(:get).with('stacks/test-grid/foostack').and_return(
+            'variables' => {
+              'TEST_ENV_VAR' => 'abc', 'MYSQL_IMAGE' => 'mysqlimage', 'tag' => 'def'
+            }
+          )
+          expect(client).to receive(:post) do |path, data|
+            expect(path).to eq 'grids/test-grid/stacks'
+            expect(data).to match hash_including(
+              'services' => array_including(
+                hash_including(
+                  'name' => 'mysql',
+                  'image' => 'mysqlimage:latest',
+                  'env' => array_including(
+                    'TEST_VAR=abc'
+                  )
+                ),
+                hash_including(
+                  'name' => 'wordpress',
+                  'image' => 'wordpress:def'
+                )
+              )
+            )
+          end.and_return({})
+          subject.run(['--no-deploy', '--values-from', 'foostack', fixture_path('stack-with-variables.yml')])
+        end
+
+        it 'can combine multiple inputs' do
+          expect(File).to receive(:exist?).with('values.yml').and_return(true)
+          expect(File).to receive(:read).with('values.yml').and_return(
+            YAML.dump('TEST_ENV_VAR' => 'abc')
+          )
+          expect(File).to receive(:exist?).with('foostack').and_return(false)
+          allow(client).to receive(:get).with('stacks/test-grid/foostack').and_return(
+            'variables' => { 'MYSQL_IMAGE' => 'mysqlimage' }
+          )
+          expect(client).to receive(:post) do |path, data|
+            expect(path).to eq 'grids/test-grid/stacks'
+            expect(data).to match hash_including(
+              'services' => array_including(
+                hash_including(
+                  'name' => 'mysql',
+                  'image' => 'mysqlimage:latest',
+                  'env' => array_including(
+                    'TEST_VAR=abc'
+                  )
+                ),
+                hash_including(
+                  'name' => 'wordpress',
+                  'image' => 'wordpress:def'
+                )
+              )
+            )
+          end.and_return({})
+          subject.run(['--no-deploy', '--values-from', 'foostack', '--values-from', 'values.yml', '-v', 'tag=def', fixture_path('stack-with-variables.yml')])
+
+        end
+      end
+
+      describe '-v' do
+        it 'sends stack to master, loading values from command line' do
+          expect(client).to receive(:post) do |path, data|
+            expect(path).to eq 'grids/test-grid/stacks'
+            expect(data).to match hash_including(
+              'services' => array_including(
+                hash_including(
+                  'name' => 'mysql',
+                  'image' => 'mysqlimage:latest',
+                  'env' => array_including(
+                    'TEST_VAR=abc'
+                  )
+                ),
+                hash_including(
+                  'name' => 'wordpress',
+                  'image' => 'wordpress:def'
+                )
+              )
+            )
+          end.and_return({})
+            YAML.dump('TEST_ENV_VAR' => 'abc', 'MYSQL_IMAGE' => 'mysqlimage', 'tag' => 'def')
+          subject.run(['--no-deploy', '-v', 'TEST_ENV_VAR=abc', '-v', 'MYSQL_IMAGE=mysqlimage', '-v', 'tag=def', fixture_path('stack-with-variables.yml')])
+        end
+      end
+    end
+
     it 'allows to override stack name' do
       expect(client).to receive(:post) do |path, data|
         expect(path).to eq 'grids/test-grid/stacks'
