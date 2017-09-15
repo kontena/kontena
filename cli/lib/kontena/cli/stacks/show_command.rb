@@ -53,6 +53,10 @@ module Kontena::Cli::Stacks
       puts "  version: #{stack['version']}"
       puts "  revision: #{stack['revision']}"
       puts "  expose: #{stack['expose'] || '-'}"
+      puts "  variables:#{' -' if stack['variables'].nil? || stack['variables'].empty?}"
+      stack['variables'].each do |var, val|
+        puts "    #{var}: #{val}"
+      end
       puts "  parent: #{stack['parent'] ? stack['parent']['name'] : '-'}"
       if stack['children'] && !stack['children'].empty?
         puts "  children:"
