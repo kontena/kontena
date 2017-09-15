@@ -108,6 +108,8 @@ module GridCertificates
         )
       end
 
+      refresh_grid_services(certificate_model)
+
       certificate_model
 
     rescue Acme::Client::Error => exc
@@ -119,6 +121,15 @@ module GridCertificates
       @le_client ||= acme_client(self.grid)
     end
 
+    ##
+    # @param [Certificate]
+    def refresh_grid_services(certificate)
+      certificate.grid.grid_services.where(:'certificates.subject' => certificate.subject).each do |grid_service|
+        info "force service #{grid_service.to_path} update for updated certificate #{certificate.subject}"
+        grid_service.set(updated_at: Time.now.utc)
+      end
+    end
   end
+
 end
 
