@@ -100,6 +100,7 @@ module Kontena
       # @return [Hash]
       def config_container(service_pod, cmd)
         service_pod.entrypoint = ['/bin/sh', '-c']
+        service_pod.cmd = cmd
         service_config = super(service_pod)
         service_config['HostConfig'].delete('RestartPolicy')
         service_config['Labels']['io.kontena.container.type'] = 'service_hook'
