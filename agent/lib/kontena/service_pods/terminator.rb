@@ -8,18 +8,20 @@ module Kontena
       include Kontena::Logging
       include Common
 
-      attr_reader :service_pod
+      attr_reader :service_pod, :hook_manager
 
       # @param [ServicePod] service_pod
       # @param [Hash] opts
       def initialize(service_pod)
         @service_pod = service_pod
+        @hook_manager = Kontena::ServicePods::LifecycleHookManager.new(service_pod)
       end
 
       # @return [Docker::Container]
       def perform
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
         if service_container
+          hook_manager.on_pre_stop(service_container) if service_container.running?
           info "terminating service: #{service_container.name_for_humans}"
           log_service_pod_event(
             service_pod.service_id, service_pod.instance_number,

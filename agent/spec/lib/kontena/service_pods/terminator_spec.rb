@@ -3,13 +3,23 @@ describe Kontena::ServicePods::Terminator do
 
   let(:service_pod) { double(:service_pod, service_id: 'service_id', instance_number: 1)}
   let(:subject) { described_class.new(service_pod) }
+  let(:hook_manager) { double(:hook_manager) }
 
   describe '#perform' do
+    before(:each) do
+      allow(subject).to receive(:hook_manager).and_return(hook_manager)
+      allow(hook_manager).to receive(:on_pre_stop)
+    end
+
     it 'terminates service instance' do
-      service_container = double(:service, :load_balanced? => false, :name => 'foo.bar-1', :name_for_humans => 'foo/bar-1', :stop_grace_period => 15)
+      service_container = double(:service,
+        :load_balanced? => false, :name => 'foo.bar-1', :name_for_humans => 'foo/bar-1',
+        :stop_grace_period => 15, :running? => true
+      )
       allow(subject).to receive(:get_container).with('service_id', 1).and_return(service_container)
       allow(subject).to receive(:get_container).with('service_id', 1, 'volume')
 
+      expect(hook_manager).to receive(:on_pre_stop).once
       expect(service_container).to receive(:stop).with({'timeout' => 15})
       expect(service_container).to receive(:wait)
       expect(service_container).to receive(:delete).with({v: true})
