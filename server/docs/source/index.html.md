@@ -917,6 +917,7 @@ net | Network mode: bridge, host (default: bridge)
 ports | Array of exposed ports
 env | List of user-defined environment variables to set on the instances of the service (will override the image environment variables)
 secrets | Array of mapped secrets from Kontena Vault
+certificates | Array of mapped certificates from Kontena Vault
 memory | Memory limit (excluding optional swap)
 memory_swap | Allowed memory (including swap)
 cpus | Specify how much of the available CPU resources (CPU cores) a service instance can use.
@@ -1001,6 +1002,14 @@ Attribute | Description
 secret | Secret name in the Kontena Vault
 name | Service local name for the secret
 type | How secret is exposed to a service container
+
+### Certificate attributes
+
+Attribute | Description
+--------- | -----------
+subject | Subject of the certiticate in the Kontena Vault
+name | Service local name for the certificate
+type | How certificate is exposed to a service container
 
 ## List services
 

@@ -5,6 +5,7 @@ class Stack
   NULL_STACK = 'null'.freeze
 
   field :name, type: String
+  field :parent_name, type: String
 
   belongs_to :grid
 
@@ -14,9 +15,41 @@ class Stack
 
   index({ grid_id: 1 })
   index({ name: 1 })
+  index({ parent_name: 1 })
 
   validates_presence_of :name
   validates_uniqueness_of :name, scope: [:grid_id]
+
+  validate :parent_name_is_not_same_as_name
+
+  def parent_name_is_not_same_as_name
+    if parent_name && name && parent_name == name
+      errors.add(:parent_name, "Parent name can't be the same as name")
+    end
+  end
+
+  def has_parent?
+    !parent_name.nil?
+  end
+
+  def top_parent
+    return self unless has_parent?
+    parent.top_parent
+  end
+
+  def parent
+    return nil unless has_parent?
+    self.class.where(grid_id: grid_id, name: parent_name).first
+  end
+
+  def children
+    self.class.where(grid_id: grid_id, parent_name: name)
+  end
+
+  def parent_chain
+    return [] unless has_parent?
+    [parent] + parent.parent_chain
+  end
 
   # @return [String]
   def to_path

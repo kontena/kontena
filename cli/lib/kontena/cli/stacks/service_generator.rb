@@ -27,7 +27,7 @@ module Kontena::Cli::Stacks
       data = {}
       data['instances'] = options['instances']
       data['image'] = parse_image(options['image'])
-      data['env'] = options['environment'] if options['environment']
+      data['env'] = options['environment'] || options['env']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
       data['ports'] = parse_stringified_ports(options['ports'] || [])
@@ -62,6 +62,7 @@ module Kontena::Cli::Stacks
       data['deploy_opts'] = deploy
       data['hooks'] = options['hooks'] || {}
       data['secrets'] = options['secrets'] if options['secrets']
+      data['certificates'] = options['certificates'] if options['certificates']
       data['build'] = parse_build_options(options) if options['build']
       data['health_check'] = parse_health_check(options)
       data['stop_grace_period'] = options['stop_grace_period'] if options['stop_grace_period']
@@ -86,7 +87,14 @@ module Kontena::Cli::Stacks
     # @return [Array<Hash>]
     def parse_links(link_options)
       link_options.map{|l|
-        service_name, alias_name = l.split(':')
+        if l.kind_of?(String)
+          service_name, alias_name = l.split(':')
+        elsif l.kind_of?(Hash)
+          service_name = l['name']
+          alias_name = l['alias']
+        else
+          raise TypeError, "Invalid link type #{l.class.name}, expecting String or Hash"
+        end
         if service_name.nil?
           raise ArgumentError.new("Invalid link value #{l}")
         end

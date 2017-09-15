@@ -21,6 +21,7 @@ module Kontena
   autoload :PluginManager, 'kontena/plugin_manager'
   autoload :MainCommand, 'kontena/main_command'
   autoload :Errors, 'kontena/errors'
+  autoload :Util, 'kontena/util'
 
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.

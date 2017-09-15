@@ -73,6 +73,16 @@ module Rpc
         secrets << {name: "SSL_CERTS", type: 'env', value: domain_auth.tls_sni_certificate}
       end
 
+      # Inject certificates as secrets
+      service.certificates.each do |certificate|
+        grid_cert = grid.certificates.find_by(subject: certificate.subject)
+        item = {name: certificate.name, type: certificate.type, value: nil}
+        if grid_cert
+          item[:value] = grid_cert.bundle
+        end
+        secrets << item
+      end
+
       secrets
     end
 

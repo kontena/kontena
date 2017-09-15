@@ -28,6 +28,30 @@ module Kontena
     end
     module_function :symbolize_keys!
 
+    def stringify_keys(obj)
+      case obj
+      when Hash
+        obj.map { |k,v| [k.to_s, stringify_keys(v)] }.to_h
+      when Array
+        obj.map { |v| stringify_keys(v) }
+      else
+        obj
+      end
+    end
+    module_function :stringify_keys
+
+    def stringify_keys!(obj)
+      case obj
+      when Hash
+        obj.keys.each { |k| obj[k.to_s] = stringify_keys!(obj.delete(k)) }
+      when Array
+        obj.map! { |v| stringify_keys!(v) }
+      else
+      end
+      obj
+    end
+    module_function :stringify_keys!
+
     # @param [String] cmd
     def which(cmd)
       exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']

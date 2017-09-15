@@ -1,5 +1,4 @@
-require 'kontena/cli/stacks/yaml/opto'
-require 'kontena/cli/common'
+require_relative '../opto'
 
 module Kontena::Cli::Stacks
   module YAML

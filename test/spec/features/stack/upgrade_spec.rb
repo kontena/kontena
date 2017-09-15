@@ -81,4 +81,70 @@ describe 'stack upgrade' do
       end
     end
   end
+
+  context "for a stack that has dependencies" do
+    after do
+      run('kontena stack ls -q').out.split(/[\r\n]/).each do |stack|
+        next unless stack.start_with?('twemproxy')
+        run "kontena stack rm --force #{stack}"
+      end
+    end
+
+    context "when a new dependency is added" do
+      it 'installs the added stack' do
+        with_fixture_dir("stack/depends") do
+          run 'kontena stack install'
+        end
+
+        with_fixture_dir("stack/depends/monitor_added") do
+          k = run 'kontena stack upgrade --force twemproxy'
+          puts k.out unless k.code.zero?
+          expect(k.code).to eq (0)
+        end
+
+        k = run 'kontena stack ls -q'
+        expect(k.out).to match /twemproxy-redis_from_yml-monitor/
+      end
+    end
+
+    context "when a dependency is removed" do
+      it 'removes the stack' do
+        with_fixture_dir("stack/depends/monitor_added") do
+          run 'kontena stack install'
+        end
+
+        k = run 'kontena stack ls -q'
+        expect(k.out).to match /twemproxy-redis_from_yml-monitor/
+
+        with_fixture_dir("stack/depends/monitor_removed") do
+          k = run 'kontena stack upgrade --force twemproxy'
+          puts k.out unless k.code.zero?
+          expect(k.code).to eq (0)
+        end
+
+        k = run 'kontena stack ls -q'
+        expect(k.out).not_to match /twemproxy-redis_from_yml-monitor/
+      end
+    end
+
+    context "when a dependency is replaced" do
+      it 'removes the stack' do
+        with_fixture_dir("stack/depends") do
+          run 'kontena stack install'
+        end
+
+        k = run 'kontena stack show twemproxy-redis_from_yml'
+        expect(k.out).to match /stack: test\/redis/
+
+        with_fixture_dir("stack/depends/second_redis_replaced") do
+          k = run 'kontena stack upgrade --force twemproxy'
+          puts k.out unless k.code.zero?
+          expect(k.code).to eq (0)
+        end
+
+        k = run 'kontena stack show twemproxy-redis_from_yml'
+        expect(k.out).to match /stack: kontena\/redis/
+      end
+    end
+  end
 end
