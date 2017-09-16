@@ -1,35 +1,28 @@
 
 describe Kontena::ServicePods::Migrator do
 
-  describe '.migrate_container' do
+  let(:container) do
+    double(:container, name_for_humans: 'foo')
+  end
+  let(:subject) { described_class.new(container) }
+
+  describe '#migrate' do
     it 'migrates container' do
-      container = double(:container, host_config: {
-        'RestartPolicy' => {
-          'Name' => 'unless-stopped'
-        }
-      })
+      allow(container).to receive(:autostart?).and_return(true)
       expect(container).to receive(:update)
-      described_class.migrate_container(container)
+      subject.migrate
     end
   end
 
   describe '.legacy_container?' do
     it 'returns true if container has restart policies' do
-      container = double(:container, host_config: {
-        'RestartPolicy' => {
-          'Name' => 'unless-stopped'
-        }
-      })
-
+      allow(container).to receive(:autostart?).and_return(true)
       expect(described_class.legacy_container?(container)).to be_truthy
     end
 
     it 'returns false if container is not legacy' do
-      container = double(:container, host_config: {
-        'RestartPolicy' => {}
-      })
-
-      expect(described_class.legacy_container?(container)).to be_truthy
+      allow(container).to receive(:autostart?).and_return(false)
+      expect(described_class.legacy_container?(container)).to be_falsey
     end
   end
 end
