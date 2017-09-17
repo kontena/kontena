@@ -1,3 +1,3 @@
-require_relative '../services/mongo_pubsub'
+require_relative '../services/pubsub/mongo'
 require_relative '../models/pubsub_channel'
 

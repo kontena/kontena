@@ -114,7 +114,7 @@ module Docker
 
     # @return [MongoPubsub::Subscription]
     def subscribe_to_exec(id)
-      MongoPubsub.subscribe("container_exec:#{id}") do |data|
+      MasterPubsub.subscribe("container_exec:#{id}") do |data|
         debug { "subscribe exec #{id}: #{data.inspect}" }
 
         if data.has_key?('error')

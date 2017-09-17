@@ -16,10 +16,8 @@ class LeaderElectorJob
   def perform
     info 'participating leader elections'
     self.listen_events
-    defer {
-      self.cleanup
-      self.elect
-    }
+    self.cleanup
+    self.elect
     every(10) do
       self.elect unless leader?
       self.cleanup
@@ -43,11 +41,12 @@ class LeaderElectorJob
   end
 
   def announce_election
-    MongoPubsub.publish(PUBSUB_KEY, {})
+    self.elect
+    MasterPubsub.publish(PUBSUB_KEY, {})
   end
 
   def listen_events
-    MongoPubsub.subscribe(PUBSUB_KEY) do |event|
+    MasterPubsub.subscribe(PUBSUB_KEY) do |event|
       self.elect
     end
   end

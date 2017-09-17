@@ -17,8 +17,6 @@ gem 'msgpack'
 gem 'httpclient', '~> 2.3'
 gem 'authority'
 gem 'mongoid-enum'
-gem 'rollbar', require: false
-gem 'rbtrace', require: false
 gem 'acme-client'
 gem 'json-jwt', '= 1.5.2'
 gem 'jsonpath'
@@ -26,6 +24,9 @@ gem 'json-serializer'
 gem 'bcrypt'
 gem 'rack-attack'
 gem 'lru_redux', '~> 1.1.0'
+gem 'rollbar', require: false
+gem 'rbtrace', require: false
+gem 'redis', require: false
 
 group :development, :test do
   gem 'dotenv'

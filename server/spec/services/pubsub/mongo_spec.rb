@@ -1,5 +1,5 @@
 
-describe MongoPubsub, :celluloid => true do
+describe Pubsub::Mongo, :celluloid => true do
 
   describe '.publish' do
     it 'sends message to channel subscribers' do

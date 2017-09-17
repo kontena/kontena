@@ -223,7 +223,7 @@ describe Rpc::ContainerHandler do
   describe '#health' do
     it 'saves container health status and sends pubsub notification' do
       container = grid.containers.create!(grid_service: grid_service, container_id: SecureRandom.hex(16), name: 'foo-1', health_status: 'unknown')
-      expect(MongoPubsub).to receive(:publish).with('service:health_status_events', {id: grid_service.id.to_s})
+      expect(MasterPubsub).to receive(:publish).with('service:health_status_events', {id: grid_service.id.to_s})
       expect {
         subject.health({'id' => container.container_id, 'status' => 'healthy'})
       }.to change{container.reload.health_status}.to 'healthy'
@@ -236,7 +236,7 @@ describe Rpc::ContainerHandler do
 
     it 'saves container health status, does not send notification when no service linked to container' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', health_status: 'unknown')
-      expect(MongoPubsub).not_to receive(:publish)
+      expect(MasterPubsub).not_to receive(:publish)
       expect {
         subject.health({'id' => container.container_id, 'status' => 'healthy'})
       }.to change{container.reload.health_status}.to 'healthy'
