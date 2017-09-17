@@ -49,7 +49,7 @@ class RpcClient
     }
     response = []
     subscription = subscribe_to_response(id, response)
-    MongoPubsub.publish_async(RPC_CHANNEL, payload)
+    MasterPubsub.publish_async(RPC_CHANNEL, payload)
     result, error = wait_for_response(subscription, response)
 
     if block_given?
@@ -69,7 +69,7 @@ class RpcClient
   # @param [Array] resp
   # @return [MongoPubsub::Subscription]
   def subscribe_to_response(request_id, resp)
-    MongoPubsub.subscribe("#{RPC_CHANNEL}:#{request_id}") do |msg|
+    MasterPubsub.subscribe("#{RPC_CHANNEL}:#{request_id}") do |msg|
       resp_message = msg['message']
       if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
         error = resp_message[2]
@@ -102,7 +102,7 @@ class RpcClient
         id: self.node_id,
         message: [2, method, params]
     }
-    MongoPubsub.publish_async(RPC_CHANNEL, payload)
+    MasterPubsub.publish_async(RPC_CHANNEL, payload)
   end
 
   ##
