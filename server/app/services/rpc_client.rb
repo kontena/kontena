@@ -1,5 +1,3 @@
-require_relative 'mongo_pubsub'
-
 class RpcClient
 
   class Error < StandardError
