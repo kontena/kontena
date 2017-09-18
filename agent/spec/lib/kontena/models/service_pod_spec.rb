@@ -335,6 +335,11 @@ describe Kontena::Models::ServicePod do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
     end
+
+    it 'sets ShmSize if set' do
+      data['shm_size'] = 64 * 1024 * 1024
+      expect(host_config['ShmSize']).to eq(data['shm_size'])
+    end
   end
 
   describe '#build_exposed_ports' do

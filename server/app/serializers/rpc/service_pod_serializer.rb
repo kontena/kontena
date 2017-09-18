@@ -28,6 +28,7 @@ module Rpc
         entrypoint: service.entrypoint,
         memory: service.memory,
         memory_swap: service.memory_swap,
+        shm_size: service.shm_size,
         cpu_shares: service.cpu_shares,
         cpus: service.cpus,
         privileged: service.privileged,

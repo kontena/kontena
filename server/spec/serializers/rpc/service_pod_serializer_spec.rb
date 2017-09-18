@@ -87,6 +87,10 @@ describe Rpc::ServicePodSerializer do
       expect(subject.to_hash).to include(:memory_swap => nil)
     end
 
+    it 'includes shm_size' do
+      expect(subject.to_hash).to include(:shm_size => nil)
+    end
+
     it 'includes cpu_shares' do
       expect(subject.to_hash).to include(:cpu_shares => nil)
     end

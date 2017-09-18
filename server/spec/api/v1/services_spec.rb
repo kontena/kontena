@@ -83,7 +83,7 @@ describe '/v1/services' do
 
   EXPECTED_FIELDS = %w(
         id created_at updated_at stack image affinity name stateful user
-        instances cmd entrypoint ports env memory memory_swap cpus cpu_shares
+        instances cmd entrypoint ports env memory memory_swap shm_size cpus cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
         stack_revision stop_grace_period read_only certificates
