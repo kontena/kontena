@@ -68,8 +68,8 @@ module Docker
             input = JSON.parse(event.data)
             if input.has_key?('stdin')
               @client.notify('/containers/tty_input', @exec_session['id'], input['stdin'])
-            elsif input.has_key?('console_size')
-              @client.notify('/containers/tty_resize', @exec_session['id'], input['console_size'])
+            elsif input.has_key?('tty_size')
+              @client.notify('/containers/tty_resize', @exec_session['id'], input['tty_size'])
             end
           rescue JSON::ParserError
             error "invalid tty_input json"

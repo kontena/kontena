@@ -101,7 +101,7 @@ module Kontena::Cli::Helpers
         begin
           if tty
             console_height, console_width = IO.console.winsize
-            websocket_exec_write(ws, 'console_size' => {
+            websocket_exec_write(ws, 'tty_size' => {
               width: console_width, height: console_height
             })
           end
