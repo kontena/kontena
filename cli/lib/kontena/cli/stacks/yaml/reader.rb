@@ -368,7 +368,7 @@ module Kontena::Cli::Stacks
               if use_opto
                 opt = variables.option(var)
                 if opt.nil?
-                  to_env = variables.find { |opt| opt.to[:env][var] }
+                  to_env = variables.find { |opt| Array(opt.to[:env]).include?(var) }
                   if to_env
                     val = to_env.value
                   else
