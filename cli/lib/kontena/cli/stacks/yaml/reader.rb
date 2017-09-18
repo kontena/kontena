@@ -376,9 +376,6 @@ module Kontena::Cli::Stacks
                   end
                 else
                   val = opt.value
-                  if opt.to['env']
-                    Array(opt.to['env']).each { |env_var| env[env_var] = val.to_s }
-                  end
                 end
               else
                 val = substitutions[var]
