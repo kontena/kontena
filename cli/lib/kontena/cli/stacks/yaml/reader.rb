@@ -52,7 +52,7 @@ module Kontena::Cli::Stacks
       def variable_values(without_defaults: false, without_vault: false)
         result = variables.to_h(values_only: true)
         if without_defaults
-          result.delete_if { |k, _| default_envs.key?(k.to_s) }
+          result.delete_if { |k, _| default_envs.key?(k.to_s) || k.to_s == 'PARENT_STACK' }
         end
         if without_vault
           result.delete_if { |k, _| variables.option(k).from.include?('vault') || variables.option(k).to.include?('vault') }
