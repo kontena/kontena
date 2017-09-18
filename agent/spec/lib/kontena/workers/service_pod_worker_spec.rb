@@ -100,7 +100,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
 
   describe '#ensure_desired_state' do
     before(:each) do
-      allow(subject.wrapped_object).to receive(:legacy_container?).and_return(false)
+      allow(subject.wrapped_object).to receive(:migrate_container)
     end
 
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
@@ -157,17 +157,9 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       expect(subject.ensure_desired_state).to be nil
     end
 
-    it 'checks if container is legacy' do
+    it 'migrates container' do
       container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
       allow(subject.wrapped_object).to receive(:get_container).and_return(container)
-      expect(subject.wrapped_object).to receive(:legacy_container?).and_return(false)
-      subject.ensure_desired_state
-    end
-
-    it 'migrates container if legacy' do
-      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
-      allow(subject.wrapped_object).to receive(:legacy_container?).and_return(true)
       expect(subject.wrapped_object).to receive(:migrate_container).with(container)
       subject.ensure_desired_state
     end

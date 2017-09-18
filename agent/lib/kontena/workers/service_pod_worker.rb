@@ -194,7 +194,7 @@ module Kontena::Workers
       debug "state of #{service_pod.name}: #{service_pod.desired_state}"
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
-      migrate_container(service_container) if service_container && legacy_container?(service_container)
+      migrate_container(service_container) if service_container
 
       if service_pod.running? && service_container.nil?
         info "creating #{service_pod.name}"
@@ -399,16 +399,9 @@ module Kontena::Workers
     end
 
     # @param container [Docker::Container]
-    # @return [Boolean]
-    def legacy_container?(container)
-      Kontena::ServicePods::Migrator.legacy_container?(container)
-    end
-
-    # @param container [Docker::Container]
     # @return [Docker::Container]
     def migrate_container(container)
       Kontena::ServicePods::Migrator.new(container).migrate
-      container.reload
     end
   end
 end

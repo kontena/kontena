@@ -21,13 +21,7 @@ module Kontena
             'MaximumRetryCount' => 0
           }
         })
-      end
-
-      # @param service_container [Docker::Container]
-      def self.legacy_container?(service_container)
-        return true if service_container.autostart?
-
-        false
+        @service_container.reload
       end
     end
   end
