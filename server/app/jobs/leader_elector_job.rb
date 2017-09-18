@@ -16,8 +16,10 @@ class LeaderElectorJob
   def perform
     info 'participating leader elections'
     self.listen_events
-    self.cleanup
-    self.elect
+    defer {
+      self.cleanup
+      self.elect
+    }
     every(10) do
       self.elect unless leader?
       self.cleanup
@@ -41,7 +43,6 @@ class LeaderElectorJob
   end
 
   def announce_election
-    self.elect
     MasterPubsub.publish(PUBSUB_KEY, {})
   end
 
