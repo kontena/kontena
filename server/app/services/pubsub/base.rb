@@ -130,10 +130,5 @@ module Pubsub
     def self.clear!
       @supervisor.actors.first.clear!
     end
-
-    private
-
-    def subscribe!
-    end
   end
 end
