@@ -43,9 +43,12 @@ module Kontena::Actors
         @container_exec.resize({
           'w' => size['width'], 'h' => size['height']
         })
-      rescue Docker::Error::NotFoundError
-        sleep 0.1
-        retry if @container_exec
+        info "tty resized to #{size['width']}x#{size['height']}"
+      rescue Docker::Error::NotFoundError => exc
+        if exc.message.include?('process not found')
+          sleep 0.1
+          retry if @container_exec
+        end
       end
     end
 
@@ -87,6 +90,7 @@ module Kontena::Actors
       info "#{cmd} exit with code #{exit_code}: #{cmd}"
       handle_exit(exit_code)
     ensure
+      @container_exec = nil
       self.terminate
     end
 
@@ -134,18 +138,6 @@ module Kontena::Actors
     # @option options [Boolean] detach
     def start_exec(options, &block)
       @container_exec.start!(options, &block)
-    end
-
-    # @param [String] stream
-    # @param [String] chunk
-    def handle_stream_chunk(stream, chunk)
-      rpc_client.notification('/container_exec/output', [@uuid, stream, chunk.force_encoding(Encoding::UTF_8)])
-    end
-
-    # @param [Integer] exit_code
-    def shutdown(exit_code)
-      rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
-      self.terminate
     end
   end
 end
