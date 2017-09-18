@@ -75,9 +75,11 @@ module Pubsub
       subscription.stop
     end
 
+    # @abstract Subclass is expected to implement #publish
     # @param [String] channel
     # @param [Hash] data
     def publish(channel, data)
+      raise NotImplementedError
     end
 
     # @param [String] channel
