@@ -140,8 +140,8 @@ module Kontena::Cli::Stacks
           cmd = ['stack', 'install', '--name', stackname]
           cmd.concat ['--parent-name', stack['parent_name']] if stack['parent_name']
 
-          values_from_list.each do |vals_from|
-            cmd.concat ['--values-from', stackname.sub(name, vals_from)]
+          values_from_stack_list.each do |vals_from|
+            cmd.concat ['--values-from-stack', stackname.sub(name, vals_from)]
           end
 
           stack['variables'].merge(dependency_values_from_options(stackname)).each do |k, v|
