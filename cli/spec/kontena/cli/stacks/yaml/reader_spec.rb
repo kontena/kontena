@@ -234,6 +234,18 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           hash_including('name' => 'mysql', 'env' => array_including('INTERNAL_VAR=$INTERNAL_VAR'))
         )
       end
+
+      it 'raises runtime error for undeclared variables' do
+        subject.variables.delete(subject.variables.option('test_var'))
+        expect{subject.execute}.to raise_error(RuntimeError, /Undeclared variable 'test_var'/)
+      end
+
+      it 'considers variables declared when they are listed as to: env targets' do
+        subject.variables.option('tag').to[:env] = "BAG"
+        expect{subject.execute}.to raise_error(RuntimeError, /Undeclared variable 'TAG'/)
+        subject.variables.option('tag').to[:env] = "TAG"
+        expect{subject.execute}.not_to raise_error
+      end
     end
 
     context 'environment variables' do
