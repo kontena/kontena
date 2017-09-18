@@ -161,7 +161,7 @@ module Kontena
         actor_id = "container_exec_#{id}"
         executor = Celluloid::Actor[actor_id]
         if executor
-          executor.tty_resize(size)
+          executor.async.tty_resize(size)
         end
       end
 
