@@ -18,6 +18,7 @@ module Kontena::Cli::Stacks
     include Common::StackValuesToOption
 
     def execute
+      write_variables if values_to
       values? ? show_variables : show_stack
     end
 
@@ -29,22 +30,15 @@ module Kontena::Cli::Stacks
       puts variable_yaml
     end
 
-    def clean_variables
-      rejected_keys = Set.new(%w(GRID STACK PARENT_STACK PLATFORM))
-      stack['variables'].reject do |key, _|
-        rejected_keys.include?(key)
-      end
-    end
-
     def variable_yaml
-      ::YAML.dump(clean_variables)
+      ::YAML.dump(stack['variables'])
     end
 
+    def write_variables
+      File.write(values_to, variable_yaml)
+    end
+      
     def show_stack
-      if values_to
-        File.write(values_to, variable_yaml)
-      end
-
       puts "#{stack['name']}:"
       puts "  created: #{stack['created_at']}"
       puts "  updated: #{stack['updated_at']}"
