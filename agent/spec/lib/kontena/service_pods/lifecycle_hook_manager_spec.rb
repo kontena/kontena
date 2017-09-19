@@ -20,6 +20,17 @@ describe Kontena::ServicePods::LifecycleHookManager do
       expect(hooks.size).to eq(1)
       expect(hooks[0]['cmd']).to eq('sleep 1')
     end
+
+    it 'returns oneshot hooks only once' do
+      allow(service_pod).to receive(:service_id).and_return('abc')
+      allow(service_pod).to receive(:instance_number).and_return(1)
+      allow(service_pod).to receive(:hooks).and_return([
+        { 'type' => 'pre_start', 'cmd' => 'sleep 1', 'oneshot' => true }
+      ])
+      allow(subject).to receive(:rpc_client).and_return(spy)
+      expect(subject.hooks_for('pre_start').size).to eq(1)
+      expect(subject.hooks_for('pre_start').size).to eq(0)
+    end
   end
 
   describe '#build_cmd' do

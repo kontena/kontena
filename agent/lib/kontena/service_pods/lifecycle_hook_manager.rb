@@ -146,7 +146,7 @@ module Kontena
           service_id: service_pod.service_id,
           instance_number: service_pod.instance_number
         }
-        rpc_client.async.request('/node_service_pods/mark_oneshot_hook', [node.id, pod, hook])
+        rpc_client.request('/node_service_pods/mark_oneshot_hook', [node.id, pod, hook])
         oneshot_cache << hook
       end
 
