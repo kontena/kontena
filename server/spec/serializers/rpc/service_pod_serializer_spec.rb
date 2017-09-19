@@ -132,6 +132,14 @@ describe Rpc::ServicePodSerializer do
       expect(subject.to_hash).to include(:net => 'bridge')
     end
 
+    it 'includes hostname' do
+      expect(subject.to_hash).to include(:hostname => 'app-2')
+    end
+
+    it 'includes domainname' do
+      expect(subject.to_hash).to include(:domainname => 'test-grid.kontena.local')
+    end
+
     it 'includes log_driver' do
       expect(subject.to_hash).to include(:log_driver => nil)
     end

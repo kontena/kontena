@@ -16,6 +16,9 @@ module GridServices
       string :image
     end
 
+    def name
+      self.grid_service.name
+    end
     def grid
       self.grid_service.grid
     end
@@ -24,6 +27,7 @@ module GridServices
     end
 
     def validate
+      validate_name
       validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
