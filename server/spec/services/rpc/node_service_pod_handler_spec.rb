@@ -108,22 +108,61 @@ describe Rpc::NodeServicePodHandler do
   end
 
   describe '#cached_pod' do
+    let(:grid_service) { double(:grid_service) }
+
+    before(:each) do
+      allow(grid_service).to receive(:hooks).and_return([])
+    end
+
     it 'transforms the service instance into pod if not already in cache' do
-      service_instance = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: double})
+      service_instance = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: grid_service})
       expect(Rpc::ServicePodSerializer).to receive(:new).once.and_return(double(:to_hash => {}))
       subject.cached_pod(service_instance)
       subject.cached_pod(service_instance)
     end
 
     it 'uses instance id, deploy_rev and desired_state as cache key' do
-      service_instance_1 = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: double})
+      service_instance_1 = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: grid_service})
       expect(Rpc::ServicePodSerializer).to receive(:new).twice.and_return(double(:to_hash => {}))
 
       subject.cached_pod(service_instance_1)
 
-      service_instance_2 = double({id: 'foo', deploy_rev: '12345', desired_state: 'stopped', grid_service: double})
+      service_instance_2 = double({id: 'foo', deploy_rev: '12345', desired_state: 'stopped', grid_service: grid_service})
       subject.cached_pod(service_instance_2)
     end
 
+    it 'does not filter out oneshot hooks if they have not been serialized' do
+      service_instance = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', instance_number: 1, grid_service: grid_service})
+      expect(Rpc::ServicePodSerializer).to receive(:new).once.and_return(double(:to_hash => {
+        hooks: [
+          { type: 'post_start', cmd: 'sleep 1'},
+          { type: 'pre_stop', cmd: 'echo "done"'}
+        ]
+      }))
+      hooks = [
+        double(:hook, type: 'post_start', cmd: 'sleep 1')
+      ]
+      allow(hooks[0]).to receive(:done_for?).and_return(false)
+      allow(grid_service).to receive(:hooks).and_return(hooks)
+      pod_hash = subject.cached_pod(service_instance)
+      expect(pod_hash[:hooks].size).to eq(2)
+    end
+
+    it 'filters out oneshot hooks if they have already been serialized' do
+      service_instance = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', instance_number: 1, grid_service: grid_service})
+      expect(Rpc::ServicePodSerializer).to receive(:new).once.and_return(double(:to_hash => {
+        hooks: [
+          { type: 'post_start', cmd: 'sleep 1'},
+          { type: 'pre_stop', cmd: 'echo "done"'}
+        ]
+      }))
+      hooks = [
+        double(:hook, type: 'post_start', cmd: 'sleep 1')
+      ]
+      allow(hooks[0]).to receive(:done_for?).and_return(true)
+      allow(grid_service).to receive(:hooks).and_return(hooks)
+      pod_hash = subject.cached_pod(service_instance)
+      expect(pod_hash[:hooks]).to eq([{ type: 'pre_stop', cmd: 'echo "done"'}])
+    end
   end
 end

@@ -14,10 +14,21 @@ module Rpc
         deploy_rev: service_instance.deploy_rev,
         desired_state: service_instance.desired_state
       }
-      @lru_cache.getset(cache_key) {
+      hooks = service_instance.grid_service.hooks
+      pod_hash = @lru_cache.getset(cache_key) {
         debug "pod_cache miss"
         ServicePodSerializer.new(service_instance).to_hash if service_instance.grid_service
       }
+      # remove cached oneshot hooks
+      hooks.dup.each do |hook|
+        if hook.done_for?(service_instance.instance_number)
+          pod_hash[:hooks].delete_if { |h|
+            h[:type] == hook.type && h[:cmd] == hook.cmd
+          }
+        end
+      end
+
+      pod_hash
     end
 
     # @param [String] id
