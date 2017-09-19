@@ -267,10 +267,33 @@ describe Rpc::ServicePodSerializer do
       expect(subject.build_volumes).to eq([{:bind_mount=>nil, :path => '/data', :flags => nil}])
     end
   end
+
   describe '#image_credentials' do
     it 'return nil by default' do
       expect(subject.image_credentials).to be_nil
     end
   end
 
+  describe '#build_hooks' do
+    it 'returns not-executed oneshot hook' do
+      service.hooks.create(
+        type: 'post_start',
+        cmd: 'sleep 1',
+        oneshot: true
+      )
+      hooks = subject.build_hooks
+      expect(hooks[0]).to eq({ type: 'post_start', cmd: 'sleep 1', oneshot: true})
+    end
+
+    it 'does not return oneshot hooks that are already executed' do
+      service.hooks.create(
+        type: 'post_start',
+        cmd: 'sleep 1',
+        oneshot: true
+      )
+      service.hooks.first.push(:done => service_instance.instance_number.to_s)
+      hooks = subject.build_hooks
+      expect(hooks.size).to eq(0)
+    end
+  end
 end

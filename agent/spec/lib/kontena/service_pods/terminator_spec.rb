@@ -2,12 +2,12 @@
 describe Kontena::ServicePods::Terminator do
 
   let(:service_pod) { double(:service_pod, service_id: 'service_id', instance_number: 1)}
-  let(:subject) { described_class.new(service_pod) }
   let(:hook_manager) { double(:hook_manager) }
+  let(:subject) { described_class.new(service_pod, hook_manager) }
 
   describe '#perform' do
     before(:each) do
-      allow(subject).to receive(:hook_manager).and_return(hook_manager)
+      allow(hook_manager).to receive(:track)
       allow(hook_manager).to receive(:on_pre_stop)
     end
 

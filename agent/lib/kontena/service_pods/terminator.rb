@@ -10,11 +10,13 @@ module Kontena
 
       attr_reader :service_pod, :hook_manager
 
-      # @param [ServicePod] service_pod
+      # @param service_pod [ServicePod]
+      # @param hook_manager [LifecycleHookManager]
       # @param [Hash] opts
-      def initialize(service_pod)
+      def initialize(service_pod, hook_manager)
         @service_pod = service_pod
-        @hook_manager = Kontena::ServicePods::LifecycleHookManager.new(service_pod)
+        @hook_manager = hook_manager
+        @hook_manager.track(service_pod)
       end
 
       # @return [Docker::Container]

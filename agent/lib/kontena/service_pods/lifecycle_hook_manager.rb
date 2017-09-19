@@ -6,10 +6,13 @@ module Kontena
       include Kontena::Helpers::RpcHelper
       include Common
 
-      attr_reader :service_pod
+      attr_reader :node, :service_pod
 
-      # @param [ServicePod] service_pod
-      def initialize(service_pod)
+      def initialize(node)
+        @node = node
+      end
+
+      def track(service_pod)
         @service_pod = service_pod
       end
 
@@ -84,7 +87,16 @@ module Kontena
       # @param [String] type
       # @return [Array<Hash>]
       def hooks_for(type)
-        service_pod.hooks.select{ |h| h['type'] == type }
+        hooks = service_pod.hooks.select { |h|
+          h['type'] == type && !h['oneshot'] || (h['oneshot'] && !oneshot_cache.include?(h))
+        }
+        hooks.each do |h|
+          if h['oneshot'] && !oneshot_cache.include?(h)
+            mark_oneshot_hook(h)
+          end
+        end
+
+        hooks
       end
 
       # @param [String] cmd
@@ -126,6 +138,21 @@ module Kontena
       # @param [Integer] severity
       def log_service_pod_event(type, data, severity = Logger::INFO)
         super(service_pod.service_id, service_pod.instance_number, type, data, severity)
+      end
+
+      # @param hook [Hash]
+      def mark_oneshot_hook(hook)
+        pod = {
+          service_id: service_pod.service_id,
+          instance_number: service_pod.instance_number
+        }
+        rpc_client.async.request('/node_service_pods/mark_oneshot_hook', [node.id, pod, hook])
+        oneshot_cache << hook
+      end
+
+      # @return [Array<Hash>]
+      def oneshot_cache
+        @oneshot_cache ||= []
       end
     end
   end

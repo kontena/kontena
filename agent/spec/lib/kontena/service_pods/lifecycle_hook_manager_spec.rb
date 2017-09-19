@@ -8,7 +8,11 @@ describe Kontena::ServicePods::LifecycleHookManager do
     ])
   end
 
-  let(:subject) { described_class.new(service_pod) }
+  let(:subject) { described_class.new(double(:node, id: 'asdasd')) }
+
+  before(:each) do
+    subject.track(service_pod)
+  end
 
   describe '#hooks_for' do
     it 'returns only hooks for given type' do

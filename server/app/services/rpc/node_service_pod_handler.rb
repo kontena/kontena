@@ -7,26 +7,23 @@ module Rpc
       @lru_cache = LruRedux::ThreadSafeCache.new(1000)
     end
 
+    # @param service_instance [GridServiceInstance]
     def cached_pod(service_instance)
+      return nil unless service_instance.grid_service
+
       # TODO Do we need any other attrbutes for the composed key?
       cache_key = {
         id: service_instance.id,
         deploy_rev: service_instance.deploy_rev,
         desired_state: service_instance.desired_state
       }
-      hooks = service_instance.grid_service.hooks
+      serializer = ServicePodSerializer.new(service_instance)
       pod_hash = @lru_cache.getset(cache_key) {
         debug "pod_cache miss"
-        ServicePodSerializer.new(service_instance).to_hash if service_instance.grid_service
+        serializer.to_hash
       }
-      # remove cached oneshot hooks
-      hooks.dup.each do |hook|
-        if hook.done_for?(service_instance.instance_number)
-          pod_hash[:hooks].delete_if { |h|
-            h[:type] == hook.type && h[:cmd] == hook.cmd
-          }
-        end
-      end
+      # hooks cannot be cached
+      pod_hash[:hooks] = serializer.build_hooks
 
       pod_hash
     end
@@ -47,8 +44,8 @@ module Rpc
       { service_pods: service_pods }
     end
 
-    # @param [String] id
-    # @param [Hash] pod
+    # @param id [String]
+    # @param pod [Hash]
     def set_state(id, pod)
       node = @grid.host_nodes.find_by(node_id: id)
       raise 'Node not found' unless node
@@ -63,6 +60,27 @@ module Rpc
         state: pod['state'],
         error: pod['error'],
       )
+      {}
+    end
+
+    # @param id [String]
+    # @param pod [Hash]
+    # @param hook [Hash]
+    def mark_oneshot_hook(id, pod, hook)
+      node = @grid.host_nodes.find_by(node_id: id)
+      raise 'Node not found' unless node
+
+      service_instance = node.grid_service_instances.find_by(
+        grid_service_id: pod['service_id'], instance_number: pod['instance_number']
+      )
+      raise 'Instance not found' unless service_instance
+
+      oneshot_hook = service_instance.grid_service.hooks.to_a.find{ |h|
+        h.oneshot && h.type == hook['type'] && h.cmd == hook['cmd']
+      }
+      raise "Hook not found: #{hook}" unless oneshot_hook
+      oneshot_hook.push(:done => pod['instance_number'].to_s)
+
       {}
     end
 
