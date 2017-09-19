@@ -45,7 +45,15 @@ module Kontena::Actors
         })
         info "tty resized to #{size['width']}x#{size['height']}"
       rescue Docker::Error::NotFoundError => exc
+        # The Docker::Exec#resize races with the Docker::Exec#start, and the
+        # resize (POST /exec/.../resize) will fail if the exec process is not
+        # yet running:
+        #   Docker::Error::NotFoundError: containerd: process not found for container
         if exc.message.include?('process not found')
+          # This needs to wait for the start => POST /exec/.../start HTTP request
+          # to return the response headers, but the Docker::Exec#start API does
+          # not tell us when that happens (it only yields on the first streaming
+          # chunk, or returns when the exec exits)... just retry instead.
           sleep 0.1
           retry if @container_exec
         end
