@@ -2,6 +2,7 @@ require_relative '../service_pods/creator'
 require_relative '../service_pods/starter'
 require_relative '../service_pods/stopper'
 require_relative '../service_pods/terminator'
+require_relative '../service_pods/migrator'
 require_relative '../helpers/event_log_helper'
 require_relative 'service_pod_manager'
 
@@ -192,6 +193,9 @@ module Kontena::Workers
     def ensure_desired_state
       debug "state of #{service_pod.name}: #{service_pod.desired_state}"
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
+
+      migrate_container(service_container) if service_container
+
       if service_pod.running? && service_container.nil?
         info "creating #{service_pod.name}"
         ensure_running
@@ -392,6 +396,12 @@ module Kontena::Workers
     # @param severity [Integer]
     def log_service_pod_event(type, data, severity = Logger::INFO)
       super(service_pod.service_id, service_pod.instance_number, type, data, severity)
+    end
+
+    # @param container [Docker::Container]
+    # @return [Docker::Container]
+    def migrate_container(container)
+      Kontena::ServicePods::Migrator.new(container).migrate
     end
   end
 end
