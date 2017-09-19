@@ -17,9 +17,9 @@ module Docker
     def start(shell, stdin, tty)
       create_session
       subscribe_to_session
-      if stdin 
+      if stdin
         register_stdin_ws_events(shell, tty)
-      else 
+      else
         register_run_ws_events(shell, tty)
       end
     end
@@ -53,7 +53,7 @@ module Docker
             if data.has_key?('cmd')
               if shell
                 cmd = ['/bin/sh', '-c', data['cmd'].join(' ')]
-              else 
+              else
                 cmd = data['cmd']
               end
               @client.notify('/containers/run_exec', @exec_session['id'], cmd, tty, true)
@@ -66,7 +66,11 @@ module Docker
         else
           begin
             input = JSON.parse(event.data)
-            @client.notify('/containers/tty_input', @exec_session['id'], input['stdin']) if input.has_key?('stdin')
+            if input.has_key?('stdin')
+              @client.notify('/containers/tty_input', @exec_session['id'], input['stdin'])
+            elsif input.has_key?('tty_size')
+              @client.notify('/containers/tty_resize', @exec_session['id'], input['tty_size'])
+            end
           rescue JSON::ParserError
             error "invalid tty_input json"
             @ws.close
@@ -89,7 +93,7 @@ module Docker
           if data.has_key?('cmd')
             if shell
               cmd = ['/bin/sh', '-c', data['cmd'].join(' ')]
-            else 
+            else
               cmd = data['cmd']
             end
             @client.notify('/containers/run_exec', @exec_session['id'], cmd, tty, false)

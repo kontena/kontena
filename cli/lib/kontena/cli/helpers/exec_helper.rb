@@ -99,6 +99,12 @@ module Kontena::Cli::Helpers
     def websocket_exec_write_thread(ws, tty: nil)
       Thread.new do
         begin
+          if tty
+            console_height, console_width = IO.console.winsize
+            websocket_exec_write(ws, 'tty_size' => {
+              width: console_width, height: console_height
+            })
+          end
           read_stdin(tty: tty) do |stdin|
             websocket_exec_write(ws, 'stdin' => stdin)
           end
