@@ -22,6 +22,10 @@ module Kontena::Cli::Stacks
       values? ? show_variables : show_stack
     end
 
+    def variables
+      @variables ||= stack['variables'] || {}
+    end
+
     def stack
       @stack ||= client.get("stacks/#{current_grid}/#{name}")
     end
@@ -31,7 +35,7 @@ module Kontena::Cli::Stacks
     end
 
     def variable_yaml
-      ::YAML.dump(stack['variables'])
+      ::YAML.dump(variables)
     end
 
     def write_variables
@@ -47,8 +51,8 @@ module Kontena::Cli::Stacks
       puts "  version: #{stack['version']}"
       puts "  revision: #{stack['revision']}"
       puts "  expose: #{stack['expose'] || '-'}"
-      puts "  variables:#{' -' if stack['variables'].nil? || stack['variables'].empty?}"
-      stack['variables'].each do |var, val|
+      puts "  variables:#{' -' if variables.empty?}"
+      variables.each do |var, val|
         puts "    #{var}: #{val}"
       end
       puts "  parent: #{stack['parent'] ? stack['parent']['name'] : '-'}"
