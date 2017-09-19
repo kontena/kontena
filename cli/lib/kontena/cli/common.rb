@@ -117,6 +117,24 @@ module Kontena
         end
       end
 
+      # Output a message like: "> Reading foofoo .."
+      # @param message [String] the message to display
+      # @param dots [TrueClass,FalseClass] set to false if you don't want to add ".." after the message
+      def caret(msg, dots: true)
+        puts "#{pastel.green('>')} #{msg}#{" #{pastel.green('..')}" if dots}"
+      end
+
+      # Run a spinner with a message for the block if a truthy value or a proc returns true.
+      # @example
+      #   spin_if(proc { prompt.yes?("for real?") }, "Doing as requested") do
+      #     # doing stuff
+      #   end
+      #   spin_if(a == 1, "Value of 'a' is 1, so let's do this") do
+      #     # doing stuff
+      #   end
+      # @param obj_or_proc [Object,Proc] something that responds to .call or is truthy/falsey
+      # @param message [String] the message to display
+      # @return anything the block returns
       def spin_if(obj_or_proc, message, &block)
         if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
           spinner(message, &block)
@@ -244,8 +262,8 @@ module Kontena
         if self.respond_to?(:force?) && self.force?
           return
         end
-        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts message if message
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
         ask("Enter '#{name}' to confirm: ") == name || error("Confirmation did not match #{name}. Aborted command.")
@@ -276,44 +294,14 @@ module Kontena
       def any_key_to_continue_with_timeout(timeout=9)
         return nil if running_silent?
         return nil unless $stdout.tty?
-        start_time = Time.now.to_i
-        end_time   = start_time + timeout
-        Thread.main['any_key.timed_out']   = false
-        msg = "Press any key to continue or ctrl-c to cancel.. (Automatically continuing in ? seconds)"
-
-        reader_thread = Thread.new do
-          Thread.main['any_key.char'] = $stdin.getch
-        end
-
-        countdown_thread = Thread.new do
-          time_left = timeout
-          while time_left > 0 && Thread.main['any_key.char'].nil?
-            print "\r#{pastel.bright_white("#{msg.sub("?", time_left.to_s)}")} "
-            time_left = end_time - Time.now.to_i
-            sleep 0.1
-          end
-          print "\r#{' ' * msg.length}  \r"
-          reader_thread.kill if reader_thread.alive?
-        end
-
-        countdown_thread.join
-
-        if Thread.main['any_key.char'] == "\u0003"
-          error "Canceled"
-        end
+        prompt.keypress("Press any key to continue or ctrl-c to cancel (Automatically continuing in :countdown seconds) ...", timeout: timeout)
       end
 
       def any_key_to_continue(timeout = nil)
         return nil if running_silent?
         return nil unless $stdout.tty?
         return any_key_to_continue_with_timeout(timeout) if timeout
-        msg = "Press any key to continue or ctrl-c to cancel.. "
-        print pastel.bright_cyan("#{msg}")
-        char = $stdin.getch
-        print "\r#{' ' * msg.length}\r"
-        if char == "\u0003"
-          error "Canceled"
-        end
+        prompt.keypress("Press any key to continue or ctrl-c to cancel.. ")
       end
 
       def display_account_login_info

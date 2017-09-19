@@ -1,5 +1,3 @@
-require_relative '../../../util'
-
 module Kontena::Cli::Stacks
   module YAML
     class ServiceExtender
@@ -14,7 +12,7 @@ module Kontena::Cli::Stacks
       # @param [Hash] from
       # @return [Hash]
       def extend_from(from)
-        service_config['environment'] = extend_env_vars(from['environment'], service_config['environment'])
+        service_config['environment'] = extend_env_vars(from['env'], service_config['environment'])
         service_config['secrets']     = extend_secrets( from['secrets'], service_config['secrets'])
         build_args                    = extend_build_args(safe_dig(from, 'build', 'args'), safe_dig(service_config, 'build', 'args'))
         unless build_args.empty?
@@ -26,6 +24,10 @@ module Kontena::Cli::Stacks
 
       private
 
+      def env_to_hash(env_array)
+        env_array.map { |env| env.split('=', 2) }.to_h
+      end
+
       # Takes two arrays of "key=value" pairs and merges them. Keys in "from"-array
       # will not overwrite keys that already exist in "to"-array.
       #
@@ -33,15 +35,7 @@ module Kontena::Cli::Stacks
       # @param [Array] to
       # @return [Array]
       def extend_env_vars(from, to)
-        env_vars = to || []
-        if from
-          from.each do |env|
-            env_vars << env unless to && to.find do |key|
-              key.split('=').first == env.split('=').first
-            end
-          end
-        end
-        env_vars
+        env_to_hash(from || []).merge(env_to_hash(to || [])).map { |k,v| [k.to_s, v.to_s].join('=') }
       end
 
       # Takes two arrays of hashes containing { 'secret' => 'str', 'type' => 'str', 'name' => 'str' }

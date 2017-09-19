@@ -335,6 +335,25 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         end
       end
     end
+
+    context 'certificates' do
+      it 'validates certificates is array' do
+        result = subject.validate_options('certificates' => 'kontena.io')
+        expect(result.errors.key?('certificates')).to be_truthy
+
+        result = subject.validate_options('certificates' => [])
+        expect(result.errors.key?('certificates')).to be_falsey
+      end
+
+      it 'validates certificates has all needed keys' do
+        result = subject.validate_options('certificates' => [{}])
+        expect(result.errors.key?('certificates')).to be_truthy
+        expect(result.errors['certificates'].has_key?('subject')).to be_truthy
+        expect(result.errors['certificates'].has_key?('name')).to be_truthy
+        expect(result.errors['certificates'].has_key?('type')).to be_truthy
+      end
+
+    end
   end
 
   describe '#validate' do

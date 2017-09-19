@@ -14,7 +14,7 @@ module Kontena::Cli::Registry
     option '--s3-region', 'S3_REGION', 'S3 region', default: 'eu-west-1'
     option '--s3-encrypt', :flag, 'Encrypt S3 objects', default: false
     option '--s3-secure', :flag, 'Use secure connection in S3', default: true
-    option '--s3-v4auth', :flag, 'Use v4auth on S3', default: false
+    option '--s3-v4auth', :flag, 'Use v4auth on S3', default: true
     option '--azure-account-name', 'AZURE_ACCOUNT_NAME', 'Azure account name'
     option '--azure-container-name', 'AZURE_CONTAINER_NAME', 'Azure container name'
 

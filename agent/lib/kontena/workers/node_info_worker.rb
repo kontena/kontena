@@ -8,9 +8,9 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observable
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
+    include Kontena::Observable::Helper
 
     attr_reader :node
 
@@ -18,8 +18,9 @@ module Kontena::Workers
 
     # @param [String] node_id
     # @param [Boolean] autostart
-    def initialize(node_id, autostart = true)
+    def initialize(node_id, node_name: , autostart: true)
       @node_id = node_id
+      @node_name = node_name
 
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
@@ -44,26 +45,28 @@ module Kontena::Workers
     # @param [Node] node
     def on_node_info(topic, node)
       @node = node
-      update_observable(node)
+      self.observable.update(node)
     end
 
     def publish_node_info
       debug 'publishing node information'
-      node_info = docker_info.dup
+      node_info = Docker.info
+      node_info['Name'] = @node_name
       node_info['PublicIp'] = self.public_ip
       node_info['PrivateIp'] = self.private_ip
       node_info['AgentVersion'] = Kontena::Agent::VERSION
       node_info['Drivers'] = {
-        'Volume' => volume_drivers,
-        'Network' => network_drivers
+        'Volume' => volume_drivers(node_info),
+        'Network' => network_drivers(node_info),
       }
       rpc_client.request('/nodes/update', [@node_id, node_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end
 
+    # @param docker_info [Hash]
     # @return [Array<Hash>]
-    def volume_drivers
+    def volume_drivers(docker_info)
       drivers = []
       plugins.each do |plugin|
         config = plugin['Config']
@@ -79,8 +82,9 @@ module Kontena::Workers
       drivers
     end
 
+    # @param docker_info [Hash]
     # @return [Array<Hash>]
-    def network_drivers
+    def network_drivers(docker_info)
       drivers = []
       plugins.each do |plugin|
         config = plugin['Config']
@@ -133,11 +137,6 @@ module Kontena::Workers
     # @return [String]
     def private_interface
       ENV['KONTENA_PEER_INTERFACE'] || 'eth1'
-    end
-
-    # @return [Hash]
-    def docker_info
-      @docker_info ||= Docker.info
     end
 
     # @return [Hash]

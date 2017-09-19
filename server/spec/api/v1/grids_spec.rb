@@ -256,7 +256,7 @@ describe '/v1/grids', celluloid: true do
       it 'returns grid nodes' do
         grid = david.grids.first
 
-        grid.host_nodes.create!(node_id: SecureRandom.uuid)
+        grid.create_node!('test-1', node_id: SecureRandom.uuid)
         get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)
@@ -280,8 +280,8 @@ describe '/v1/grids', celluloid: true do
 
         it 'creates and returns grid node' do
           grid = david.grids.first
-
           expect {
+
             post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
             expect(response.status).to eq(201)
           }.to change{ grid.reload.host_nodes.count }.by(1)
@@ -289,6 +289,9 @@ describe '/v1/grids', celluloid: true do
           expect(json_response).to match hash_including(
             'id' => 'terminal-a/test-1',
             'name' => 'test-1',
+            'connected' => false,
+            'updated' => false,
+            'status' => 'created',
             'has_token' => true,
           )
         end
@@ -309,7 +312,7 @@ describe '/v1/grids', celluloid: true do
       before do
         @grid = david.grids.first
 
-        node = @grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid)
+        node = @grid.create_node!('node-1', node_id: SecureRandom.uuid)
 
         foo_service = @grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
         bar_service = @grid.grid_services.create!(name: 'bar', image_name: 'bar/foo')
@@ -340,12 +343,48 @@ describe '/v1/grids', celluloid: true do
         expect(json_response['logs'].first['data']).to eq('foo-1 1')
       end
 
-      it 'returns grid container logs for multiple services' do
+      it 'returns grid container logs for multiple services by service name' do
         get "/v1/grids/#{@grid.to_path}/container_logs?services=foo,bar", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(2)
         expect(json_response['logs'][0]['data']).to eq('foo-1 1')
         expect(json_response['logs'][1]['data']).to eq('bar-1 1')
+      end
+
+      context 'stack service' do
+        let(:stack) do
+          Stacks::Create.run(
+            current_user: david,
+            grid: @grid,
+            name: 'foostack',
+            stack: 'stack',
+            version: '0.1.1',
+            source: '...',
+            variables: { foo: 'bar' },
+            registry: 'file',
+            services: [
+              { name: 'app', image: 'my/app:latest', stateful: false },
+              { name: 'foo', image: 'my/app:latest', stateful: false },
+              { name: 'redis', image: 'redis:2.8', stateful: true }
+            ]
+          ).result
+        end
+
+        before do
+          node = @grid.create_node!('node-2', node_id: SecureRandom.uuid)
+          app_container = stack.grid_services.find_by(name: 'app').containers.create!(name: 'app-1', host_node: node, container_id: 'ddd')
+          app_container.container_logs.create!(name: "app-1", data: 'app-1 1', type: 'stdout', grid: @grid, host_node: node, grid_service: stack.grid_services[0])
+          foo_container = stack.grid_services.find_by(name: 'foo').containers.create!(name: 'foo-1', host_node: node, container_id: 'eee')
+          foo_container.container_logs.create!(name: "foo-1", data: 'foo-1 1', type: 'stdout', grid: @grid, host_node: node, grid_service: stack.grid_services[1])
+        end
+
+        it 'returns grid container logs for multiple services by service id' do
+          get "/v1/grids/#{@grid.to_path}/container_logs?services=foostack/app,foostack/foo,foostack/nonexist,nostack/app", nil, request_headers
+          expect(response.status).to eq(200)
+          expect(json_response['logs'].size).to eq(2)
+          expect(json_response['logs'][0]['data']).to eq('app-1 1')
+          expect(json_response['logs'][1]['data']).to eq('foo-1 1')
+        end
       end
 
       it 'returns grid container logs for a container' do
@@ -387,6 +426,37 @@ describe '/v1/grids', celluloid: true do
         expect(json_response['logs'].size).to eq(2)
       end
     end
+
+    describe '/domain_authorizations' do
+      let(:grid) { david.grids.first }
+
+      it 'returns empty  array by default' do
+        get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['domain_authorizations'].size).to eq(0)
+      end
+
+      it 'returns all domain authorizations' do
+        grid.grid_domain_authorizations.create!(domain: 'foo.com', challenge: {:foo => :bar})
+        grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service, grid_service_deploy: GridServiceDeploy.create!(grid_service: db_service))
+        get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['domain_authorizations'].size).to eq(2)
+        expect(json_response['domain_authorizations'].find {|a| a['domain'] == 'foobar.com'}['linked_service']['id']).to eq(db_service.to_path)
+      end
+    end
+  end
+
+  describe 'POST /domain_authorizations' do
+    let(:grid) { david.grids.first }
+
+    it 'creates new authorization' do
+      auth = grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service)
+      outcome = double(:success? => true, :result => auth)
+      expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(outcome)
+      post "/v1/grids/#{grid.to_path}/domain_authorizations", {'domain' => 'foobar.com'}.to_json, request_headers
+      expect(response.status).to eq(201)
+    end
   end
 
   describe 'GET /metrics' do
@@ -395,7 +465,7 @@ describe '/v1/grids', celluloid: true do
     end
 
     let :node do
-      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      grid.create_node!('abc', node_id: 'a:b:c')
     end
 
     before do

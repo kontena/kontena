@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'kontena-websocket-client', '~> 0.1.0'
-gem 'docker-api', '~> 1.32.0'
+gem 'docker-api', '~> 1.33.0'
 gem 'msgpack', '~> 1.0.3'
 gem 'activesupport', '~> 4.2.0'
 gem 'celluloid', '~> 0.17.3'
@@ -9,6 +9,7 @@ gem 'etcd'
 gem 'statsd-ruby'
 gem 'vmstat'
 gem 'fluent-logger', '~>0.6.2'
+gem 'rbtrace', require: false
 
 group :development, :test do
   gem 'rake', require: false
@@ -16,4 +17,5 @@ group :development, :test do
   gem 'dotenv', require: false
   gem 'webmock', require: false
   gem 'simplecov', require: false
+  gem 'ruby-prof', require: false
 end

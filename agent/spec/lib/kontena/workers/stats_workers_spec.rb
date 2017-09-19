@@ -1,6 +1,6 @@
 require_relative '../../helpers/fixtures_helpers'
 
-describe Kontena::Workers::StatsWorker do
+describe Kontena::Workers::StatsWorker, :celluloid => true do
   include FixturesHelpers
   include RpcClientMocks
 
@@ -15,18 +15,20 @@ describe Kontena::Workers::StatsWorker do
   end
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
   end
-  after(:each) { Celluloid.shutdown }
 
-  describe '#collect_stats' do
+  describe '#publish_stats' do
+    before do
+      allow(subject.wrapped_object).to receive(:cadvisor_running?).and_return(true)
+    end
+
     it 'loops through all containers' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return([
         { namespace: 'docker', id: 'id', name: '/docker/id' },
       ])
       expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id' }
-      subject.collect_stats
+      subject.publish_stats
     end
 
     it 'ignores systemd mount cgroups' do
@@ -35,19 +37,19 @@ describe Kontena::Workers::StatsWorker do
         { namespace: 'docker', id: 'id2', name: '/system.slice/var-lib-docker-containers-id-shm.mount' },
       ])
       expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id1' }
-      subject.collect_stats
+      subject.publish_stats
     end
 
     it 'does nothing on get error' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return(nil)
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
-      subject.collect_stats
+      subject.publish_stats
     end
 
     it 'does not call send_stats if no container stats found' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return({})
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
-      subject.collect_stats
+      subject.publish_stats
     end
   end
 

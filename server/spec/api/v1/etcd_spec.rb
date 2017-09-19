@@ -11,12 +11,8 @@ describe '/v1/etcd/:grid_name/:etcd_path' do
   let(:grid) do
     grid = Grid.create!(name: 'test-grid')
     grid.users << david
-    grid.host_nodes.create(name: 'node-a', node_id: 'aaa', connected: true)
+    grid.create_node!('node-a', node_id: 'aaa', connected: true)
     grid
-  end
-
-  let(:node_a) do
-    HostNode.create(name: 'node-a', node_id: 'aaa', connected: true, grid: grid)
   end
 
   let(:fake_client) { spy(:rpc_client) }

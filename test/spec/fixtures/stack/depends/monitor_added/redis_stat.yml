@@ -1,0 +1,9 @@
+stack: test/redis-stat
+description: A redis statistics monitor
+version: 0.1.0
+expose: monitor
+
+services:
+  monitor:
+    image: richardhull/redis-stat:0.4.14
+    command: --server redis.${PARENT_STACK}

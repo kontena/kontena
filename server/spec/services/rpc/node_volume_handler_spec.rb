@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe Rpc::NodeVolumeHandler, celluloid: true do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
-  let(:node) { HostNode.create!(grid: grid, name: 'test-node', node_id: 'abc') }
+  let(:node) { grid.create_node!('test-node', node_id: 'abc') }
 
   describe '#list' do
 
@@ -25,7 +25,7 @@ describe Rpc::NodeVolumeHandler, celluloid: true do
     end
 
     it 'does not return volumes from other node' do
-      other_node = HostNode.create!(grid: grid, name: 'other-node', node_id: 'def')
+      other_node = grid.create_node!('other-node', node_id: 'def')
       volume = grid.volumes.create!(driver: 'local', scope: 'instance', name: 'foo')
       volume.volume_instances.create!(host_node: node, name: 'svc.foo-1')
       list = subject.list(other_node.node_id)

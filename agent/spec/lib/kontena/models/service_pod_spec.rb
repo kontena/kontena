@@ -269,8 +269,8 @@ describe Kontena::Models::ServicePod do
   describe '#service_host_config' do
     let(:host_config) { subject.service_host_config }
 
-    it 'sets RestartPolicy' do
-      expect(host_config['RestartPolicy']['Name']).to eq('unless-stopped')
+    it 'does not set RestartPolicy' do
+      expect(host_config['RestartPolicy']).to be_nil
     end
 
     it 'does not include Binds if no volumes are defined' do
@@ -321,9 +321,24 @@ describe Kontena::Models::ServicePod do
       expect(host_config['CpuShares']).to eq(500)
     end
 
+    it 'does not include CpuQuota if cpus not defined' do
+      expect(host_config['CpuShares']).to be_nil
+    end
+
+    it 'includes CpuPeriod & CpuQuota if cpus is defined' do
+      data['cpus'] = 1.5
+      expect(host_config['CpuPeriod']).to eq(100_000)
+      expect(host_config['CpuQuota']).to eq(150_000)
+    end
+
     it 'sets PidMode if set' do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
+    end
+
+    it 'sets ShmSize if set' do
+      data['shm_size'] = 64 * 1024 * 1024
+      expect(host_config['ShmSize']).to eq(data['shm_size'])
     end
   end
 

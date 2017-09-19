@@ -1,6 +1,7 @@
 describe Kontena::WebsocketClient, :celluloid => true do
   let(:url) { 'ws://socket.example.com' }
   let(:node_id) { 'ABCD' }
+  let(:node_name) { 'test-1' }
   let(:grid_token) { 'secret' }
   let(:node_token) { nil }
   let(:node_labels) { ['region=test'] }
@@ -17,6 +18,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   let(:actor) {
     described_class.new(url, node_id,
+      node_name: node_name,
       grid_token: grid_token,
       node_token: node_token,
       node_labels: node_labels,
@@ -30,6 +32,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   before do
     allow(subject).to receive(:async).and_return(async)
+    allow(actor).to receive(:async).and_return(async)
   end
 
   before do
@@ -51,7 +54,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   describe '#start' do
     it 'connects' do
-      expect(subject).to receive(:connect)
+      expect(subject).to receive(:connect!)
 
       actor.start
     end
@@ -62,7 +65,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       expect(async).to receive(:connect_client)
       expect(subject).to receive(:publish).with('websocket:connect', nil)
 
-      actor.connect
+      actor.connect!
 
       expect(subject).to be_connecting
       expect(subject).to_not be_connected
@@ -73,6 +76,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       expect(subject.ws.instance_variable_get('@headers')).to match(
         'Kontena-Grid-Token' => 'secret',
         'Kontena-Node-Id' => 'ABCD',
+        'Kontena-Node-Name' => 'test-1',
         'Kontena-Version' => Kontena::Agent::VERSION,
         'Kontena-Node-Labels' => 'region=test',
         'Kontena-Connected-At' => String,
@@ -85,7 +89,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       it 'creates a websocket client with Kontena-Node-Token header' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject).to be_connecting
         expect(subject).to_not be_connected
@@ -96,6 +100,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject.ws.instance_variable_get('@headers')).to match(
           'Kontena-Node-Token' => 'node-secret',
           'Kontena-Node-Id' => 'ABCD',
+          'Kontena-Node-Name' => 'test-1',
           'Kontena-Version' => Kontena::Agent::VERSION,
           'Kontena-Node-Labels' => 'region=test',
           'Kontena-Connected-At' => String,
@@ -135,7 +140,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
           expect(err.message).to eq 'Invalid websocket URL: http://api.example.com'
         end
 
-        actor.connect
+        actor.connect!
 
         expect(subject.connecting?).to be false
       end
@@ -149,7 +154,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       it 'creates a websocket client with ssl, and ssl_verify' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'wss://socket.example.com'
@@ -167,7 +172,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       it 'creates a websocket client with ssl and no ssl_verify' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'wss://socket.example.com'
@@ -181,11 +186,11 @@ describe Kontena::WebsocketClient, :celluloid => true do
     let(:url) { 'wss://socket.example.com' }
     let(:options) { { ssl_hostname: 'test'} }
 
-    describe '#connect' do
+    describe '#connect!' do
       it 'creates a websocket client with ssl and ssl_hostname' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'wss://socket.example.com'
@@ -214,7 +219,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#start' do
       it 'does not connect' do
-        expect(subject).not_to receive(:connect)
+        expect(subject).not_to receive(:connect!)
 
         actor.start
       end
@@ -245,8 +250,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
           allow(ws_client).to receive(:close_reason).and_return ''
         end
         expect(subject).to_not receive(:on_error)
-        expect(subject).to receive(:on_close).with(1000, '')
-
+        expect(subject).to receive(:disconnected!).and_call_original
         expect(ws_client).to receive(:disconnect)
 
         actor.connect_client(ws_client)
@@ -310,7 +314,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
           allow(ws_client).to receive(:close_code).and_return(1337)
           allow(ws_client).to receive(:close_reason).and_return 'testing'
         end
-        expect(subject).to receive(:on_close).with(1337, 'testing')
+        expect(subject).to receive(:info).with('Agent closed connection with code 1337: testing')
 
         expect(ws_client).to receive(:disconnect)
 
@@ -327,12 +331,33 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(ws_client).to receive(:disconnect)
 
         expect(subject).not_to receive(:on_error)
-        expect(subject.logger).to receive(:error)
+        expect(subject).to receive(:error)
 
         actor.connect_client(ws_client)
 
         expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
+      end
+
+      it 'handles websocket pongs as async calls' do
+        expect(ws_client).to receive(:connect)
+        expect(subject).to receive(:on_open)
+        expect(ws_client).to receive(:read) do |&block|
+          expect(@on_pong).to_not be_nil
+
+          expect(async).to receive(:on_pong).with(1.0)
+
+          @on_pong.call(1.0)
+
+          allow(ws_client).to receive(:close_code).and_return(1000)
+          allow(ws_client).to receive(:close_reason).and_return ''
+        end
+        expect(subject).to_not receive(:on_error)
+
+        expect(subject).to receive(:disconnected!).and_call_original
+        expect(ws_client).to receive(:disconnect)
+
+        actor.connect_client(ws_client)
       end
     end
 
@@ -464,7 +489,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#start' do
       it 'does not connect' do
-        expect(subject).not_to receive(:connect)
+        expect(subject).not_to receive(:connect!)
 
         actor.start
       end
@@ -536,12 +561,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     end
 
     describe '#on_close' do
-      it 'publishes websocket:close' do
-        expect(subject).to receive(:publish).with('websocket:close', nil)
-
-        actor.on_close(1000, '')
-      end
-
       it 'aborts on 4001 error code', log_celluloid_actor_crashes: false do
         expect(subject).to receive(:handle_invalid_token).and_call_original
         expect(Kontena::Agent).to receive(:shutdown)
@@ -584,15 +603,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject).to receive(:warn).with(/server ping 3.20s of 5.00s timeout/)
 
         subject.on_pong(3.2)
-      end
-    end
-
-    describe '#close' do
-      it 'publishes event and closes websocket' do
-        expect(subject).to receive(:publish).with('websocket:disconnect', nil)
-        expect(ws_client).to receive(:close)
-
-        actor.close
       end
     end
   end

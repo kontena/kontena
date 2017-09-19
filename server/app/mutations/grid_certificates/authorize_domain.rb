@@ -3,7 +3,9 @@ require 'openssl'
 
 require_relative 'common'
 require_relative '../../services/logging'
-
+#
+# Deprecated
+#
 module GridCertificates
   class AuthorizeDomain < Mutations::Command
     include Common

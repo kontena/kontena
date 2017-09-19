@@ -44,6 +44,7 @@ describe HostNodes::Create do
     expect(outcome.result.token).to be_a String
     expect(outcome.result.token).to_not be_empty
     expect(outcome.result.labels).to eq []
+    expect(outcome.result.status).to eq :created
   end
 
   it 'creates with token' do
@@ -69,8 +70,7 @@ describe HostNodes::Create do
 
   context 'with an existing node in the same grid' do
     let(:node) do
-      grid.host_nodes.create!(
-        name: 'test-1',
+      grid.create_node!('test-1',
         token: 'asdfasdfasdfasdf',
       )
     end

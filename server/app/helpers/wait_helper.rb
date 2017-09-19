@@ -14,9 +14,9 @@ module WaitHelper
   # For a zero timeout, only yields exactly once.
   #
   # @param message [String] Message for debugging
-  # @param timeout [Integer] How long to wait
-  # @param interval [Integer] At what interval is the block yielded
-  # @param threshold [Integer] Log slow waits after threshold
+  # @param timeout [Float] How long to wait
+  # @param interval [Float] At what interval is the block yielded
+  # @param threshold [Float] Log slow waits after threshold
   # @param block [Block] Block to yield
   # @return [Object] Return value from block, or nil
   def wait_until(message = nil, timeout: WAIT_TIMEOUT, interval: WAIT_INTERVAL, threshold: WAIT_THRESHOLD, &block)

@@ -20,6 +20,10 @@ module Kontena
       @read_pipe, @write_pipe = IO.pipe
     end
 
+    def docker_info
+      @docker_info ||= Docker.info
+    end
+
     def configure(opts)
       @opts = opts
 
@@ -28,14 +32,26 @@ module Kontena
 
         @node_id = node_id
       else
-        @node_id = Docker.info['ID']
+        @node_id = docker_info['ID']
+      end
+
+      if node_name = opts[:node_name]
+        raise ArgumentError, "Invalid KONTENA_NODE_NAME: #{node_name}" if node_name.empty?
+        @node_name = node_name
+      else
+        @node_name = docker_info['Name']
       end
 
       if node_labels = opts[:node_labels]
         @node_labels = node_labels.split()
       else
-        @node_labels = Docker.info['Labels'].to_a
+        @node_labels = docker_info['Labels'].to_a
       end
+    end
+
+    # @return [String]
+    def node_name
+      @node_name
     end
 
     # @return [String]
@@ -103,16 +119,21 @@ module Kontena
     end
 
     def handle_trace
-      info "Dump thread trace..."
+      info "Dump celluloid actor and thread stacks..."
+
+      Celluloid.dump
 
       Thread.list.each do |thread|
-        warn "Thread #{thread.object_id.to_s(36)} #{thread['label']}"
-        if thread.backtrace
-          warn thread.backtrace.join("\n")
-        else
-          warn "no backtrace available"
+        next if thread[:celluloid_actor_system]
+
+        puts "Thread 0x#{thread.object_id.to_s(16)} <#{thread.name}>"
+        if backtrace = thread.backtrace
+          puts "\t#{backtrace.join("\n\t")}"
         end
+        puts
       end
+
+      info "Dump cellulooid actor and thread stacks: done"
     end
 
     def supervise
@@ -128,9 +149,15 @@ module Kontena
 
     def supervise_state
       @supervisor.supervise(
+        type: Kontena::Observable::Registry,
+        as: :observable_registry,
+      )
+      @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
         as: :node_info_worker,
-        args: [self.node_id],
+        args: [self.node_id,
+          node_name: self.node_name,
+        ],
       )
     end
 
@@ -147,6 +174,7 @@ module Kontena
         type: Kontena::WebsocketClient,
         as: :websocket_client,
         args: [@opts[:api_uri], @node_id,
+          node_name: self.node_name,
           grid_token: @opts[:grid_token],
           node_token: @opts[:node_token],
           node_labels: @node_labels,

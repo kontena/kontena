@@ -23,6 +23,9 @@ describe Grid do
 
   it { should have_index_for(token: 1).with_options(unique: true) }
 
+  let(:initial_size) { 3 }
+  subject { Grid.create!(name: 'test', initial_size: initial_size) }
+
   describe '.after_create' do
     it 'creates default stack automatically' do
       expect {
@@ -39,10 +42,62 @@ describe Grid do
 
     it 'returns only available numbers' do
       grid = Grid.create!(name: 'test')
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 5)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 5)
       available = (1..254).to_a - [1, 5]
       expect(grid.free_node_numbers).to eq(available)
+    end
+  end
+
+  describe '#create_node!' do
+    it 'creates and returns node with assigned node_number' do
+      node = subject.create_node!('test-node')
+
+      expect(node).to be_a HostNode
+      expect(node.name).to eq 'test-node'
+      expect(node.node_number).to eq 1
+    end
+
+    context 'with an existing node' do
+      let(:other_node) { subject.create_node!('test-node') }
+
+      before do
+        other_node
+      end
+
+      it 'fails with a duplicate name' do
+        expect{subject.create_node!('test-node')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error/)
+      end
+
+      it 'retries on node_number race condition' do
+        expect(subject).to receive(:reserved_node_numbers).once.and_return([])
+        expect(subject).to receive(:reserved_node_numbers).once.and_call_original
+
+        node = subject.create_node!('test-node2')
+        expect(node.name).to eq 'test-node2'
+        expect(node.node_number).to eq 2
+      end
+
+      describe 'with (ensure_unique_name: true)' do
+        it 'renames on name conflict' do
+          node = subject.create_node!('test-node', ensure_unique_name: true)
+
+          expect(node).to be_a HostNode
+          expect(node.name).to eq 'test-node-2'
+          expect(node.node_number).to eq 2
+        end
+
+        it 'retries with a different node_number after name conflict' do
+          expect(subject).to receive(:warn).with(/rename node test-node on name conflict/) do
+            HostNode.create!(grid: subject, name: 'other-node', node_number: 2)
+          end
+
+          node = subject.create_node!('test-node', ensure_unique_name: true)
+
+          expect(node.name).to eq 'test-node-3'
+          expect(node.node_number).to eq 3
+        end
+      end
     end
   end
 
@@ -50,22 +105,22 @@ describe Grid do
     let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
 
     it 'returns true if initial nodes are created' do
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
-      HostNode.create(grid: grid, node_id: 'cc', node_number: 3)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 2)
+      HostNode.create!(grid: grid, node_id: 'cc', name: 'node-3', node_number: 3)
       expect(grid.has_initial_nodes?).to eq(true)
     end
 
     it 'returns false if nodes are missing' do
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 2)
       expect(grid.has_initial_nodes?).to eq(false)
     end
 
     it 'returns false if there are enough nodes but initial node is missing' do
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
-      HostNode.create(grid: grid, node_id: 'cc', node_number: 4)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 2)
+      HostNode.create!(grid: grid, node_id: 'cc', name: 'node-4', node_number: 4)
       expect(grid.has_initial_nodes?).to eq(false)
     end
   end
@@ -74,12 +129,12 @@ describe Grid do
     let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
 
     it 'returns true if node is initial member' do
-      node = HostNode.create(grid: grid, node_id: 'aa', node_number: 2)
+      node = HostNode.create!(grid: grid, node_id: 'aa', name: 'node-2', node_number: 2)
       expect(grid.initial_node?(node)).to be_truthy
     end
 
     it 'returns false if node is not initial member' do
-      node = HostNode.create(grid: grid, node_id: 'aa', node_number: 4)
+      node = HostNode.create!(grid: grid, node_id: 'aa', name: 'node-4',  node_number: 4)
       expect(grid.initial_node?(node)).to be_falsey
     end
   end

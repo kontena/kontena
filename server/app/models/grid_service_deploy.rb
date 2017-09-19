@@ -30,6 +30,8 @@ class GridServiceDeploy
 
   embeds_many :grid_service_instance_deploys
 
+  has_many :grid_domain_authorizations # Possibility to handle multiple tls-sni cert updates in one deploy
+
   index({ grid_service_id: 1 }, { background: true })
   index({ created_at: 1 }, { background: true })
   index({ queued_at: 1 }, { background: true })

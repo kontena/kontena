@@ -1,27 +1,33 @@
-
-describe HostNodes::Common, celluloid: true do
-  let(:grid) { Grid.create!(name: 'test') }
-  let(:node_a) { HostNode.create!(name: 'node-a', grid: grid, node_id: 'AA', connected: true) }
-  let(:node_b) { HostNode.create!(name: 'node-b', grid: grid, node_id: 'BB', connected: true) }
-  let(:node_c) { HostNode.create!(name: 'node-c', grid: grid, node_id: 'CC', connected: false) }
+describe HostNodes::Common do
   let(:described_class) {
     Class.new do
       include HostNodes::Common
     end
   }
 
-  describe '#notify_grid' do
-    it 'returns future' do
-      expect(subject.notify_grid(grid).class).to eq(Celluloid::Future)
-    end
+  context 'for a grid with three nodes' do
+    let!(:grid) { Grid.create!(name: 'test') }
+    let!(:node_a) { grid.create_node!('node-a', node_id: 'AA', connected: true) }
+    let!(:node_b) { grid.create_node!('node-b', node_id: 'BB', connected: true) }
+    let!(:node_c) { grid.create_node!('node-c', node_id: 'CC', connected: false) }
 
-    it 'notifies all connected nodes' do
-      node_a; node_b; node_c
-      expect(subject).to receive(:notify_node).once.with(grid, node_a)
-      expect(subject).to receive(:notify_node).once.with(grid, node_b)
-      expect(subject).not_to receive(:notify_node).with(grid, node_c)
-      future = subject.notify_grid(grid)
-      future.value
+    describe '#notify_grid' do
+      let(:node1_plugger) { instance_double(Agent::NodePlugger) }
+      let(:node2_plugger) { instance_double(Agent::NodePlugger) }
+      let(:node3_plugger) { instance_double(Agent::NodePlugger) }
+
+      before do
+        allow(Agent::NodePlugger).to receive(:new).with(node_a).and_return(node1_plugger)
+        allow(Agent::NodePlugger).to receive(:new).with(node_b).and_return(node2_plugger)
+        allow(Agent::NodePlugger).to receive(:new).with(node_c).and_return(node3_plugger)
+      end
+
+      it 'notifies all connected nodes' do
+        expect(node1_plugger).to receive(:send_node_info)
+        expect(node2_plugger).to receive(:send_node_info)
+        expect(node3_plugger).to_not receive(:send_node_info)
+        subject.notify_grid(grid)
+      end
     end
   end
 end

@@ -235,7 +235,8 @@ describe Kontena::Cli::Helpers::ExecHelper do
 
       it 'connects and sends messages from stdin' do
         stdin_eol = false
-
+        allow(IO.console).to receive(:winsize).and_return([100, 100])
+        expect(websocket_client).to receive(:send).once.with('{"tty_size":{"width":100,"height":100}}')
         expect(websocket_client).to receive(:send).once.with('{"cmd":["test-tty"]}')
 
         expect(subject).to receive(:read_stdin).once.with(tty: true) do |&block|

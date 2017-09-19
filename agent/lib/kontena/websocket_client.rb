@@ -6,8 +6,8 @@ require_relative 'rpc_client'
 # Celluloid::Notifications:
 #   websocket:connect [nil] connecting, not yet connected
 #   websocket:open [nil] connected, websocket open
-#   websocket:disconnect [nil] websocket closing
-#   websocket:close [nil] websocket closed
+#   websocket:connected [nil] received /agent/master_info from server
+#   websocket:disconnected [nil] websocket disconnected
 module Kontena
   class WebsocketClient
     include Celluloid
@@ -16,6 +16,7 @@ module Kontena
 
     STRFTIME = '%F %T.%NZ'
 
+    CONNECT_INTERVAL = 1.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -23,21 +24,18 @@ module Kontena
     CLOSE_TIMEOUT = 10.0
     WRITE_TIMEOUT = 10.0 # this one is a little odd
 
-    attr_reader :api_uri,
-                :ws,
-                :rpc_server,
-                :ping_timer
-
     # @param [String] api_uri
     # @param [String] node_id
+    # @param [String] node_name
     # @param [String] grid_token
     # @param [String] node_token
     # @param [Array<String>] node_labels
     # @param [Hash] ssl_params
     # @param [String] ssl_hostname
-      def initialize(api_uri, node_id, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
+      def initialize(api_uri, node_id, node_name:, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
       @api_uri = api_uri
       @node_id = node_id
+      @node_name = node_name
       @grid_token = grid_token
       @node_token = node_token
       @node_labels = node_labels
@@ -76,17 +74,18 @@ module Kontena
     end
 
     def start
-      every(1.0) do
-        connect if !connected? unless connecting?
+      every(CONNECT_INTERVAL) do
+        connect! if !connected? unless connecting?
       end
     end
 
-    def connect
+    def connect!
       @connecting = true
 
-      info "connecting to master at #{api_uri}"
+      info "connecting to master at #{@api_uri}"
       headers = {
           'Kontena-Node-Id' => @node_id.to_s,
+          'Kontena-Node-Name' => @node_name,
           'Kontena-Version' => Kontena::Agent::VERSION,
           'Kontena-Node-Labels' => @node_labels.join(','),
           'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
@@ -133,7 +132,8 @@ module Kontena
       # run the blocking websocket client connect+read in a separate thread
       defer {
         ws.on_pong do |delay|
-          actor.on_pong(delay)
+          # XXX: called with the client mutex locked, do not block
+          actor.async.on_pong(delay)
         end
 
         # blocks until open, raises on errors
@@ -148,11 +148,11 @@ module Kontena
       }
 
     rescue Kontena::Websocket::CloseError => exc
-      # handle known errors, will reconnect
+      # server closed connection
       on_close(exc.code, exc.reason)
 
     rescue Kontena::Websocket::Error => exc
-      # handle known errors, will reconnect
+      # handle known errors, will reconnect or shutdown
       on_error exc
 
     rescue => exc
@@ -160,20 +160,16 @@ module Kontena
       error exc
 
     else
-      on_close(ws.close_code, ws.close_reason)
+      # impossible: agent closed connection?!
+      info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
 
     ensure
-      @connected = false
-      @connecting = false
-      @ws = nil
-
-      ws.disconnect
+      disconnected!
+      ws.disconnect # close socket
     end
 
+    # Websocket handshake complete.
     def on_open
-      @connected = true
-      @connecting = false
-
       ssl_verify = ws.ssl_verify?
 
       begin
@@ -200,6 +196,16 @@ module Kontena
         info "unsecure connection established without SSL"
       end
 
+      connected!
+    end
+
+    # The websocket is connected: @ws is now valid and wen can send message
+    def connected!
+      @connected = true
+      @connecting = false
+
+      # NOTE: the server may still reject the websocket connection by closing it after the open handshake
+      #       wait for the /agent/master_info RPC before emitting websocket:connected
       publish('websocket:open', nil)
     end
 
@@ -207,6 +213,16 @@ module Kontena
       fail "not connected" unless @ws
 
       @ws
+    end
+
+    # The websocket is disconnected: @ws is invalid and we can no longer send messages
+    def disconnected!
+      @ws = nil # prevent further send_message calls until reconnected
+      @connected = false
+      @connecting = false
+
+      # any queued up send_message calls will fail
+      publish('websocket:disconnected', nil)
     end
 
     # Called from RpcServer, does not crash the Actor on errors.
@@ -259,7 +275,9 @@ module Kontena
       end
     end
 
-    # @param exc [Exception]
+    # Websocket connection failed
+    #
+    # @param exc [Kontena::Websocket::Error]
     def on_error(exc)
       case exc
       when Kontena::Websocket::SSLVerifyError
@@ -283,6 +301,8 @@ module Kontena
       end
     end
 
+    # Server closed websocket connection
+    #
     # @param code [Integer]
     # @param reason [String]
     def on_close(code, reason)
@@ -298,8 +318,6 @@ module Kontena
       else
         warn "connection closed with code #{code}: #{reason}"
       end
-
-      publish('websocket:close', nil)
     end
 
     def handle_invalid_token
@@ -336,21 +354,13 @@ module Kontena
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
     end
 
+    # @param delay [Float]
     def on_pong(delay)
       if delay > PING_TIMEOUT / 2
         warn "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
       else
         debug "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
       end
-    end
-
-    # Abort the connection, closing the websocket, with a timeout
-    def close
-      # stop sending messages, queue them up until reconnected
-      publish('websocket:disconnect', nil)
-
-      # send close frame with CLOSE_TIMEOUT
-      @ws.close
     end
   end
 end

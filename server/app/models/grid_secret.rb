@@ -16,4 +16,8 @@ class GridSecret
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
+
+  def services
+    self.grid.grid_services.where(:secrets.elem_match => { secret: self.name })
+  end
 end
