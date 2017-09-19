@@ -100,6 +100,16 @@ module V1
           r.route 'grid_event_logs'
         end
 
+        # /v1/grids/:name/domain_authorizations
+        r.on 'domain_authorizations' do
+          r.route 'grid_domain_authorizations'
+        end
+
+        # /v1/grids/:name/certificates
+        r.on 'certificates' do
+          r.route 'grid_certificates'
+        end
+
         r.get do
           r.is do
             render('grids/show')
@@ -127,8 +137,16 @@ module V1
             end
             unless r['services'].nil?
               services = r['services'].split(',').map do |service|
-                @grid.grid_services.find_by(name: service).try(:id)
-              end.delete_if{|s| s.nil?}
+                if service.include?('/')
+                  stack_name, service_name = service.split('/', 2)
+                  stack_id = @grid.stacks.where(name: stack_name).first.try(:id)
+                  if stack_id && service_name
+                    @grid.grid_services.where(stack_id: stack_id, name: service_name).first.try(:id)
+                  end
+                else
+                  @grid.grid_services.find_by(name: service).try(:id)
+                end
+              end.compact
 
               scope = scope.where(grid_service_id: {:$in => services})
             end

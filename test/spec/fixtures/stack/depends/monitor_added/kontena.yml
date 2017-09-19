@@ -1,0 +1,28 @@
+stack: test/twemproxy
+version: 0.1.1
+description: A twemproxy-balanced redis pair
+depends:
+  redis_from_registry:
+    stack: kontena/redis:0.1.0
+    variables:
+      version: 3.2-alpine
+  redis_from_yml:
+    stack: redis.yml
+    variables:
+      version: 3.2-alpine
+
+expose: twemproxy
+
+variables:
+  port:
+    type: integer
+    value: 6000
+
+services:
+  twemproxy:
+    image: ianblenke/twemproxy
+    environment:
+      - "REDIS1_PORT_6379_TCP_ADDR=${redis_from_registry}"
+      - "REDIS2_PORT_6379_TCP_ADDR=${redis_from_yml}"
+    ports:
+      - "${port}:6000"

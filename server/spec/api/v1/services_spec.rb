@@ -83,10 +83,10 @@ describe '/v1/services' do
 
   EXPECTED_FIELDS = %w(
         id created_at updated_at stack image affinity name stateful user
-        instances cmd entrypoint ports env memory memory_swap cpu_shares
+        instances cmd entrypoint ports env memory memory_swap shm_size cpus cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
-        stack_revision stop_grace_period read_only
+        stack_revision stop_grace_period read_only certificates
       ).sort
 
   describe 'GET /:id' do
@@ -125,11 +125,14 @@ describe '/v1/services' do
     it 'returns health status' do
       redis_service.health_check = GridServiceHealthCheck.new(port: 5000, protocol: 'tcp')
       redis_service.save
-      container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', health_status: 'healthy')
+      redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', health_status: 'healthy')
+      redis_service.containers.create!(name: 'redis-2', container_id: 'bbb', health_status: 'unhealthy')
+      redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['health_status']['total']).to eq(1)
+      expect(json_response['health_status']['total']).to eq(3)
       expect(json_response['health_status']['healthy']).to eq(1)
+      expect(json_response['health_status']['unhealthy']).to eq(1)
     end
 
     it 'returns no health check or status if protocol nil' do
@@ -147,6 +150,15 @@ describe '/v1/services' do
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['stop_grace_period']).to eq(37)
+    end
+
+    it 'returns certificates' do
+      redis_service.certificates << GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERTS', type: 'env')
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['certificates'].size).to eq(1)
+      expect(json_response['certificates'][0]).to eq({'subject' => 'kontena.io', 'name' => 'SSL_CERTS', 'type' => 'env'})
     end
   end
 

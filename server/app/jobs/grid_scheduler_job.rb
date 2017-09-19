@@ -4,10 +4,15 @@ class GridSchedulerJob
   include Celluloid
   include Logging
   include CurrentLeader
-  include Workers
 
   def initialize
     async.perform
+  end
+
+  # @param [Grid] grid
+  def reschedule_grid(grid)
+    info "rescheduling #{grid.name} services"
+    schedule_grid(grid) # XXX: if leader?
   end
 
   def perform

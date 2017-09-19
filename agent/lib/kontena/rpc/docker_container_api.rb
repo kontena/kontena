@@ -147,7 +147,21 @@ module Kontena
         actor_id = "container_exec_#{id}"
         executor = Celluloid::Actor[actor_id]
         if executor
-          executor.input(input)
+          executor.async.input(input)
+        else
+          raise RpcServer::Error.new(404, "Exec session (#{session_id}) not found")
+        end
+
+        {}
+      end
+
+      # @param [String] id
+      # @param [String] size
+      def tty_resize(id, size)
+        actor_id = "container_exec_#{id}"
+        executor = Celluloid::Actor[actor_id]
+        if executor
+          executor.async.tty_resize(size)
         end
       end
 

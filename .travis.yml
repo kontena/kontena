@@ -38,7 +38,7 @@ matrix:
       env: TEST_DIR=server
     - rvm: 2.3.3
       env: TEST_DIR=server
-    - rvm: 2.4.1
+    - rvm: 2.3.3
       env: TEST_DIR=agent
 script: ./build/travis/test.sh
 deploy:
@@ -62,11 +62,4 @@ deploy:
       tags: true
       condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
       rvm: 2.4.1
-      repo: kontena/kontena
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_docs.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
-      rvm: 2.2.6
       repo: kontena/kontena

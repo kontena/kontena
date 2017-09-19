@@ -1,8 +1,10 @@
   module Kontena
     module Helpers
       module PortHelper
-
-        def container_port_open?(ip, port, timeout = 2.0)
+        # @param ip [String]
+        # @param port [Integer]
+        # @param timeout [Float]
+        def port_open?(ip, port, timeout: 2.0)
           Timeout::timeout(timeout) do
             begin
               TCPSocket.new(ip, port).close
@@ -14,7 +16,6 @@
         rescue Timeout::Error
           false
         end
-
       end
     end
   end

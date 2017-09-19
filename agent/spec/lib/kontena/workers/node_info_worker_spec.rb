@@ -2,7 +2,8 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
   include RpcClientMocks
 
   let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
-  let(:subject) { described_class.new(node_id, false) }
+  let(:node_name) { 'test-1' }
+  let(:subject) { described_class.new(node_id, node_name: node_name, autostart: false) }
   let(:node) do
     Node.new(
       'id' => node_id,
@@ -12,18 +13,19 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
       }
     )
   end
+  let(:docker_info) { {
+    'Name' => 'node-1',
+    'Labels' => nil,
+    'ID' => '44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7',
+    'Plugins' => {
+      'Network' => ['bridge', 'host'],
+      'Volume' => ['local']
+    },
+  }}
 
   before(:each) do
     mock_rpc_client
-    allow(Docker).to receive(:info).and_return({
-      'Name' => 'node-1',
-      'Labels' => nil,
-      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
-      'Plugins' => {
-        'Network' => ['bridge', 'host'],
-        'Volume' => ['local']
-      }
-    })
+    allow(Docker).to receive(:info).and_return(docker_info)
     allow(subject.wrapped_object).to receive(:plugins).and_return([
       { 'Name' => 'foo:latest', 'Enabled' => true, 'Config' => { 'Interface' => { 'Types' => ['docker.volumedriver/1.0']} } }
     ])
@@ -63,9 +65,16 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
       subject.publish_node_info
     end
 
-    it 'contains docker id' do
+    it 'contains node id' do
       expect(rpc_client).to receive(:request).once.with(
-        '/nodes/update', [node_id, hash_including('ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
+        '/nodes/update', [node_id, hash_including('ID' => '44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7')]
+      )
+      subject.publish_node_info
+    end
+
+    it 'contains node name' do
+      expect(rpc_client).to receive(:request).once.with(
+        '/nodes/update', [node_id, hash_including('Name' => 'test-1')]
       )
       subject.publish_node_info
     end
@@ -94,14 +103,19 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
 
   describe '#network_drivers' do
     it 'returns array of drivers' do
-      expect(subject.network_drivers).to include(hash_including({name: 'bridge'}))
+      expect(subject.network_drivers(docker_info)).to match [
+        {name: 'bridge'},
+        {name: 'host'},
+      ]
     end
   end
 
   describe '#volume_drivers' do
     it 'returns array of drivers' do
-      expect(subject.volume_drivers).to include(hash_including({name: 'local'}))
-      expect(subject.volume_drivers).to include(hash_including({name: 'foo', version: 'latest'}))
+      expect(subject.volume_drivers(docker_info)).to match [
+        {name: 'foo', version: 'latest'},
+        {name: 'local'},
+      ]
     end
   end
 

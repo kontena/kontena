@@ -3,9 +3,12 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::StatsHelper
+    include Kontena::Helpers::WaitHelper
+
+    PUBLISH_INTERVAL = 60
 
     attr_reader :statsd
 
@@ -15,6 +18,16 @@ module Kontena::Workers
       @statsd = nil
       info 'initialized'
       async.start if autostart
+    end
+
+    def start
+      every(PUBLISH_INTERVAL) do
+        self.publish_stats
+      end
+
+      observe(Actor[:node_info_worker].observable) do |node|
+        configure_statsd(node)
+      end
     end
 
     # @param [Node] node
@@ -35,23 +48,16 @@ module Kontena::Workers
       warn error.backtrace.join("\n") if error.backtrace
     end
 
-    def start
-      observe(Actor[:node_info_worker]) do |node|
-        configure_statsd(node)
-      end
-
-      info 'waiting for cadvisor'
-      sleep 1 until cadvisor_running?
-      info 'cadvisor is running, starting stats loop'
-      last_collected = Time.now.to_i
-      loop do
-        sleep 1 until last_collected < (Time.now.to_i - 60)
-        self.collect_stats
-        last_collected = Time.now.to_i
-      end
+    # @return [Boolean]
+    def cadvisor_running?
+      cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
+      return false if cadvisor.nil?
+      cadvisor.info['State']['Running'] == true
     end
 
-    def collect_stats
+    def publish_stats
+      wait_until('cadvisor running') { cadvisor_running? }
+
       debug 'starting collection'
 
       if response = get("/api/v1.2/subcontainers")
@@ -143,13 +149,6 @@ module Kontena::Workers
 
       # to nano seconds
       (cur - prev) * 1000000000
-    end
-
-    # @return [Boolean]
-    def cadvisor_running?
-      cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
-      return false if cadvisor.nil?
-      cadvisor.info['State']['Running'] == true
     end
 
     # @param [String] name

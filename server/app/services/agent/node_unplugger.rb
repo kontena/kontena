@@ -10,8 +10,19 @@ module Agent
     end
 
     # @param [Time] connected_at
-    def unplug!(connected_at)
-      self.update_node! connected_at
+    # @param [Integer] code websocket close
+    # @param [String] reason websocket close
+    def unplug!(connected_at, code, reason)
+      connection = @node.websocket_connection
+      self.update_node!(connected_at,
+        connected: false,
+        disconnected_at: Time.now.utc,
+        websocket_connection: {
+          opened: connection && connection.opened,
+          close_code: code,
+          close_reason: reason
+        },
+      )
       self.update_node_containers
       self.publish_update_event
     rescue => exc
@@ -19,9 +30,9 @@ module Agent
     end
 
     # @raise [RuntimeError] Node ... has already re-connected at ...
-    def update_node!(connected_at)
+    def update_node!(connected_at, **attrs)
       connected_node = HostNode.where(:id => node.id, :connected_at => connected_at)
-        .find_one_and_update({:$set => {connected: false}})
+        .find_one_and_update({:$set => attrs})
 
       fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
 

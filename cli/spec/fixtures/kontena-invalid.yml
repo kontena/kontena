@@ -1,4 +1,0 @@
-wordpress:
-  stateful: 'true'
-  environment:
-    WORDPRESS_DB_PASSWORD: ${project}_secret

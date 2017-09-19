@@ -29,11 +29,6 @@ module Docker
       self.json['State']
     end
 
-    # @return [Hash]
-    def restart_policy
-      self.host_config['RestartPolicy']
-    end
-
     # @return [String] Stack aware name of the containers service
     def service_name_for_lb
       return self.labels['io.kontena.service.name'] if self.default_stack?
@@ -51,11 +46,6 @@ module Docker
       return false if self.labels['io.kontena.service.id'].nil?
 
       self.labels['io.kontena.stack.name'].nil? || self.labels['io.kontena.stack.name'].to_s == 'null'.freeze
-    end
-
-    # @return [Boolean]
-    def autostart?
-      return ['always', 'unless-stopped'].include?(self.host_config.dig('RestartPolicy', 'Name'))
     end
 
     # @return [Boolean]
@@ -86,6 +76,11 @@ module Docker
       false
     end
 
+    # @return [DateTime]
+    def started_at
+      DateTime.parse(cached_json['State']['StartedAt'])
+    end
+
     # @return [Boolean]
     def finished?
       DateTime.parse(self.state['FinishedAt']).year > 1
@@ -112,6 +107,11 @@ module Docker
       !self.labels['io.kontena.load_balancer.name'].nil?
     rescue
       false
+    end
+
+    # @return [Boolean]
+    def autostart?
+      ['always'.freeze, 'unless-stopped'.freeze].include?(self.host_config.dig('RestartPolicy', 'Name'))
     end
 
     # @return [String]
@@ -222,6 +222,11 @@ module Docker
     # @return [Integer]
     def stop_grace_period
       (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
+    def reload
+      @cached_json = nil
+      cached_json
     end
 
     private

@@ -57,6 +57,24 @@ RSpec.configure do |config|
   include Shell
   include ContainerHelper
 
+  config.before :context, :subcommand => :app do
+    version = Kommando.run("kontena --version").out[/kontena-cli (\d+.+?) /, 1]
+    if Gem::Version.new(version) >= Gem::Version.new('1.4.0')
+      k = Kommando.run "kontena plugin install app-command"
+    else
+      k = Kommando.run "kontena plugin install --version 0.1.0.rc1 app-command"
+    end
+
+    unless k.code == 0
+      STDERR.puts(k.out)
+      abort "Unable to install app-command plugin"
+    end
+  end
+
+  config.after :context, :subcommand => :app do
+    k = Kommando.run "kontena plugin uninstall --force app-command"
+  end
+
   config.before :each do
     k = Kommando.run "kontena grid use e2e"
     unless k.code == 0

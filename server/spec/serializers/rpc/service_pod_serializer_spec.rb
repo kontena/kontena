@@ -2,7 +2,7 @@ require_relative '../../spec_helper'
 
 describe Rpc::ServicePodSerializer do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:node) { HostNode.create!(name: 'node-1', node_id: 'a') }
+  let(:node) { grid.create_node!('node-1', node_id: 'a') }
   let(:lb) do
     GridService.create!(
       name: 'lb',
@@ -22,6 +22,7 @@ describe Rpc::ServicePodSerializer do
       stop_grace_period: 20
     )
   end
+
   let(:service_instance) do
     service.grid_service_instances.create!(
       instance_number: 2,
@@ -38,6 +39,14 @@ describe Rpc::ServicePodSerializer do
 
   let! :ext_vol do
     Volume.create(grid: grid, name: 'ext-vol', scope: 'instance', driver: 'local')
+  end
+
+  let! :domain_auth_dns do
+    GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
+  end
+
+  let! :domain_auth_tls do
+    GridDomainAuthorization.create!(grid: grid, authorization_type: 'tls-sni-01', grid_service: service, domain: 'www.kontena.io', tls_sni_certificate: 'TLS_AUTH')
   end
 
   describe '#to_hash' do
@@ -76,6 +85,10 @@ describe Rpc::ServicePodSerializer do
 
     it 'includes memory_swap' do
       expect(subject.to_hash).to include(:memory_swap => nil)
+    end
+
+    it 'includes shm_size' do
+      expect(subject.to_hash).to include(:shm_size => nil)
     end
 
     it 'includes cpu_shares' do
@@ -119,6 +132,14 @@ describe Rpc::ServicePodSerializer do
       expect(subject.to_hash).to include(:net => 'bridge')
     end
 
+    it 'includes hostname' do
+      expect(subject.to_hash).to include(:hostname => 'app-2')
+    end
+
+    it 'includes domainname' do
+      expect(subject.to_hash).to include(:domainname => 'test-grid.kontena.local')
+    end
+
     it 'includes log_driver' do
       expect(subject.to_hash).to include(:log_driver => nil)
     end
@@ -132,7 +153,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes secrets' do
-      expect(subject.to_hash).to include(:secrets => [])
+      expect(subject.to_hash[:secrets].size).to eq(1)
     end
 
     it 'includes default network' do
@@ -141,6 +162,11 @@ describe Rpc::ServicePodSerializer do
 
     it 'stop_grace_period' do
       expect(subject.to_hash).to include(:stop_grace_period => 20)
+    end
+
+    it 'includes domain auth as secret' do
+
+      expect(subject.to_hash[:secrets].find { |s| s[:name] == 'SSL_CERTS'}[:value]).to eq('TLS_AUTH')
     end
 
     describe '[:env]' do
@@ -154,9 +180,28 @@ describe Rpc::ServicePodSerializer do
         expect(env).to include("KONTENA_SERVICE_ID=#{service.id.to_s}")
         expect(env).to include("KONTENA_SERVICE_NAME=#{service.name.to_s}")
         expect(env).to include("KONTENA_GRID_NAME=#{service.grid.name.to_s}")
+        expect(env).to include("KONTENA_PLATFORM_NAME=#{service.grid.name.to_s}")
         expect(env).to include("KONTENA_STACK_NAME=#{service.stack.name.to_s}")
         expect(env).to include("KONTENA_NODE_NAME=#{node.name.to_s}")
         expect(env).to include("KONTENA_SERVICE_INSTANCE_NUMBER=2")
+      end
+    end
+
+    describe '[:secrets]' do
+      it 'includes certificates as secrets' do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate',
+          chain: 'chain')
+        service.certificates.create!(subject: 'kontena.io', name: 'CERT')
+        subject = described_class.new(service_instance)
+        secrets = subject.to_hash[:secrets]
+
+        expect(secrets.size).to eq(2) # There's also the tls domain auth secret
+
+        expect(secrets.find{ |s| s[:name] == 'CERT'}[:value]).to eq('certificatechainprivate_key')
       end
     end
 
@@ -168,6 +213,7 @@ describe Rpc::ServicePodSerializer do
         expect(labels).to include('io.kontena.service.name' => service.name)
         expect(labels).to include('io.kontena.stack.name' => service.stack.name)
         expect(labels).to include('io.kontena.grid.name' => grid.name)
+        expect(labels).to include('io.kontena.platform.name' => grid.name)
       end
 
       it 'does not include load balancer labels by default' do

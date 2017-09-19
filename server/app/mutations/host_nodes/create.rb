@@ -25,17 +25,14 @@ module HostNodes
     end
 
     # @return [HostNode]
-    def build_host_node
-      host_node = HostNode.new(
-        grid: self.grid,
-        name: self.name,
+    def create_host_node
+      host_node = self.grid.create_node!(self.name,
         token: self.token || self.generate_token,
       )
-      host_node
     end
 
     def execute
-      host_node = build_host_node
+      host_node = create_host_node
 
       set_common_params(host_node)
 

@@ -10,6 +10,8 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Stack name"
 
+    option '--[no-]wait', :flag, 'Do not wait service deployment', default: true
+
     requires_current_master
     requires_current_master_token
 
@@ -18,10 +20,12 @@ module Kontena::Cli::Stacks
       spinner "Triggering deployment of stack #{pastel.cyan(name)}" do
         deployment = deploy_stack(name)
       end
-      spinner "Waiting for deployment to start" do
-        wait_for_deployment_to_start(deployment)
+      if wait?
+        spinner "Waiting for deployment to start" do
+          wait_for_deployment_to_start(deployment)
+        end
+        wait_for_deploy_to_finish(deployment)
       end
-      wait_for_deploy_to_finish(deployment)
     end
 
     def deploy_stack(name)

@@ -1,0 +1,5 @@
+stack: user/depstack1child3
+version: 0.0.1
+services:
+  logger:
+    image: logger

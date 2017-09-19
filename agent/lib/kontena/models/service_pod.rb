@@ -19,6 +19,8 @@ module Kontena
                   :entrypoint,
                   :memory,
                   :memory_swap,
+                  :shm_size,
+                  :cpus,
                   :cpu_shares,
                   :privileged,
                   :pid,
@@ -64,6 +66,8 @@ module Kontena
         @entrypoint = attrs['entrypoint']
         @memory = attrs['memory']
         @memory_swap = attrs['memory_swap']
+        @shm_size = attrs['shm_size']
+        @cpus = attrs['cpus']
         @cpu_shares = attrs['cpu_shares']
         @privileged = attrs['privileged'] || false
         @cap_add = attrs['cap_add']
@@ -194,11 +198,7 @@ module Kontena
 
       # @return [Hash]
       def service_host_config
-        host_config = {
-          'RestartPolicy' => {
-            'Name' => 'unless-stopped'
-          }
-        }
+        host_config = {}
         bind_volumes = self.build_bind_volumes
         if bind_volumes.size > 0
           host_config['Binds'] = bind_volumes
@@ -209,12 +209,17 @@ module Kontena
         if self.can_expose_ports? && self.ports
           host_config['PortBindings'] = self.build_port_bindings
         end
+        if self.cpus
+          host_config['CpuPeriod'] = 100000
+          host_config['CpuQuota'] = (host_config['CpuPeriod'] * self.cpus).to_i
+        end
 
         host_config['NetworkMode'] = self.net
         host_config['DnsSearch'] = [self.domainname, self.domainname.split('.', 2)[1]]
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
+        host_config['ShmSize'] = self.shm_size if self.shm_size
         host_config['Privileged'] = self.privileged if self.privileged
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0

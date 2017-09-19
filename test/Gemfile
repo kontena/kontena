@@ -4,3 +4,5 @@ gem 'dotenv'
 gem 'rspec'
 gem 'kommando', '~> 0.1.2'
 gem 'kontena-cli', path: '../cli'
+gem 'rake'
+

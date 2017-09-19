@@ -89,5 +89,6 @@
       "initial_size" : 1
    },
    "mem_total" : 1045032960,
-   "connected" : true
+   "connected" : true,
+   "availability": "active"
 }
