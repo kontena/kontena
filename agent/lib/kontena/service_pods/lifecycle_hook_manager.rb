@@ -88,15 +88,19 @@ module Kontena
       # @return [Array<Hash>]
       def hooks_for(type)
         hooks = service_pod.hooks.select { |h|
-          h['type'] == type && !h['oneshot'] || (h['oneshot'] && !oneshot_cache.include?(h))
+          h['type'] == type && !cached_oneshot_hook?(h)
         }
-        hooks.each do |h|
-          if h['oneshot'] && !oneshot_cache.include?(h)
-            mark_oneshot_hook(h)
-          end
-        end
+        hooks.each { |h|
+          mark_oneshot_hook(h) if !cached_oneshot_hook?(h)
+        }
 
         hooks
+      end
+
+      # @param hook [Hash]
+      # @return [Boolean]
+      def cached_oneshot_hook?(hook)
+        hook['oneshot'] && oneshot_cache.include?(hook)
       end
 
       # @param [String] cmd
@@ -152,7 +156,7 @@ module Kontena
 
       # @return [Array<Hash>]
       def oneshot_cache
-        @oneshot_cache ||= []
+        @oneshot_cache ||= Set.new
       end
     end
   end
