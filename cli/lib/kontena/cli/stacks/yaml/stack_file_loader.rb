@@ -85,7 +85,7 @@ module Kontena::Cli::Stacks
         else
           @dependencies = depends.map do |name, dependency|
             loader = StackFileLoader.for(dependency['stack'], self)
-            deps = { 'name' => name, 'stack' => loader.source, 'variables' => dependency.fetch('variables', Hash.new), :loader => self }
+            deps = { 'name' => name, 'stack' => loader.source, 'variables' => dependency.fetch('variables', Hash.new) }
             if recurse
               child_deps = loader.dependencies
               deps['depends'] = child_deps unless child_deps.nil?
