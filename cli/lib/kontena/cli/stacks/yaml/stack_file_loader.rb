@@ -103,38 +103,36 @@ module Kontena::Cli::Stacks
       end
 
       # Returns a non nested hash of all dependencies.
-      # Processes :variables_from_options hash and moves the related variables to children
+      # Processes :variables hash and moves the related variables to children
       #
       # @param basename [String] installed stack name
       # @param opts [Hash] extra data such as variable lists
       # @return [Hash] { installation_name => { 'name' => installation-name, 'stack' => stack_name, :loader => self }, child_install_name => { ... } }
-      def flat_dependencies(basename = nil, opts = {})
-        basename ||= stack_name.stack
-
-        variables_from_options = opts[:variables_from_options] || {}
-        variables_from_yaml = opts[:variables_from_yaml] || {}
+      def flat_dependencies(basename, opts = {})
+        opt_variables = opts[:variables] || {}
 
         result = {
           basename => self.to_h.merge(opts).merge(
-            'name' => basename,
-            :variables_from_yaml => variables_from_yaml,
-            :variables_from_options => variables_from_options.reject { |k, _| k.include?('.') }
+            name: basename,
+            variables: opt_variables.reject { |k, _| k.include?('.') }
           )
         }
 
         depends.each do |as_name, data|
           variables = {}
 
-          variables_from_options.select { |k, _| k.start_with?(as_name + '.') }.each do |k,v|
+          opt_variables.select { |k, _| k.start_with?(as_name + '.') }.each do |k,v|
             variables[k.split('.', 2).last] = v
           end
+
+          data['variables'] ||= {}
 
           loader = StackFileLoader.for(data['stack'], self)
           result.merge!(
            loader.flat_dependencies(
              basename + '-' + as_name,
-             :variables_from_yaml => data['variables'],
-             :variables_from_options => variables
+             variables: data['variables'].merge(variables),
+             parent_name: basename
            )
           )
         end

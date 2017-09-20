@@ -1,4 +1,6 @@
 require_relative 'common'
+require_relative 'change_resolver'
+
 require 'json'
 
 module Kontena::Cli::Stacks
@@ -25,202 +27,179 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
-    def normalize_local_data(stack_data, parent_name)
-      return nil if stack_data.nil? || stack_data.empty?
-
-      depends = stack_data.delete('depends') || []
-      normalized_data = {
-        parent_name => stack_data.merge(
-          :loader => loader_class.for(stack_data['stack'])
-        )
-      }
-
-      depends.each do |stack|
-        key = "#{parent_name}-#{stack['name']}"
-        normalized_data.merge!(normalize_local_data(stack.merge('parent_name' => parent_name), key))
-      end
-      normalized_data
-    end
-
-    def normalize_master_data(stack_name, raise_not_found = false)
-      begin
-        data = fetch_master_data(stack_name)
-      rescue Kontena::Errors::StandardError => ex
-        return nil if ex.status == 404 && !raise_not_found
-        raise ex
-      end
-      depends = data.delete('children') || []
-
-      normalized_data = { stack_name => data }
-
-      return normalized_data if skip_dependencies?
-
-      depends.each do |stack|
-        normalized_data.merge!(normalize_master_data(stack['name']))
-      end
-      normalized_data
-    end
-
-    def dry_msg(message)
-      puts pastel.red('DRY RUN: ') + message
-    end
-
-    def merge_data(local_data, remote_data)
-      merged = {}
-      unless local_data.nil? || local_data.empty?
-        local_data.each do |key, data|
-          merged[key] ||= {}
-          merged[key][:local] = data
-        end
-      end
-      unless remote_data.nil? || remote_data.empty?
-        remote_data.each do |key, data|
-          merged[key] ||= {}
-          merged[key][:remote] = data
-        end
-      end
-      merged
-    end
-
-    def dry_report(merged)
-      added_services = []
-      removed_services = []
-      kept_services = {}
-      merged.each do |stackname, data|
-        if data[:remote].nil?
-          dry_msg "New stack #{stackname} would be installed to master"
-          added_services = data[:local][:stack]['services'].map { |svc| "#{stackname}/#{svc['name']}" }
-        elsif data[:local]
-          data[:local][:stack]['services'].each do |svc|
-            remote_svc = data[:remote]['services'].find { |s| s['name'] == svc['name'] }
-            if remote_svc
-              kept_services["#{stackname}/#{svc['name']}"] ||= {}
-              #kept_services["#{stackname}/#{svc['name']}"][:before] = JSON.load(JSON.dump(remote_svc)) # naughty deep clone/dup
-              #kept_services["#{stackname}/#{svc['name']}"][:after] = JSON.load(JSON.dump(svc))
-            else
-              added_services << "#{stackname}/#{svc['name']}"
-            end
-          end
-        end
-      end
-
-      merged.each do |stackname, data|
-        if data[:local].nil?
-          dry_msg "Stack  #{stackname} would be removed from master"
-          removed_services = data[:remote]['services'].map { |svc| "#{stackname}/#{svc['name']}" }
-        else
-          data[:local][:stack]['services'].each do |svc|
-            unless data[:remote]['services'].find { |s| s['name'] == svc['name'] }
-              added_services << "#{stackname}/#{svc['name']}"
-            end
-          end
-          data[:remote]['services'].each do |svc|
-            unless data[:local][:stack]['services'].find { |s| s['name'] == svc['name'] }
-              removed_services << "#{stackname}/#{svc['name']}"
-            end
-          end
-        end
-      end
-
-      unless added_services.empty?
-        dry_msg "The following services would be added to master"
-        added_services.each { |svc| puts " - #{svc}" }
-      end
-
-      unless removed_services.empty?
-        dry_msg "The following services would be removed from master"
-        removed_services.each { |svc| puts " - #{svc}" }
-      end
-
-      unless kept_services.empty?
-        dry_msg "The following services would be kept:"
-        kept_services.each do |svc_name, before_after|
-          #before = before_after[:before]
-          #after = before_after[:after]
-          puts "- #{svc_name}"
-        end
-      end
-    end
+    attr_reader :old_data, :new_data, :changes
 
     def execute
       set_env_variables(stack_name, current_grid)
 
-      local = spinner "Parsing #{pastel.cyan(source)}" do
-        normalize_local_data({'stack' => source, 'depends' => skip_dependencies? ? nil : loader.dependencies}, stack_name)
+      gather_data
+      process_data
+      display_report
+
+      return if dry_run?
+
+      get_confirmation
+
+      run_removes
+      run_installs
+      run_upgrades
+      run_deploys if deploy?
+    end
+
+    # Recursively fetch master data in StackFileLoader#flat_dependencies format
+    def fetch_master_data(stackname)
+      response = client.get(stack_url(stackname))
+      children = response.delete('children') || []
+      result = { stackname => { stack_data: response } }
+      children.each do |child|
+        result.merge!(fetch_master_data(child['name']))
       end
+      result
+    end
 
-      remote = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
-        normalize_master_data(stack_name, true)
-      end
-
-      merged = merge_data(local, remote)
-
-      removes = merged.keys.select { |k| merged[k][:local].nil? }
-
-      unless removes.empty?
-        puts
-        puts "Stacks to be removed because they are no longer depended on:"
-        removes.each do |r|
-          puts pastel.yellow("- #{r}")
-        end
-        puts
-        unless force?
-          puts "#{pastel.red('Warning:')} This can not be undone, data will be lost."
-        end
-        confirm unless force?
-        removes.reverse_each do |removed_stack|
-          Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack) unless dry_run?
-          merged.delete(removed_stack)
-        end
-      end
-
-      unless force?
-        merged.each do |stackname, data|
-          next if data[:remote].nil?
-          unless data[:local][:loader].stack_name.stack_name == data[:remote]['stack']
-            confirm "Replacing stack #{pastel.cyan(data[:remote]['stack'])} on master with #{pastel.cyan(data[:local][:loader].stack_name.stack_name)}. Are you sure?"
-          end
-        end
-      end
-
-      merged.reverse_each do |stackname, data|
-        set_env_variables(stackname, current_grid)
-        data[:local][:stack] = data[:local][:loader].reader.execute(
-          name: stackname,
-          values: (data.dig(:local, 'variables') || {}).merge(dependency_values_from_options(stackname)),
-          defaults: data.dig(:remote, 'variables'),
-          parent_name: data.dig(:local, 'parent_name')
+    def process_data
+      caret "Analyzing upgrade"
+      # Execute the local stacks
+      new_data.reverse_each do |stackname, data|
+        reader = data[:loader].reader
+        set_env_variables(stackname, current_grid) # set envs for execution time
+        data[:stack_data] = reader.execute(
+          values: data[:variables],
+          defaults: old_data[stackname][:stack_data]['variables'],
+          parent_name: data[:parent_name],
+          name: data[:name]
         )
-        hint_on_validation_notifications(data[:local][:loader].reader.notifications, data[:local][:loader].source)
-        abort_on_validation_errors(data[:local][:loader].reader.errors, data[:local][:loader].source)
+        hint_on_validation_notifications(reader.notifications, reader.loader.source)
+        abort_on_validation_errors(reader.errors, reader.loader.source)
       end
 
-      if dry_run?
-        dry_report(merged)
-        return
+      set_env_variables(stack_name, current_grid) # restore envs
+
+      @changes = Kontena::Cli::Stacks::ChangeResolver.new(old_data, new_data)
+    end
+
+    def display_report
+      will = dry_run? ? "would" : "will"
+
+      puts "SERVICES:"
+      puts "-" * 40
+
+      unless changes.removed_services.empty?
+        puts pastel.yellow("These services #{will} be removed from master:")
+        changes.removed_services.each { |svc| puts " - #{svc}" }
+        puts
       end
 
-      merged.reverse_each do |stackname, data|
-        stack = data[:local][:stack]
-        if data[:remote]
-          spinner "Upgrading #{stack_name == stackname ? 'stack' : 'dependency'} #{pastel.cyan(stackname)}" do |spin|
-            update_stack(stackname, stack) || spin.fail!
-          end
-        else
-          cmd = ['stack', 'install', '--name', stackname]
-          cmd.concat ['--parent-name', stack['parent_name']] if stack['parent_name']
+      unless changes.added_services.empty?
+        puts "These new services #{will} be created to master:"
+        changes.added_services.each { |svc| puts " - #{svc}" }
+        puts
+      end
 
-          stack['variables'].merge(dependency_values_from_options(stackname)).each do |k, v|
-            cmd.concat ['-v', "#{k}=#{v}"]
-          end
-
-          cmd << '--no-deploy'
-          cmd << data[:local][:loader].source
-          caret "Installing new dependency #{cmd.last} as #{stackname}"
-          Kontena.run!(cmd)
+      unless changes.upgraded_services.empty?
+        puts "These services #{will} be upgraded:"
+        changes.upgraded_services.each do |svc|
+          puts "- #{svc}"
         end
+        puts
+      end
 
-        Kontena.run!(['stack', 'deploy', stackname]) if deploy?
+      puts "STACKS:"
+      puts "-" * 40
+
+      unless changes.removed_stacks.empty?
+        puts pastel.red("These stacks #{will} be removed because they are no longer depended on:")
+        changes.removed_stacks.each { |stack| puts "- #{stack}" }
+        puts
+      end
+
+      unless changes.replaced_stacks.empty?
+        puts pastel.yellow("These stacks #{will} be replaced with other stacks:")
+        changes.replaced_stacks.each do |installed_name, data|
+          puts "- #{installed_name} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}"
+        end
+        puts
+      end
+
+      unless changes.added_stacks.empty?
+        puts pastel.red("These new stack dependencies #{will} be installed:")
+        changes.added_stacks.each { |stack| puts "- #{stack}" }
+        puts
+      end
+
+      unless changes.upgraded_stacks.empty?
+        puts "These stacks #{will} be upgraded#{' and deployed' if deploy?}:"
+        changes.upgraded_stacks.each { |stack| puts "- #{stack}" }
+        puts
+      end
+
+
+      puts
+    end
+
+    def gather_data
+      @old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
+        fetch_master_data(stack_name)
+      end
+
+      @new_data = spinner "Parsing #{pastel.cyan(source)}" do
+        loader.flat_dependencies(
+          stack_name,
+          variables: values_from_options
+        )
+      end
+    end
+
+    # requires heavier confirmation when something very dangerous is going to happen
+    def get_confirmation
+      unless force?
+        if changes.removed_services.empty? && changes.removed_stacks.empty? && changes.replaced_stacks.empty?
+          confirm
+        else
+          puts "#{pastel.red('Warning:')} This can not be undone, data will be lost."
+          confirm_command(stack_name)
+        end
+      end
+    end
+
+    def deployable_stacks
+      @deployable_stacks ||= []
+    end
+
+    def run_removes
+      changes.removed_stacks.reverse_each do |removed_stack|
+        Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
+      end
+    end
+
+    def run_installs
+      changes.added_stacks.reverse_each do |added_stack|
+        data = new_data[added_stack]
+        cmd = ['stack', 'install', '--name', added_stack, '--no-deploy']
+        cmd.concat ['--parent-name', data[:parent_name]] if data[:parent_name]
+        data[:values_from_options].merge(data[:values_from_yaml]).each do |k,v|
+          cmd.concat ['-v', "#{k}=#{v}"]
+        end
+        cmd << data[:loader].source
+        caret "Installing new dependency #{cmd.last} as #{added_stack}"
+        deployable_stacks << added_stack
+        Kontena.run!(cmd)
+      end
+    end
+
+    def run_upgrades
+      changes.upgraded_stacks.reverse_each do |upgraded_stack|
+        data = new_data[upgraded_stack]
+        spinner "Upgrading #{stack_name == upgraded_stack ? 'stack' : 'dependency'} #{pastel.cyan(upgraded_stack)}" do |spin|
+          deployable_stacks << upgraded_stack
+          update_stack(upgraded_stack, data[:stack_data]) || spin.fail!
+        end
+      end
+    end
+
+    def run_deploys
+      deployable_stacks.each do |deployable_stack|
+        Kontena.run!(['stack', 'deploy', deployable_stack])
       end
     end
 
@@ -230,10 +209,6 @@ module Kontena::Cli::Stacks
 
     def stack_url(name)
       "stacks/#{current_grid}/#{name}"
-    end
-
-    def fetch_master_data(stack_name)
-      client.get(stack_url(stack_name))
     end
   end
 end
