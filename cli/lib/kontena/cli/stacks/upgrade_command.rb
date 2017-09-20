@@ -47,12 +47,12 @@ module Kontena::Cli::Stacks
     end
 
     # Recursively fetch master data in StackFileLoader#flat_dependencies format
-    def fetch_master_data(stackname)
-      response = client.get(stack_url(stackname))
+    def gather_master_data(stackname)
+      response = fetch_master_data(stackname)
       children = response.delete('children') || []
       result = { stackname => { stack_data: response } }
       children.each do |child|
-        result.merge!(fetch_master_data(child['name']))
+        result.merge!(gather_master_data(child['name']))
       end
       result
     end
@@ -65,7 +65,7 @@ module Kontena::Cli::Stacks
         set_env_variables(stackname, current_grid) # set envs for execution time
         data[:stack_data] = reader.execute(
           values: data[:variables],
-          defaults: old_data[stackname][:stack_data]['variables'],
+          defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
           parent_name: data[:parent_name],
           name: data[:name]
         )
@@ -117,6 +117,7 @@ module Kontena::Cli::Stacks
         puts pastel.yellow("These stacks #{will} be replaced with other stacks:")
         changes.replaced_stacks.each do |installed_name, data|
           puts "- #{installed_name} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}"
+          logger.debug { "- #{installed_name} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}" }
         end
         puts
       end
@@ -139,7 +140,7 @@ module Kontena::Cli::Stacks
 
     def gather_data
       @old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
-        fetch_master_data(stack_name)
+        gather_master_data(stack_name)
       end
 
       @new_data = spinner "Parsing #{pastel.cyan(source)}" do
@@ -177,7 +178,7 @@ module Kontena::Cli::Stacks
         data = new_data[added_stack]
         cmd = ['stack', 'install', '--name', added_stack, '--no-deploy']
         cmd.concat ['--parent-name', data[:parent_name]] if data[:parent_name]
-        data[:values_from_options].merge(data[:values_from_yaml]).each do |k,v|
+        data[:variables].each do |k,v|
           cmd.concat ['-v', "#{k}=#{v}"]
         end
         cmd << data[:loader].source
@@ -209,6 +210,10 @@ module Kontena::Cli::Stacks
 
     def stack_url(name)
       "stacks/#{current_grid}/#{name}"
+    end
+
+    def fetch_master_data(stackname)
+      client.get(stack_url(stackname))
     end
   end
 end

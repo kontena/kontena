@@ -70,7 +70,11 @@ module Kontena::Cli::Stacks
 
       removed_stacks.each do |removed_stack|
         removed_services.concat(
-          old_data[removed_stack][:stack_data]['services'].map { |svc| "#{removed_stack}/#{svc['name']}"}
+          begin
+            old_data[removed_stack][:stack_data]['services'].map { |svc| "#{removed_stack}/#{svc['name']}"}
+        rescue
+          require 'byebug'; byebug
+        end
         )
       end
 
