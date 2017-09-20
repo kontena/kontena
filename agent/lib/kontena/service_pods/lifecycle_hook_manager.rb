@@ -100,7 +100,7 @@ module Kontena
       # @param hook [Hash]
       # @return [Boolean]
       def cached_oneshot_hook?(hook)
-        hook['oneshot'] && oneshot_cache.include?(hook)
+        hook['oneshot'] && oneshot_cache.include?(hook['id'])
       end
 
       # @param [String] cmd
@@ -151,7 +151,7 @@ module Kontena
           instance_number: service_pod.instance_number
         }
         rpc_client.request('/node_service_pods/mark_oneshot_hook', [node.id, pod, hook])
-        oneshot_cache << hook
+        oneshot_cache << hook['id']
       end
 
       # @return [Array<Hash>]

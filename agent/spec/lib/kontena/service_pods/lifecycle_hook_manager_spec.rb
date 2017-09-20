@@ -5,9 +5,9 @@ describe Kontena::ServicePods::LifecycleHookManager do
       service_id: 'a',
       instance_number: 2,
       hooks: [
-        { 'type' => 'pre_start', 'cmd' => 'sleep 1'},
-        { 'type' => 'post_start', 'cmd' => 'sleep 2'},
-        { 'type' => 'pre_stop', 'cmd' => 'sleep 3'}
+        { 'id' => '1', 'type' => 'pre_start', 'cmd' => 'sleep 1'},
+        { 'id' => '2', 'type' => 'post_start', 'cmd' => 'sleep 2'},
+        { 'id' => '3', 'type' => 'pre_stop', 'cmd' => 'sleep 3'}
       ]
     )
   end
@@ -30,7 +30,7 @@ describe Kontena::ServicePods::LifecycleHookManager do
       allow(service_pod).to receive(:service_id).and_return('abc')
       allow(service_pod).to receive(:instance_number).and_return(1)
       allow(service_pod).to receive(:hooks).and_return([
-        { 'type' => 'pre_start', 'cmd' => 'sleep 1', 'oneshot' => true }
+        { 'id' => 'a', 'type' => 'pre_start', 'cmd' => 'sleep 1', 'oneshot' => true }
       ])
       allow(subject).to receive(:rpc_client).and_return(spy)
       expect(subject.hooks_for('pre_start').size).to eq(1)
@@ -40,16 +40,16 @@ describe Kontena::ServicePods::LifecycleHookManager do
 
   describe '#cached_oneshot_hook?' do
     it 'returns false if not oneshot' do
-      expect(subject.cached_oneshot_hook?({'oneshot' => false})).to be_falsey
+      expect(subject.cached_oneshot_hook?({ 'id' => 'a', 'oneshot' => false })).to be_falsey
     end
 
     it 'returns false if oneshot but not cached' do
-      expect(subject.cached_oneshot_hook?({'oneshot' => true})).to be_falsey
+      expect(subject.cached_oneshot_hook?({'id' => 'a', 'oneshot' => true })).to be_falsey
     end
 
     it 'returns true if oneshot and cached' do
-      hook = {'oneshot' => true}
-      subject.oneshot_cache << hook
+      hook = { 'id' => 'a', 'oneshot' => true }
+      subject.oneshot_cache << hook['id']
       expect(subject.cached_oneshot_hook?(hook)).to be_truthy
     end
   end
