@@ -276,13 +276,13 @@ describe Rpc::ServicePodSerializer do
 
   describe '#build_hooks' do
     it 'returns not-executed oneshot hook' do
-      service.hooks.create(
+      hook = service.hooks.create!(
         type: 'post_start',
         cmd: 'sleep 1',
         oneshot: true
       )
       hooks = subject.build_hooks
-      expect(hooks[0]).to eq({ type: 'post_start', cmd: 'sleep 1', oneshot: true})
+      expect(hooks[0]).to eq({ id: hook.id.to_s, type: hook.type, cmd: hook.cmd, oneshot: hook.oneshot})
     end
 
     it 'does not return oneshot hooks that are already executed' do
