@@ -76,7 +76,7 @@ module Rpc
       raise 'Instance not found' unless service_instance
 
       oneshot_hook = service_instance.grid_service.hooks.to_a.find{ |h|
-        h.oneshot && h.type == hook['type'] && h.cmd == hook['cmd']
+        h.oneshot && h.id.to_s == hook['id']
       }
       raise "Hook not found: #{hook}" unless oneshot_hook
       oneshot_hook.push(:done => pod['instance_number'].to_s)
