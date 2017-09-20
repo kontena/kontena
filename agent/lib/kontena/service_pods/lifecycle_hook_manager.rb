@@ -146,6 +146,8 @@ module Kontena
 
       # @param hook [Hash]
       def mark_oneshot_hook(hook)
+        return unless hook['oneshot']
+
         pod = {
           service_id: service_pod.service_id,
           instance_number: service_pod.instance_number
