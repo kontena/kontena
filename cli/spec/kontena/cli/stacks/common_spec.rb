@@ -12,10 +12,6 @@ describe Kontena::Cli::Stacks::Common do
       include Kontena::Cli::Stacks::Common::StackNameOption
       include Kontena::Cli::Stacks::Common::StackValuesToOption
       include Kontena::Cli::Stacks::Common::StackValuesFromOption
-
-      def what
-        [source]
-      end
     end
   end
 
