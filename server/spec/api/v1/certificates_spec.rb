@@ -93,6 +93,15 @@ describe '/v1/certificates' do
 
     end
 
+    it 'fails deleting certificate as it\'s in use' do
+      GridService.create!(grid: grid, name: 'redis', image_name: 'redis', certificates: [GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERT')])
+      expect {
+        delete "/v1/certificates/#{grid.name}/kontena.io", nil, request_headers
+        expect(response.status).to eq(422)
+      }.not_to change{Certificate.count}
+
+    end
+
     it 'return 404 for missing cert' do
       delete "/v1/certificates/#{grid.name}/foobar.io", nil, request_headers
       expect(response.status).to eq(404)

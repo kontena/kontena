@@ -77,9 +77,14 @@ module V1
           r.on ':subject' do |subject|
             @certificate = @grid.certificates.find_by(subject: subject)
             if @certificate
-              @certificate.destroy
-              response.status = 200
-              {}
+              outcome = GridCertificates::RemoveCertificate.run(certificate: @certificate)
+              if outcome.success?
+                response.status = 200
+                {}
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
             else
               response.status = 404
               {error: 'Not found'}
