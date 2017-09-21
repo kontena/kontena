@@ -102,8 +102,8 @@ module Kontena::Cli::Stacks
         where.option '--values-from-stack', '[STACK_NAME]', 'Read variable values from an installed stack', multivalued: true do |stackname|
           response = client.get("stacks/#{current_grid}/#{stackname}")
           variables = response['variables']
-          Kontena.logger.debug { "Received variables from stack #{filename} on Master: #{variables.inspect}" }
-          warn "Stack #{filename} does not have any values for variables" if variables.empty?
+          Kontena.logger.debug { "Received variables from stack #{stackname} on Master: #{variables.inspect}" }
+          warn "Stack #{stackname} does not have any values for variables" if variables.empty?
           values_from_installed_stack.merge!(variables)
           stackname
         end
