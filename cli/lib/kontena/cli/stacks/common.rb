@@ -100,11 +100,10 @@ module Kontena::Cli::Stacks
         end
 
         where.option '--values-from-stack', '[STACK_NAME]', 'Read variable values from an installed stack', multivalued: true do |stackname|
-          response = client.get("stacks/#{current_grid}/#{stackname}")
-          variables = response['variables']
+          variables = read_values_from_stacks(stackname)
           Kontena.logger.debug { "Received variables from stack #{stackname} on Master: #{variables.inspect}" }
           warn "Stack #{stackname} does not have any values for variables" if variables.empty?
-          values_from_installed_stack.merge!(variables)
+          values_from_installed_stacks.merge!(variables)
           stackname
         end
 
@@ -115,6 +114,27 @@ module Kontena::Cli::Stacks
       end
 
       module InstanceMethods
+        def read_values_from_stacks(stackname)
+          result = {}
+          response = client.get("stacks/#{current_grid}/#{stackname}")
+          result.merge!(response['variables']) if response['variables']
+          if response['children']
+            response['children'].each do |child_info|
+              result.merge!(
+                read_values_from_stacks(child_info['name']).tap do |child_result|
+                  child_result.keys.each do |key|
+                    new_key = child_info['name'].dup # foofoo-redis-monitor
+                    new_key.sub!("#{stackname}-", '') # monitor
+                    new_key.concat ".#{key}" # monitor.foovariable
+                    child_result[new_key] = child_result.delete(key)
+                  end
+                end
+              )
+            end
+          end
+          result
+        end
+
         def values_from_file
           @values_from_file ||= {}
         end
@@ -123,12 +143,12 @@ module Kontena::Cli::Stacks
           @values_from_value_options ||= {}
         end
 
-        def values_from_installed_stack
-          @values_from_installed_stack ||= {}
+        def values_from_installed_stacks
+          @values_from_installed_stacks ||= {}
         end
 
         def values_from_options
-          @values_from_options ||= values_from_file.merge(values_from_installed_stack).merge(values_from_value_options)
+          @values_from_options ||= values_from_installed_stacks.merge(values_from_file).merge(values_from_value_options)
         end
 
         # Transforms a hash

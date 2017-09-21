@@ -118,16 +118,37 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     describe '--values-from-stack' do
       it 'sends stack to master, loading values from another stack on master' do
-        allow(client).to receive(:get).with('stacks/test-grid/foostack').and_return(
-          'variables' => {
-            'TEST_ENV_VAR' => 'abc', 'MYSQL_IMAGE' => 'mysqlimage', 'tag' => 'def'
-          }
+        expect(client).to receive(:get).with('stacks/test-grid/otherdep').and_return(
+          'variables' => { 'foo' => 'bar' },
+          'children' => [
+            { 'name' => 'otherdep-dep_1' } ,
+            { 'name' => 'otherdep-dep_2' }
+          ]
         )
-        expect(client).to receive(:post) do |path, data|
-          expect(path).to eq 'grids/test-grid/stacks'
-          expect(data).to match hash_including(expectation)
-        end.and_return({})
-        subject.run(['--no-deploy', '--values-from-stack', 'foostack', fixture_path('stack-with-variables.yml')])
+
+        expect(client).to receive(:get).with('stacks/test-grid/otherdep-dep_1').and_return(
+          'variables' => { 'dep1var' => 'test' },
+          'children' => [
+            { 'name' => 'otherdep-dep_1-dep_1' }
+          ]
+        )
+
+        expect(client).to receive(:get).with('stacks/test-grid/otherdep-dep_1-dep_1').and_return(
+          'variables' => { 'dep1dep1var' => 'test11' },
+          'children' => []
+        )
+
+        expect(client).to receive(:get).with('stacks/test-grid/otherdep-dep_2').and_return(
+          'variables' => { 'dep2var' => 'test2' },
+          'children' => [ ]
+        )
+
+        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep1var=test', '-v', 'dep_1.dep1dep1var=test11', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')]).and_return(true)
+        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", '-v', 'dep_var=1', '-v', 'dep2var=test2', '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')]).and_return(true)
+
+        allow(client).to receive(:post).and_return({})
+
+        subject.run(['--values-from-stack', 'otherdep', '-n', 'deptest', '--no-deploy', fixture_path('stack-with-dependencies.yml')])
       end
     end
 
