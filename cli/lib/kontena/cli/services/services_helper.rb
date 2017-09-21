@@ -433,7 +433,8 @@ module Kontena
 
         # @param [String] image
         # @return [String]
-        def parse_image(image)
+        def parse_image(image = nil)
+          return if image.nil?
           unless image.include?(":")
             image = "#{image}:latest"
           end

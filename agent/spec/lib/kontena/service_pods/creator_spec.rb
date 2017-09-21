@@ -29,7 +29,12 @@ describe Kontena::ServicePods::Creator do
   end
 
   let(:service_pod) { Kontena::Models::ServicePod.new(data) }
-  let(:subject) { described_class.new(service_pod) }
+  let(:hook_manager) { double(:hook_manager) }
+  let(:subject) { described_class.new(service_pod, hook_manager) }
+
+  before(:each) do
+    allow(hook_manager).to receive(:track)
+  end
 
   describe '#ensure_data_container' do
     it 'creates data container if it does not exist' do
@@ -45,7 +50,7 @@ describe Kontena::ServicePods::Creator do
       subject.get_container('service_id', 2)
     end
   end
-  
+
 
   describe '#config_container' do
     let(:network_adapter) { instance_double(Kontena::NetworkAdapters::Weave) }
@@ -79,7 +84,7 @@ describe Kontena::ServicePods::Creator do
         )
       }
 
-      subject { described_class.new(service_pod) }
+      subject { described_class.new(service_pod, hook_manager) }
 
       it 'does not include weave-wait' do
         expect(network_adapter).to_not receive(:modify_create_opts)
@@ -116,13 +121,13 @@ describe Kontena::ServicePods::Creator do
         )
       }
 
-      subject { described_class.new(service_pod) }
+      subject { described_class.new(service_pod, hook_manager) }
 
       it 'does not include weave-wait' do
         expect(network_adapter).to receive(:modify_create_opts)
 
         config = subject.config_container(service_pod)
-        
+
       end
     end
   end

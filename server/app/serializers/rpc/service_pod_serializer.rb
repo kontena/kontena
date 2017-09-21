@@ -134,8 +134,7 @@ module Rpc
       service.hooks.each do |hook|
         if hook.instances.include?('*') || hook.instances.include?(instance_number)
           unless hook.done_for?(instance_number)
-            hooks << {type: hook.type, cmd: hook.cmd}
-            hook.push(:done => instance_number) if hook.oneshot
+            hooks << { id: hook.id.to_s, type: hook.type, cmd: hook.cmd, oneshot: hook.oneshot }
           end
         end
       end

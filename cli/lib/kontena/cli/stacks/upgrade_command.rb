@@ -139,9 +139,11 @@ module Kontena::Cli::Stacks
         else
           cmd = ['stack', 'install', '--name', stackname]
           cmd.concat ['--parent-name', stack['parent_name']] if stack['parent_name']
+
           stack['variables'].merge(dependency_values_from_options(stackname)).each do |k, v|
             cmd.concat ['-v', "#{k}=#{v}"]
           end
+
           cmd << '--no-deploy'
           cmd << data[:local][:loader].source
           caret "Installing new dependency #{cmd.last} as #{stackname}"
