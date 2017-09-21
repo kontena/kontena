@@ -51,6 +51,8 @@ module Kontena::Cli::Stacks
 
       validate_dependencies if dependencies?
 
+      stack # runs validations
+
       hint_on_validation_notifications(reader.notifications, dependencies? ? loader.source : nil)
       abort_on_validation_errors(reader.errors, dependencies? ? loader.source : nil)
 
