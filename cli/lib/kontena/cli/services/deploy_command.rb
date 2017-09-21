@@ -7,6 +7,7 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
+    option '--[no-]wait', :flag, 'Do not wait for service deployment', default: true
     option '--force', :flag, 'Force deploy even if service does not have any changes'
 
     def execute
@@ -17,7 +18,7 @@ module Kontena::Cli::Services
       data[:force] = true if force?
       spinner "Deploying service #{name.colorize(:cyan)} " do
         deployment = deploy_service(token, name, data)
-        wait_for_deploy_to_finish(token, deployment)
+        wait_for_deploy_to_finish(token, deployment) if wait?
       end
     end
   end

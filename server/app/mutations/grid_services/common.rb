@@ -308,7 +308,27 @@ module GridServices
           boolean :read_only
           hash :hooks do
             optional do
+              array :pre_start do
+                hash do
+                  required do
+                    string :name
+                    string :cmd
+                    string :instances
+                    boolean :oneshot, default: false
+                  end
+                end
+              end
               array :post_start do
+                hash do
+                  required do
+                    string :name
+                    string :cmd
+                    string :instances
+                    boolean :oneshot, default: false
+                  end
+                end
+              end
+              array :pre_stop do
                 hash do
                   required do
                     string :name
