@@ -151,7 +151,16 @@ module Kontena::Cli::Stacks
       def set_variable_values(values)
         values.each do |key, val|
           var = variables.option(key.to_s)
-          var.set(val) if var
+          if var
+            var.set(val)
+          else
+            type = case val
+                   when Integer then :integer
+                   when TrueClass, FalseClass then :boolean
+                   else :string
+                   end
+            variables.build_option(type: type, name: key, value: val)
+          end
         end
       end
 
