@@ -19,6 +19,7 @@ module Kontena::Cli::Stacks
 
     option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
+    option '--dry-run', :flag, "Simulate install"
 
     requires_current_master
     requires_current_master_token
@@ -27,6 +28,7 @@ module Kontena::Cli::Stacks
       set_env_variables(stack_name, current_grid)
 
       values_from_installed_stacks.merge!(install_dependencies) unless skip_dependencies?
+
 
       stack # runs validations
 
@@ -55,6 +57,8 @@ module Kontena::Cli::Stacks
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 
+        cmd << '--dry-run' if dry_run?
+
         cmd << '--no-deploy' unless deploy?
 
         cmd << dependency['stack']
@@ -68,14 +72,18 @@ module Kontena::Cli::Stacks
     end
 
     def create_stack
+      return if dry_run?
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         client.post("grids/#{current_grid}/stacks", stack)
       end
-      stack
     end
 
     def deploy_stack
-      Kontena.run!(['stack', 'deploy', stack['name']])
+      if dry_run?
+        caret "Stack #{stack['name']} deploy would be triggered", dots: false
+      else
+        Kontena.run!(['stack', 'deploy', stack['name']])
+      end
     end
   end
 end
