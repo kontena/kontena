@@ -88,8 +88,7 @@ module Kontena::Workers
 
       if overlay_cidr
         wait_weave_running?
-
-        register_container_dns(container)
+        register_container_dns(container) if container.service_container?
         attach_overlay(container)
       else
         debug "skip start for container=#{container.name} without overlay_cidr"

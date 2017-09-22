@@ -94,9 +94,17 @@ module Kontena::Cli::Stacks
       def self.included(where)
         where.prepend InstanceMethods
 
-        where.option '--values-from', '[FILE]', 'Read variable values from YAML', multivalued: true do |filename|
+        where.option '--values-from', '[FILE]', 'Read variable values from a YAML file', multivalued: true do |filename|
           values_from_file.merge!(::YAML.safe_load(File.read(filename), [], [], true, filename))
           filename
+        end
+
+        where.option '--values-from-stack', '[STACK_NAME]', 'Read variable values from an installed stack', multivalued: true do |stackname|
+          variables = read_values_from_stacks(stackname)
+          Kontena.logger.debug { "Received variables from stack #{stackname} on Master: #{variables.inspect}" }
+          warn "Stack #{stackname} does not have any values for variables" if variables.empty?
+          values_from_installed_stacks.merge!(variables)
+          stackname
         end
 
         where.option '-v', "VARIABLE=VALUE", "Set stack variable values, example: -v domain=example.com. Can be used multiple times.", multivalued: true, attribute_name: :var_option do |var_pair|
@@ -107,6 +115,27 @@ module Kontena::Cli::Stacks
       end
 
       module InstanceMethods
+        def read_values_from_stacks(stackname)
+          result = {}
+          response = client.get("stacks/#{current_grid}/#{stackname}")
+          result.merge!(response['variables']) if response['variables']
+          if response['children']
+            response['children'].each do |child_info|
+              result.merge!(
+                read_values_from_stacks(child_info['name']).tap do |child_result|
+                  child_result.keys.each do |key|
+                    new_key = child_info['name'].dup # foofoo-redis-monitor
+                    new_key.sub!("#{stackname}-", '') # monitor
+                    new_key.concat ".#{key}" # monitor.foovariable
+                    child_result[new_key] = child_result.delete(key)
+                  end
+                end
+              )
+            end
+          end
+          result
+        end
+
         def values_from_file
           @values_from_file ||= {}
         end
@@ -115,8 +144,12 @@ module Kontena::Cli::Stacks
           @values_from_value_options ||= {}
         end
 
+        def values_from_installed_stacks
+          @values_from_installed_stacks ||= {}
+        end
+
         def values_from_options
-          @values_from_options ||= values_from_file.merge(values_from_value_options)
+          @values_from_options ||= values_from_installed_stacks.merge(values_from_file).merge(values_from_value_options)
         end
 
         # Transforms a hash

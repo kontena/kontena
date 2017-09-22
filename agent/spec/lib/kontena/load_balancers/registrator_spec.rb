@@ -24,6 +24,7 @@ describe Kontena::LoadBalancers::Registrator do
     it 'calls #register_container on start event' do
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
       expect(container).to receive(:load_balanced?).and_return(true)
+      expect(container).to receive(:service_container?).and_return(true)
       expect(subject.wrapped_object).to receive(:register_container).once.with(container)
       subject.on_container_event('topic', event)
     end

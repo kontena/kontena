@@ -21,7 +21,7 @@ module Kontena::Cli::Stacks
 
       def initialize(*args)
         super
-        @source = self.class.with_context(@source, parent)
+        @source = self.class.with_context(@source, @parent)
       end
 
       def read_content

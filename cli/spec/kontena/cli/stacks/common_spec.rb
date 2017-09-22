@@ -3,6 +3,10 @@ require "kontena/cli/stacks/yaml/reader"
 
 describe Kontena::Cli::Stacks::Common do
   include FixturesHelpers
+  include RequirementsHelper
+  include ClientHelpers
+
+  mock_current_master
 
   let(:klass) do
     Class.new(Kontena::Command) do
@@ -53,7 +57,7 @@ describe Kontena::Cli::Stacks::Common do
       expect(subject.instance(['-v', 'foo=bar', '-v', 'bar=baz', fixture_path('kontena_v3.yml')]).values_from_options).to match hash_including('foo' => 'bar', 'bar' => 'baz')
     end
 
-    context '--values-from' do
+    describe '--values-from' do
       before do
         allow(File).to receive(:exist?).with('vars.yml').and_return(true)
         expect(File).to receive(:read).with('vars.yml').and_return(::YAML.dump('baz' => 'bag', 'bar' => 'boo'))
@@ -66,6 +70,30 @@ describe Kontena::Cli::Stacks::Common do
       it 'includes values read from --values-from file, overriden by -v values' do
         expect(subject.instance(['-v', 'foo=bar', '-v', 'bar=baz', '--values-from', 'vars.yml', fixture_path('kontena_v3.yml')]).values_from_options).to match hash_including('foo' => 'bar', 'bar' => 'baz', 'baz' => 'bag')
       end
+    end
+
+    describe '--values-from-stack' do
+      let(:instance) { subject.instance(['--values-from-stack', 'redisproxy', fixture_path('kontena_v3.yml')]) }
+
+      it 'reads all dependent stack variables' do
+        expect(client).to receive(:get).with('stacks/test-grid/redisproxy').and_return(
+          'variables' => { 'foo' => 'bar' },
+          'children' => [ { 'name' => 'redisproxy-redis1' } ]
+        )
+
+        expect(client).to receive(:get).with('stacks/test-grid/redisproxy-redis1').and_return(
+          'variables' => { 'redisvar' => 'test' },
+          'children' => [ { 'name' => 'redisproxy-redis1-monitor' } ]
+        )
+
+        expect(client).to receive(:get).with('stacks/test-grid/redisproxy-redis1-monitor').and_return(
+          'variables' => { 'monitorvar' => 'test2' },
+          'children' => []
+        )
+
+        expect(instance.values_from_options).to match hash_including('foo' => 'bar', 'redis1.redisvar' => 'test', 'redis1.monitor.monitorvar' => 'test2')
+      end
+
     end
   end
 end
