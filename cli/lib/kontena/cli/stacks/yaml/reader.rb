@@ -173,11 +173,14 @@ module Kontena::Cli::Stacks
       # This variable can be used to interpolate for example a hostname to some environment variable:
       # environment:
       #   - "REDIS_HOST=redis.${REDIS}"
-      def create_dependency_variables(dependencies, name)
+      def create_dependency_variables(dependencies, name, prefix = "")
         return if dependencies.nil?
         dependencies.each do |options|
-          variables.build_option(name: options['name'].to_s, type: :string, value: "#{name}-#{options['name']}")
-          create_dependency_variables(options['depends'], "#{name}.#{options['name']}")
+          variables.build_option(
+            name: "#{"#{prefix}." unless prefix.empty?}#{options['name']}",
+            type: :string,
+            value: "#{name}-#{options['name']}")
+          create_dependency_variables(options['depends'], "#{name}-#{options['name']}", options['name'])
         end
       end
 
@@ -375,7 +378,7 @@ module Kontena::Cli::Stacks
           if row.strip.start_with?('interpolate:') || row.strip.start_with?('evaluate:')
             row
           else
-            row.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
+            row.gsub(/(?<!\$)\$(?!\$)\{?(?:\w|\.)+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
               var = v.tr('${}', '')
 
               if use_opto
