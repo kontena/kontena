@@ -62,7 +62,7 @@ module Kontena::Cli::Stacks
 
       removed_stacks.concat(old_names - new_names)
       added_stacks.concat(new_names - old_names)
-      upgraded_stacks.concat(new_names - added_stacks)
+      upgraded_stacks.concat(new_names & old_names)
 
       removed_stacks.each do |removed_stack|
         removed_services.concat(
@@ -89,7 +89,7 @@ module Kontena::Cli::Stacks
 
         removed_services.concat(old_services - new_services)
         added_services.concat(new_services - old_services)
-        upgraded_services.concat(new_services & added_services)
+        upgraded_services.concat(new_services & old_services)
       end
     end
   end
