@@ -26,7 +26,7 @@ module Kontena::Cli::Stacks
     def execute
       set_env_variables(stack_name, current_grid)
 
-      install_dependencies unless skip_dependencies?
+      values_from_installed_stacks.merge!(install_dependencies) unless skip_dependencies?
 
       stack # runs validations
 
@@ -36,12 +36,16 @@ module Kontena::Cli::Stacks
       dump_variables if values_to
 
       create_stack
+
       deploy_stack if deploy?
+
+      stack
     end
 
     def install_dependencies
       dependencies = loader.dependencies
-      return if dependencies.nil?
+      result = {}
+      return result if dependencies.nil?
       dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency['name']}"
         caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
@@ -54,14 +58,20 @@ module Kontena::Cli::Stacks
         cmd << '--no-deploy' unless deploy?
 
         cmd << dependency['stack']
-        Kontena.run!(cmd)
+        dependency_result = Kontena.run!(cmd)
+        dependency_result_variables = dependency_result['variables'] ||= {}
+        dependency_result_variables.each do |key, value|
+          result[dependency['name'] + '.' + key] = value
+        end
       end
+      result
     end
 
     def create_stack
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         client.post("grids/#{current_grid}/stacks", stack)
       end
+      stack
     end
 
     def deploy_stack
