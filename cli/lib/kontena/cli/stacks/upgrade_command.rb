@@ -86,20 +86,20 @@ module Kontena::Cli::Stacks
 
       unless changes.removed_services.empty?
         puts pastel.yellow("These services #{will} be removed from master:")
-        changes.removed_services.each { |svc| puts " - #{svc}" }
+        changes.removed_services.each { |svc| puts pastel.yellow(" - #{svc}") }
         puts
       end
 
       unless changes.added_services.empty?
-        puts "These new services #{will} be created to master:"
-        changes.added_services.each { |svc| puts " - #{svc}" }
+        puts pastel.green("These new services #{will} be created to master:")
+        changes.added_services.each { |svc| puts pastel.green(" - #{svc}") }
         puts
       end
 
       unless changes.upgraded_services.empty?
-        puts "These services #{will} be upgraded:"
+        puts pastel.cyan("These services #{will} be upgraded:")
         changes.upgraded_services.each do |svc|
-          puts "- #{svc}"
+          puts pastel.cyan("- #{svc}")
         end
         puts
       end
@@ -109,28 +109,27 @@ module Kontena::Cli::Stacks
 
       unless changes.removed_stacks.empty?
         puts pastel.red("These stacks #{will} be removed because they are no longer depended on:")
-        changes.removed_stacks.each { |stack| puts "- #{stack}" }
+        changes.removed_stacks.each { |stack| puts pastel.red("- #{stack}") }
         puts
       end
 
       unless changes.replaced_stacks.empty?
-        puts pastel.yellow("These stacks #{will} be replaced with other stacks:")
+        puts pastel.yellow("These stacks #{will} be replaced by other stacks:")
         changes.replaced_stacks.each do |installed_name, data|
-          puts "- #{installed_name} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}"
-          logger.debug { "- #{installed_name} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}" }
+          puts "- #{pastel.yellow(installed_name)} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}"
         end
         puts
       end
 
       unless changes.added_stacks.empty?
         puts pastel.red("These new stack dependencies #{will} be installed:")
-        changes.added_stacks.each { |stack| puts "- #{stack}" }
+        changes.added_stacks.each { |stack| puts pastel.red("- #{stack}") }
         puts
       end
 
       unless changes.upgraded_stacks.empty?
-        puts "These stacks #{will} be upgraded#{' and deployed' if deploy?}:"
-        changes.upgraded_stacks.each { |stack| puts "- #{stack}" }
+        puts pastel.cyan("These stacks #{will} be upgraded#{' and deployed' if deploy?}:")
+        changes.upgraded_stacks.each { |stack| puts pastel.cyan("- #{stack}") }
         puts
       end
 
