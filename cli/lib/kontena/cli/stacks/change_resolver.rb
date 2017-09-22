@@ -3,10 +3,6 @@ require_relative 'yaml/stack_file_loader'
 module Kontena::Cli::Stacks
   class ChangeResolver
 
-    def self.common
-      @common ||= Class.new { include Kontena::Cli::Common }.new
-    end
-
     attr_reader :old_data, :new_data
 
     # Creates a change analysis from two sets of stack data.
@@ -97,7 +93,7 @@ module Kontena::Cli::Stacks
 
         removed_services.concat(old_services - new_services)
         added_services.concat(new_services - old_services)
-        upgraded_services.concat(new_services - added_services)
+        upgraded_services.concat(new_services & added_services)
       end
     end
   end
