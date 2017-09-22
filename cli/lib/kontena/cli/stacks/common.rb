@@ -148,7 +148,7 @@ module Kontena::Cli::Stacks
         end
 
         def values_from_options
-          @values_from_options ||= values_from_installed_stacks.merge(values_from_file).merge(values_from_value_options)
+          values_from_installed_stacks.merge(values_from_file).merge(values_from_value_options)
         end
 
         # Transforms a hash
