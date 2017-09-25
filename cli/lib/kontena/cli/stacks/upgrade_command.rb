@@ -162,11 +162,9 @@ module Kontena::Cli::Stacks
     # requires heavier confirmation when something very dangerous is going to happen
     def get_confirmation(changes)
       unless force?
-        if changes.removed_services.empty? && changes.removed_stacks.empty? && changes.replaced_stacks.empty?
-          confirm
-        else
+        unless changes.removed_services.empty? && changes.removed_stacks.empty? && changes.replaced_stacks.empty?
           puts "#{pastel.red('Warning:')} This can not be undone, data will be lost."
-          confirm_command(stack_name)
+          confirm
         end
       end
     end
