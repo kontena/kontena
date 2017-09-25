@@ -27,26 +27,44 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
-    attr_reader :old_data, :new_data, :changes
-
+    # @return [Kontena::Cli::Stacks::ChangeResolver]
     def execute
       set_env_variables(stack_name, current_grid)
 
-      gather_data
-      process_data
-      display_report
+      old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
+        gather_master_data(stack_name)
+      end
+
+      new_data = spinner "Parsing #{pastel.cyan(source)}" do
+        loader.flat_dependencies(
+          stack_name,
+          variables: values_from_options
+        )
+      end
+
+      changes = process_data(old_data, new_data)
+
+      display_report(changes)
 
       return if dry_run?
 
-      get_confirmation
+      get_confirmation(changes)
 
-      run_removes
-      run_installs
-      run_upgrades
-      run_deploys if deploy?
+      run_removes(changes.removed_stacks)
+
+      deployable_stacks = []
+      deployable_stacks.concat run_installs(changes)
+      deployable_stacks.concat run_upgrades(changes)
+
+      run_deploys(deployable_stacks) if deploy?
+
+      changes
     end
 
+    private
+
     # Recursively fetch master data in StackFileLoader#flat_dependencies format
+    # @return [Hash{string => Hash}] stackname => hash
     def gather_master_data(stackname)
       response = fetch_master_data(stackname)
       children = response.delete('children') || []
@@ -57,8 +75,12 @@ module Kontena::Cli::Stacks
       result
     end
 
-    def process_data
-      caret "Analyzing upgrade"
+    # Preprocess data and return a ChangeResolver
+    # @param old_data [Hash] data from master
+    # @param new_data [Hash] data from files
+    # @return [Kontena::Cli::Stacks::ChangeRsolver]
+    def process_data(old_data, new_data)
+      caret "Analyzing upgrade" # not a spinner, because the stack executes can create prompts
       # Execute the local stacks
       new_data.reverse_each do |stackname, data|
         reader = data[:loader].reader
@@ -75,10 +97,10 @@ module Kontena::Cli::Stacks
 
       set_env_variables(stack_name, current_grid) # restore envs
 
-      @changes = Kontena::Cli::Stacks::ChangeResolver.new(old_data, new_data)
+      Kontena::Cli::Stacks::ChangeResolver.new(old_data, new_data)
     end
 
-    def display_report
+    def display_report(changes)
       will = dry_run? ? "would" : "will"
 
       puts "SERVICES:"
@@ -137,21 +159,8 @@ module Kontena::Cli::Stacks
       puts
     end
 
-    def gather_data
-      @old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
-        gather_master_data(stack_name)
-      end
-
-      @new_data = spinner "Parsing #{pastel.cyan(source)}" do
-        loader.flat_dependencies(
-          stack_name,
-          variables: values_from_options
-        )
-      end
-    end
-
     # requires heavier confirmation when something very dangerous is going to happen
-    def get_confirmation
+    def get_confirmation(changes)
       unless force?
         if changes.removed_services.empty? && changes.removed_stacks.empty? && changes.replaced_stacks.empty?
           confirm
@@ -166,15 +175,17 @@ module Kontena::Cli::Stacks
       @deployable_stacks ||= []
     end
 
-    def run_removes
-      changes.removed_stacks.reverse_each do |removed_stack|
+    def run_removes(removed_stacks)
+      removed_stacks.reverse_each do |removed_stack|
         Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
       end
     end
 
-    def run_installs
+    # @return [Array] an array of stack names that have been installed, but not yet deployed
+    def run_installs(changes)
+      deployable_stacks = []
       changes.added_stacks.reverse_each do |added_stack|
-        data = new_data[added_stack]
+        data = changes.new_data[added_stack]
         cmd = ['stack', 'install', '--name', added_stack, '--no-deploy']
         cmd.concat ['--parent-name', data[:parent_name]] if data[:parent_name]
         data[:variables].each do |k,v|
@@ -185,19 +196,24 @@ module Kontena::Cli::Stacks
         deployable_stacks << added_stack
         Kontena.run!(cmd)
       end
+      deployable_stacks
     end
 
-    def run_upgrades
+    # @return [Array] an array of stack names that have been upgraded, but not yet deployed
+    def run_upgrades(changes)
+      deployable_stacks = []
       changes.upgraded_stacks.reverse_each do |upgraded_stack|
-        data = new_data[upgraded_stack]
+        data = changes.new_data[upgraded_stack]
         spinner "Upgrading #{stack_name == upgraded_stack ? 'stack' : 'dependency'} #{pastel.cyan(upgraded_stack)}" do |spin|
           deployable_stacks << upgraded_stack
           update_stack(upgraded_stack, data[:stack_data]) || spin.fail!
         end
       end
+      deployable_stacks
     end
 
-    def run_deploys
+    # @param deployable_stacks [Array<String>] an array of stack names that should be deployed
+    def run_deploys(deployable_stacks)
       deployable_stacks.each do |deployable_stack|
         Kontena.run!(['stack', 'deploy', deployable_stack])
       end
