@@ -56,7 +56,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
     it 'requires confirmation when master stack is different than input stack' do
       expect(client).to receive(:get).with('stacks/test-grid/stack-b').and_return(stack_response.merge('stack' => 'foo/otherstack'))
-      expect(subject).to receive(:confirm_command).and_call_original
+      expect(subject).to receive(:confirm).and_call_original
       expect{subject.run(['stack-b', fixture_path('kontena_v3.yml')])}.to exit_with_error.and output(/- stack-b from foo\/otherstack to user\/stackname/).to_stdout
     end
 
@@ -109,7 +109,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
       context 'when a dependency has been removed' do
         it 'warns if a stack no longer in the dependency chain would be removed' do
-          expect(subject).to receive(:confirm_command).and_call_original
+          expect(subject).to receive(:confirm).and_call_original
           expect{subject.run(['--no-deploy', 'deptest', fixture_path('stack-with-dependencies-dep_2-removed.yml')])}.to exit_with_error.and output(/- deptest-dep_2.*data will be lost/m).to_stdout
         end
       end
