@@ -24,11 +24,14 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
+    # @return [Hash] yaml reader execute result hash
     def execute
       set_env_variables(stack_name, current_grid)
 
-      values_from_installed_stacks.merge!(install_dependencies) unless skip_dependencies?
-
+      unless skip_dependencies?
+        values_from_dependencies = install_dependencies
+        values_from_installed_stacks.merge!(values_from_dependencies)
+      end
 
       stack # runs validations
 
@@ -44,6 +47,7 @@ module Kontena::Cli::Stacks
       stack
     end
 
+    # @return [Hash{String => Hash}] A hash of hashes, first level key is dependent stack name, second level is variable name.
     def install_dependencies
       dependencies = loader.dependencies
       result = {}
