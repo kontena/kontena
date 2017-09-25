@@ -67,7 +67,7 @@ module Kontena::Cli::Stacks
 
         cmd << dependency['stack']
         dependency_result = Kontena.run!(cmd)
-        dependency_result_variables = dependency_result['variables'] ||= {}
+        dependency_result_variables = dependency_result['variables'] || {}
         dependency_result_variables.each do |key, value|
           result[dependency['name'] + '.' + key] = value
         end
