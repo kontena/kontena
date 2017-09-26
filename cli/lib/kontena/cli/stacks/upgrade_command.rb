@@ -50,13 +50,13 @@ module Kontena::Cli::Stacks
 
       get_confirmation(changes)
 
-      run_removes(changes.removed_stacks)
-
       deployable_stacks = []
       deployable_stacks.concat run_installs(changes)
       deployable_stacks.concat run_upgrades(changes)
 
       run_deploys(deployable_stacks) if deploy?
+
+      run_removes(changes.removed_stacks)
 
       changes
     end
