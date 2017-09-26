@@ -688,7 +688,8 @@ Accept: application/json
     "stack": "my/redis",
     "version": "0.1.0",
     "registry": "file://",
-    "services": []
+    "services": [],
+    "parent_name": "parent-stack-name"
 }
 ```
 
