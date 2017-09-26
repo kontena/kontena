@@ -80,8 +80,8 @@ module Kontena::Cli::Stacks
     # @param new_data [Hash] data from files
     # @return [Kontena::Cli::Stacks::ChangeRsolver]
     def process_data(old_data, new_data)
-      caret "Analyzing upgrade" # not a spinner, because the stack executes can create prompts
-      # Execute the local stacks
+      logger.debug { "Master stacks: #{old_data.keys.join(",")} YAML stacks: #{new_data.keys.join(",")}" }
+
       new_data.reverse_each do |stackname, data|
         reader = data[:loader].reader
         set_env_variables(stackname, current_grid) # set envs for execution time
@@ -97,7 +97,9 @@ module Kontena::Cli::Stacks
 
       set_env_variables(stack_name, current_grid) # restore envs
 
-      Kontena::Cli::Stacks::ChangeResolver.new(old_data, new_data)
+      spinner "Analyzing upgrade" do
+        Kontena::Cli::Stacks::ChangeResolver.new(old_data, new_data)
+      end
     end
 
     def display_report(changes)
