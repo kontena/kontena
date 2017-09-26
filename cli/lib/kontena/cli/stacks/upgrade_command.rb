@@ -103,6 +103,10 @@ module Kontena::Cli::Stacks
     end
 
     def display_report(changes)
+      if !dry_run? && changes.removed_stacks.empty? && changes.replaced_stacks.empty? && changes.upgraded_stacks.size == 1 && changes.removed_services.empty?
+        return
+      end
+
       will = dry_run? ? "would" : "will"
 
       puts "SERVICES:"
@@ -156,7 +160,6 @@ module Kontena::Cli::Stacks
         changes.upgraded_stacks.each { |stack| puts pastel.cyan("- #{stack}") }
         puts
       end
-
 
       puts
     end
