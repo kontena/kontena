@@ -582,6 +582,10 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "version": "0.1.0",
   "registry": "https://stack-registry.kontena.io",
   "expose": "peer",
+  "parent": { "name": "parent-stack-name" },
+  "children": [
+    { "name": "child-stack-name" }
+  ],
   "services": [
       {
           "name": "arbiter",
@@ -662,6 +666,8 @@ registry | A stack registry where stack schema is originally fetched
 expose | A service that stack exposes to grid level DNS namespace
 services | A list of stack services (see [services](#services) for more info)
 volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
+parent | Null or an object with "name" attribute if the stack is part of a dependency chain
+children | An array of objects with "name" attribute if the stack is part of a dependency chain
 
 ### Volume attributes
 
@@ -669,7 +675,6 @@ Attribute | Description
 ---------- | -------
 name  | Name of the volume within the stack
 external | Name of the grid level volume definition to use
-
 
 ## Create a stack
 
