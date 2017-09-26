@@ -76,6 +76,7 @@ module Kontena::Cli::Stacks
     end
 
     def tree_icon(row)
+      return '' unless $stdout.tty?
       parent = row['parent']
       children = row['children'] || []
       if parent.nil? && children.empty?
