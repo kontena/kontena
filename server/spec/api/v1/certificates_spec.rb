@@ -98,6 +98,7 @@ describe '/v1/certificates' do
       expect {
         delete "/v1/certificates/#{grid.name}/kontena.io", nil, request_headers
         expect(response.status).to eq(422)
+        expect(json_response['error']['certificate']).to match(/Certificate still in use/)
       }.not_to change{Certificate.count}
 
     end

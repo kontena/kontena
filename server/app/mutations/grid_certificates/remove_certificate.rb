@@ -13,7 +13,7 @@ module GridCertificates
 
     def validate
       services_using = certificate.grid.grid_services.where(:'certificates.subject' => certificate.subject).map { |s| s.to_path}
-      add_error(self.certificate.subject, :certificate_in_use, "Certificate still in use in services: #{services_using.join(',')}") if services_using.size > 0
+      add_error(:certificate, :certificate_in_use, "Certificate still in use in services: #{services_using.join(',')}") if services_using.size > 0
     end
 
     def execute
