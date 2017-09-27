@@ -37,4 +37,17 @@ class Certificate
     [self.subject] + self.alt_names.to_a
   end
 
+  # Checks if all domains are authorized with tls-sni, we can't automate anything else for now
+  # @return [Boolean]
+  def auto_renewable?
+    self.all_domains.each do |domain|
+      domain_auth = self.grid.grid_domain_authorizations.find_by(domain: domain)
+      unless domain_auth && domain_auth.authorization_type == 'tls-sni-01'
+        return false
+      end
+    end
+
+    true
+  end
+
 end
