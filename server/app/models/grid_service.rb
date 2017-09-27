@@ -101,6 +101,17 @@ class GridService
     self.stack.try(:name).to_s == Stack::NULL_STACK
   end
 
+  # @param [Integer] instance_number
+  # @return [String]
+  def instance_hostname(instance_number)
+    "#{self.name}-#{instance_number}"
+  end
+
+  # @return [String]
+  def domain
+    self.stack.domain
+  end
+
   # @param [String] state
   def set_state(state)
     state_changed = self.state != state

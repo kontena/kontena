@@ -120,17 +120,15 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         it 'merges validation errors' do
           expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_return(fixture('docker-compose-invalid.yml'))
           outcome = subject.execute
-          expect(outcome['errors']).to eq([{
-            'docker-compose_v2.yml' =>[
-              {
-                'services' => {
-                  'wordpress' => {
-                    'networks' => 'key not expected'
-                  }
-                }
-              }
-            ]
-          }])
+          expect(subject.errors).to match array_including(
+            hash_including(
+              'docker-compose_v2.yml' => array_including(
+                hash_including(
+                  'services' => { 'wordpress' => { 'networks' => 'key not expected' } }
+                )
+              )
+            )
+          )
         end
       end
 
@@ -324,7 +322,12 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'expands build option to absolute path' do
       outcome = subject.execute
-      expect(outcome['services']['webapp']['build']['context']).to eq(fixture_path(''))
+      expect(outcome['services']).to match array_including(
+        hash_including(
+          'name' => 'webapp',
+          'build' => hash_including('context' => fixture_path(''))
+        )
+      )
     end
   end
 
@@ -335,7 +338,12 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'expands build context to absolute path' do
       outcome = subject.execute
-      expect(outcome['services']['webapp']['build']['context']).to eq(fixture_path(''))
+      expect(outcome['services']).to match array_including(
+        hash_including(
+          'name' => 'webapp',
+          'build' => hash_including('context' => fixture_path(''))
+        )
+      )
     end
   end
 

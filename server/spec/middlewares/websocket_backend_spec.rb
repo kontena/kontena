@@ -108,6 +108,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       let(:rack_req) { instance_double(Rack::Request, env: {
         'HTTP_KONTENA_NODE_ID' => node_id,
         'HTTP_KONTENA_NODE_NAME' => node_name,
+        'HTTP_KONTENA_VERSION' => node_version,
       })}
 
       describe '#on_open' do
@@ -272,19 +273,13 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
-          expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
+          #expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
           expect(subject).to receive(:send_master_info).with(client_ws)
-          expect(subject.logger).to receive(:warn).with('reject websocket connection for node node-1: agent version 0.8.0 is not compatible with server version 0.9.1')
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: agent version 0.8.0 is not compatible with server version 0.9.1')
           expect(client_ws).to receive(:close).with(4010, 'agent version 0.8.0 is not compatible with server version 0.9.1')
 
-          host_node = nil
+          subject.on_open(client_ws, rack_req)
 
-          expect{
-            subject.on_open(client_ws, rack_req)
-          }.to change{host_node = grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
-
-          expect(host_node.status).to eq :offline
-          expect(host_node.websocket_error).to match /Websocket connection rejected at .* with code 4010: agent version 0.8.0 is not compatible with server version 0.9.1/
         end
       end
     end

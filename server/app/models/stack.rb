@@ -56,6 +56,15 @@ class Stack
     "#{self.grid.try(:name)}/#{self.name}"
   end
 
+  # @return [String]
+  def domain
+    if self.name == NULL_STACK
+      self.grid.domain
+    else
+      "#{self.name}.#{self.grid.domain}"
+    end
+  end
+
   # @return [Symbol]
   def state
     services = self.grid_services.to_a

@@ -21,7 +21,7 @@ describe '/v1/certificates' do
     AccessToken.create!(user: david, scopes: ['user'])
   end
 
-  let(:certificate) do
+  let!(:certificate) do
     Certificate.create!(
         grid: grid,
         subject: 'kontena.io',
@@ -63,7 +63,6 @@ describe '/v1/certificates' do
 
   describe 'GET /v1/grids/<grid>/certificates' do
     it 'gets all certs' do
-      certificate
       get "/v1/grids/#{grid.name}/certificates", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['certificates'].size).to eq(1)
@@ -73,7 +72,6 @@ describe '/v1/certificates' do
 
   describe 'GET /v1/certificates/<grid>/<subject>' do
     it 'gets a certificate' do
-      certificate
       get "/v1/certificates/#{grid.name}/kontena.io", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['subject']).to eq('kontena.io')
@@ -83,6 +81,32 @@ describe '/v1/certificates' do
     it '404 for non-existing cert' do
       get "/v1/certificates/#{grid.name}/foobar.io", nil, request_headers
       expect(response.status).to eq(404)
+    end
+  end
+
+  describe 'DELETE /v1/certificates/<grid>/<subject>' do
+    it 'deletes certificate' do
+      expect {
+        delete "/v1/certificates/#{grid.name}/kontena.io", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{Certificate.count}.by (-1)
+
+    end
+
+    it 'fails deleting certificate as it\'s in use' do
+      GridService.create!(grid: grid, name: 'redis', image_name: 'redis', certificates: [GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERT')])
+      expect {
+        delete "/v1/certificates/#{grid.name}/kontena.io", nil, request_headers
+        expect(response.status).to eq(422)
+        expect(json_response['error']['certificate']).to match(/Certificate still in use/)
+      }.not_to change{Certificate.count}
+
+    end
+
+    it 'return 404 for missing cert' do
+      delete "/v1/certificates/#{grid.name}/foobar.io", nil, request_headers
+      expect(response.status).to eq(404)
+      expect(json_response['error']).to eq('Not found')
     end
   end
 

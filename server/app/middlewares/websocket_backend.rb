@@ -187,8 +187,6 @@ class WebsocketBackend
     node_id = req.env['HTTP_KONTENA_NODE_ID']
     connected_at = nil
 
-    node = find_node(req)
-
     # check version
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
 
@@ -196,6 +194,8 @@ class WebsocketBackend
       send_master_info(ws)
       raise CloseError.new(4010), "agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
     end
+
+    node = find_node(req)
 
     # check clock after version check, because older agent versions do not send this header
     connected_at = Time.parse(req.env['HTTP_KONTENA_CONNECTED_AT'])
@@ -235,7 +235,7 @@ class WebsocketBackend
     end
 
     if node
-      # this only applies to the version/clock skew errors, not any of the early token -> node errors
+      # this only applies to the clock skew errors, not any of the early token -> node or version errors
       Agent::NodePlugger.new(node).reject!(connected_at, exc.code, exc.message)
     end
 

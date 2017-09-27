@@ -28,6 +28,8 @@ module Kontena::Cli::Stacks
 
       install_dependencies unless skip_dependencies?
 
+      stack # runs validations
+
       hint_on_validation_notifications(reader.notifications)
       abort_on_validation_errors(reader.errors)
 
@@ -42,11 +44,10 @@ module Kontena::Cli::Stacks
       return if dependencies.nil?
       dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency['name']}"
-        caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
+        caret "Installing dependency #{pastel.cyan(dependency['stack'])} as #{pastel.cyan(target_name)}"
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
         dependency['variables'].merge(dependency_values_from_options(dependency['name'])).each do |key, value|
-          next if key == 'PARENT_STACK'
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 

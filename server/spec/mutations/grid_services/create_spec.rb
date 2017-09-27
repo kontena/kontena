@@ -72,6 +72,29 @@ describe GridServices::Create do
       expect(outcome.errors.symbolic).to eq 'name' => :matches
     end
 
+    it 'does not allow a name that is too long' do
+      outcome = described_class.new(
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxxx39',
+        stateful: true
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxxx39-1.test-grid.kontena.local'
+    end
+
+    it 'does not allow a name that is too long for the number of instances' do
+      outcome = described_class.new(
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38',
+        stateful: true,
+        instances: 10
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38-10.test-grid.kontena.local'
+    end
+
     it 'does not allow duplicate name within a grid' do
       GridService.create!(name: 'redis', image_name: 'redis:latest', grid: grid)
       outcome = described_class.new(
@@ -542,6 +565,62 @@ describe GridServices::Create do
           stop_grace_period: 'foo'
       ).run
       expect(outcome).not_to be_success
+    end
+
+    context 'hooks' do
+      it 'saves post_start hooks' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          hooks: {
+            post_start: [
+              {
+                name: 'sleep', cmd: 'sleep 10', instances: 1, oneshot: true
+              }
+            ]
+          }
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.hooks.size).to eq(1)
+      end
+
+      it 'saves pre_start hooks' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          hooks: {
+            pre_start: [
+              {
+                name: 'sleep', cmd: 'sleep 10', instances: 1, oneshot: true
+              }
+            ]
+          }
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.hooks.size).to eq(1)
+      end
+
+      it 'saves pre_stop hooks' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          hooks: {
+            pre_stop: [
+              {
+                name: 'sleep', cmd: 'sleep 10', instances: 1, oneshot: true
+              }
+            ]
+          }
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.hooks.size).to eq(1)
+      end
     end
 
     context 'volumes' do

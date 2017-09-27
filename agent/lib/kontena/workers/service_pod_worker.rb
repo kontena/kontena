@@ -2,6 +2,7 @@ require_relative '../service_pods/creator'
 require_relative '../service_pods/starter'
 require_relative '../service_pods/stopper'
 require_relative '../service_pods/terminator'
+require_relative '../service_pods/migrator'
 require_relative '../helpers/event_log_helper'
 require_relative 'service_pod_manager'
 
@@ -19,13 +20,14 @@ module Kontena::Workers
     CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.0) # seconds
 
     attr_reader :node, :prev_state, :service_pod
-    attr_accessor :service_pod, :container_state_changed
+    attr_accessor :service_pod, :container_state_changed, :hook_manager
 
     # @param node [Node]
     # @param service_pod [ServicePod]
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
+      @hook_manager = Kontena::ServicePods::LifecycleHookManager.new(node)
       @prev_state = nil # last state sent to master; do not go backwards in time
       @container_state_changed = true
       @deploy_rev_changed = false
@@ -192,6 +194,9 @@ module Kontena::Workers
     def ensure_desired_state
       debug "state of #{service_pod.name}: #{service_pod.desired_state}"
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
+
+      migrate_container(service_container) if service_container
+
       if service_pod.running? && service_container.nil?
         info "creating #{service_pod.name}"
         ensure_running
@@ -222,7 +227,7 @@ module Kontena::Workers
 
     # @return [Docker::Container]
     def ensure_running
-      Kontena::ServicePods::Creator.new(service_pod).perform
+      Kontena::ServicePods::Creator.new(service_pod, hook_manager).perform
     rescue => exc
       log_service_pod_event(
         "service:create_instance",
@@ -233,9 +238,7 @@ module Kontena::Workers
     end
 
     def ensure_started
-      Kontena::ServicePods::Starter.new(
-        service_pod.service_id, service_pod.instance_number
-      ).perform
+      Kontena::ServicePods::Starter.new(service_pod, hook_manager).perform
     rescue => exc
       log_service_pod_event(
         "service:start_instance",
@@ -246,9 +249,7 @@ module Kontena::Workers
     end
 
     def ensure_stopped
-      Kontena::ServicePods::Stopper.new(
-        service_pod.service_id, service_pod.instance_number
-      ).perform
+      Kontena::ServicePods::Stopper.new(service_pod, hook_manager).perform
     rescue => exc
       log_service_pod_event(
         "service:stop_instance",
@@ -259,9 +260,7 @@ module Kontena::Workers
     end
 
     def ensure_terminated
-      Kontena::ServicePods::Terminator.new(
-        service_pod.service_id, service_pod.instance_number
-      ).perform
+      Kontena::ServicePods::Terminator.new(service_pod, hook_manager).perform
     rescue => exc
       log_service_pod_event(
         "service:remove_instance",
@@ -392,6 +391,12 @@ module Kontena::Workers
     # @param severity [Integer]
     def log_service_pod_event(type, data, severity = Logger::INFO)
       super(service_pod.service_id, service_pod.instance_number, type, data, severity)
+    end
+
+    # @param container [Docker::Container]
+    # @return [Docker::Container]
+    def migrate_container(container)
+      Kontena::ServicePods::Migrator.new(container).migrate
     end
   end
 end

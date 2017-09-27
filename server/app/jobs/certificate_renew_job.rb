@@ -34,7 +34,7 @@ class CertificateRenewJob
   end
 
   def renew_certificate(certificate)
-    if can_renew?(certificate)
+    if certificate.auto_renewable?
       info "certificate renewal needed for #{certificate.subject}"
       authorize_domains(certificate)
       request_new_cert(certificate)
@@ -42,18 +42,6 @@ class CertificateRenewJob
   rescue => exc
       error "Failed to renew certificate for #{certificate.subject}"
       error exc
-  end
-
-  # Checks if all domains are authorized with tls-sni, we can't automate anything else for now
-  def can_renew?(certificate)
-    certificate.all_domains.each do |domain|
-      domain_auth = certificate.grid.grid_domain_authorizations.find_by(domain: domain)
-      unless domain_auth && domain_auth.authorization_type == 'tls-sni-01'
-        return false
-      end
-    end
-
-    true
   end
 
   # Creates new authorizations for all the domains

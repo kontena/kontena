@@ -49,10 +49,10 @@ module Kontena::Cli::Stacks
       # @param without_defaults [TrueClass,FalseClass] strip the GRID, STACK, etc from response
       # @param without_vault [TrueClass,FalseClass] strip out any values that are going to or coming from VAULT
       # @return [Hash] a hash of key value pairs representing the values of stack variables
-      def variable_values(without_defaults: false, without_vault: false)
-        result = variables.to_h(values_only: true)
+      def variable_values(without_defaults: false, without_vault: false, with_errors: false)
+        result = variables.to_h(values_only: true, with_errors: with_errors)
         if without_defaults
-          result.delete_if { |k, _| default_envs.key?(k.to_s) }
+          result.delete_if { |k, _| default_envs.key?(k.to_s) || k.to_s == 'PARENT_STACK' }
         end
         if without_vault
           result.delete_if { |k, _| variables.option(k).from.include?('vault') || variables.option(k).to.include?('vault') }
@@ -201,21 +201,26 @@ module Kontena::Cli::Stacks
 
         validate unless skip_validation
 
-        {}.tap do |result|
-          Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
-            result['stack']         = raw_yaml['stack']
-            result['version']       = loader.stack_name.version || '0.0.1'
-            result['name']          = name
-            result['registry']      = loader.registry
-            result['expose']        = fully_interpolated_yaml['expose']
-            result['services']      = errors.empty? ? parse_services(service_name) : {}
-            result['volumes']       = errors.empty? ? parse_volumes : {}
-            result['dependencies']  = dependencies
-            result['source']        = raw_content
-            result['variables']     = variable_values(without_defaults: true, without_vault: true)
-            result['parent_name']   = parent_name
+        result = {}
+        Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
+          result['stack']         = raw_yaml['stack']
+          result['version']       = loader.stack_name.version || '0.0.1'
+          result['name']          = name
+          result['registry']      = loader.registry
+          result['expose']        = fully_interpolated_yaml['expose']
+          result['services']      = errors.empty? ? parse_services(service_name) : {}
+          result['volumes']       = errors.empty? ? parse_volumes : {}
+          result['dependencies']  = dependencies
+          result['source']        = raw_content
+          result['variables']     = variable_values(without_defaults: true, without_vault: true)
+          result['parent_name']   = parent_name
+        end
+        if service_name.nil?
+          result['services'].each do |service|
+            errors << { 'services' => { service['name'] => { 'image' => "image is missing" } } } if service['image'].to_s.empty?
           end
         end
+        result
       end
 
       # Returns an array of hashes containing the dependency tree starting from this file
@@ -317,7 +322,6 @@ module Kontena::Cli::Stacks
           service_config.delete('extends')
         end
         if name
-          exit_with_error("Image is missing for #{name}. Aborting.") unless service_config['image'] # why isn't this a validation?
           ServiceGeneratorV2.new(service_config).generate.merge('name' => name)
         else
           ServiceGeneratorV2.new(service_config).generate
@@ -345,10 +349,10 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        external_reader = Reader.new(filename)
+        external_reader = FileLoader.new(filename, loader).reader
         outcome = external_reader.execute(service_name)
-        errors.concat external_reader.errors unless errors.any? { |item| item.key?(filename) }
-        notifications.concat external_reader.notifications unless notifications.any? { |item| item.key?(filename) }
+        errors.concat external_reader.errors unless external_reader.errors.empty? || errors.include?(external_reader.errors)
+        notifications.concat external_reader.notifications unless external_reader.notifications.empty? || notifications.include?(external_reader.notifications)
         outcome['services']
       end
 
@@ -445,12 +449,11 @@ module Kontena::Cli::Stacks
       end
 
       def store_failures(data)
-        data['errors'] = data[:errors] unless data['errors']
-        data['notifications'] = data[:notifications] unless data['notifications']
-        errors << { file => data['errors'] || data[:errors] } unless data['errors'].empty?
-        notifications << { file => data['notifications'] } unless data['notifications'].empty?
+        data['errors'] ||= data[:errors] || []
+        data['notifications'] ||= data[:notifications] || []
+        errors << { File.basename(file) => data['errors'] } unless data['errors'].empty?
+        notifications << { File.basename(file) => data['notifications'] } unless data['notifications'].empty?
       end
-
 
       # @param [Hash] options - service config
       def normalize_env_vars(options)
