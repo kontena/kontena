@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Rpc::NodeVolumeHandler, celluloid: true do
+describe Rpc::NodeVolumeHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:node) { grid.create_node!('test-node', node_id: 'abc') }
