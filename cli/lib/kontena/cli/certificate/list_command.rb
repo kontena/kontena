@@ -15,7 +15,7 @@ module Kontena::Cli::Certificate
     THREE_DAYS = 3 * 24 * 60 * 60
 
     def fields
-      quiet? ? ['subject'] : {subject: 'subject', "expiration" => 'expires_in'}
+      quiet? ? ['subject'] : {subject: 'subject', "expiration" => 'expires_in', auto_renewable?: 'auto_renewable'}
     end
 
     def certificates
