@@ -99,7 +99,7 @@ module Kontena
         lines.each do |chunk|
           data = {
               id: id,
-              time: Time.now.utc.xmlschema,
+              time: Time.now.utc.xmlschema(6),
               type: type,
               data: chunk
           }
