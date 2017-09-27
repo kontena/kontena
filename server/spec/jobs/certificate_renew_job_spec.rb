@@ -29,18 +29,6 @@ describe CertificateRenewJob, celluloid: true do
     end
   end
 
-  describe '#can_renew?' do
-    it 'returns false if some domain not tls-sni authorized' do
-      GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'dns-01')
-      expect(subject.can_renew?(certificate)).to be_falsey
-    end
-
-    it 'returns true when all domains tls-sni authorized' do
-      GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01')
-      expect(subject.can_renew?(certificate)).to be_truthy
-    end
-  end
-
   describe '#authorize_domains' do
     it 'authorises domain succesfully' do
       domain_auth = GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: service)

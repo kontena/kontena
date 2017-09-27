@@ -49,8 +49,8 @@ module Kontena::Cli::Stacks
       # @param without_defaults [TrueClass,FalseClass] strip the GRID, STACK, etc from response
       # @param without_vault [TrueClass,FalseClass] strip out any values that are going to or coming from VAULT
       # @return [Hash] a hash of key value pairs representing the values of stack variables
-      def variable_values(without_defaults: false, without_vault: false)
-        result = variables.to_h(values_only: true)
+      def variable_values(without_defaults: false, without_vault: false, with_errors: false)
+        result = variables.to_h(values_only: true, with_errors: with_errors)
         if without_defaults
           result.delete_if { |k, _| default_envs.key?(k.to_s) || k.to_s == 'PARENT_STACK' }
         end

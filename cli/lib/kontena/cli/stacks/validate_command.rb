@@ -30,7 +30,6 @@ module Kontena::Cli::Stacks
         cmd.concat ['--parent-name', stack_name]
 
         dependency['variables'].merge(dependency_values_from_options(dependency['name'])).each do |key, value|
-          next if key == 'PARENT_STACK'
           cmd.concat ['-v', "#{key}=#{value}"]
         end
         cmd << dependency['stack']
@@ -58,8 +57,11 @@ module Kontena::Cli::Stacks
 
       dump_variables if values_to
 
-      result = reader.fully_interpolated_yaml.merge(
-        'variables' => Kontena::Util.stringify_keys(reader.variables.to_h(with_values: true, with_errors: true))
+      result = stack.reject { |k, _| k == 'source' }
+      result.merge!(
+        'variables' => Kontena::Util.stringify_keys(
+          reader.variable_values(without_defaults: true, without_vault: true, with_errors: true)
+        )
       )
       if dependencies?
         puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source}")

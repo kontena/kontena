@@ -43,6 +43,11 @@ module Kontena::Cli::Stacks
         @parent = parent
       end
 
+      # @return [String] a stripped down version of inspect without all the yaml source
+      def inspect
+        "#<#{self.class.name}:#{object_id} @source=#{source.inspect} @parent=#{parent.nil? ? 'nil' : parent.source}>"
+      end
+
       # @return [Hash] a hash parsed from the YAML content
       def yaml
         @yaml ||= ::YAML.safe_load(content, [], [], true, source)
@@ -75,20 +80,70 @@ module Kontena::Cli::Stacks
       # @return [Array<Hash>] an array of hashes ('name', 'stack', 'variables', and 'depends')
       def dependencies(recurse: true)
         return @dependencies if @dependencies
-        depends = yaml['depends']
         if depends.nil? || depends.empty?
           @dependencies = nil
         else
           @dependencies = depends.map do |name, dependency|
-            reader = StackFileLoader.for(dependency['stack'], self)
-            deps = { 'name' => name, 'stack' => reader.source, 'variables' => dependency.fetch('variables', Hash.new) }
+            loader = StackFileLoader.for(dependency['stack'], self)
+            deps = { 'name' => name, 'stack' => loader.source, 'variables' => dependency.fetch('variables', Hash.new) }
             if recurse
-              child_deps = reader.dependencies
+              child_deps = loader.dependencies
               deps['depends'] = child_deps unless child_deps.nil?
             end
             deps
           end
         end
+      end
+
+      def to_h
+        {
+          'stack' => stack_name.stack_name,
+          :loader => self,
+        }
+      end
+
+      # Returns a non nested hash of all dependencies.
+      # Processes :variables hash and moves the related variables to children
+      #
+      # @param basename [String] installed stack name
+      # @param opts [Hash] extra data such as variable lists
+      # @return [Hash] { installation_name => { 'name' => installation-name, 'stack' => stack_name, :loader => self }, child_install_name => { ... } }
+      def flat_dependencies(basename, opts = {})
+        opt_variables = opts[:variables] || {}
+
+        result = {
+          basename => self.to_h.merge(opts).merge(
+            name: basename,
+            variables: opt_variables.reject { |k, _| k.include?('.') }
+          )
+        }
+
+        depends.each do |as_name, data|
+          variables = {}
+
+          opt_variables.select { |k, _| k.start_with?(as_name + '.') }.each do |k,v|
+            variables[k.split('.', 2).last] = v
+          end
+
+          data['variables'] ||= {}
+
+          loader = StackFileLoader.for(data['stack'], self)
+          result.merge!(
+           loader.flat_dependencies(
+             basename + '-' + as_name,
+             variables: data['variables'].merge(variables),
+             parent_name: basename
+           )
+          )
+        end
+
+        result
+      end
+
+      private
+
+      def depends
+        yaml['depends'] || {}
       end
     end
   end
