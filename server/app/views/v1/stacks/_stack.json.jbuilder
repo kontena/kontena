@@ -16,11 +16,13 @@ json.services stack.grid_services.to_a do |grid_service|
   json.partial! 'app/views/v1/grid_services/grid_service', grid_service: grid_service
 end
 
-json.parent do
-  if stack.has_parent?
+if stack.has_parent?
+  json.parent do
     json.id stack.parent.to_path
     json.name stack.parent.name
   end
+else
+  json.parent nil
 end
 
 json.children(stack.children) do |child_stack|
