@@ -38,7 +38,9 @@ module Kontena::Cli::Stacks
     end
 
     def execute
-      unless online?
+      if online?
+        set_env_variables(stack_name, require_current_grid)
+      else
         config.current_master = nil
         set_env_variables(stack_name, 'validate', 'validate-platform')
       end

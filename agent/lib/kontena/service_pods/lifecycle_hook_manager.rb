@@ -130,7 +130,7 @@ module Kontena
       def log_hook_output(id, line, type)
         data = [{
           id: id,
-          time: Time.now.utc.xmlschema,
+          time: Time.now.utc.xmlschema(6),
           type: type,
           data: line
         }]

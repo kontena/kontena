@@ -89,7 +89,7 @@ describe '/v1/stacks', celluloid: true do
 
     context 'nested stacks' do
 
-      let(:child_stack_1) do
+      let!(:child_stack_1) do
         outcome = Stacks::Create.run(
           current_user: david,
           grid: grid,
@@ -108,7 +108,7 @@ describe '/v1/stacks', celluloid: true do
         outcome.result
       end
 
-      let(:child_stack_1_2) do
+      let!(:child_stack_1_2) do
         outcome = Stacks::Create.run(
           current_user: david,
           grid: grid,
@@ -127,7 +127,7 @@ describe '/v1/stacks', celluloid: true do
         outcome.result
       end
 
-      let(:child_stack_2) do
+      let!(:child_stack_2) do
         outcome = Stacks::Create.run(
           current_user: david,
           grid: grid,
@@ -146,22 +146,28 @@ describe '/v1/stacks', celluloid: true do
         outcome.result
       end
 
-      before { [child_stack_1, child_stack_1_2, child_stack_2].map(&:inspect) }
-
       it 'returns stack json including parent names' do
         get "/v1/stacks/#{child_stack_1.to_path}", nil, request_headers
-        expect(json_response['parent']).to match hash_including('name' => stack.name)
+        expect(json_response['parent']).to match hash_including('name' => stack.name, 'id' => "#{stack.grid.name}/#{stack.name}")
+      end
+
+      context 'when parent stack does not exist' do
+        it 'returns stack json with parent name excluding parent id' do
+          child_stack_1.destroy
+          get "/v1/stacks/#{child_stack_1_2.to_path}", nil, request_headers
+          expect(json_response['parent']).to match hash_including('name' => 'child-stack-1', 'id' => nil)
+        end
       end
 
       it 'returns stack json including children names' do
         get "/v1/stacks/#{stack.to_path}", nil, request_headers
         expect(json_response['children']).to match array_including(
-          hash_including('name' => child_stack_1.name),
-          hash_including('name' => child_stack_2.name)
+          hash_including('name' => child_stack_1.name, 'id' => "#{child_stack_1.grid.name}/#{child_stack_1.name}"),
+          hash_including('name' => child_stack_2.name, 'id' => "#{child_stack_2.grid.name}/#{child_stack_2.name}"),
         )
         get "/v1/stacks/#{child_stack_1.to_path}", nil, request_headers
         remove_instance_variable(:@json_response)
-        expect(json_response['children']).to match [ hash_including('name' => child_stack_1_2.name) ]
+        expect(json_response['children']).to match [ hash_including('name' => child_stack_1_2.name, 'id' => "#{child_stack_1_2.grid.name}/#{child_stack_1_2.name}") ]
       end
     end
   end
