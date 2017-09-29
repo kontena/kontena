@@ -155,7 +155,7 @@ describe '/v1/stacks', celluloid: true do
         it 'returns stack json with parent name excluding parent id' do
           child_stack_1.destroy
           get "/v1/stacks/#{child_stack_1_2.to_path}", nil, request_headers
-          expect(json_response['parent']).to match hash_including('name' => 'child-stack-1-2', 'id' => nil)
+          expect(json_response['parent']).to match hash_including('name' => 'child-stack-1', 'id' => nil)
         end
       end
 
