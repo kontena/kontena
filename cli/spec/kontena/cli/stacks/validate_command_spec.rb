@@ -18,6 +18,13 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
       expect{Kontena.run!('stack', 'validate', fixture_path('kontena_v3.yml'))}.not_to exit_with_error
       expect{Kontena.run!('stack', 'validate', fixture_path('kontena_v3.yml'))}.to output(/stack:.*version:.*services:.*variables:/m).to_stdout
     end
+
+    context '--online' do
+      it 'validates a yaml file' do
+        expect{Kontena.run!('stack', 'validate', '--online', fixture_path('kontena_v3.yml'))}.to output(/stack:.*version:.*services:.*variables:/m).to_stdout
+      end
+    end
+
   end
 
   context 'with dependencies' do
