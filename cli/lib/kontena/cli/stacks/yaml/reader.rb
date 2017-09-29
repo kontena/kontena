@@ -183,16 +183,25 @@ module Kontena::Cli::Stacks
         loader.origin == 'file'
       end
 
+      def set_variable_defaults_as_values
+        variables.each do |variable|
+          variable.set(variable.default) unless variable.default.nil?
+        end
+      end
+
       # @param [String] service_name (set when using extends)
       # @param name [String] override stackname (default is to parse it from the YAML, but if you set it through -n it needs to be overriden)
       # @param parent_name [String] parent stack name
       # @param skip_validation [Boolean] skip running validations
       # @param values [Hash] force-set variable values using variable_name => variable_value key pairs
       # @param defaults [Hash] set variable defaults from variable_name => variable_value key pairs
+      # @param use_defaults_as_values [TrueClass,FalseClass] set variable values from variable defaults when true
       # @return [Hash]
-      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil)
+      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil, use_defaults_as_values: false)
         set_variable_defaults(defaults) if defaults
         set_variable_values(values) if values
+        set_variable_defaults_as_values if use_defaults_as_values
+
         create_dependency_variables(dependencies, name)
         create_parent_variable(parent_name) if parent_name
 
