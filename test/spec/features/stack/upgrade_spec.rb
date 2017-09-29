@@ -45,6 +45,8 @@ describe 'stack upgrade' do
 
   context "for a stack that is linked to externally" do
     before(:each) do
+      run 'kontena service rm --force external-linking-service'
+      run 'kontena stack rm --force links-external-linked'
       with_fixture_dir("stack/links") do
         k = run 'kontena stack install external-linked_1.yml'
         expect(k.code).to eq(0), k.out
@@ -61,7 +63,7 @@ describe 'stack upgrade' do
       expect(k.code).to eq(0), k.out
 
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack upgrade --no-deploy links-external-linked external-linked_2.yml'
+        k = run 'kontena stack upgrade --force --no-deploy links-external-linked external-linked_2.yml'
         expect(k.code).to_not eq(0), k.out
         expect(k.out).to match /Cannot delete service that is linked to another service/
       end
