@@ -150,8 +150,8 @@ module Kontena::Cli::Stacks
       end
 
       unless changes.added_stacks.empty?
-        puts pastel.red("These new stack dependencies #{will} be installed:")
-        changes.added_stacks.each { |stack| puts pastel.red("- #{stack}") }
+        puts pastel.green("These new stack dependencies #{will} be installed:")
+        changes.added_stacks.each { |stack| puts pastel.green("- #{stack}") }
         puts
       end
 
