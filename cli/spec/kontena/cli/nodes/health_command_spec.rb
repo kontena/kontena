@@ -4,8 +4,11 @@ describe Kontena::Cli::Nodes::HealthCommand do
   include ClientHelpers
   include OutputHelpers
 
+  let(:connected_at) { (Time.now - 50.0).to_s }
+
   before do
     allow(subject).to receive(:health_icon) {|health| health.inspect }
+    allow(subject).to receive(:time_since).with(connected_at).and_return('50s')
   end
 
   context "for an online node" do
@@ -15,7 +18,7 @@ describe Kontena::Cli::Nodes::HealthCommand do
         "node_number" => 4,
         "initial_member" => false,
         'status' => 'online',
-        'connected_at' => (Time.now - 50.0).to_s,
+        'connected_at' => connected_at,
         "connected" => true,
         'etcd_health' => {
           'health' => true,
@@ -61,7 +64,7 @@ describe Kontena::Cli::Nodes::HealthCommand do
         "node_number" => 1,
         "initial_member" => true,
         'status' => 'online',
-        'connected_at' => (Time.now - 50.0).to_s,
+        'connected_at' => connected_at,
         "connected" => true,
         'etcd_health' => {
           'health' => true,
@@ -89,7 +92,7 @@ describe Kontena::Cli::Nodes::HealthCommand do
         "node_number" => 4,
         "initial_member" => false,
         'status' => 'online',
-        'connected_at' => (Time.now - 50.0).to_s,
+        'connected_at' => connected_at,
         "connected" => true,
         'etcd_health' => {
           'health' => false,
