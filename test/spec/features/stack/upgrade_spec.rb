@@ -3,14 +3,16 @@ require 'spec_helper'
 describe 'stack upgrade' do
   context 'from file' do
     before(:each) do
+      run 'kontena stack rm --force redis'
+      run 'kontena stack rm --force links-external-linked'
       with_fixture_dir("stack/upgrade") do
-        k = run 'kontena stack install version1.yml'
-        expect(k.code).to eq(0)
+        run 'kontena stack install version1.yml'
       end
     end
 
     after(:each) do
       run 'kontena stack rm --force redis'
+      run 'kontena stack rm --force links-external-linked'
     end
 
     it 'upgrades a stack' do
@@ -36,13 +38,15 @@ describe 'stack upgrade' do
         end
         k.run
         expect(k.code).to eq(1)
-        expect(k.out).to match /Replacing stack.*Are you sure\?.*Aborted command/m
+        expect(uncolorize(k.out)).to match /redis from test\/redis to test\/notredis.*Aborted command/m
       end
     end
   end
 
   context "for a stack that is linked to externally" do
     before(:each) do
+      run 'kontena service rm --force external-linking-service'
+      run 'kontena stack rm --force links-external-linked'
       with_fixture_dir("stack/links") do
         k = run 'kontena stack install external-linked_1.yml'
         expect(k.code).to eq(0), k.out
@@ -59,7 +63,7 @@ describe 'stack upgrade' do
       expect(k.code).to eq(0), k.out
 
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack upgrade --no-deploy links-external-linked external-linked_2.yml'
+        k = run 'kontena stack upgrade --force --no-deploy links-external-linked external-linked_2.yml'
         expect(k.code).to_not eq(0), k.out
         expect(k.out).to match /Cannot delete service that is linked to another service/
       end
@@ -67,7 +71,7 @@ describe 'stack upgrade' do
 
     it 'fails to deploy if linked' do
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack upgrade --no-deploy links-external-linked external-linked_2.yml'
+        k = run 'kontena stack upgrade --force --no-deploy links-external-linked external-linked_2.yml'
         expect(k.code).to eq(0), k.out
       end
 
