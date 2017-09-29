@@ -18,8 +18,8 @@ end
 
 if stack.has_parent?
   json.parent do
-    json.id stack.parent.to_path
-    json.name stack.parent.name
+    json.id stack.parent.try(:to_path)
+    json.name stack.parent_name
   end
 else
   json.parent nil
