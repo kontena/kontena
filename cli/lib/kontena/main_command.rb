@@ -28,7 +28,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "certificate", "LE Certificate specific commands", load_subcommand('certificate_command')
   subcommand "registry", "Registry specific commands", load_subcommand('registry_command')
   subcommand "external-registry", "External registry specific commands", load_subcommand('external_registry_command')
-  subcommand "volume", "Volume specific commands [EXPERIMENTAL]", load_subcommand('volume_command')
+  subcommand "volume", "Volume specific commands", load_subcommand('volume_command')
   subcommand "plugin", "Plugin specific commands", load_subcommand('plugin_command')
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
   subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
