@@ -58,7 +58,7 @@ module Rpc
       return nil unless container
 
       if data['time']
-        created_at = Time.parse(data['time'])
+        created_at = Time.xmlschema(data['time'])
       else
         created_at = Time.now.utc
       end
