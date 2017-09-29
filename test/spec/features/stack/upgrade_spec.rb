@@ -3,14 +3,16 @@ require 'spec_helper'
 describe 'stack upgrade' do
   context 'from file' do
     before(:each) do
+      run 'kontena stack rm --force redis'
+      run 'kontena stack rm --force links-external-linked'
       with_fixture_dir("stack/upgrade") do
-        k = run 'kontena stack install version1.yml'
-        expect(k.code).to eq(0)
+        run 'kontena stack install version1.yml'
       end
     end
 
     after(:each) do
       run 'kontena stack rm --force redis'
+      run 'kontena stack rm --force links-external-linked'
     end
 
     it 'upgrades a stack' do
@@ -36,7 +38,7 @@ describe 'stack upgrade' do
         end
         k.run
         expect(k.code).to eq(1)
-        expect(k.out).to match /Replacing stack.*Are you sure\?.*Aborted command/m
+        expect(uncolorize(k.out)).to match /redis from test\/redis to test\/notredis.*Aborted command/m
       end
     end
   end
