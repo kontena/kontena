@@ -19,13 +19,14 @@ class HostNodeSerializer < KontenaJsonSerializer
   attribute :agent_version
   attribute :docker_version
   attribute :peer_ips
+  attribute :node_id
   attribute :node_number
   attribute :initial_member
   attribute :grid
   attribute :resource_usage
 
   def id
-    object.node_id
+    object.to_path
   end
 
   def last_seen_at
