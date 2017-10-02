@@ -33,6 +33,12 @@ namespace :release do
     headline "Building Docker image for Ubuntu package builds ..."
     sh("docker build -t #{UBUNTU_IMAGE} -f build/Dockerfile.ubuntu .")
   end
+  task :setup_cli_omnibus do
+    headline "Setting up CLI omnibus..."
+    Dir.chdir('cli') do
+      sh("rake release:setup_omnibus")
+    end
+  end
 
   task :build => [
     :setup,
@@ -72,6 +78,12 @@ namespace :release do
   task :package_ubuntu => [
     :setup, :setup_ubuntu, :package_ubuntu_server, :package_ubuntu_agent
   ]
+
+  task :package_ubuntu_cli do
+    Dir.chdir('cli') do
+      sh("rake release:build_omnibus")
+    end
+  end
 
   task :package_ubuntu_server do
     sh("docker run -it --rm -w /build/server -v #{Dir.pwd}/server/release:/build/server/release #{UBUNTU_IMAGE} rake release:build_ubuntu REV=#{PKG_REV}")
@@ -124,6 +136,12 @@ namespace :release do
     :push_ubuntu_server,
     :push_ubuntu_agent
   ]
+
+  task :push_ubuntu_cli do
+    Dir.chdir('cli') do
+      sh("rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
+    end
+  end
 
   task :push_ubuntu_server do
     Dir.chdir('server') do
