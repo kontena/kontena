@@ -36,7 +36,8 @@ module Kontena
         end
 
         def print_table(array, fields = nil, &block)
-          puts generate_table(array, fields, &block)
+          output = generate_table(array, fields, &block)
+          puts output unless output.strip.empty?
         end
       end
 
@@ -68,7 +69,7 @@ module Kontena
 
       def render
         if data.empty?
-          fields.map(&method(:format_header_item)).join('  ')
+          fields.size > 1 ? fields.map(&method(:format_header_item)).join('  ') : ''
         else
           table.render(render_mode, render_options).gsub(/\s+$/, '')
         end
