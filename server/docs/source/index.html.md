@@ -584,7 +584,7 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "expose": "peer",
   "parent": {
     "name": "parent-stack-name",
-    "id": "my-grid/parent-stack-name"
+    "id": "my-grid/parent-stack-name" # null when parent does not exist
   },
   "children": [
     {
