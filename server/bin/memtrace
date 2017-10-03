@@ -3,6 +3,7 @@
 require 'optparse'
 require 'json'
 require 'logger'
+require 'set'
 
 $logger = Logger.new(STDERR)
 $logger.level = Logger::INFO
@@ -143,21 +144,22 @@ class ObjGraph
     @targets << obj
   end
 
-  def walk(obj, depth: 0, stack: [], &block)
+  def walk(obj, depth: 0, visited: Set.new, &block)
     addr = obj[:address]
 
-    if stack.include? addr
-      yield obj, depth: depth, recursive: true
-    elsif root = from_root?(obj)
+    if visited.include? addr
+      yield obj, depth: depth, visited: true
+      return
+    else
+      visited.add addr
       yield obj, depth: depth
+    end
+
+    if root = from_root?(obj)
       yield root, depth: depth + 1 # reachable from root; do not resolve further references
     else
-      yield obj, depth: depth
-
-      stack = stack + [addr]
-
       for ref in @references_to[addr]
-        walk(ref, depth: depth + 1, stack: stack, &block)
+        walk(ref, depth: depth + 1, visited: visited, &block)
       end
     end
   end
@@ -190,9 +192,13 @@ class Options
   end
 end
 
-def trace(graph, target)
-  graph.walk(target) do |obj, depth: , recursive: false|
-    puts "#{"\t" * depth}#{recursive ? '...' : ''}#{obj.render(class_obj: graph.resolve_class(obj))} -- #{obj.source}"
+def trace(graph, *targets)
+  visited = Set.new
+
+  for target in targets
+    graph.walk(target, visited: visited) do |obj, depth: , visited: false|
+      puts "#{"\t" * depth}#{visited ? '...' : ''}#{obj.render(class_obj: graph.resolve_class(obj))} -- #{obj.source}"
+    end
   end
 end
 
@@ -202,6 +208,4 @@ graph = ObjGraph.load(options.dump_file,
   type: options.type,
 )
 
-for target in graph.targets
-  trace(graph, target)
-end
+trace(graph, *graph.targets)
