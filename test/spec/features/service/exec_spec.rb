@@ -79,19 +79,25 @@ describe 'service exec' do
     end
 
     # RuntimeError : stdin read JSON::GeneratorError: partial character in source, but hit end
-    pending 'runs a command with UTF-8 input across block boundries' do
+    pending 'runs a command with chunked UTF-8 input' do
       k = kommando("kontena service exec -it test-1 sh")
 
       k.out.on("#") do
-        # with an odd number of bytes in the 'echo ', the 2-byte UTF-8 chars will get split across the 1024-byte chunk boundary
-        k.in << "echo #{"\u00e5"*512}\r"
+        data = "echo f\u00e5\u00e5\r"
+
+        # write slowly, one byte at a time
+        data.encode('UTF-8').force_encoding('ASCII-8BIT').each_char do |c|
+          k.in << c
+          sleep 0.05
+        end
+
         k.out.on("#") do
           k.in << "exit\r"
         end
       end
 
       expect(k.run).to be_truthy
-      expect(k.out).to match /^\u00e5{512}$/
+      expect(k.out).to match /^echo f\u00e5\u00e5$/ # XXX: fails on the invalid UTF-8 byte sequence
     end
   end
 
