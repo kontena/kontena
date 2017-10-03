@@ -41,9 +41,9 @@ module Kontena::Cli::Helpers
             chunk = io.readpartial(1024)
 
             # STDIN.raw does not use the ruby external_encoding, it returns binary strings (ASCII-8BIT encoding)
-            # however, we use websocket text frames with JSON, which encodes as UTF-8, and does not handle arbitrary binary data
-            # assume stdin input is valid UTF-8... the JSON.dump will fail if not.
-            chunk.force_encoding(Encoding::UTF_8)
+            # however, we use websocket text frames with JSON, which expects unicode strings encodable as UTF-8, and does not handle arbitrary binary data
+            # assume all stdin input is using ruby's external_encoding... the JSON.dump will fail if not.
+            chunk.force_encoding(Encoding.default_external)
 
             yield chunk
           end
