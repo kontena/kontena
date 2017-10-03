@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
 
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
+    include Common::NoPromptOption
 
     option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
@@ -52,6 +53,7 @@ module Kontena::Cli::Stacks
         end
 
         cmd << '--no-deploy' unless deploy?
+        cmd << '--no-prompt' unless use_prompt?
 
         cmd << dependency['stack']
         Kontena.run!(cmd)

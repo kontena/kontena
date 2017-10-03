@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
 
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
+    include Common::NoPromptOption
 
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
 
@@ -194,6 +195,7 @@ module Kontena::Cli::Stacks
         data[:variables].each do |k,v|
           cmd.concat ['-v', "#{k}=#{v}"]
         end
+        cmd << '--no-prompt' unless use_prompt?
         cmd << data[:loader].source
         caret "Installing new dependency #{cmd.last} as #{added_stack}"
         deployable_stacks << added_stack

@@ -178,6 +178,13 @@ module Kontena::Cli::Stacks
         variables.build_option(name: 'PARENT_STACK', type: :string, value: parent_name)
       end
 
+      # Removes any `from: prompt` entries from variables
+      def disable_prompts
+        variables.each do |option|
+          option.from.delete_if { |k,_| k.to_s == 'prompt' }
+        end
+      end
+
       # @return [Boolean] did this stack come from a local file?
       def from_file?
         loader.origin == 'file'
@@ -189,8 +196,10 @@ module Kontena::Cli::Stacks
       # @param skip_validation [Boolean] skip running validations
       # @param values [Hash] force-set variable values using variable_name => variable_value key pairs
       # @param defaults [Hash] set variable defaults from variable_name => variable_value key pairs
+      # @param prompt [Boolean] set to false to disable prompting
       # @return [Hash]
-      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil)
+      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil, prompt: true)
+        disable_prompts if !prompt
         set_variable_defaults(defaults) if defaults
         set_variable_values(values) if values
         create_dependency_variables(dependencies, name)

@@ -62,6 +62,21 @@ describe Kontena::Cli::Stacks::InstallCommand do
       subject.run(['--no-deploy', 'user/stack:1.0.0'])
     end
 
+    context '--no-prompt' do
+      it 'exits with error when there is no default value' do
+        expect(Kontena).not_to receive(:prompt)
+        expect{subject.run(['--no-prompt', '--no-deploy', fixture_path('stack-with-prompt-and-default.yml')])}.to exit_with_error.and output(/Required value/).to_stderr
+      end
+
+      it 'does not prompt when there are default values' do
+        expect(Kontena).not_to receive(:prompt)
+        expect(client).to receive(:post) do |path, data|
+          expect(data['services'].first['cmd']).to match array_including("Hello, foomeister")
+        end
+        subject.run(['--no-prompt', '-v', 'target=foomeister', '--no-deploy', fixture_path('stack-with-prompt-and-default.yml')])
+      end
+    end
+
     context '--[no-]deploy' do
       it 'runs deploy for the stack after install by default' do
         expect(client).to receive(:post).with(
