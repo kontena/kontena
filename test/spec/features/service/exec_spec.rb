@@ -36,22 +36,61 @@ describe 'service exec' do
     expect(k.code).to eq(126)
   end
 
-  it 'runs a command inside a service with tty' do
-    k = kommando("kontena service exec -it test-1 sh")
+  describe '--tty' do
+    it 'runs a command inside a service' do
+      k = kommando("kontena service exec -it test-1 sh")
 
-    k.out.on("#") do
-      k.in << "ls -la /\r"
-      k.out.on "lib64" do
-        k.in << "exit\r"
+      k.out.on("#") do
+        k.in << "ls -la /\r"
+        k.out.on "lib64" do
+          k.in << "exit\r"
+        end
       end
+      expect(k.run).to be_truthy
     end
-    expect(k.run).to be_truthy
+
+    it 'runs a command with tty control input' do
+      k = kommando("kontena service exec -it test-1 sh")
+
+      k.out.on("#") do
+        k.in << "sleep 10 && echo ok\r"
+        sleep 0.1
+        k.in << "\x03"
+        sleep 0.1
+        k.in << "\x04"
+      end
+
+      expect(k.run).to be_truthy
+      expect(k.out).to match /\^C/
+    end
+
+    it 'runs a command with non-ascii input' do
+      k = kommando("kontena service exec -it test-1 sh")
+
+      k.out.on("#") do
+        k.in << "echo f\u00e5\u00e5 | LANG=C.UTF-8 rev\r"
+        k.out.on("#") do
+          k.in << "exit\r"
+        end
+      end
+
+      expect(k.run).to be_truthy
+      expect(k.out).to match /\u00e5\u00e5f/
+    end
   end
 
-  it 'runs a command with piped stdin' do
-    k = kommando("$ echo beer | kontena service exec -i test-1 rev")
-    expect(k.run).to be_truthy
-    expect(k.out).to eq('reeb')
+  describe '--interactive' do
+    it 'runs a command with piped stdin' do
+      k = kommando("$ echo beer | kontena service exec -i test-1 rev")
+      expect(k.run).to be_truthy
+      expect(k.out).to eq('reeb')
+    end
+
+    it 'runs a command with piped non-ascii stdin' do
+      k = kommando("$ echo f\u00e5\u00e5 | kontena service exec -i test-1 sh -c 'LANG=C.UTF-8 rev'")
+      expect(k.run).to be_truthy
+      expect(k.out).to eq("\u00e5\u00e5f")
+    end
   end
 
   context 'with multiple instances' do
