@@ -64,8 +64,6 @@ module Kontena::Cli::Stacks
 
       # @return [StackName] an accessor to StackName for the target file
       def stack_name
-        return @stack_name if @stack_name
-        raise RuntimeError, "The file #{source} does not have the required top level keyword 'stack:'" if yaml['stack'].nil?
         @stack_name = Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
       end
 
