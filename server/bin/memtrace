@@ -27,7 +27,7 @@ class DumpFile
   end
 end
 
-Obj = Struct.new(:address, :type, :class, :generation, :references, :length, :name, :value, :file, :line, :method) do
+Obj = Struct.new(:address, :type, :class, :generation, :references, :length, :name, :value, :file, :line, :method, :root) do
   def references
     self[:references] || []
   end
@@ -46,13 +46,19 @@ Obj = Struct.new(:address, :type, :class, :generation, :references, :length, :na
       "#{type}[#{size}]@#{address}/#{generation}"
     when 'CLASS', 'MODULE'
       "#{type}<#{name}>@#{address}/#{generation}"
+    when 'ROOT'
+      "#{type}<#{root}>"
     else
       "#{type}#{class_obj ? "<#{class_obj.name}>" : ''}@#{address}/#{generation}"
     end
   end
 
   def source
-    "#{file}:#{line}##{method}"
+    if file && line && method
+      "#{file}:#{line}##{method}"
+    else
+      nil
+    end
   end
 end
 
@@ -77,6 +83,7 @@ class ObjGraph
         obj[:file],
         obj[:line],
         obj[:method],
+        obj[:root],
       )
 
       case obj.type
