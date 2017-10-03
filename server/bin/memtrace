@@ -65,7 +65,7 @@ end
 # @attr classes [Hash{addr => name}]
 # @attr targets []
 class ObjGraph
-  def self.load(source, generation: nil)
+  def self.load(source, generation: nil, type: nil)
     $logger.info "Loading object graph from #{source} for generation=#{generation}..."
 
     graph = self.new
@@ -96,6 +96,7 @@ class ObjGraph
       end
 
       next if generation && obj.generation != generation
+      next if type && obj.type != type
 
       graph.target! obj
     end
@@ -152,6 +153,7 @@ end
 class Options
   attr_reader :dump_file
   attr_reader :generation
+  attr_reader :type
 
   def parser
     parser = OptionParser.new
@@ -160,6 +162,9 @@ class Options
     end
     parser.on('--generation=GEN', Integer) do |g|
       @generation = g
+    end
+    parser.on('--type=TYPE') do |t|
+      @type = t.upcase
     end
     parser
   end
@@ -180,6 +185,7 @@ end
 options = Options.parse(ARGV)
 graph = ObjGraph.load(options.dump_file,
   generation: options.generation,
+  type: options.type,
 )
 
 for target in graph.targets
