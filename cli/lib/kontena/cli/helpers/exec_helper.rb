@@ -113,7 +113,7 @@ module Kontena::Cli::Helpers
             })
           end
           read_stdin(tty: tty) do |stdin|
-            logger.debug "read stdin with encoding=#{stdin.encoding}: #{stdin.inspect}"
+            logger.debug "websocket exec stdin with encoding=#{stdin.encoding}: #{stdin.inspect}"
             websocket_exec_write(ws, 'stdin' => stdin)
           end
           websocket_exec_write(ws, 'stdin' => nil) # EOF
