@@ -28,7 +28,9 @@ module Rpc
         entrypoint: service.entrypoint,
         memory: service.memory,
         memory_swap: service.memory_swap,
+        shm_size: service.shm_size,
         cpu_shares: service.cpu_shares,
+        cpus: service.cpus,
         privileged: service.privileged,
         cap_add: service.cap_add,
         cap_drop: service.cap_drop,
@@ -37,8 +39,8 @@ module Rpc
         volumes: build_volumes,
         volumes_from: service.volumes_from,
         net: service.net,
-        hostname: build_hostname,
-        domainname: build_domainname,
+        hostname: service_instance.hostname,
+        domainname: service_instance.domain,
         exposed: service.stack_exposed?,
         log_driver: service.log_driver,
         log_opts: service.log_opts,
@@ -65,6 +67,23 @@ module Rpc
         end
         secrets << item
       end
+
+      # Inject tls-sni based domain authz as secrets
+      # Why secrets? Well, secrets are already handled in a way they can be concatenated with same env names
+      service.grid_domain_authorizations.select {|d| d.authorization_type == 'tls-sni-01'}.each do |domain_auth|
+        secrets << {name: "SSL_CERTS", type: 'env', value: domain_auth.tls_sni_certificate}
+      end
+
+      # Inject certificates as secrets
+      service.certificates.each do |certificate|
+        grid_cert = grid.certificates.find_by(subject: certificate.subject)
+        item = {name: certificate.name, type: certificate.type, value: nil}
+        if grid_cert
+          item[:value] = grid_cert.bundle
+        end
+        secrets << item
+      end
+
       secrets
     end
 
@@ -77,6 +96,7 @@ module Rpc
       env << "KONTENA_STACK_NAME=#{service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{service_instance.host_node.name}"
       env << "KONTENA_SERVICE_INSTANCE_NUMBER=#{service_instance.instance_number}"
+
       env
     end
 
@@ -114,8 +134,7 @@ module Rpc
       service.hooks.each do |hook|
         if hook.instances.include?('*') || hook.instances.include?(instance_number)
           unless hook.done_for?(instance_number)
-            hooks << {type: hook.type, cmd: hook.cmd}
-            hook.push(:done => instance_number) if hook.oneshot
+            hooks << { id: hook.id.to_s, type: hook.type, cmd: hook.cmd, oneshot: hook.oneshot }
           end
         end
       end
@@ -134,18 +153,6 @@ module Rpc
         }
       end
       networks
-    end
-
-    def build_hostname
-      "#{service.name}-#{service_instance.instance_number}"
-    end
-
-    def build_domainname
-      if service.stack.name == Stack::NULL_STACK
-        "#{service.grid.name}.kontena.local"
-      else
-        "#{service.stack.name}.#{service.grid.name}.kontena.local"
-      end
     end
 
     # @return [Hash,NilClass]

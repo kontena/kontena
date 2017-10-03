@@ -1,12 +1,22 @@
 require_relative 'logging'
 require_relative 'helpers/wait_helper'
 
-
 module Kontena
   class RpcClient
     include Celluloid
     include Kontena::Logging
+    include Kontena::Observer::Helper
     include Kontena::Helpers::WaitHelper
+
+    class RequestObservable < Kontena::Observable
+      def initialize(method, id)
+        super("#{method}@#{id}")
+      end
+
+      def set_response(result, error)
+        update([result, error])
+      end
+    end
 
     REQUEST_ID_RANGE = 1..2**31
 
@@ -52,20 +62,22 @@ module Kontena
     # @raise abort
     # @return [Object]
     def request(method, params, timeout: 30)
-      id = request_id
-      @requests[id] = nil
-
       if !wait_until("websocket client is connected", timeout: timeout, threshold: 10.0, interval: 0.1) { connected? }
         raise TimeoutError.new(500, 'WebsocketClient is not connected')
       end
 
+      id = request_id
+      observable = @requests[id] = RequestObservable.new(method, id)
+
       websocket_client.send_request(id, method, params)
 
-      if !wait_until("request #{method} has response wth id=#{id}", timeout: timeout, interval: 0.01) { @requests[id] }
-        raise TimeoutError.new(500, 'Request timed out')
+      begin
+        result, error = observe(observable, timeout: timeout)
+      rescue Timeout::Error => exc
+        raise TimeoutError.new(500, exc.message)
       end
 
-      result, error = @requests.delete(id)
+      @requests.delete(id)
 
       if error
         raise Error.new(error['code'], error['message'])
@@ -80,7 +92,11 @@ module Kontena
     # Sent by the Kontena::WebsocketClient actor
     def handle_response(response)
       type, msgid, error, result = response
-      @requests[msgid] = [result, error]
+      if observable = @requests[msgid]
+        @requests[msgid].set_response(result, error)
+      else
+        warn "unknown response with id=#{msgid}"
+      end
     end
 
     # @return [Integer]

@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
       require_relative 'validations'
       include Validations
 
-      KNOWN_TOP_LEVEL_KEYS = %w(
+      KNOWN_TOP_LEVEL_KEYS = %i(
         services
         errors
         volumes
@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
         data
         description
         expose
+        depends
       )
 
       def initialize
@@ -26,7 +27,7 @@ module Kontena::Cli::Stacks
         @schema['network_mode'] = optional(%w(host bridge))
         @schema['logging'] = optional({
           'driver' => optional('string'),
-          'options' => optional(-> (value) { value.is_a?(Hash) })
+          'options' => optional(-> (value) { value.kind_of?(Hash) })
           })
         Validations::CustomValidators.load
       end
@@ -59,14 +60,16 @@ module Kontena::Cli::Stacks
           notifications: []
         }
 
-        result[:notifications] += (yaml.keys - KNOWN_TOP_LEVEL_KEYS).map do |key|
-          { key => "unknown top level key" }
+        yaml.keys.each do |key|
+          unless KNOWN_TOP_LEVEL_KEYS.include?(key) || KNOWN_TOP_LEVEL_KEYS.include?(key.to_sym)
+            result[:notifications] << { key.to_s => "unknown top level key" }
+          end
         end
 
         if yaml.key?('services')
-          if yaml['services'].is_a?(Hash)
+          if yaml['services'].kind_of?(Hash)
             yaml['services'].each do |service, options|
-              unless options.is_a?(Hash)
+              unless options.kind_of?(Hash)
                 result[:errors] << { 'services' => { service => { 'options' => "must be a mapping not a #{options.class}"}  } }
                 next
               end
@@ -107,9 +110,9 @@ module Kontena::Cli::Stacks
         end
 
         if yaml.key?('volumes')
-          if yaml['volumes'].is_a?(Hash)
+          if yaml['volumes'].kind_of?(Hash)
             yaml['volumes'].each do |volume, options|
-              if options.is_a?(Hash)
+              if options.kind_of?(Hash)
                 option_errors = validate_volume_options(options)
                 unless option_errors.valid?
                   result[:errors] << { 'volumes' => { volume => option_errors.errors } }
@@ -129,6 +132,20 @@ module Kontena::Cli::Stacks
 
         if (yaml['volumes'].nil? || yaml['volumes'].empty?) && (yaml['services'].nil? || yaml['services'].empty?)
           result[:errors] << { 'file' => 'does not list any services or volumes' }
+        end
+
+        if yaml.key?('depends')
+          unless yaml['depends'].kind_of?(Hash)
+            result[:errors] << { 'depends' => "Must be a mapping, not #{yaml['depends'].class}" }
+          end
+
+          yaml['depends'].each do |name, dependency_options|
+            validator = validate_dependencies(dependency_options)
+            result[:errors] << { 'depends' => { name => validator.errors } } unless validator.valid?
+            if yaml.key?('services') && yaml['services'][name]
+              result[:errors] << { 'depends' => { name => 'is defined both as service and dependency name' } }
+            end
+          end
         end
         result
       end

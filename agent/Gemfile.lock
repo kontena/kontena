@@ -67,6 +67,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.6.0)
     rspec-support (3.6.0)
+    ruby-prof (0.16.2)
     safe_yaml (1.0.4)
     simplecov (0.14.1)
       docile (~> 1.1.0)
@@ -104,10 +105,11 @@ DEPENDENCIES
   rake
   rbtrace
   rspec
+  ruby-prof
   simplecov
   statsd-ruby
   vmstat
   webmock
 
 BUNDLED WITH
-   1.15.3
+   1.15.4

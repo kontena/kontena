@@ -3,7 +3,7 @@ require_relative '../common'
 module Kontena::Cli::Stacks::Registry
   class PullCommand < Kontena::Command
     include Kontena::Cli::Stacks::Common
-    include Kontena::Cli::Stacks::Common::StackNameParam
+    include Kontena::Cli::Stacks::Common::RegistryNameParam
 
     banner "Pulls / downloads a stack from the stack registry"
 
@@ -13,7 +13,7 @@ module Kontena::Cli::Stacks::Registry
 
     def execute
       target = no_cache? ? stacks_client : Kontena::StacksCache
-      content = target.pull(stack_name, stack_version)
+      content = target.pull(stack_name.stack_name, stack_name.version)
       if return?
         return content
       elsif file

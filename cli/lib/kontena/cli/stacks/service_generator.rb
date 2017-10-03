@@ -27,12 +27,14 @@ module Kontena::Cli::Stacks
       data = {}
       data['instances'] = options['instances']
       data['image'] = parse_image(options['image'])
-      data['env'] = options['environment'] if options['environment']
+      data['env'] = options['environment'] || options['env']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
       data['ports'] = parse_stringified_ports(options['ports'] || [])
       data['memory'] = parse_memory(options['mem_limit'].to_s) if options['mem_limit']
       data['memory_swap'] = parse_memory(options['memswap_limit'].to_s) if options['memswap_limit']
+      data['shm_size'] = parse_memory(options['shm_size'].to_s) if options['shm_size']
+      data['cpus'] = options['cpus'] if options['cpus']
       data['cpu_shares'] = options['cpu_shares'] if options['cpu_shares']
       data['volumes'] = options['volumes'] || []
       data['volumes_from'] = options['volumes_from'] || []
@@ -61,6 +63,7 @@ module Kontena::Cli::Stacks
       data['deploy_opts'] = deploy
       data['hooks'] = options['hooks'] || {}
       data['secrets'] = options['secrets'] if options['secrets']
+      data['certificates'] = options['certificates'] if options['certificates']
       data['build'] = parse_build_options(options) if options['build']
       data['health_check'] = parse_health_check(options)
       data['stop_grace_period'] = options['stop_grace_period'] if options['stop_grace_period']
@@ -85,7 +88,14 @@ module Kontena::Cli::Stacks
     # @return [Array<Hash>]
     def parse_links(link_options)
       link_options.map{|l|
-        service_name, alias_name = l.split(':')
+        if l.kind_of?(String)
+          service_name, alias_name = l.split(':')
+        elsif l.kind_of?(Hash)
+          service_name = l['name']
+          alias_name = l['alias']
+        else
+          raise TypeError, "Invalid link type #{l.class.name}, expecting String or Hash"
+        end
         if service_name.nil?
           raise ArgumentError.new("Invalid link value #{l}")
         end

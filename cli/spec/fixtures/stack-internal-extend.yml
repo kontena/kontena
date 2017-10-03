@@ -4,8 +4,13 @@ services:
   base:
     stateful: true
     instances: 2
+    image: base
     deploy:
       strategy: ha
+    environment:
+      - "TEST1=test1"
+      - "TEST2=test2"
   app:
     extends: base
-    stateful: true
+    environment:
+      - "TEST2=changed"

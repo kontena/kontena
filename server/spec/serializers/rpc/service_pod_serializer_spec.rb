@@ -22,6 +22,7 @@ describe Rpc::ServicePodSerializer do
       stop_grace_period: 20
     )
   end
+
   let(:service_instance) do
     service.grid_service_instances.create!(
       instance_number: 2,
@@ -38,6 +39,14 @@ describe Rpc::ServicePodSerializer do
 
   let! :ext_vol do
     Volume.create(grid: grid, name: 'ext-vol', scope: 'instance', driver: 'local')
+  end
+
+  let! :domain_auth_dns do
+    GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
+  end
+
+  let! :domain_auth_tls do
+    GridDomainAuthorization.create!(grid: grid, authorization_type: 'tls-sni-01', grid_service: service, domain: 'www.kontena.io', tls_sni_certificate: 'TLS_AUTH')
   end
 
   describe '#to_hash' do
@@ -76,6 +85,10 @@ describe Rpc::ServicePodSerializer do
 
     it 'includes memory_swap' do
       expect(subject.to_hash).to include(:memory_swap => nil)
+    end
+
+    it 'includes shm_size' do
+      expect(subject.to_hash).to include(:shm_size => nil)
     end
 
     it 'includes cpu_shares' do
@@ -119,6 +132,14 @@ describe Rpc::ServicePodSerializer do
       expect(subject.to_hash).to include(:net => 'bridge')
     end
 
+    it 'includes hostname' do
+      expect(subject.to_hash).to include(:hostname => 'app-2')
+    end
+
+    it 'includes domainname' do
+      expect(subject.to_hash).to include(:domainname => 'test-grid.kontena.local')
+    end
+
     it 'includes log_driver' do
       expect(subject.to_hash).to include(:log_driver => nil)
     end
@@ -132,7 +153,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes secrets' do
-      expect(subject.to_hash).to include(:secrets => [])
+      expect(subject.to_hash[:secrets].size).to eq(1)
     end
 
     it 'includes default network' do
@@ -141,6 +162,11 @@ describe Rpc::ServicePodSerializer do
 
     it 'stop_grace_period' do
       expect(subject.to_hash).to include(:stop_grace_period => 20)
+    end
+
+    it 'includes domain auth as secret' do
+
+      expect(subject.to_hash[:secrets].find { |s| s[:name] == 'SSL_CERTS'}[:value]).to eq('TLS_AUTH')
     end
 
     describe '[:env]' do
@@ -158,6 +184,24 @@ describe Rpc::ServicePodSerializer do
         expect(env).to include("KONTENA_STACK_NAME=#{service.stack.name.to_s}")
         expect(env).to include("KONTENA_NODE_NAME=#{node.name.to_s}")
         expect(env).to include("KONTENA_SERVICE_INSTANCE_NUMBER=2")
+      end
+    end
+
+    describe '[:secrets]' do
+      it 'includes certificates as secrets' do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate',
+          chain: 'chain')
+        service.certificates.create!(subject: 'kontena.io', name: 'CERT')
+        subject = described_class.new(service_instance)
+        secrets = subject.to_hash[:secrets]
+
+        expect(secrets.size).to eq(2) # There's also the tls domain auth secret
+
+        expect(secrets.find{ |s| s[:name] == 'CERT'}[:value]).to eq('certificatechainprivate_key')
       end
     end
 
@@ -235,10 +279,33 @@ describe Rpc::ServicePodSerializer do
       expect(subject.build_volumes).to eq([{:bind_mount=>nil, :path => '/data', :flags => nil}])
     end
   end
+
   describe '#image_credentials' do
     it 'return nil by default' do
       expect(subject.image_credentials).to be_nil
     end
   end
 
+  describe '#build_hooks' do
+    it 'returns not-executed oneshot hook' do
+      hook = service.hooks.create!(
+        type: 'post_start',
+        cmd: 'sleep 1',
+        oneshot: true
+      )
+      hooks = subject.build_hooks
+      expect(hooks[0]).to eq({ id: hook.id.to_s, type: hook.type, cmd: hook.cmd, oneshot: hook.oneshot})
+    end
+
+    it 'does not return oneshot hooks that are already executed' do
+      service.hooks.create(
+        type: 'post_start',
+        cmd: 'sleep 1',
+        oneshot: true
+      )
+      service.hooks.first.push(:done => service_instance.instance_number.to_s)
+      hooks = subject.build_hooks
+      expect(hooks.size).to eq(0)
+    end
+  end
 end

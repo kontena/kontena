@@ -2,7 +2,6 @@ require_relative 'common'
 
 module HostNodes
   class Update < Mutations::Command
-    include AsyncHelper
     include Common
     include Logging
 
@@ -21,9 +20,7 @@ module HostNodes
 
       self.host_node.save
 
-      async_thread do
-        notify_grid(self.host_node.grid)
-      end
+      notify_grid(self.host_node.grid)
 
       # Update availability if given and trigger appropriate actions
       if self.availability && self.host_node.availability != self.availability

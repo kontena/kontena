@@ -9,6 +9,11 @@ module GridServices
       base.extend(ClassMethods)
     end
 
+    # @return [Integer]
+    def instance_count
+      self.instances || self.container_count || 1
+    end
+
     # @param [Grid] grid
     # @param [Hash] link
     # @return [Array<Stack,String>]
@@ -91,6 +96,25 @@ module GridServices
       service_secrets
     end
 
+    # @return [Array<GridServiceCertificate>]
+    def build_grid_service_certificates(existing_certificates)
+      service_certificates = []
+      self.certificates.each do |certificate|
+        service_certificate = existing_certificates.find{ |c|
+          c.subject == certificate['subject'] && c.name == certificate['name']
+        }
+        unless service_certificate
+          service_certificate = GridServiceCertificate.new(
+              subject: certificate['subject'],
+              name: certificate['name']
+          )
+        end
+        service_certificates << service_certificate
+      end
+
+      service_certificates
+    end
+
     def build_service_volumes(existing_volumes, grid, stack)
       service_volumes = []
       self.volumes.each do |vol|
@@ -121,6 +145,16 @@ module GridServices
       service_volumes
     end
 
+    def validate_name
+      domain = self.stack.domain
+      hostname = "#{self.name}-#{self.instance_count}"
+      fqdn = "#{hostname}.#{domain}"
+
+      if fqdn.length > 64
+        add_error(:name, :length, "Total grid service name length #{fqdn.length} is over limit (64): #{fqdn}")
+      end
+    end
+
     def validate_links
       validate_each :links do |link|
         link[:name] = "#{self.stack.name}/#{link[:name]}" unless link[:name].include?('/')
@@ -141,6 +175,18 @@ module GridServices
         secret = self.grid.grid_secrets.find_by(name: s[:secret])
         unless secret
           [:not_found, "Secret #{s[:secret]} does not exist"]
+        else
+          nil
+        end
+      end
+    end
+
+    # Validates that the defined certificates exist
+    def validate_certificates
+      validate_each :certificates do |c|
+        cert = self.grid.certificates.find_by(subject: c[:subject])
+        unless cert
+          [:not_found, "Certificate #{c[:subject]} does not exist"]
         else
           nil
         end
@@ -196,6 +242,14 @@ module GridServices
               end
             end
           end
+          array :certificates do
+            hash do
+              required do
+                string :subject
+                string :name
+              end
+            end
+          end
           array :ports do
             hash do
               required do
@@ -230,9 +284,11 @@ module GridServices
           array :volumes_from do
             string
           end
+          float :cpus
           integer :cpu_shares, min: 0, max: 1024
           integer :memory
           integer :memory_swap
+          integer :shm_size
           boolean :privileged
           array :cap_add do
             string
@@ -252,7 +308,27 @@ module GridServices
           boolean :read_only
           hash :hooks do
             optional do
+              array :pre_start do
+                hash do
+                  required do
+                    string :name
+                    string :cmd
+                    string :instances
+                    boolean :oneshot, default: false
+                  end
+                end
+              end
               array :post_start do
+                hash do
+                  required do
+                    string :name
+                    string :cmd
+                    string :instances
+                    boolean :oneshot, default: false
+                  end
+                end
+              end
+              array :pre_stop do
                 hash do
                   required do
                     string :name

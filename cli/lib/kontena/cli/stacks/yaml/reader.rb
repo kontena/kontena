@@ -1,5 +1,10 @@
-require 'kontena/cli/common'
-require 'kontena/util'
+require_relative 'stack_file_loader'
+require_relative 'service_extender'
+require_relative '../service_generator_v2'
+require_relative 'validator_v3'
+require 'opto'
+require 'liquid'
+require_relative 'opto'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -8,65 +13,67 @@ module Kontena::Cli::Stacks
       module Setters; end
     end
 
-    # Workaround for nil-valued variables in Liquid templates:
-    #   https://github.com/Shopify/liquid/issues/749
-    # This is something that we can pass in to `Liquid::Template.render` that gets evaluated as nil.
-    # If we pass in a nil value directly, then Liquid ignores it and considers the variable to be undefined.
     class LiquidNull
+      # Workaround for nil-valued variables in Liquid templates:
+      #   https://github.com/Shopify/liquid/issues/749
+      # This is something that we can pass in to `Liquid::Template.render` that gets evaluated as nil.
+      # If we pass in a nil value directly, then Liquid ignores it and considers the variable to be undefined.
       def to_liquid
         nil
       end
     end
 
     class Reader
+      # The kontena Stack YAML reader
+
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values, :registry
+      attr_reader :file, :loader, :errors, :notifications
 
-      def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
-        require_relative 'service_extender'
-        require_relative 'validator_v3'
-        require_relative 'opto'
-        require 'liquid'
-
-        @file = file
-
-        if from_registry?
-          require 'shellwords'
-          @raw_content = Kontena::StacksCache.pull(file)
-          @registry    = current_account.stacks_url
-        elsif from_url?
-          @raw_content = load_from_url(file)
-          @registry = 'file://'
+      # @param stack_origin [String] a filename, pointer to registry or an URL
+      # @return [Reader]
+      def initialize(file)
+        if file.kind_of?(StackFileLoader)
+          @file = file.source
+          @loader = file
         else
-          @raw_content = File.read(File.expand_path(file))
-          @registry = 'file://'
+          @file = file
+          @loader = StackFileLoader.for(file)
         end
 
         @errors           = []
         @notifications    = []
-        @skip_validation  = skip_validation
-        @skip_variables   = skip_variables
-        @variables        = variables
-        @values           = values
-        @defaults         = defaults
       end
 
-      def load_from_url(url)
-        require 'open-uri'
-        stream = open(url)
-        stream.read
+      # @param without_defaults [TrueClass,FalseClass] strip the GRID, STACK, etc from response
+      # @param without_vault [TrueClass,FalseClass] strip out any values that are going to or coming from VAULT
+      # @return [Hash] a hash of key value pairs representing the values of stack variables
+      def variable_values(without_defaults: false, without_vault: false, with_errors: false)
+        result = variables.to_h(values_only: true, with_errors: with_errors)
+        if without_defaults
+          result.delete_if { |k, _| default_envs.key?(k.to_s) || k.to_s == 'PARENT_STACK' }
+        end
+        if without_vault
+          result.delete_if { |k, _| variables.option(k).from.include?('vault') || variables.option(k).to.include?('vault') }
+        end
+        result
       end
 
+      # Values that are set always when parsing stacks
+      # @return [Hash] a hash of key value pairs
       def default_envs
         @default_envs ||= {
           'GRID' => env['GRID'],
           'STACK' => env['STACK'],
-          'PLATFORM' => env['PLATFORM']
+          'PLATFORM' => env['PLATFORM'] || env['GRID']
         }
       end
 
+      # Only uses the values from #default_envs to provide a hash from minimally interpolated
+      # YAML file. Useful for accessing some parts of the YAML without asking any questions.
+      #
+      # @return [Hash] minimally interpolated YAMl from the stack file.
       def internals_interpolated_yaml
         @internals_interpolated_yaml ||= ::YAML.safe_load(
           replace_dollar_dollars(
@@ -77,92 +84,155 @@ module Kontena::Cli::Stacks
               warnings: false
             )
           )
-        ) || {}
+        )
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
+      # Uses variable interpolation, prompts as needed, liquid interpolation
+      #
+      # @return [Hash] the most commplete stack parsing outcome
       def fully_interpolated_yaml
         return @fully_interpolated_yaml if @fully_interpolated_yaml
-        vars = variables.to_h(values_only: true)
         @fully_interpolated_yaml = ::YAML.safe_load(
           replace_dollar_dollars(
             interpolate(
               interpolate_liquid(
                 raw_content,
-                vars
+                variable_values
               ),
               use_opto: true,
               raise_on_unknown: true
             )
           )
-        ) || {}
+        )
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
-      def raw_yaml
-        @raw_yaml ||= ::YAML.safe_load(raw_content) || {}
+      # The YAML file raw content
+      def raw_content
+        loader.content
       end
 
+      # @return [Hash] with zero interpolation/processing. Will mostly fail
+      def raw_yaml
+        loader.yaml
+      end
+
+      # Creates an opto option definition compatible hash from the #default_envs hash
+      # @return [Hash]
+      def default_envs_to_options
+        default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
+      end
+
+      # Accessor to the Opto variable handler
       # @return [Opto::Group]
       def variables
-        return @variables if @variables
-        @variables = ::Opto::Group.new(
-          (internals_interpolated_yaml['variables'] || {}).merge(default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }),
-          defaults: {
-            from: :env,
-            to: :env
-          }
+        @variables ||= ::Opto::Group.new(
+          internals_interpolated_yaml.fetch('variables', {}).merge(default_envs_to_options),
+          defaults: { from: :env }
         )
-        if defaults
-          defaults.each do |key, val|
-            var = @variables.option(key)
-            var.default = val if var
-          end
-        end
-
-        if values
-          values.each do |key, val|
-            var = @variables.option(key)
-            var.set(val) if var
-          end
-        end
-        @variables
       end
 
-      # @param [String] service_name
+      # Accepts a hash of variable_name => variable_value pairs and sets the values as variable default values
+      # Used when previous answers are read from master and passed as default values for upgrade.
+      # @param defaults [Hash] { 'variable_name' => 'variable_value' }
+      def set_variable_defaults(defaults)
+        defaults.each do |key, val|
+          var = variables.option(key.to_s)
+          var.default = val if var
+        end
+      end
+
+      # Set values from a hash to values of the variables.
+      # Used when variable values are read from a file or command line parameters or dependency variable injection
+      # @param [Hash] a hash of variable_name => variable_value pairs
+      def set_variable_values(values)
+        values.each do |key, val|
+          var = variables.option(key.to_s)
+          var.set(val) if var
+        end
+      end
+
+      # Creates a set of variables using the 'depends' section. The variable name is the name of the dependency
+      # and the variable value is the generated child stack name. For example,.have something like:
+      # depends:
+      #   redis:
+      #     stack: foo/redis
+      # you will get a new variable called "redis" and its value will be "this-stack-name-redis".
+      # This variable can be used to interpolate for example a hostname to some environment variable:
+      # environment:
+      #   - "REDIS_HOST=redis.${REDIS}"
+      def create_dependency_variables(dependencies, name)
+        return if dependencies.nil?
+        dependencies.each do |options|
+          variables.build_option(name: options['name'].to_s, type: :string, value: "#{name}-#{options['name']}")
+          create_dependency_variables(options['depends'], "#{name}.#{options['name']}")
+        end
+      end
+
+      # If this stack is a part of a dependency chain and has a parent, the variable $PARENT_STACK will
+      # interpolate to the name of the parent stack.
+      def create_parent_variable(parent_name)
+        variables.build_option(name: 'PARENT_STACK', type: :string, value: parent_name)
+      end
+
+      # @return [Boolean] did this stack come from a local file?
+      def from_file?
+        loader.origin == 'file'
+      end
+
+      # @param [String] service_name (set when using extends)
+      # @param name [String] override stackname (default is to parse it from the YAML, but if you set it through -n it needs to be overriden)
+      # @param parent_name [String] parent stack name
+      # @param skip_validation [Boolean] skip running validations
+      # @param values [Hash] force-set variable values using variable_name => variable_value key pairs
+      # @param defaults [Hash] set variable defaults from variable_name => variable_value key pairs
       # @return [Hash]
-      def execute(service_name = nil)
-        process_variables unless skip_variables?
-        validate unless skip_validation?
+      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil)
+        set_variable_defaults(defaults) if defaults
+        set_variable_values(values) if values
+        create_dependency_variables(dependencies, name)
+        create_parent_variable(parent_name) if parent_name
+
+        variables.run
+        raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid? || skip_validation
+
+        validate unless skip_validation
 
         result = {}
         Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
-          result[:stack]         = raw_yaml['stack']
-          result[:version]       = self.stack_version
-          result[:name]          = self.stack_name
-          result[:registry]      = registry
-          result[:expose]        = fully_interpolated_yaml['expose']
-          result[:errors]        = errors unless skip_validation?
-          result[:notifications] = notifications
-          result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
-          unless skip_variables?
-            result[:variables]     = variables.to_h(values_only: true).reject do |k,_|
-              default_envs.keys.include?(k) || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
-            end
+          result['stack']         = raw_yaml['stack']
+          result['version']       = loader.stack_name.version || '0.0.1'
+          result['name']          = name
+          result['registry']      = loader.registry
+          result['expose']        = fully_interpolated_yaml['expose']
+          result['services']      = errors.empty? ? parse_services(service_name) : {}
+          result['volumes']       = errors.empty? ? parse_volumes : {}
+          result['dependencies']  = dependencies
+          result['source']        = raw_content
+          result['variables']     = variable_values(without_defaults: true, without_vault: true)
+          result['parent_name']   = parent_name
+        end
+        if service_name.nil?
+          result['services'].each do |service|
+            errors << { 'services' => { service['name'] => { 'image' => "image is missing" } } } if service['image'].to_s.empty?
           end
-          result[:volumes]       = errors.count.zero? ? parse_volumes : {}
         end
         result
       end
 
-
-      def process_variables
-        variables.run
-        raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
+      # Returns an array of hashes containing the dependency tree starting from this file
+      # @return [Array<Hash>]]
+      def dependencies
+        @dependencies ||= loader.dependencies
       end
 
+      # Interpolate any Liquid templating in the YAML content
+      # @param content [String] file content
+      # @param vars [Hash] key-value pairs
+      # @return [String]
       # @raise [Liquid::Error]
       def interpolate_liquid(content, vars)
         Liquid::Template.error_mode = :strict
@@ -174,39 +244,11 @@ module Kontena::Cli::Stacks
         template.render!(vars, strict_variables: true, strict_filters: true)
       end
 
-      def stack_name
-        @stack_name ||= parse_stack_name(raw_yaml['stack'].to_s)[:stack]
-      end
-
-      def stack_version
-        @stack_version ||= raw_yaml['version'] || parse_stack_name(raw_yaml['stack'].to_s)[:version] || '0.0.1'
-      end
-
-      # @return [Array] array of validation errors
+      # @return [Array<Hash>] array of validation errors
       def validate
         result = validator.validate(fully_interpolated_yaml)
         store_failures(result)
         result
-      end
-
-      def skip_validation?
-        !!@skip_validation
-      end
-
-      def skip_variables?
-        !!@skip_variables
-      end
-
-      def from_registry?
-        file =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/ && !File.exist?(file)
-      end
-
-      def from_url?
-        file =~ /\A(?:http|https|ftp):\/\//
-      end
-
-      def from_file?
-        !from_registry? && !from_url?
       end
 
       # @return [Kontena::Cli::Stacks::YAML::ValidatorV3]
@@ -219,12 +261,12 @@ module Kontena::Cli::Stacks
           if process_hash?(config)
             volumes[name].delete('only_if')
             volumes[name].delete('skip_if')
-            volumes[name] = process_volume(config)
+            volumes[name] = process_volume(name, config)
           else
             volumes.delete(name)
           end
         end
-        volumes
+        volumes.map { |name, vol| vol.merge('name' => name) }
       end
 
       ##
@@ -233,7 +275,7 @@ module Kontena::Cli::Stacks
       def parse_services(service_name = nil)
         if service_name.nil?
           services.each do |name, config|
-            services[name] = process_config(config)
+            services[name] = process_config(config, name)
             if process_hash?(config)
               services[name].delete('only_if')
               services[name].delete('skip_if')
@@ -241,10 +283,10 @@ module Kontena::Cli::Stacks
               services.delete(name)
             end
           end
-          services
+          services.map { |name, svc| svc.merge('name' => name) }
         else
-          raise ("Service '#{service_name}' not found in #{file}") unless services.has_key?(service_name)
-          process_config(services[service_name])
+          raise ("Service '#{service_name}' not found in #{file}") unless services.key?(service_name)
+          process_config(services[service_name], service_name)
         end
       end
 
@@ -254,7 +296,6 @@ module Kontena::Cli::Stacks
       # @return [Boolean]
       def process_hash?(hash)
         return true unless hash['skip_if'] || hash['only_if']
-        return true if skip_variables? || variables.empty?
 
         skip_lambdas = normalize_ifs(hash['skip_if'])
         only_lambdas = normalize_ifs(hash['only_if'])
@@ -271,36 +312,48 @@ module Kontena::Cli::Stacks
       end
 
       # @param [Hash] service_config
-      def process_config(service_config)
+      def process_config(service_config, name=nil)
         normalize_env_vars(service_config)
         merge_env_vars(service_config)
         expand_build_context(service_config)
         normalize_build_args(service_config)
-        if service_config.has_key?('extends')
+        if service_config.key?('extends')
           service_config = extend_config(service_config)
           service_config.delete('extends')
         end
-        service_config
+        if name
+          ServiceGeneratorV2.new(service_config).generate.merge('name' => name)
+        else
+          ServiceGeneratorV2.new(service_config).generate
+        end
       end
 
-      def process_volume(volume_config)
+      def process_volume(name, volume_config)
+        return [] if volume_config.nil? || volume_config.empty?
+        if volume_config['external'].is_a?(TrueClass)
+          volume_config['external'] = name
+        elsif volume_config['external']['name']
+          volume_config['external'] = volume_config['external']['name']
+        end
+        volume_config['name'] = name
         volume_config
       end
 
       def volumes
-        @volumes ||= fully_interpolated_yaml['volumes'] || {}
+        @volumes ||= fully_interpolated_yaml.fetch('volumes', {})
       end
 
       # @return [Hash] - services from YAML file
       def services
-        @services ||= fully_interpolated_yaml['services'] || {}
+        @services ||= fully_interpolated_yaml.fetch('services', {})
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, variables: variables, defaults: defaults, values: values).execute(service_name)
-        errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
-        notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
-        outcome[:services]
+        external_reader = FileLoader.new(filename, loader).reader
+        outcome = external_reader.execute(service_name)
+        errors.concat external_reader.errors unless external_reader.errors.empty? || errors.include?(external_reader.errors)
+        notifications.concat external_reader.notifications unless external_reader.notifications.empty? || notifications.include?(external_reader.notifications)
+        outcome['services']
       end
 
       private
@@ -319,8 +372,9 @@ module Kontena::Cli::Stacks
               if use_opto
                 opt = variables.option(var)
                 if opt.nil?
-                  if variables.find { |opt| opt.to[:env][var] }
-                    val = env[var]
+                  to_env = variables.find { |opt| Array(opt.to[:env]).include?(var) }
+                  if to_env
+                    val = to_env.value
                   else
                     raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
                   end
@@ -353,7 +407,7 @@ module Kontena::Cli::Stacks
       # @example
       #   normalize_ifs( 'wp' )        # lambdas return true if variable wp is not null or false or 'false'
       #   normalize_ifs( wp: 1 )       # lambdas return true if value of wp is 1
-      #   normalize_ifs( [:wp, :ws] )  # lambdas return true if wp and ws are not not null or false or 'false'
+      #   normalize_ifs( ['wp, :ws'] )  # lambdas return true if wp and ws are not not null or false or 'false'
       #   normalize_ifs( wp: 1, ws: 1) # lambdas return true if wp and ws are 1
       #   normalize_ifs(nil)           # returns nil
       def normalize_ifs(ifs)
@@ -378,36 +432,28 @@ module Kontena::Cli::Stacks
       # @param [Hash] service_config
       # @return [Hash] updated service config
       def extend_config(service_config)
-        extended_service = extended_service(service_config['extends'])
-        return unless extended_service
-        filename  = service_config['extends']['file']
-        stackname = service_config['extends']['stack']
-        if filename
-          parent_config = from_external_file(filename, extended_service)
-        elsif stackname
-          parent_config = from_external_file(stackname, extended_service)
+        extends = service_config['extends']
+        case extends
+        when NilClass
+          return
+        when String
+          raise ("Service '#{extends}' not found in #{file}") unless services.key?(extends)
+          parent_config = process_config(services[extends])
+        when Hash
+          target = extends['file'] || extends['stack']
+          parent_config = from_external_file(target, extends['service'])
         else
-          raise ("Service '#{extended_service}' not found in #{file}") unless services.has_key?(extended_service)
-          parent_config = process_config(services[extended_service])
+          raise TypeError, "Extends must be a hash or string"
         end
         ServiceExtender.new(service_config).extend_from(parent_config)
       end
 
-      def extended_service(extend_config)
-        if extend_config.kind_of?(Hash)
-          extend_config['service']
-        elsif extend_config.kind_of?(String)
-          extend_config
-        else
-          nil
-        end
-      end
-
       def store_failures(data)
-        errors << { file => data[:errors] } unless data[:errors].empty?
-        notifications << { file => data[:notifications] } unless data[:notifications].empty?
+        data['errors'] ||= data[:errors] || []
+        data['notifications'] ||= data[:notifications] || []
+        errors << { File.basename(file) => data['errors'] } unless data['errors'].empty?
+        notifications << { File.basename(file) => data['notifications'] } unless data['notifications'].empty?
       end
-
 
       # @param [Hash] options - service config
       def normalize_env_vars(options)
@@ -444,36 +490,14 @@ module Kontena::Cli::Stacks
 
       # @param [Hash] options - service config
       def normalize_build_args(options)
-        if safe_dig(options, 'build', 'args').kind_of?(Array)
-          args = options['build']['args'].dup
-          options['build']['args'] = {}
-          args.each do |arg|
-            k,v = arg.split('=')
-            options['build']['args'][k] = v
-          end
-        end
+        build = options['build']
+        return unless build.kind_of?(Hash)
+        args = build['args']
+        return unless args
+        return unless args.kind_of?(Array)
+        build.delete('args')
+        build['args'] = args.map { |arg| arg.split('=', 2) }.to_h
       end
-
-      # Takes a stack name such as user/foo:1.0.0 and breaks it into components
-      # @param [String] stack_name
-      # @return [Hash] a hash with :user, :stack and :version
-      def parse_stack_name(stack_name)
-        return {} if stack_name.nil?
-        return {} if stack_name.empty?
-        name, version = stack_name.split(':', 2)
-        if name.include?('/')
-          user, stack = name.split('/', 2)
-        else
-          user = nil
-          stack = name
-        end
-        {
-          user: user,
-          stack: stack,
-          version: version
-        }
-      end
-
 
       def env
         ENV

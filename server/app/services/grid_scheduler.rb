@@ -13,21 +13,6 @@ class GridScheduler
     @grid = grid
   end
 
-  def reschedule
-    self.reschedule_services
-  end
-
-  def reschedule_services
-    grid.grid_services.each do |service|
-      if should_reschedule_service?(service)
-        reschedule_service(service)
-      end
-    end
-  rescue => exc
-    error exc.message
-    debug exc.backtrace.join("\n") if exc.backtrace
-  end
-
   def check_service(service)
     if should_reschedule_service?(service)
       reschedule_service(service)

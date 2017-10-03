@@ -46,5 +46,23 @@ module GridCertificates
     def acme_endpoint
       ENV['ACME_ENDPOINT'] || ACME_ENDPOINT
     end
+
+    def resolve_service(grid, service_name)
+      stack_name, service = service_name.split('/')
+      stack = grid.stacks.find_by(name: stack_name)
+      return nil if stack.nil?
+
+      stack.grid_services.find_by(name: service)
+    end
+
+    def validate_dns_record(domain, expected_record)
+      resolv = Resolv::DNS.new()
+      info "validating domain:_acme-challenge.#{domain}"
+      resource = resolv.getresource("_acme-challenge.#{domain}", Resolv::DNS::Resource::IN::TXT)
+      info "got record: #{resource.strings}, expected: #{expected_record}"
+      expected_record == resource.strings[0]
+    rescue
+      false
+    end
   end
 end

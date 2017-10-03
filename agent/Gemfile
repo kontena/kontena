@@ -17,4 +17,5 @@ group :development, :test do
   gem 'dotenv', require: false
   gem 'webmock', require: false
   gem 'simplecov', require: false
+  gem 'ruby-prof', require: false
 end

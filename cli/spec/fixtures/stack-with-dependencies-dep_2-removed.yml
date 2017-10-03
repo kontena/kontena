@@ -1,0 +1,17 @@
+stack: user/depstack1
+version: 0.0.1
+variables:
+  test_var:
+    type: string
+    from:
+      random_string:
+        length: 16
+        charset: hex
+depends:
+  dep_1:
+    stack: stack-with-dependencies-dep-1.yml
+services:
+  app:
+    image: "${test_var}"
+    environment:
+      - "TEST=${dep_1}"

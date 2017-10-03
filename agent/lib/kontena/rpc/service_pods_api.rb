@@ -4,8 +4,8 @@ module Kontena
   module Rpc
     class ServicePodsApi
 
-      # @param [String] service_id
-      # @param [Integer] instance_number
+      # @param service_id [String]
+      # @param instance_number [Integer]
       # @return [Hash]
       def restart(service_id, instance_number)
         Kontena::ServicePods::Restarter.new(service_id, instance_number).perform
