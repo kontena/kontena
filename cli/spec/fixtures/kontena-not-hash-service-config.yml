@@ -1,3 +1,4 @@
-version: '2'
+stack: foo/foofoo
+version: 0.1.1
 services:
   wordpress: 'service config cannot be string'
