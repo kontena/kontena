@@ -180,8 +180,9 @@ module Kontena::Cli::Stacks
 
       # Removes any `from: prompt` entries from variables
       def disable_prompts
+        prompts = Set.new(%w(prompt service_link vault_cert_prompt))
         variables.each do |option|
-          option.from.delete_if { |k,_| k.to_s == 'prompt' }
+          option.from.delete_if { |k,_| prompts.include?(k.to_s) }
         end
       end
 
