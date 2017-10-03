@@ -41,6 +41,23 @@ describe Kontena::Cli::Stacks::Common do
     end
   end
 
+  describe '#stack_name' do
+    before do
+      allow(File).to receive(:exist?).with(fixture_path('test.yml')).and_return(true)
+    end
+
+    it 'raises if stack file does not have "stack:"' do
+      expect(File).to receive(:read).with(fixture_path('test.yml')).and_return(YAML.dump('services' => { 'abcd' => { 'image' => 'foo' } }))
+      puts YAML.dump('services' => { 'abcd' => { 'image' => 'foo' } })
+      expect{subject.instance([fixture_path('test.yml')]).stack_name}.to raise_error(RuntimeError, /keyword/)
+    end
+
+    it 'reads the stack name from the yaml' do
+      expect(File).to receive(:read).with(fixture_path('test.yml')).and_return(YAML.dump('stack' => 'foo/foostack', 'services' => { 'abcd' => { 'image' => 'foo' } }))
+      expect(subject.instance([fixture_path('test.yml')]).stack_name).to eq 'foostack'
+    end
+  end
+
   describe '#stack' do
     it 'returns a stack result' do
       expect(subject.instance([fixture_path('kontena_v3.yml')]).stack).to respond_to(:[])
