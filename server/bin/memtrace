@@ -1,0 +1,180 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'json'
+require 'logger'
+
+$logger = Logger.new(STDERR)
+$logger.level = Logger::INFO
+
+class DumpFile
+  def self.open(path)
+    raise "Not a file: #{path}" unless File.file?(path)
+    self.new(path)
+  end
+
+  def initialize(path)
+    @path = path
+  end
+
+  def each
+    $logger.info "Reading objects from #{@path}..."
+    File.open(@path) do |file|
+      file.each do |line|
+        yield JSON.parse(line, symbolize_names: true)
+      end
+    end
+  end
+end
+
+Obj = Struct.new(:address, :type, :class, :generation, :references, :length, :name, :value, :file, :line, :method) do
+  def references
+    self[:references] || []
+  end
+
+  def to_s
+    "<#{type}@#{address}>"
+  end
+
+  def render(class_obj: nil)
+    case type
+    when 'STRING'
+      "#{type}(#{value.inspect})@#{address}/#{generation}"
+    when 'ARRAY'
+      "#{type}[#{length}]@#{address}/#{generation}"
+    when 'HASH'
+      "#{type}[#{size}]@#{address}/#{generation}"
+    when 'CLASS', 'MODULE'
+      "#{type}<#{name}>@#{address}/#{generation}"
+    else
+      "#{type}#{class_obj ? "<#{class_obj.name}>" : ''}@#{address}/#{generation}"
+    end
+  end
+
+  def source
+    "#{file}:#{line}##{method}"
+  end
+end
+
+# @attr classes [Hash{addr => name}]
+# @attr targets []
+class ObjGraph
+  def self.load(source, generation: nil)
+    $logger.info "Loading object graph from #{source} for generation=#{generation}..."
+
+    graph = self.new
+
+    for obj in source
+      obj = Obj.new(
+        obj[:address],
+        obj[:type],
+        obj[:class],
+        obj[:generation],
+        obj[:references],
+        obj[:length],
+        obj[:name],
+        obj[:value],
+        obj[:file],
+        obj[:line],
+        obj[:method],
+      )
+
+      case obj.type
+      when 'CLASS'
+        graph.class! obj, obj.address
+      end
+
+      for address in obj.references
+        graph.reference! obj, address
+      end
+
+      next if generation && obj.generation != generation
+
+      graph.target! obj
+    end
+
+    $logger.info "Loaded object graph with classes=#{graph.classes.size} references_to=#{graph.references_to.size} targets=#{graph.targets.size}"
+
+    graph
+  end
+
+  attr_reader :classes
+  attr_reader :references_to
+  attr_reader :targets
+
+  def initialize
+    @classes = {}
+    @references_to = Hash.new {|h, k| h[k] = [] }
+    @targets = []
+  end
+
+  def class!(obj, address)
+    @classes[address] = obj
+  end
+
+  def resolve_class(obj)
+    @classes[obj.class]
+  end
+
+  def reference!(obj, ref)
+    @references_to[ref] << obj
+  end
+
+  def target!(obj)
+    @targets << obj
+  end
+
+  def walk(obj, depth: 0, stack: [], &block)
+    addr = obj[:address]
+
+    if stack.include? addr
+      yield obj, depth: depth, recursive: true
+    else
+      yield obj, depth: depth
+
+      stack = stack + [addr]
+
+      for ref in @references_to[addr]
+        walk(ref, depth: depth + 1, stack: stack, &block)
+      end
+    end
+  end
+end
+
+# @attr dump_file [DumpFile]
+class Options
+  attr_reader :dump_file
+  attr_reader :generation
+
+  def parser
+    parser = OptionParser.new
+    parser.on('--dump-file=PATH') do |path|
+      @dump_file = DumpFile.new(path)
+    end
+    parser.on('--generation=GEN', Integer) do |g|
+      @generation = g
+    end
+    parser
+  end
+
+  def self.parse(argv)
+    options = self.new
+    options.parser.parse!
+    options
+  end
+end
+
+def trace(graph, target)
+  graph.walk(target) do |obj, depth: , recursive: false|
+    puts "#{"\t" * depth}#{recursive ? '...' : ''}#{obj.render(class_obj: graph.resolve_class(obj))} -- #{obj.source}"
+  end
+end
+
+options = Options.parse(ARGV)
+graph = ObjGraph.load(options.dump_file,
+  generation: options.generation,
+)
+
+for target in graph.targets
+  trace(graph, target)
+end
