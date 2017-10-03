@@ -90,7 +90,8 @@ module Kontena::Cli::Stacks
           values: data[:variables],
           defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
           parent_name: data[:parent_name],
-          name: data[:name]
+          name: data[:name],
+          prompt: use_prompt?
         )
         hint_on_validation_notifications(reader.notifications, reader.loader.source)
         abort_on_validation_errors(reader.errors, reader.loader.source)
