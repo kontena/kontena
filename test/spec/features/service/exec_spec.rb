@@ -55,9 +55,9 @@ describe 'service exec' do
       k.out.on("#") do
         k.in << "sleep 10 && echo ok\r"
         sleep 0.1
-        k.in << "\x03"
+        k.in << "\x03" # Ctrl-C -> SIGINT
         sleep 0.1
-        k.in << "\x04"
+        k.in << "\x04" # Ctrl-D -> EOF
       end
 
       expect(k.run).to be_truthy
