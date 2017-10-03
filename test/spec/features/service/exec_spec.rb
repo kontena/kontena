@@ -77,6 +77,22 @@ describe 'service exec' do
       expect(k.run).to be_truthy
       expect(k.out).to match /\u00e5\u00e5f/
     end
+
+    # RuntimeError : stdin read JSON::GeneratorError: partial character in source, but hit end
+    pending 'runs a command with UTF-8 input across block boundries' do
+      k = kommando("kontena service exec -it test-1 sh")
+
+      k.out.on("#") do
+        # with an odd number of bytes in the 'echo ', the 2-byte UTF-8 chars will get split across the 1024-byte chunk boundary
+        k.in << "echo #{"\u00e5"*512}\r"
+        k.out.on("#") do
+          k.in << "exit\r"
+        end
+      end
+
+      expect(k.run).to be_truthy
+      expect(k.out).to match /^\u00e5{512}$/
+    end
   end
 
   describe '--interactive' do
