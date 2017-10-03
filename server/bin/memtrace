@@ -91,8 +91,10 @@ class ObjGraph
         graph.class! obj, obj.address
       end
 
-      for address in obj.references
-        graph.reference! obj, address
+      if obj.type == 'ROOT'
+        obj.references.each {|addr| graph.from_root! obj, addr }
+      else
+        obj.references.each {|addr| graph.reference_from! obj, addr }
       end
 
       next if generation && obj.generation != generation
@@ -108,11 +110,13 @@ class ObjGraph
 
   attr_reader :classes
   attr_reader :references_to
+  attr_reader :from_roots
   attr_reader :targets
 
   def initialize
     @classes = {}
     @references_to = Hash.new {|h, k| h[k] = [] }
+    @from_root = {}
     @targets = []
   end
 
@@ -124,7 +128,14 @@ class ObjGraph
     @classes[obj.class]
   end
 
-  def reference!(obj, ref)
+  def from_root!(root, addr)
+    @from_root[addr] = root
+  end
+  def from_root?(obj)
+    @from_root[obj.address]
+  end
+
+  def reference_from!(obj, ref)
     @references_to[ref] << obj
   end
 
@@ -137,6 +148,9 @@ class ObjGraph
 
     if stack.include? addr
       yield obj, depth: depth, recursive: true
+    elsif root = from_root?(obj)
+      yield obj, depth: depth
+      yield root, depth: depth + 1 # reachable from root; do not resolve further references
     else
       yield obj, depth: depth
 
