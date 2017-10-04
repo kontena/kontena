@@ -355,6 +355,7 @@ Commits that affect multiple components are listed separately under each affecte
 * Migrate restart-policy containers (#2791)
 * Fix exec console size (#2708)
 * Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
+* Change log RPCs to use xmlschema timestamps with sub-second precision (#2832)
 
 #### Server
 
@@ -422,6 +423,16 @@ Commits that affect multiple components are listed separately under each affecte
 * Fix exec console size (#2708)
 * Fix HostNode index updates to single migration (#2852)
 * Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
+* Fix websocket agent version check (#2855)
+* Add cert delete API and CLI command (#2850)
+* Fix server NodeVolumeHandler to not be a Celluloid actor (#2868)
+* List auto-renewable certificates; Migrate existing LE cert secrets to new certificate models (#2867)
+* Add ID field to stack dependency relations in JSON response (#2866)
+* Change log RPCs to use xmlschema timestamps with sub-second precision (#2832)
+* Remove experimental status from volumes (#2864)
+* Fix server stack view to not crash for orphaned child stacks (#2885)
+* Fix server cloud event serializer to use HostNode#to_path as node id (#2892)
+* Fix server ContainerInfoMapper memory leak (#2896)
 
 #### CLI
 
@@ -480,6 +491,17 @@ Commits that affect multiple components are listed separately under each affecte
 * Fix stack validate command and validity checking when installing (#2812)
 * CLI: Add --no-wait option to kontena service deploy (#2847)
 * Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
+* Add cert delete API and CLI command (#2850)
+* Add --dry-run to simulate kontena stack upgrade (#2823)
+* List auto-renewable certificates; Migrate existing LE cert secrets to new certificate models (#2867)
+* Fix cli node health specs duration off-by-one timing (#2870)
+* Remove experimental status from volumes (#2864)
+* Fix missing stack and grid variables when running validate with --online flag (#2886)
+* Change "new stacks" color to green in stack upgrade report (#2890)
+* CLI: Do not output field names in quiet mode when there is no data (#2876)
+* Deploy CLI omnibus deb to bintray (#2658)
+* Fix CLI omnibus liblzma source (#2903)
+* Fix CLI omnibus liblzma source url (#2907)
 
 #### Docs
 
