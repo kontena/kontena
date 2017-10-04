@@ -4,11 +4,18 @@ set -ue
 
 VERSION=$(cat ./VERSION)
 
-if gem fetch -v $VERSION kontena-cli; then
-  echo "gem version $VERSION already deployed:"
+echo "Checking for deployed kontena-cli gem version $VERSION..."
+
+if gem fetch -v $VERSION kontena-cli 2>&1 | tee /tmp/gem-fetch.log | grep -q "ERROR:  Could not find a valid gem 'kontena-cli' (= $VERSION) in any repository"; then
+  echo "gem version $VERSION has not yet been deployed"
+elif test -e ./kontena-cli-$VERSION.gem; then
+  echo "gem version $VERSION already deployed"
   ls -l kontena-cli-$VERSION.gem
   sha256sum kontena-cli-$VERSION.gem
   exit 0
+else
+  echo "WARNING: unknown gem fetch error, continuing anyways"
+  cat /tmp/gem-fetch.log
 fi
 
 # login
