@@ -62,8 +62,17 @@ module V1
             audit_event(r, container.grid, container, interactive ? 'exec_interactive' : 'exec')
 
             r.websocket do |ws|
-              executor = Docker::StreamingExecutor.new(container, ws)
-              executor.start(shell, interactive, tty)
+              begin
+                executor = Docker::StreamingExecutor.new(container, ws)
+                executor.start(shell, interactive, tty)
+              # XXX: the roda error_handle also rescues ScriptError, so those wont't propagate to puma
+              rescue => exc
+                puts "websocket handler error: #{exc} @ #{exc.backtrace.join("\n\t")}"
+                ws.start_driver # XXX: the ws.close has to happen after the ws.rack_response -> ws.start_driver -> EventMachine.schedule { @driver.start }
+                EventMachine.schedule { ws.close(4000, "#{exc}") }
+              ensure
+                # TODO: executor.terminate unless executor.started?
+              end
             end
           end
         end
