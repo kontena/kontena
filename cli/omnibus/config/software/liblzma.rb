@@ -24,7 +24,7 @@ skip_transitive_dependency_licensing true
 version("5.2.2") { source md5: "7cf6a8544a7dae8e8106fdf7addfa28c" }
 version("5.2.3") { source md5: "ef68674fb47a8b8e741b34e429d86e9d" }
 
-source url: "https://sourceforge.net/projects/lzmautils/files/xz-#{version}.tar.gz/download",
+source url: "http://tukaani.org/xz/xz-#{version}.tar.gz",
        unsafe: true # accept https -> https redirects from sourceforge
 
 relative_path "xz-#{version}"
