@@ -53,7 +53,8 @@ module Rpc
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
       node = grid.host_nodes.find_by(node_id: node_id)
-      container = grid.containers.build(
+      container = Container.new(
+        grid_id: grid.id,
         container_id: container_id,
         name: labels['io.kontena.container.name'],
         container_type: labels['io.kontena.container.type'] || 'container',
@@ -72,7 +73,8 @@ module Rpc
     def create_container(node_id, info)
       container_id = info['Id']
       node = grid.host_nodes.find_by(node_id: node_id)
-      container = grid.containers.build(
+      container = Container.new(
+        grid_id: grid.id,
         container_id: container_id,
         name: info['Name'].split("/")[1],
         container_type: 'container',
