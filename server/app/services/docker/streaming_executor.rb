@@ -134,6 +134,10 @@ module Docker
         on_websocket_message(event.data)
       end
 
+      @ws.on(:error) do |exc|
+        warn exc
+      end
+
       @ws.on(:close) do |event|
         on_websocket_close(event.code, event.reason)
       end
