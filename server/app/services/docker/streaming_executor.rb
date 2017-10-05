@@ -144,7 +144,7 @@ module Docker
       debug { "websocket message: #{data.inspect}"}
 
       if data.has_key?('cmd')
-        exec_run(data['cmd'], shell: @shell, tty: @tty, stdin: @stdin)
+        exec_run(data['cmd'], shell: @shell, tty: @tty, stdin: @interactive)
       end
 
       if data.has_key?('stdin')
