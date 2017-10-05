@@ -78,8 +78,13 @@ module Docker
       @rpc_client.notify('/containers/run_exec', self.exec_id, cmd, tty, stdin)
     end
 
-    # @param tty_size [Hash{'width' => Integer, 'height' => Integer}]
-    def exec_resize(tty_size)
+    # @param width [Integer]
+    # @param height [Integer]
+    def exec_resize(width, height)
+      raise ArgumentError "width and height must be integers > 0" unless width > 0 && height > 0 
+
+      tty_size = { 'width' => width, 'height' => height }
+
       debug { "exec #{self.exec_id} resize: #{tty_size.inspect}" }
 
       @rpc_client.notify('/containers/tty_resize', self.exec_id, tty_size)
@@ -173,7 +178,7 @@ module Docker
 
       if data.has_key?('tty_size')
         fail "not running" unless running?
-        exec_resize(data['tty_size'])
+        exec_resize(data['tty_size']['width'], data['tty_size']['height'])
       end
     rescue JSON::ParserError => exc
       warn "invalid websocket JSON: #{exc}"

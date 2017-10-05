@@ -49,6 +49,56 @@ describe Docker::StreamingExecutor do
       subject.setup
     end
 
+    describe '#exec_run' do
+      it 'sends RPC notify' do
+        expect(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['echo', 'test'], false, false)
+
+        subject.exec_run(['echo', 'test'])
+      end
+
+      it 'execs with interactive' do
+        expect(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['echo', 'test'], false, true)
+
+        subject.exec_run(['echo', 'test'], stdin: true)
+      end
+
+      it 'execs with interactive tty' do
+        expect(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['echo', 'test'], true, true)
+
+        subject.exec_run(['echo', 'test'], tty: true, stdin: true)
+      end
+
+      it 'execs with shell' do
+        expect(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['/bin/sh', '-c', 'echo test'], false, false)
+
+        subject.exec_run(['echo test'], shell: true)
+      end
+    end
+
+    describe '#exec_resize' do
+      it 'sends RPC notify' do
+        expect(rpc_client).to receive(:notify).with('/containers/tty_resize', exec_id, {'width' => 80, 'height' => 24})
+
+        subject.exec_resize(80, 24)
+      end
+    end
+
+    describe '#exec_input' do
+      it 'sends RPC notify' do
+        expect(rpc_client).to receive(:notify).with('/containers/tty_input', exec_id, "echo test\r")
+
+        subject.exec_input("echo test\r")
+      end
+    end
+
+    describe '#exec_terminate' do
+      it 'sends RPC notify' do
+        expect(rpc_client).to receive(:notify).with('/containers/terminate_exec', exec_id)
+
+        subject.exec_terminate
+      end
+    end
+
     describe '#teardown' do
       it 'terminates the subscription and agent RPC exec' do
         expect(pubsub_subscription).to receive(:terminate)
