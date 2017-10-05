@@ -81,6 +81,24 @@ describe Docker::StreamingExecutor do
 
         subject.exec_resize(80, 24)
       end
+
+      it 'fails on invalid width' do
+        expect{
+          subject.exec_resize(nil, 24)
+        }.to raise_error(ArgumentError)
+      end
+
+      it 'fails on invalid height' do
+        expect{
+          subject.exec_resize(80, nil)
+        }.to raise_error(ArgumentError)
+      end
+
+      it 'fails on invalid width/height' do
+        expect{
+          subject.exec_resize(-1, -1)
+        }.to raise_error(ArgumentError)
+      end
     end
 
     describe '#exec_input' do

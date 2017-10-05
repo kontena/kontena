@@ -81,7 +81,9 @@ module Docker
     # @param width [Integer]
     # @param height [Integer]
     def exec_resize(width, height)
-      raise ArgumentError "width and height must be integers > 0" unless width > 0 && height > 0 
+      raise ArgumentError, "width must be integer" unless Integer === width
+      raise ArgumentError, "height must be integer" unless Integer === height
+      raise ArgumentError, "width and height must be integers > 0" unless width > 0 && height > 0
 
       tty_size = { 'width' => width, 'height' => height }
 
