@@ -27,6 +27,9 @@ module Docker
     def started!
       @started = true
     end
+
+    # start() was successful
+    # @return [Boolean]
     def started?
       @started
     end
@@ -34,10 +37,17 @@ module Docker
     def running!
       @running = true
     end
+
+    # exec is running, and ready to accept input/tty_resize
+    #
+    # @return [Boolean]
     def running?
       @running
     end
 
+    # Valid after setup()
+
+    # @return [String] container exec RPC UUID
     def exec_id
       @exec_session['id']
     end
