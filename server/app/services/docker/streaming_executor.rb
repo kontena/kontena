@@ -76,6 +76,8 @@ module Docker
       debug { "exec #{self.exec_id} run with shell=#{shell} tty=#{tty} stdin=#{stdin}: #{cmd.inspect}" }
 
       @rpc_client.notify('/containers/run_exec', self.exec_id, cmd, tty, stdin)
+
+      running!
     end
 
     # @param width [Integer]
@@ -172,9 +174,8 @@ module Docker
       debug { "websocket message: #{data.inspect}"}
 
       if data.has_key?('cmd')
-        fail "already running" if running?
+        fail "unexpected cmd: already running" if running?
         exec_run(data['cmd'], shell: @shell, tty: @tty, stdin: @interactive)
-        running!
       end
 
       if data.has_key?('stdin')

@@ -177,6 +177,39 @@ describe Docker::StreamingExecutor do
         end
       end
 
+      describe '#on_websocket_message' do
+        it 'accepts a command frame' do
+          expect(subject).to receive(:exec_run).with(['echo', 'test'], shell: false, tty: false, stdin: false)
+
+          subject.on_websocket_message('{"cmd":["echo", "test"]}')
+        end
+
+        context 'with a running exec' do
+          before do
+            allow(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['echo', 'test'], false, false).once
+            subject.exec_run(['echo', 'test'])
+          end
+
+          it 'aborts with a second command frame' do
+            expect(subject).to_not receive(:exec_run)
+            expect(subject).to receive(:abort).with(RuntimeError) do |exc|
+              expect(exc.message).to eq 'unexpected cmd: already running'
+            end
+
+            subject.on_websocket_message('{"cmd":["echo", "test 2"]}')
+          end
+
+        end
+      end
+
+      describe '#on_websocket_close' do
+        it 'terminates the exec' do
+          expect(subject).to receive(:teardown)
+
+          subject.on_websocket_close(1000, 'test')
+        end
+      end
+
       describe '#abort' do
         it 'closes the websocket and tears down' do
           expect(subject).to receive(:websocket_close).with(4000, "RuntimeError: test")
