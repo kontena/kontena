@@ -19,6 +19,7 @@ module Kontena::Cli::Stacks
 
     option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
+    option '--use-defaults', :flag, "Use defaults for all variable prompts"
 
     requires_current_master
     requires_current_master_token
@@ -52,6 +53,7 @@ module Kontena::Cli::Stacks
         end
 
         cmd << '--no-deploy' unless deploy?
+        cmd << '--use-defaults' if use_defaults?
 
         cmd << dependency['stack']
         Kontena.run!(cmd)

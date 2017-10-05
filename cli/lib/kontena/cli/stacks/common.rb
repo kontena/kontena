@@ -33,7 +33,8 @@ module Kontena::Cli::Stacks
       @stack ||= reader.execute(
         name: stack_name,
         parent_name: self.respond_to?(:parent_name) ? self.parent_name : nil,
-        values: (self.respond_to?(:values_from_options) ? self.values_from_options : {})
+        values: (self.respond_to?(:values_from_options) ? self.values_from_options : {}),
+        use_defaults_as_values: self.respond_to?(:use_defaults?) ? self.use_defaults? : false
       )
     end
 

@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
     option ['--[no-]sudo'], :flag, 'Run docker using sudo', hidden: Kontena.on_windows?, environment_variable: 'KONTENA_SUDO', default: false
 
     option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
+    option '--use-defaults', :flag, "Use defaults for all variable prompts"
 
     include Common::StackValuesToOption
     include Common::StackValuesFromOption

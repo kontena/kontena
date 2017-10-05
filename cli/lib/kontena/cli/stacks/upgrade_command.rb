@@ -23,6 +23,7 @@ module Kontena::Cli::Stacks
     option '--force', :flag, 'Force upgrade'
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
     option '--dry-run', :flag, "Simulate upgrade"
+    option '--use-defaults', :flag, "Use defaults for all variable prompts"
 
     requires_current_master
     requires_current_master_token
@@ -89,7 +90,8 @@ module Kontena::Cli::Stacks
           values: data[:variables],
           defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
           parent_name: data[:parent_name],
-          name: data[:name]
+          name: data[:name],
+          use_defaults_as_values: use_defaults?
         )
         hint_on_validation_notifications(reader.notifications, reader.loader.source)
         abort_on_validation_errors(reader.errors, reader.loader.source)
@@ -191,6 +193,7 @@ module Kontena::Cli::Stacks
         data = changes.new_data[added_stack]
         cmd = ['stack', 'install', '--name', added_stack, '--no-deploy']
         cmd.concat ['--parent-name', data[:parent_name]] if data[:parent_name]
+        cmd << '--use-defaults' if use_defaults?
         data[:variables].each do |k,v|
           cmd.concat ['-v', "#{k}=#{v}"]
         end
