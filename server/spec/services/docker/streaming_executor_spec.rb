@@ -8,6 +8,7 @@ describe Docker::StreamingExecutor do
   let(:rpc_client) { instance_double(RpcClient) }
   let(:exec_id) { '70720f99-19aa-4d6b-bd1d-5cd9b430ae8b' }
   let(:pubsub_subscription) { instance_double(MongoPubsub::Subscription) }
+  let(:websocket) { instance_double(Faye::WebSocket) }
 
   subject { described_class.new(container) }
 
@@ -117,6 +118,75 @@ describe Docker::StreamingExecutor do
       end
     end
 
+    describe '#start' do
+      it 'registers websocket handlers' do
+        expect(websocket).to receive(:on).with(:message) do |&block|
+          expect(subject).to receive(:on_websocket_message).with('foo')
+
+          block.call(double(data: 'foo'))
+        end
+
+        expect(websocket).to receive(:on).with(:error) do |&block|
+          expect(subject).to receive(:warn).with(RuntimeError)
+
+          block.call(RuntimeError.new('test'))
+        end
+
+        expect(websocket).to receive(:on).with(:close) do |&block|
+          expect(subject).to receive(:on_websocket_close).with(1000, 'test')
+
+          block.call(double(code: 1000, reason: 'test'))
+        end
+
+        subject.start(websocket)
+
+        expect(subject).to be_started
+      end
+    end
+
+    context 'with a websocket' do
+      before do
+        allow(websocket).to receive(:on)
+
+        subject.start(websocket)
+      end
+
+      describe '#websocket_write', :eventmachine => false do
+        it 'sends JSON data on the websocket from the EM thread' do
+          expect(websocket).to receive(:send).with('{"test":"test"}') do
+            expect(EventMachine.reactor_thread?).to be_truthy
+            EM.stop
+          end
+
+          EM.run {
+            subject.websocket_write(test: 'test')
+          }
+        end
+      end
+
+      describe '#websocket_close', :eventmachine => false do
+        it 'closes the websocket from the EM thread' do
+          expect(websocket).to receive(:close).with(1000, "test") do
+            expect(EventMachine.reactor_thread?).to be_truthy
+            EM.stop
+          end
+
+          EM.run {
+            subject.websocket_close(1000, 'test')
+          }
+        end
+      end
+
+      describe '#abort' do
+        it 'closes the websocket and tears down' do
+          expect(subject).to receive(:websocket_close).with(4000, "RuntimeError: test")
+          expect(subject).to receive(:teardown)
+
+          subject.abort RuntimeError.new('test')
+        end
+      end
+    end
+
     describe '#teardown' do
       it 'terminates the subscription and agent RPC exec' do
         expect(pubsub_subscription).to receive(:terminate)
@@ -124,7 +194,6 @@ describe Docker::StreamingExecutor do
 
         subject.teardown
       end
-
     end
 
     context 'after teardown' do
