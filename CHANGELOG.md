@@ -316,17 +316,11 @@ New Kontena Stack YAML variables, attributes and `kontena service create|update`
 * Support async stack deployments #2757
 * Support for shm size #2764
 * Server stack remove fails to stop services #2777
-* [1.4] Remove restart policy from old containers #2790
-* [1.4] Stack variable envs leak between dependent child stacks #2798
-* [1.4] Updating a certificate does not update services using that certificate #2801
-* [1.4] Stack reader does not allow interpolating `to: env: FOO` using `${FOO}` #2815
 * Having a dry-run option for stack upgrade would be great #2819
 * Service oneshot hooks might not get executed if the initial service deploy fails #2844
 * Service oneshot hooks can get executed more than once in special circumstances #2845
-* [1.4] DB migration failure on HostNode indexes for 1.3.4 -> 1.4.0.pre #2851
 * Remove experimental status from volume commands #2857
 * CLI: ls -q outputs headers when result set empty #2874
-* [1.4] kontena stack validate --online fails on GRID/STACK/PLATFORM variables #2880
 * Server leaks memory if new containers are constantly created and destroyed #2895
 
 ### Changes
