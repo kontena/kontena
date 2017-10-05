@@ -69,6 +69,7 @@ module V1
                 executor.start(ws)
               end
             ensure
+              # only relevant if the request wasn't actually a websocket request
               executor.teardown unless executor.started?
             end
           end
