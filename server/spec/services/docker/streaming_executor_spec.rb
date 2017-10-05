@@ -215,6 +215,13 @@ describe Docker::StreamingExecutor do
           subject.on_websocket_message('invalid json data')
         end
 
+        it 'aborts on random server errors' do
+          expect(rpc_client).to receive(:notify).and_raise(Celluloid::DeadActorError)
+          expect(subject).to receive(:abort).with(Celluloid::DeadActorError)
+
+          subject.on_websocket_message('{"cmd":["echo", "test"]}')
+        end
+
         describe 'for a non-interactive exec' do
           it 'accepts a command frame' do
             expect(subject).to receive(:exec_run).with(['echo', 'test'], shell: false, tty: false, stdin: false)
