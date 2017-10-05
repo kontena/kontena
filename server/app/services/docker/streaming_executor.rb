@@ -38,7 +38,7 @@ module Docker
     # Setup RPC state
     def setup
       @exec_session = exec_create
-      @subscription = subscribe_to_exec
+      @subscription = subscribe_to_exec(@exec_session['id'])
     end
 
     # @return [Hash{:id => String}]
@@ -82,11 +82,9 @@ module Docker
     end
 
     # @return [MongoPubsub::Subscription]
-    def subscribe_to_exec
-      channel = "container_exec:#{self.exec_id}"
-
-      MongoPubsub.subscribe(channel) do |data|
-        debug { "subscribe #{channel}: #{data.inspect}" }
+    def subscribe_to_exec(id)
+      MongoPubsub.subscribe("container_exec:#{id}") do |data|
+        debug { "subscribe exec #{id}: #{data.inspect}" }
 
         if data.has_key?('error')
           websocket_write(error: data['error'])
