@@ -122,11 +122,9 @@ module Scheduler
       # @param [String] compare
       # @param [String] value
       def service_match?(node, compare, value)
-        service_names = node.containers.delete_if{|c|
-            c.grid_service.nil?
-          }.map{|c|
-            c.grid_service.name
-          }.uniq
+        service_names = node.grid_service_instances.includes(:grid_service).delete_if { |i|
+          i.grid_service.nil?
+        }.map { |i| i.grid_service.name }.uniq
         if compare == '=='
           service_names.any?{|n| n == value}
         elsif compare == '!='
