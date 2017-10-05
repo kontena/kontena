@@ -31,6 +31,13 @@ module Docker
       @started
     end
 
+    def running!
+      @running = true
+    end
+    def running?
+      @running
+    end
+
     def exec_id
       @exec_session['id']
     end
@@ -144,14 +151,18 @@ module Docker
       debug { "websocket message: #{data.inspect}"}
 
       if data.has_key?('cmd')
+        fail "already running" if running?
         exec_run(data['cmd'], shell: @shell, tty: @tty, stdin: @interactive)
+        running!
       end
 
       if data.has_key?('stdin')
+        fail "not running" unless running?
         exec_input(data['stdin'])
       end
 
       if data.has_key?('tty_size')
+        fail "not running" unless running?
         exec_resize(data['tty_size'])
       end
     rescue JSON::ParserError => exc
