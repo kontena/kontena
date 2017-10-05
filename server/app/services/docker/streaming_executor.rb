@@ -24,6 +24,11 @@ module Docker
       !!@interactive
     end
 
+    # @return [Boolean]
+    def tty?
+      !!@tty
+    end
+
     def started!
       @started = true
     end
@@ -179,12 +184,14 @@ module Docker
       end
 
       if data.has_key?('stdin')
-        fail "not running" unless running?
+        fail "unexpected stdin: not interactive" unless interactive?
+        fail "unexpected stdin: not running" unless running?
         exec_input(data['stdin'])
       end
 
       if data.has_key?('tty_size')
-        fail "not running" unless running?
+        fail "unexpected tty_size: not a tty" unless tty?
+        fail "unexpected tty_size: not running" unless running?
         exec_resize(data['tty_size']['width'], data['tty_size']['height'])
       end
     rescue JSON::ParserError => exc

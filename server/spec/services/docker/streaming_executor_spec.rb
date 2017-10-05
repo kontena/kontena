@@ -178,27 +178,90 @@ describe Docker::StreamingExecutor do
       end
 
       describe '#on_websocket_message' do
-        it 'accepts a command frame' do
-          expect(subject).to receive(:exec_run).with(['echo', 'test'], shell: false, tty: false, stdin: false)
+        it 'aborts with invalid JSON' do
+          expect(subject).to receive(:abort).with(JSON::ParserError)
 
-          subject.on_websocket_message('{"cmd":["echo", "test"]}')
+          subject.on_websocket_message('invalid json data')
         end
 
-        context 'with a running exec' do
-          before do
-            allow(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['echo', 'test'], false, false).once
-            subject.exec_run(['echo', 'test'])
+        describe 'for a non-interactive exec' do
+          it 'accepts a command frame' do
+            expect(subject).to receive(:exec_run).with(['echo', 'test'], shell: false, tty: false, stdin: false)
+
+            subject.on_websocket_message('{"cmd":["echo", "test"]}')
           end
 
-          it 'aborts with a second command frame' do
-            expect(subject).to_not receive(:exec_run)
+          it 'aborts with a stdin frame' do
             expect(subject).to receive(:abort).with(RuntimeError) do |exc|
-              expect(exc.message).to eq 'unexpected cmd: already running'
+              expect(exc.message).to eq 'unexpected stdin: not interactive'
             end
 
-            subject.on_websocket_message('{"cmd":["echo", "test 2"]}')
+            subject.on_websocket_message('{"stdin":"foo"}')
           end
 
+          it 'aborts with a tty_size frame' do
+            expect(subject).to receive(:abort).with(RuntimeError) do |exc|
+              expect(exc.message).to eq 'unexpected tty_size: not a tty'
+            end
+
+            subject.on_websocket_message('{"tty_size":{"width": 80, "height": 24}}')
+          end
+        end
+
+        describe 'with an interactive tty exec' do
+          subject { described_class.new(container, interactive: true, tty: true) }
+
+          context 'before the exec is running' do
+            it 'accepts a command frame' do
+              expect(subject).to receive(:exec_run).with(['echo', 'test'], shell: false, tty: true, stdin: true)
+
+              subject.on_websocket_message('{"cmd":["echo", "test"]}')
+            end
+
+            it 'aborts with a stdin frame' do
+              expect(subject).to receive(:abort).with(RuntimeError) do |exc|
+                expect(exc.message).to eq 'unexpected stdin: not running'
+              end
+
+              subject.on_websocket_message('{"stdin":"foo"}')
+            end
+
+            it 'aborts with a tty_size frame' do
+              expect(subject).to receive(:abort).with(RuntimeError) do |exc|
+                expect(exc.message).to eq 'unexpected tty_size: not running'
+              end
+
+              subject.on_websocket_message('{"tty_size":{"width": 80, "height": 24}}')
+            end
+          end
+
+          context 'with a running exec' do
+            before do
+              allow(rpc_client).to receive(:notify).with('/containers/run_exec', exec_id, ['echo', 'test'], false, false).once
+              subject.exec_run(['echo', 'test'])
+            end
+
+            it 'aborts with a second command frame' do
+              expect(subject).to_not receive(:exec_run)
+              expect(subject).to receive(:abort).with(RuntimeError) do |exc|
+                expect(exc.message).to eq 'unexpected cmd: already running'
+              end
+
+              subject.on_websocket_message('{"cmd":["echo", "test 2"]}')
+            end
+
+            it 'accepts a stdin frame' do
+              expect(subject).to receive(:exec_input).with("foo")
+
+              subject.on_websocket_message('{"stdin":"foo"}')
+            end
+
+            it 'accepts a tty_size frame' do
+              expect(subject).to receive(:exec_resize).with(80, 24)
+
+              subject.on_websocket_message('{"tty_size":{"width": 80, "height": 24}}')
+            end
+          end
         end
       end
 
