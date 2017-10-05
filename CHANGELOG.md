@@ -293,27 +293,39 @@ New Kontena Stack YAML variables, attributes and `kontena service create|update`
 * stateful: true service should not get deployed on instances with ephemeral[=yes] label #2487
 * Soft affinity for services (#2490)
 * Agent does not validate KONTENA_URI=wss:// SSL certs (#2500)
+* CLI: kontena stack build to read values from installed stack #2515
 * Raise weave connection limit (#2539)
+* Difficult to get rid of a node that is missing a name and stuck as (initializing) #2558
 * Return also unhealthy count in service json (#2564)
 * Ubuntu kontena-agent package is not compatible with Docker 17.06 (#2588)
 * Move app commands to plugin (#2597)
+* Agent container exec only returns exit code 0 on Docker API errors #2598
+* Cli exec does not set terminal size #2601
+* CLI validation of wss:// SSL certs for exec commands is broken #2603
 * (Docs) Default command for s3 image registry fails (#2606)
 * Add platform as grid alias in stack yml (#2633)
 * Expose platform name as env (#2634)
 * CLI timeout is too low (#2637)
+* LogWorker shouldn't spam docker logs #2661
 * Server Cloud::WebsocketClient does not validate SSL certificates (#2685)
+* CLI: stack logs by service #2712
 * 1.3 Agent stuck connecting to master (#2723)
 * Make fluentd forwarded logs more structured by default (#2735)
+* Agent container exec input can block the entire RPC server #2740
 * kontena node/labels update does not notify nodes (#2746)
+* Support async stack deployments #2757
 * Support for shm size #2764
+* Server stack remove fails to stop services #2777
 * [1.4] Remove restart policy from old containers #2790
 * [1.4] Stack variable envs leak between dependent child stacks #2798
 * [1.4] Updating a certificate does not update services using that certificate #2801
 * [1.4] Stack reader does not allow interpolating `to: env: FOO` using `${FOO}` #2815
+* Having a dry-run option for stack upgrade would be great #2819
 * Service oneshot hooks might not get executed if the initial service deploy fails #2844
 * Service oneshot hooks can get executed more than once in special circumstances #2845
 * [1.4] DB migration failure on HostNode indexes for 1.3.4 -> 1.4.0.pre #2851
 * Remove experimental status from volume commands #2857
+* CLI: ls -q outputs headers when result set empty #2874
 * [1.4] kontena stack validate --online fails on GRID/STACK/PLATFORM variables #2880
 * Server leaks memory if new containers are constantly created and destroyed #2895
 
