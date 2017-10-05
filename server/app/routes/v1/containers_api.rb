@@ -55,24 +55,21 @@ module V1
           end
 
           r.on 'exec' do
-            interactive = r['interactive'].to_s == 'true'
-            tty = r['tty'].to_s == 'true'
-            shell = r['shell'].to_s == 'true'
+            executor = Docker::StreamingExecutor.new(container,
+              interactive: r['interactive'].to_s == 'true',
+              shell: r['shell'].to_s == 'true',
+              tty: r['tty'].to_s == 'true',
+            )
+            audit_event(r, container.grid, container, executor.interactive? ? 'exec_interactive' : 'exec')
+            executor.setup
 
-            audit_event(r, container.grid, container, interactive ? 'exec_interactive' : 'exec')
-
-            r.websocket do |ws|
-              begin
-                executor = Docker::StreamingExecutor.new(container, ws)
-                executor.start(shell, interactive, tty)
-              # XXX: the roda error_handle also rescues ScriptError, so those wont't propagate to puma
-              rescue => exc
-                puts "websocket handler error: #{exc} @ #{exc.backtrace.join("\n\t")}"
-                ws.start_driver # XXX: the ws.close has to happen after the ws.rack_response -> ws.start_driver -> EventMachine.schedule { @driver.start }
-                EventMachine.schedule { ws.close(4000, "#{exc}") }
-              ensure
-                # TODO: executor.terminate unless executor.started?
+            begin
+              r.websocket do |ws|
+                # this is not allowed to fail
+                executor.start(ws)
               end
+            ensure
+              executor.teardown unless executor.started?
             end
           end
         end
