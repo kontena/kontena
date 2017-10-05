@@ -61,9 +61,9 @@ module V1
               tty: r['tty'].to_s == 'true',
             )
             audit_event(r, container.grid, container, executor.interactive? ? 'exec_interactive' : 'exec')
-            executor.setup
 
             begin
+              executor.setup
               r.websocket do |ws|
                 # this is not allowed to fail
                 executor.start(ws)
