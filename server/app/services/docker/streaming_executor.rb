@@ -186,14 +186,14 @@ module Docker
     #
     # Can be called multiple times (abort -> on_websocket_close)
     def teardown
-      if @exec_session
-        exec_terminate
-        @exec_session = nil
-      end
-
       if @subscription
         @subscription.terminate
         @subscription = nil
+      end
+
+      if @exec_session
+        exec_terminate
+        @exec_session = nil
       end
     end
   end
