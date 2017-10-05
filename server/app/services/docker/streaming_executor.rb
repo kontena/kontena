@@ -126,7 +126,7 @@ module Docker
         elsif data.has_key?('stream')
           websocket_write(stream: data['stream'], chunk: data['chunk'])
         else
-          error "invalid container exec #{channel} RPC: #{data.inspect}"
+          error "invalid container exec #{id} RPC: #{data.inspect}"
         end
       end
     end

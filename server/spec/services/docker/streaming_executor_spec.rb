@@ -45,7 +45,10 @@ describe Docker::StreamingExecutor do
   context 'after setup' do
     before do
       expect(rpc_client).to receive(:request).with('/containers/create_exec', container_id).and_return({'id' => exec_id})
-      expect(MongoPubsub).to receive(:subscribe).with("container_exec:70720f99-19aa-4d6b-bd1d-5cd9b430ae8b").and_return(pubsub_subscription)
+      expect(MongoPubsub).to receive(:subscribe).with("container_exec:70720f99-19aa-4d6b-bd1d-5cd9b430ae8b") do |channel, &block|
+        @pubsub_block = block
+        pubsub_subscription
+      end
 
       subject.setup
     end
@@ -174,6 +177,34 @@ describe Docker::StreamingExecutor do
           EM.run {
             subject.websocket_close(1000, 'test')
           }
+        end
+      end
+
+      describe '#subscribe_to_exec' do
+        it 'sends error and closes' do
+          expect(subject).to receive(:websocket_write).with(error: 'test')
+          expect(subject).to receive(:websocket_close).with(4000)
+
+          @pubsub_block.call(HashWithIndifferentAccess.new(error: 'test'))
+        end
+
+        it 'sends exit and closes' do
+          expect(subject).to receive(:websocket_write).with(exit: 0)
+          expect(subject).to receive(:websocket_close).with(1000)
+
+          @pubsub_block.call(HashWithIndifferentAccess.new(exit: 0))
+        end
+
+        it 'sends stream chunk and closes' do
+          expect(subject).to receive(:websocket_write).with(stream: 'stdout', chunk: '# ')
+
+          @pubsub_block.call(HashWithIndifferentAccess.new(stream: 'stdout', chunk: '# '))
+        end
+
+        it 'logs error on unexpected input' do
+          expect(subject).to receive(:error).with("invalid container exec #{exec_id} RPC: {\"test\"=>true}")
+
+          @pubsub_block.call(HashWithIndifferentAccess.new(test: true))
         end
       end
 
