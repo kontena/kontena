@@ -17,6 +17,7 @@ module Kontena
     STRFTIME = '%F %T.%NZ'
 
     CONNECT_INTERVAL = 1.0
+    RECONNECT_BACKOFF = 90.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -43,7 +44,7 @@ module Kontena
       @ssl_hostname = ssl_hostname
 
       @connected = false
-      @connecting = false
+      @reconnect_attempt = 0
 
       if @node_token
         info "initialized with node token #{@node_token[0..8]}..., node ID #{@node_id}"
@@ -61,11 +62,6 @@ module Kontena
       @connected
     end
 
-    # @return [Boolean]
-    def connecting?
-      @connecting
-    end
-
     def rpc_server
       Celluloid::Actor[:rpc_server]
     end
@@ -74,14 +70,30 @@ module Kontena
     end
 
     def start
-      every(CONNECT_INTERVAL) do
-        connect! if !connected? unless connecting?
+      after(CONNECT_INTERVAL) do
+        connect!
+      end
+    end
+
+    def reconnect!
+      if @reconnect_attempt > 16
+        backoff = RECONNECT_BACKOFF
+      else
+        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** @reconnect_attempt].min
+      end
+
+      backoff *= rand
+
+      @reconnect_attempt += 1
+
+      info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
+
+      after(backoff) do
+        connect!
       end
     end
 
     def connect!
-      @connecting = true
-
       info "connecting to master at #{@api_uri}"
       headers = {
           'Kontena-Node-Id' => @node_id.to_s,
@@ -116,9 +128,7 @@ module Kontena
 
     rescue => exc
       error exc
-
-      # abort connect, allow re-connecting
-      @connecting = false
+      reconnect!
     end
 
     # Connect the websocket client, and read messages.
@@ -202,7 +212,7 @@ module Kontena
     # The websocket is connected: @ws is now valid and wen can send message
     def connected!
       @connected = true
-      @connecting = false
+      @reconnect_attempt = 0
 
       # NOTE: the server may still reject the websocket connection by closing it after the open handshake
       #       wait for the /agent/master_info RPC before emitting websocket:connected
@@ -219,10 +229,11 @@ module Kontena
     def disconnected!
       @ws = nil # prevent further send_message calls until reconnected
       @connected = false
-      @connecting = false
 
       # any queued up send_message calls will fail
       publish('websocket:disconnected', nil)
+
+      reconnect!
     end
 
     # Called from RpcServer, does not crash the Actor on errors.
