@@ -11,6 +11,7 @@ module Cloud
     include Logging
 
     CONNECT_INTERVAL = 5.0
+    RECONNECT_BACKOFF = 120.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -42,13 +43,13 @@ module Cloud
       info "initialized with client ID #{@client_id} (secret #{@client_secret[0..8]}...)"
 
       @connected = false
-      @connecting = false
+      @reconnect_attempt = 0
     end
 
     # Called from CloudWebsocketConnectJob
     def start
-      every(CONNECT_INTERVAL) do
-        connect if !connected? unless connecting?
+      after(CONNECT_INTERVAL) do
+        connect
       end
     end
 
@@ -63,9 +64,22 @@ module Cloud
       @connected
     end
 
-    # @return [Boolean]
-    def connecting?
-      @connecting
+    def reconnect
+      if @reconnect_attempt > 16
+        backoff = RECONNECT_BACKOFF
+      else
+        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** @reconnect_attempt].min
+      end
+
+      backoff *= rand
+
+      @reconnect_attempt += 1
+
+      info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
+
+      after(backoff) do
+        connect
+      end
     end
 
     # @return [String]
@@ -74,8 +88,6 @@ module Cloud
     end
 
     def connect
-      @connecting = true
-
       info "Connecting to cloud at #{@api_uri}"
 
       headers = {
@@ -96,9 +108,7 @@ module Cloud
 
     rescue => exc
       error exc
-
-      # abort connect, allow re-connecting
-      @connecting = false
+      reconnect
     end
 
     # Connect the websocket client, and read messages.
@@ -147,7 +157,7 @@ module Cloud
 
     def on_open
       @connected = true
-      @connecting = false
+      @reconnect_attempt = 0
 
       begin
         ssl_cert = @ws.ssl_cert!
@@ -201,7 +211,6 @@ module Cloud
     # @param reason [String]
     def on_close(code, reason)
       @connected = false
-      @connecting = false
 
       case code
       when 1002
@@ -211,6 +220,8 @@ module Cloud
       end
 
       unsubscribe_events
+
+      reconnect
     end
 
     # @param [Array] msg
