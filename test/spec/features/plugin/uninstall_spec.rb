@@ -6,7 +6,7 @@ describe 'plugin uninstall' do
   end
 
   it 'removes installed plugin' do
-    k = run('kontena plugin uninstall --force aws')
+    k = run('kontena plugin uninstall aws')
     expect(k.code).to eq(0)
   end
 end
