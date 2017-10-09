@@ -69,10 +69,9 @@ module Scheduler
       # @param [Integer] instance_number
       # @return [Float]
       def instance_rank(node, grid_service, instance_number)
-        prev_instance = node.grid_service_instances.find_by(
-          grid_service_id: grid_service.id, instance_number: instance_number
-        )
-        if prev_instance
+        # ask all instances so that mongoid can cache query
+        current_instances = node.grid_service_instances.where(grid_service_id: grid_service.id).to_a
+        if current_instances.any? { |i| i.instance_number == instance_number}
           -5.0
         else
           0.0
@@ -82,9 +81,9 @@ module Scheduler
       # @param [Scheduler::Node] node
       # @return [Float]
       def memory_rank(node)
-        stats = node.host_node_stats.latest
-        if stats
-          stats.memory['used'].to_f / node.mem_total.to_f
+        stats = node.latest_stats
+        unless stats.empty?
+          stats['memory']['used'].to_f / node.mem_total.to_f
         else
           0.0
         end
