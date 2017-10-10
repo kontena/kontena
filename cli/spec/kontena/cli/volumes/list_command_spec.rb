@@ -1,0 +1,50 @@
+require 'kontena/cli/volumes/list_command'
+
+describe Kontena::Cli::Volumes::ListCommand do
+  include ClientHelpers
+  include OutputHelpers
+  include RequirementsHelper
+
+  expect_to_require_current_master
+  expect_to_require_current_master_token
+
+  mock_current_master
+
+  let(:subject) { described_class.new("kontena") }
+  let(:response)  do
+    {
+      'volumes' => [
+        { 'id' => 'test-grid/testvol',
+          'name' => 'testvol',
+          'scope' => 'testscope',
+          'driver' => 'testdriver',
+          'created_at' => (Time.now.utc - 90).to_s
+        },
+        { 'id' => 'test-grid/testvol2',
+          'name' => 'testvol2',
+          'scope' => 'testscope2',
+          'driver' => 'testdriver2',
+          'created_at' => (Time.now.utc - 350).to_s
+        }
+      ]
+    }
+  end
+
+  it 'lists volumes' do
+    expect(client).to receive(:get).with('volumes/test-grid').and_return(response)
+    expect{subject.run([])}.to output_table [
+      ['testvol',  'testscope', 'testdriver', '1 minute ago'],
+      ['testvol2', 'testscope2', 'testdriver2', '5 minutes ago']
+    ]
+  end
+
+  context '--quiet' do
+    it 'lists volume names' do
+      expect(client).to receive(:get).with('volumes/test-grid').and_return(response)
+      expect{subject.run(['-q'])}.to output_table([
+        ['testvol'],
+        ['testvol2']
+      ]).without_header
+    end
+  end
+end
