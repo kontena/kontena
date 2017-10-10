@@ -55,8 +55,9 @@ module OutputHelpers
         @real.zip(@expected) do |real, expected|
           line += 1
           fields = real.split(/\s{2,}/)
-          without_regex = expected.each_index.select { |i| !expected[i].kind_of?(Regexp) }
-          if without_regex.empty?
+          with_regex = expected.each_index.select { |i| expected[i].kind_of?(Regexp) }
+          without_regex = expected.each_index.reject { |i| with_regex.include?(i) }
+          if with_regex.empty?
             regexes_pass = true
           else
             regexes_pass = without_regex.all? do |i|
