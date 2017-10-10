@@ -18,13 +18,13 @@ describe Kontena::Cli::Volumes::ListCommand do
           'name' => 'testvol',
           'scope' => 'testscope',
           'driver' => 'testdriver',
-          'created_at' => (Time.now.utc - 90).to_s
+          'created_at' => Time.parse('2001-01-01 12:00:00').to_s
         },
         { 'id' => 'test-grid/testvol2',
           'name' => 'testvol2',
           'scope' => 'testscope2',
           'driver' => 'testdriver2',
-          'created_at' => (Time.now.utc - 350).to_s
+          'created_at' => Time.parse('2001-01-02 12:00:00').to_s
         }
       ]
     }
@@ -33,8 +33,8 @@ describe Kontena::Cli::Volumes::ListCommand do
   it 'lists volumes' do
     expect(client).to receive(:get).with('volumes/test-grid').and_return(response)
     expect{subject.run([])}.to output_table [
-      ['testvol',  'testscope', 'testdriver', '1 minute ago'],
-      ['testvol2', 'testscope2', 'testdriver2', '5 minutes ago']
+      ['testvol',  'testscope', 'testdriver', /\d+ days ago/],
+      ['testvol2', 'testscope2', 'testdriver2', /\d+ days ago/]
     ]
   end
 
