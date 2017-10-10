@@ -45,6 +45,7 @@ module Kontena::Cli::Services
     option "--health-check-initial-delay", "DELAY", "Initial delay for health check"
     option "--health-check-port", "PORT", "Port for health check"
     option "--health-check-protocol", "PROTOCOL", "Protocol of health check"
+    option "--stop-signal", "STOP_SIGNAL", "Alternative signal to stop container"
     option "--stop-timeout", "STOP_TIMEOUT", "Timeout (duration) to stop a container"
     option "--read-only", :flag, "Read-only root fs for the container", default: false
 
@@ -95,6 +96,7 @@ module Kontena::Cli::Services
       health_check = parse_health_check
       data[:health_check] = health_check unless health_check.empty?
       data[:pid] = pid if pid
+      data[:stop_signal] = stop_signal if stop_signal
       data[:stop_grace_period] = stop_timeout if stop_timeout
       data[:read_only] = read_only?
       data

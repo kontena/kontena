@@ -40,6 +40,7 @@ class GridService
   field :revision, type: Integer, default: 1
   field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
+  field :stop_signal, type: String
   field :stop_grace_period, type: Fixnum, default: 10
 
   belongs_to :grid
