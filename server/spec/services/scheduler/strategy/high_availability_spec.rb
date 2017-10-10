@@ -130,7 +130,9 @@ describe Scheduler::Strategy::HighAvailability do
     end
 
     it 'returns rank based on memory usage' do
-      node.host_node_stats.create!(memory: {'used' => 256.megabytes})
+      node.latest_stats = {
+        'memory' => { 'used' => 256.megabytes }
+      }
       node.mem_total = 1.gigabytes
       expect(subject.memory_rank(node)).to eq(0.25)
     end
