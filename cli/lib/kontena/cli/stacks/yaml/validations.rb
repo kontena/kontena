@@ -80,6 +80,7 @@ module Kontena::Cli::Stacks::YAML
           'interval' => optional('integer'),
           'initial_delay' => optional('integer')
         }),
+        'stop_signal' => optional('string'),
         'stop_grace_period' => optional(/(\d+(?:\.\d+)?)([hms])/),
         'read_only' => optional('boolean')
       }

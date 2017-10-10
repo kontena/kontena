@@ -2,7 +2,7 @@ describe GridService do
   it { should be_timestamped_document }
   it { should be_kind_of(EventStream) }
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
-                          :net, :log_driver, :pid).of_type(String) }
+                          :net, :log_driver, :pid, :stop_signal).of_type(String) }
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares,
                           :revision, :stack_revision, :shm_size).of_type(Integer) }
