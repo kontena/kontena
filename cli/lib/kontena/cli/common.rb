@@ -14,7 +14,7 @@ module Kontena
 
       def_delegators :prompt, :ask, :yes?
       def_delegators :config,
-        :current_grid=, :require_current_grid, :current_master,
+        :current_grid=, :require_current_grid,
         :current_master=, :require_current_master, :require_current_account,
         :current_account
       def_delegator :config, :config_filename, :settings_filename
@@ -246,7 +246,17 @@ module Kontena
       end
 
       def current_grid
-        (self.respond_to?(:grid) ? self.grid : nil) || config.current_grid
+        @current_grid ||= (self.respond_to?(:grid) ? self.grid : nil) || config.current_grid
+      end
+
+      def current_master
+        return @current_master if @current_master
+        if self.respond_to?(:current_master_name) && self.current_master_name
+          config.current_master = self.current_master_name
+          @current_master = config.current_master
+        else
+          @current_master = config.current_master
+        end
       end
 
       def current_master_index
