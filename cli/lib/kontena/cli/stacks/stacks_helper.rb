@@ -9,10 +9,10 @@ module Kontena::Cli::Stacks
           deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
         end
         if deployment['state'] == 'error'
-          $stderr.puts "Stack deploy failed"
+          puts "Stack deploy failed"
           deployment['service_deploys'].each do |service_deploy|
             if service_deploy['state'] == 'error'
-              $stderr.puts " - #{service_deploy['reason']}"
+              puts " - #{service_deploy['reason']}"
             end
           end
 
