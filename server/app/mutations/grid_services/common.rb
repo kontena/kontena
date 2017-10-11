@@ -352,7 +352,7 @@ module GridServices
               integer :initial_delay, default: 10
             end
           end
-          string :stop_signal, matches: /^((SIG)([A-Z0-9]+|RTMIN\+\d+|RTMAX-\d+)|\d+)$/i
+          string :stop_signal, matches: /\A((SIG)([A-Z0-9]+|RTMIN\+\d+|RTMAX-\d+)|\d+)\z/i
           string :stop_grace_period, matches: Duration::VALIDATION_PATTERN
         end
       end
