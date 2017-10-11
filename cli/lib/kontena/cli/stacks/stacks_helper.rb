@@ -15,7 +15,7 @@ module Kontena::Cli::Stacks
             end
           end
 
-          raise 'deploy failed'
+          abort
         end
       end
 
