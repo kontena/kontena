@@ -42,7 +42,7 @@ class Certificate
   def auto_renewable?
     self.all_domains.each do |domain|
       domain_auth = self.grid.grid_domain_authorizations.find_by(domain: domain)
-      unless domain_auth && domain_auth.authorization_type == 'tls-sni-01'
+      unless domain_auth && domain_auth.authorization_type == 'tls-sni-01' && domain_auth.grid_service
         return false
       end
     end

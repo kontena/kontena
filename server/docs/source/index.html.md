@@ -582,6 +582,16 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "version": "0.1.0",
   "registry": "https://stack-registry.kontena.io",
   "expose": "peer",
+  "parent": {
+    "name": "parent-stack-name",
+    "id": "my-grid/parent-stack-name" # null when parent does not exist
+  },
+  "children": [
+    {
+      "name": "child-stack-name",
+      "id": "my-grid/child-stack-name"
+    }
+  ],
   "services": [
       {
           "name": "arbiter",
@@ -600,7 +610,8 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
           "stateful": true,
           "replicas": 3,
           "cmd": "--replset kontena --smallfiles",
-        "stop_grace_period": "1m23s",
+          "stop_signal": "SIGTERM",
+          "stop_grace_period": "1m23s",
           "health_check": {
               "protocol": "tcp",
               "port": 27017
@@ -662,6 +673,8 @@ registry | A stack registry where stack schema is originally fetched
 expose | A service that stack exposes to grid level DNS namespace
 services | A list of stack services (see [services](#services) for more info)
 volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
+parent | Null or an object referencing the parent stack in a stack dependency chain
+children | An array of objects referencing the child stacks in a stack dependency chain
 
 ### Volume attributes
 
@@ -669,7 +682,6 @@ Attribute | Description
 ---------- | -------
 name  | Name of the volume within the stack
 external | Name of the grid level volume definition to use
-
 
 ## Create a stack
 
@@ -683,7 +695,8 @@ Accept: application/json
     "stack": "my/redis",
     "version": "0.1.0",
     "registry": "file://",
-    "services": []
+    "services": [],
+    "parent_name": "parent-stack-name"
 }
 ```
 
@@ -933,6 +946,7 @@ log_driver | Log driver (string)
 log_opts | Log driver options (object)
 hooks | Commands to be executed when service instance is deployed
 instance_counts | Stats about how many instances this service currently has
+stop_signal | Alternative signal to stop the container
 stop_grace_period | How long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with the image), before sending SIGKILL.
 health_status | Health status of the service instances. Only counted if there is a health check defined for the service.
 

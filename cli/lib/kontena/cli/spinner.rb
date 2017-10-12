@@ -168,6 +168,7 @@ module Kontena
               Kernel.puts msg
             end
           end
+          Thread.main['spinners'].delete(spin_thread)
         end
 
         exit(status) if status

@@ -43,6 +43,7 @@ module Kontena
                   :wait_for_port,
                   :volume_specs,
                   :read_only,
+                  :stop_signal,
                   :stop_grace_period
       attr_accessor :entrypoint, :cmd
 
@@ -88,6 +89,7 @@ module Kontena
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
         @read_only = attrs['read_only']
+        @stop_signal = attrs['stop_signal']
         @stop_grace_period = attrs['stop_grace_period']
       end
 
@@ -172,6 +174,7 @@ module Kontena
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
         docker_opts['Entrypoint'] = self.entrypoint if self.entrypoint
+        docker_opts['StopSignal'] = self.stop_signal if self.stop_signal
 
         if self.can_expose_ports? && self.ports
           docker_opts['ExposedPorts'] = self.build_exposed_ports

@@ -217,9 +217,18 @@ describe Kontena::Models::ServicePod do
       expect(service_config['Entrypoint']).to be_nil
     end
 
-    it 'does not include Entrypoint if nil' do
+    it 'includes Entrypoint if set' do
       data['entrypoint'] = ['/bin/sh']
       expect(service_config['Entrypoint']).to eq(['/bin/sh'])
+    end
+    
+    it 'does not include StopSignal if nil' do
+      expect(service_config['StopSignal']).to be_nil
+    end
+
+    it 'includes StopSignal if set' do
+      data['stop_signal'] = 'SIGQUIT'
+      expect(service_config['StopSignal']).to eq('SIGQUIT')
     end
 
     it 'includes empty ExposedPorts if no ports are defined' do
