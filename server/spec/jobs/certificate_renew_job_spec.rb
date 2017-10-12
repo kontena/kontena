@@ -5,7 +5,7 @@ describe CertificateRenewJob, celluloid: true do
 
   let(:grid) { Grid.create!(name: 'test-grid') }
 
-  let(:service) { GridService.create!(grid: grid, name: 'lb', image_name: 'lb')}
+  let(:linked_service) { GridService.create!(grid: grid, name: 'lb', image_name: 'lb')}
 
   let(:certificate) {
     Certificate.create!(grid: grid,
@@ -29,30 +29,84 @@ describe CertificateRenewJob, celluloid: true do
     end
   end
 
-  describe '#authorize_domains' do
-    it 'authorises domain succesfully' do
-      domain_auth = GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: service)
-      expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => true, :result => domain_auth))
-      expect(subject.wrapped_object).to receive(:wait_until!)
-      subject.authorize_domains(certificate)
-    end
+  context 'without any domain authz' do
+    describe '#renew_certificate' do
+      it 'does not renew the certificate' do
+        expect(subject.wrapped_object).to_not receive(:authorize_domains)
+        expect(subject.wrapped_object).to_not receive(:request_new_cert)
 
-    it 'raises if domain auth fails' do
-      domain_auth = GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: service)
-      expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => false, :errors => double(:message => 'boom')))
-      expect {
-        subject.authorize_domains(certificate)
-      }.to raise_error "Domain authorization failed: boom"
-    end
-
-    it 'raises if tls-sni deployment fails' do
-      domain_auth = GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: service)
-      expect(domain_auth).to receive(:status).twice.and_return(:deploy_error) #once in the wait loop and once after it
-      expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => true, :result => domain_auth))
-      expect {
-        subject.authorize_domains(certificate)
-      }.to raise_error "Deployment of tls-sni secret failed"
+        subject.renew_certificate(certificate)
+      end
     end
   end
 
+  context 'with a non-renewable domain authz' do
+    let(:domain_auth) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'dns-01') }
+
+    describe '#renew_certificate' do
+      it 'does not renew the certificate' do
+        expect(subject.wrapped_object).to_not receive(:authorize_domains)
+        expect(subject.wrapped_object).to_not receive(:request_new_cert)
+
+        subject.renew_certificate(certificate)
+      end
+    end
+  end
+
+  context 'with an auto-renewable domain authz' do
+    let!(:domain_auth) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: linked_service) }
+
+    describe '#renew_certificate' do
+      before do
+        expect(certificate).to be_auto_renewable
+      end
+
+      it 're-authorizes and renews the cert' do
+        expect(subject.wrapped_object).to receive(:authorize_domains).with(certificate)
+        expect(subject.wrapped_object).to receive(:request_new_cert).with(certificate)
+
+        subject.renew_certificate(certificate)
+      end
+
+    end
+
+    describe '#authorize_domains' do
+      it 'authorises domain succesfully' do
+        expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => true, :result => domain_auth))
+        expect(subject.wrapped_object).to receive(:wait_until!)
+        subject.authorize_domains(certificate)
+      end
+
+      it 'raises if domain auth fails' do
+        expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => false, :errors => double(:message => 'boom')))
+        expect {
+          subject.authorize_domains(certificate)
+        }.to raise_error "Domain authorization failed: boom"
+      end
+
+      it 'raises if tls-sni deployment fails' do
+        expect(domain_auth).to receive(:status).twice.and_return(:deploy_error) #once in the wait loop and once after it
+        expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => true, :result => domain_auth))
+        expect {
+          subject.authorize_domains(certificate)
+        }.to raise_error "Deployment of tls-sni secret failed"
+      end
+    end
+
+    context 'with the linked service having been removed' do
+      before do
+        linked_service.destroy
+        certificate.reload
+      end
+
+      describe '#renew_certificate' do
+        it 'does not renew the cert' do
+          expect(subject.wrapped_object).to_not receive(:request_new_cert)
+          expect(subject.wrapped_object).to_not receive(:error)
+
+          subject.renew_certificate(certificate)
+        end
+      end
+    end
+  end
 end
