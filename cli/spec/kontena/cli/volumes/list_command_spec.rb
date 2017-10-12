@@ -33,8 +33,8 @@ describe Kontena::Cli::Volumes::ListCommand do
   it 'lists volumes' do
     expect(client).to receive(:get).with('volumes/test-grid').and_return(response)
     expect{subject.run([])}.to output_table [
-      ['testvol',  'testscope', 'testdriver', /\d+ days ago/],
-      ['testvol2', 'testscope2', 'testdriver2', /\d+ days ago/]
+      ['testvol',  'testscope', 'testdriver', a_string_matching(/\d+ days ago/)],
+      ['testvol2', 'testscope2', 'testdriver2', a_string_matching(/\d+ days ago/)]
     ]
   end
 
