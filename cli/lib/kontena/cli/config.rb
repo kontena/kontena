@@ -103,9 +103,8 @@ module Kontena
         end
 
         self.current_server = ENV['KONTENA_MASTER'] || settings['current_server']
-        unless find_server(self.current_server)
-          warn "Master '#{self.current_server}' not found in configuration"
-          self.current_server = nil
+        if self.current_server && !find_server(self.current_server)
+          abort "Master '#{self.current_server}' not found in configuration"
         end
 
         Array(settings['accounts']).each do |account_data|

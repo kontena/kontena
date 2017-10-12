@@ -256,7 +256,11 @@ module Kontena
       def current_master
         return @current_master if @current_master
         if self.respond_to?(:current_master_name) && self.current_master_name
-          config.current_master = self.current_master_name
+          begin
+            config.current_master = self.current_master_name
+          rescue
+            exit_with_error "Master #{pastel.cyan(current_master_name)} not found in config"
+          end
           @current_master = config.current_master
         else
           @current_master = config.current_master
