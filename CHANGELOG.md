@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.4.0.rc1) (2017-09-14)
+## [1.4.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.4.0.rc2) (2017-10-12)
 
 ### Highlights
 
@@ -170,6 +170,10 @@ services:
 
     The `--s3-v4auth` optional is now the default.
 
+* `kontena volume list -q`
+
+    Output the plain volume name `foo` used for scripting `kontena volume ...` commands, instead of the full `gridname/foo` ID.
+
 * `kontena plugin uninstall`
 
     No longer prompts for confirmation or accepts `--force`.
@@ -240,6 +244,10 @@ New Kontena Stack YAML variables, attributes and `kontena service create|update`
 
     Timeout in seconds for stopping the container.
 
+* `stop_signal` / `--stop-signal`
+
+    Override the default `SIGTERM` signal used to stop a container.
+
 ### Breaking changes
 
 * Docker versions older than 1.12 are no longer supported on host/master nodes (#2589)
@@ -274,10 +282,12 @@ New Kontena Stack YAML variables, attributes and `kontena service create|update`
 
 ### Known issues
 
-* `kontena service restart` also triggers ServicePodWorker restart timer (#2781)
+* Agent ServicePodWorker gets confused by service restarts ()#2781)
 * Dependent stack variables are not interpolated (#2799)
 
     The new stack `depends` do not yet support the use of interpolation for the child stack `variables`.
+
+* CLI stack validate outputs stack create API request instead of interpolated stack YAML #2887
 
 ### Fixed issues
 
@@ -322,6 +332,8 @@ New Kontena Stack YAML variables, attributes and `kontena service create|update`
 * Remove experimental status from volume commands #2857
 * CLI: ls -q outputs headers when result set empty #2874
 * Server leaks memory if new containers are constantly created and destroyed #2895
+* Certificate auto-renewal can fail if domain authz's linked service has been removed bug server #2881
+* CLI: kontena volume ls -q returns grid/volumename #2925
 
 ### Changes
 
@@ -368,6 +380,7 @@ Commits that affect multiple components are listed separately under each affecte
 * Fix exec console size (#2708)
 * Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
 * Change log RPCs to use xmlschema timestamps with sub-second precision (#2832)
+* Support for stop_signal (#2918)
 
 #### Server
 
@@ -445,6 +458,11 @@ Commits that affect multiple components are listed separately under each affecte
 * Fix server stack view to not crash for orphaned child stacks (#2885)
 * Fix server cloud event serializer to use HostNode#to_path as node id (#2892)
 * Fix server ContainerInfoMapper memory leak (#2896)
+* Check ports from scheduled instances (#2910)
+* Check service affinity via service instances (#2911)
+* Support for stop_signal (#2918)
+* Docs: Add stack depends parent/children fields to API documentation (#2862)
+* Fix certificates to not auto-renew if missing the linked service (#2933)
 
 #### CLI
 
@@ -514,6 +532,9 @@ Commits that affect multiple components are listed separately under each affecte
 * Deploy CLI omnibus deb to bintray (#2658)
 * Fix CLI omnibus liblzma source (#2903)
 * Fix CLI omnibus liblzma source url (#2907)
+* Support for stop_signal (#2918)
+* Fix CLI output hang after exceptions raised in spinners (#2906)
+* CLI: Make volumes ls -q output name instead of grid/name (#2926)
 
 #### Docs
 
