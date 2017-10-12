@@ -55,16 +55,7 @@ module OutputHelpers
         @real.zip(@expected) do |real, expected|
           line += 1
           fields = real.split(/\s{2,}/)
-          with_regex = expected.each_index.select { |i| expected[i].kind_of?(Regexp) }
-          without_regex = expected.each_index.reject { |i| with_regex.include?(i) }
-          if with_regex.empty?
-            regexes_pass = true
-          else
-            regexes_pass = without_regex.all? do |i|
-              expected[i].match(fields[i]) ? true : false
-            end
-          end
-          unless regexes_pass && values_match?(fields.values_at(*without_regex), expected.values_at(*without_regex))
+          unless values_match?(expected, fields)
             @errors << [
               "on line #{line}:",
               " expected: #{expected}",
@@ -102,7 +93,7 @@ module OutputHelpers
       @expected = lines.flatten
       @actual = CaptureStdoutLines.capture(block)
 
-      values_match?(@actual, @expected)
+      values_match?(@expected, @actual)
     end
   end
 
