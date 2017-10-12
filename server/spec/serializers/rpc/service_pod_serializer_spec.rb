@@ -19,6 +19,7 @@ describe Rpc::ServicePodSerializer do
       env: ['FOO=bar'],
       networks: [grid.networks.first],
       service_volumes: [ServiceVolume.new(volume: volume, path:'/data'), ServiceVolume.new(volume: ext_vol, path: '/foo')],
+      stop_signal: 'SIGQUIT',
       stop_grace_period: 20
     )
   end
@@ -158,6 +159,10 @@ describe Rpc::ServicePodSerializer do
 
     it 'includes default network' do
       expect(subject.to_hash).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
+    end
+
+    it 'stop_signal' do
+      expect(subject.to_hash).to include(:stop_signal => 'SIGQUIT')
     end
 
     it 'stop_grace_period' do

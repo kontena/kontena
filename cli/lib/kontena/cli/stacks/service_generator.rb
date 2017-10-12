@@ -66,6 +66,7 @@ module Kontena::Cli::Stacks
       data['certificates'] = options['certificates'] if options['certificates']
       data['build'] = parse_build_options(options) if options['build']
       data['health_check'] = parse_health_check(options)
+      data['stop_signal'] = options['stop_signal'] if options['stop_signal']
       data['stop_grace_period'] = options['stop_grace_period'] if options['stop_grace_period']
       data['read_only'] = options['read_only'] || false
       data
