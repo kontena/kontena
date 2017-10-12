@@ -41,9 +41,20 @@ describe Certificate do
       end
     end
 
-    context 'with tls-sni domain authorizations' do
+    context 'with tls-sni domain authorizations missing any linked service' do
       let!(:authz1) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01') }
       let!(:authz2) { GridDomainAuthorization.create!(grid: grid, domain: 'www.kontena.io', authorization_type: 'tls-sni-01') }
+
+      it 'is not auto-renewable' do
+        expect(certificate).to_not be_auto_renewable
+      end
+    end
+
+    context 'with tls-sni domain authorizations having a linked service' do
+      let(:linked_service) { GridService.create!(grid: grid, name: 'lb', image_name: 'lb')}
+
+      let!(:authz1) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: linked_service) }
+      let!(:authz2) { GridDomainAuthorization.create!(grid: grid, domain: 'www.kontena.io', authorization_type: 'tls-sni-01', grid_service: linked_service) }
 
       it 'is auto-renewable' do
         expect(certificate).to be_auto_renewable
