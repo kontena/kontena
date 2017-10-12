@@ -38,6 +38,7 @@ services:
     environment:
       - KONTENA_URI=ws://localhost:9292
       - KONTENA_TOKEN=e2etoken
+      - LOG_LEVEL=0
     network_mode: "host"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
