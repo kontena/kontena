@@ -7,6 +7,7 @@ class GridServiceInstance
   # updated by master
   field :desired_state, type: String, default: 'initialized'.freeze
   field :deploy_rev, type: String
+  field :latest_stats, type: Hash, default: {}
 
   # updated by agent
   field :rev, type: String

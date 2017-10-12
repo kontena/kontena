@@ -112,6 +112,9 @@ module Rpc
           flush_stats
           gc_cache
         end
+        if container['grid_service_id'] && container['instance_number'] && container['container_type'] == 'container'.freeze
+          update_grid_service_instance_stats(container, data)
+        end
       end
     end
 
@@ -136,6 +139,22 @@ module Rpc
     def flush_stats
       @db_session[:container_stats].insert_many(@stats.dup)
       @stats.clear
+    end
+
+    # @param container [Hash]
+    # @param data [Hash]
+    def update_grid_service_instance_stats(container, data)
+      @db_session[:grid_service_instances].find_one_and_update(
+        { grid_service_id: container['grid_service_id'], instance_number: container['instance_number'] },
+        {
+          :'$set' => {
+            latest_stats: {
+              cpu: data['cpu'],
+              memory: data['memory']
+            }
+          }
+        }
+      )
     end
 
     def gc_cache

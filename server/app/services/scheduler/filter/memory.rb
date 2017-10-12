@@ -14,7 +14,7 @@ module Scheduler
           memory = resolve_memory_from_stats(service, instance_number)
         end
 
-        return candidates unless memory # we cannot calculate so let's return all candidates
+        return candidates if memory == 0 # we cannot calculate so let's return all candidates
 
         candidates.delete_if { |c|
           reject_candidate?(c, memory, service, instance_number)
@@ -27,30 +27,28 @@ module Scheduler
         candidates
       end
 
+      # @param service [GridService]
+      # @param instance_number [Integer]
+      # @return [Integer]
       def resolve_memory_from_stats(service, instance_number)
-        cache_key = "scheduler:mem:filter:#{service.id}-#{instance_number}"
-        memory = self.class.cache[cache_key]
-        unless memory
-          container = service.containers.to_a.find { |c| c.instance_number == instance_number }
-          if container
-            stats = container.container_stats.latest
-            if stats
-              memory = stats.memory['usage'] * 1.25
-              self.class.cache[cache_key] = memory
-            end
-          end
-        end
-        unless memory
-          memory = 256.megabytes # just a default if we cannot resolve anything
+        memory = 0
+        service_instance = fetch_service_instance(service, instance_number)
+        if service_instance && !service_instance.latest_stats.empty?
+          usage = service_instance.latest_stats.dig('memory', 'usage')
+          memory = usage * 1.25 if usage
         end
 
-        memory
+        memory.to_i
       end
 
       # @param service [GridService]
       # @param instance_number [Integer]
-      def fetch_service_instance(service, instance_number)
-        service.grid_service_instances.to_a.find { |i| i.instance_number == instance_number }
+      # @param candidate [HostNode]
+      # @return [GridServiceInstance, NilClass]
+      def fetch_service_instance(service, instance_number, candidate = nil)
+        service.grid_service_instances.to_a.find { |i|
+          i.instance_number == instance_number && (candidate.nil? || i.host_node_id == candidate.id)
+        }
       end
 
       # @param [HostNode] candidate
@@ -58,7 +56,7 @@ module Scheduler
       # @param [GridService] service
       # @param [Integer] instance_number
       def reject_candidate?(candidate, memory, service, instance_number)
-        return false if fetch_service_instance(service, instance_number)
+        return false if fetch_service_instance(service, instance_number, candidate)
         return true if candidate.mem_total.to_i < memory
 
         node_stat = candidate.latest_stats
@@ -72,11 +70,6 @@ module Scheduler
         return true if mem_free < memory
 
         false
-      end
-
-      # @return [LruRedux::TTL::ThreadSafeCache]
-      def self.cache
-        @cache ||= LruRedux::TTL::ThreadSafeCache.new(1000, 60 * 5)
       end
     end
   end

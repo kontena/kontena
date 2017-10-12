@@ -11,10 +11,6 @@ describe Scheduler::Filter::Memory do
     GridService.create(name: 'test-service', grid: grid, image_name: 'test-service:latest')
   }
 
-  before(:each) do
-    described_class.cache.clear
-  end
-
   describe '#for_service' do
     it 'returns all nodes with default memory available if memory consumption cannot be calculated' do
       nodes.each{|n| n.update_attribute(:mem_total, 384.megabytes) }
@@ -116,6 +112,33 @@ describe Scheduler::Filter::Memory do
         candidate, 500.megabytes, test_service, 1
       )
       expect(reject).to be_falsey
+    end
+  end
+
+  describe '#resolve_memory_from_stats' do
+    let(:candidate) {
+      candidate = nodes[0]
+      candidate.mem_total = 1.gigabytes
+      candidate
+    }
+
+    it 'returns zero if stats are empty' do
+      test_service.grid_service_instances.create!(
+        host_node: candidate,
+        instance_number: 1
+      )
+      expect(subject.resolve_memory_from_stats(test_service, 1)).to eq(0)
+    end
+
+    it 'returns memory (+ 25%) if stats found' do
+      test_service.grid_service_instances.create!(
+        host_node: candidate,
+        instance_number: 1,
+        latest_stats: {
+          'memory' => { 'usage' => 34.megabytes }
+        }
+      )
+      expect(subject.resolve_memory_from_stats(test_service, 1)).to eq(34.megabytes * 1.25)
     end
   end
 end
