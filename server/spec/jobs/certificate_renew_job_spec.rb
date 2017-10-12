@@ -67,6 +67,7 @@ describe CertificateRenewJob, celluloid: true do
 
         subject.renew_certificate(certificate)
       end
+
     end
 
     describe '#authorize_domains' do
@@ -89,6 +90,22 @@ describe CertificateRenewJob, celluloid: true do
         expect {
           subject.authorize_domains(certificate)
         }.to raise_error "Deployment of tls-sni secret failed"
+      end
+    end
+
+    context 'with the linked service having been removed' do
+      before do
+        linked_service.destroy
+        certificate.reload
+      end
+
+      describe '#renew_certificate' do
+        it 'does not renew the cert' do
+          expect(subject.wrapped_object).to_not receive(:request_new_cert)
+          expect(subject.wrapped_object).to_not receive(:error)
+
+          subject.renew_certificate(certificate)
+        end
       end
     end
   end
