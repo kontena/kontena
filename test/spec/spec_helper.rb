@@ -72,7 +72,7 @@ RSpec.configure do |config|
   end
 
   config.after :context, :subcommand => :app do
-    k = Kommando.run "kontena plugin uninstall --force app-command"
+    k = Kommando.run "kontena plugin uninstall app-command"
   end
 
   config.before :each do
