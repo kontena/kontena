@@ -81,7 +81,6 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     end
 
     context 'with a stack including dependencies' do
-
       let(:expectation)     {{ 'name' => 'deptest', 'stack' => 'user/depstack1' }}
       let(:expectation_1)   {{ 'name' => 'deptest-dep_1', 'stack' => 'user/depstack1child1'}}
       let(:expectation_1_1) {{ 'name' => 'deptest-dep_1-dep_1', 'stack' => 'user/depstack1child1child1', 'services' => array_including(hash_including('image' => 'image:2')) }}
@@ -116,11 +115,18 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
           ),
           'variables' => hash_including('dep_var' => 2),
         ))
-        expect(client).to receive(:put).with('stacks/test-grid/deptest-dep_1-dep_1', hash_including(expectation_1_1)).and_return(true)
+        expect(client).to receive(:put).with('stacks/test-grid/deptest-dep_1-dep_1', hash_including(
+          'name' => 'deptest-dep_1-dep_1',
+          'stack' => 'user/depstack1child1child1',
+          'services' => array_including(
+            hash_including('name' => 'monitor', 'image' => 'image:3'),
+          ),
+          'variables' => hash_including('dep_var' => 3),
+        ))
         expect(client).to receive(:put).with('stacks/test-grid/deptest-dep_1', hash_including(expectation_1)).and_return(true)
         expect(client).to receive(:put).with('stacks/test-grid/deptest', hash_including(expectation)).and_return(true)
 
-        subject.run(['--force', '--no-deploy', '-v', 'dep_2.dep_var=2', 'deptest', fixture_path('stack-with-dependencies.yml')])
+        subject.run(['--force', '--no-deploy', '-v', 'dep_2.dep_var=2', '-v', 'dep_1.dep_1.dep_var=3', 'deptest', fixture_path('stack-with-dependencies.yml')])
       end
 
       context 'when a dependency has been removed' do
