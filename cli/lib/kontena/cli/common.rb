@@ -14,7 +14,7 @@ module Kontena
 
       def_delegators :prompt, :ask, :yes?
       def_delegators :config,
-        :current_grid=, :require_current_grid,
+        :current_grid=, :require_current_grid, :require_current_master_token,
         :current_master=, :require_current_account,
         :current_account
       def_delegator :config, :config_filename, :settings_filename
