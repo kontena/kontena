@@ -108,6 +108,21 @@ module OutputHelpers
     end
   end
 
+  matcher :output_json do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      @actual = JSON.parse(output)
+
+      values_match?(expected,   @actual)
+    end
+
+    failure_message do |block|
+      return "expected block to return #{expected}, but returned #{@actual}"
+    end
+  end
+
   module CaptureStdout
     def self.capture(block)
       capture = StringIO.new
