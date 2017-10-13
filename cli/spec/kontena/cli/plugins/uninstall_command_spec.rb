@@ -29,5 +29,11 @@ describe Kontena::Cli::Plugins::UninstallCommand do
 
       subject.run(['test'])
     end
+
+    it 'ignores --force' do
+      allow(uninstaller).to receive(:uninstall)
+
+      subject.run(['--force', 'test'])
+    end
   end
 end
