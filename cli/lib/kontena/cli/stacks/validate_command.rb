@@ -19,6 +19,7 @@ module Kontena::Cli::Stacks
     option '--dependency-tree', :flag, "Show dependency tree"
     option '--[no-]dependencies', :flag, "Validate dependencies", default: true
     option '--parent-name', '[PARENT_NAME]', "Set parent name", hidden: true
+    option '--output-json', :flag, "Output API JSON"
 
     def validate_dependencies
       dependencies = loader.dependencies
@@ -59,12 +60,12 @@ module Kontena::Cli::Stacks
 
       dump_variables if values_to
 
-      result = reader.fully_interpolated_yaml
-
-      if dependencies?
-        puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source}")
+      if output_json?
+        puts JSON.pretty_generate(stack)
       else
-        puts ::YAML.dump(result)
+        result = ::YAML.dump(reader.fully_interpolated_yaml)
+        result = result.sub(/\A---$/, "---\n# #{loader.source}") if dependencies?
+        puts result
       end
     end
   end

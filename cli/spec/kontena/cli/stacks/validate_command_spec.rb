@@ -16,7 +16,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
       end
     end
 
-    it 'validates a yaml file' do
+    it 'outputs interpolated YAML' do
       expect{Kontena.run!('stack', 'validate', fixture_path('stack-with-liquid.yml'))}.to output_yaml(
         'stack' => 'user/stackname',
         'version' => '0.1.1',
@@ -35,6 +35,34 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
           ),
         ),
       )
+    end
+
+    it 'outputs generated JSON' do
+      expect{Kontena.run!('stack', 'validate', '-v', 'copies=2', '--output-json', fixture_path('stack-with-liquid.yml'))}.to output_json(hash_including(
+        'stack' => 'user/stackname',
+        'version' => '0.1.1',
+        'name' => 'stackname',
+        'registry' => 'file://',
+        'expose' => nil,
+        'volumes' => [ ],
+        'dependencies' => nil,
+        'source' => a_string_matching(/.+/),
+        'parent_name' => nil,
+        'variables' => {
+          'grid_name' => '{{ GRID }} stackname',
+          'copies' => 2,
+        },
+        'services' => [
+          hash_including(
+            'name' => 'service-1',
+            'image' => 'foo:1',
+          ),
+          hash_including(
+            'name' => 'service-2',
+            'image' => 'foo:2',
+          ),
+        ],
+      ))
     end
 
     context '--online' do
