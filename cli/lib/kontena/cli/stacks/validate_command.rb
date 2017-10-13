@@ -59,12 +59,8 @@ module Kontena::Cli::Stacks
 
       dump_variables if values_to
 
-      result = stack.reject { |k, _| k == 'source' }
-      result.merge!(
-        'variables' => Kontena::Util.stringify_keys(
-          reader.variable_values(without_defaults: true, without_vault: true, with_errors: true)
-        )
-      )
+      result = reader.fully_interpolated_yaml
+
       if dependencies?
         puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source}")
       else
@@ -73,4 +69,3 @@ module Kontena::Cli::Stacks
     end
   end
 end
-
