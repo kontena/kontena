@@ -55,7 +55,7 @@ module OutputHelpers
         @real.zip(@expected) do |real, expected|
           line += 1
           fields = real.split(/\s{2,}/)
-          unless values_match?(fields, expected)
+          unless values_match?(expected, fields)
             @errors << [
               "on line #{line}:",
               " expected: #{expected}",
@@ -93,7 +93,7 @@ module OutputHelpers
       @expected = lines.flatten
       @actual = CaptureStdoutLines.capture(block)
 
-      values_match?(@actual, @expected)
+      values_match?(@expected, @actual)
     end
   end
 

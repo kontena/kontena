@@ -82,6 +82,7 @@ module GridServices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
+      attributes[:stop_signal] = self.stop_signal if self.stop_signal
       attributes[:stop_grace_period] = parse_duration(self.stop_grace_period) if self.stop_grace_period
       attributes[:read_only] = self.read_only unless self.read_only.nil?
 
