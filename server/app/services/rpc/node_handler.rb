@@ -57,7 +57,8 @@ module Rpc
           memory: data['memory'],
           load: data['load'],
           filesystem: data['filesystem'],
-          cpu: data['cpu']
+          cpu: data['cpu'],
+          usage: data['usage']
         }
       )
     end
