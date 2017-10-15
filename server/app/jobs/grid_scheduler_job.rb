@@ -48,6 +48,8 @@ class GridSchedulerJob
         rescue => exc
           error "error occurred in service #{service.to_path}"
           error exc.message
+        ensure
+          Mongoid::QueryCache.clear_cache
         end
       else
         info "skipping checks because not a leader anymore"
