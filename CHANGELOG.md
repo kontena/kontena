@@ -1,18 +1,16 @@
 # Changelog
 
-## [1.4.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.4.0.rc2) (2017-10-12)
+## [1.4.0](https://github.com/kontena/kontena/releases/tag/v1.4.0.rc2) (2017-10-16)
 
 ### Highlights
 
-#### Fully automated LetsEncrypt certificate request and renewal using `tls-sni-01`
+#### Fully automated LetsEncrypt certificates using `tls-sni-01`
 
-The new Kontena Certificate support integrates with the Kontena Loadbalancer to provide fully automated LetsEncrypt `tls-sni-01` domain authorizations.
+The new Kontena Certificate support integrates with the Kontena Loadbalancer to provide fully automated Let's Encrypt `tls-sni-01` domain authorizations.
 
-The `kontena certificate authorize --type tls-sni-01 --linked-service STACK/lb` command can be used to request a domain authorization `tls-sni-01` challenge, and deploy the challenge certificate to the linked Kontena Loadbalancer.
-The new `kontena certificate request` command can then be immediately used to request a new certificate for the authorized domains.
-The new certificates will show up in `kontena certificate list` together with their validity period, and the Kontena Server will automatically renew the certificates 7 days before expiry.
+The `kontena certificate authorize` command can be used to request a **tls-sni-01** domain authorization challenge from Let's Encrypt, and also deploy the challenge certificate to the linked Kontena load-balancer. The new `kontena certificate request` command can then be immediately used to request a new certificate for the authorized domains. The new certificates will show up in `kontena certificate list` together with their validity period, and the Kontena Master will automatically renew the certificates 7 days before expiry.
 
-The new certificates can be deployed to the same loadbalancer using the new Kontena Stack YAML `certificates` syntax:
+These new certificates can be deployed to the load-balancer service using the new Kontena Stack YAML `certificates` syntax.
 
 ```yaml
 stack: example/lb
@@ -23,10 +21,11 @@ services:
       - subject: example.com
 ```
 
+Any existing `LE_CERTIFICATE_*` secrets will also be migrated to Kontena Certificates during the upgrade.
+
 #### Stack dependencies
 
-Kontena Stacks can now embed other Kontena Stacks, and installing/upgrading/removing such a stack will automatically install/upgrade/remove the child stacks.
-The child stacks can have their variables set by the parent stack.
+Kontena Stacks can now embed other Kontena Stacks, and these child stacks will be automatically installed, upgraded and removed as part of the top-level stack. The child stack variables can either be set by the parent stack, or using the new `kontena stack install -v child.variable=value` CLI options.
 
 ```yaml
 stack: example/app
