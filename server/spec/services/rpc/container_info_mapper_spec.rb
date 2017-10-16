@@ -17,22 +17,31 @@ describe Rpc::ContainerInfoMapper do
       service.containers.create!(name: 'app-1', host_node: node, container_id: SecureRandom.hex(32))
     end
 
-    it 'updates container host_node' do
-      data = {
-          'Id' => container.container_id,
-          'Config' => {
-              'Labels' => {}
-          }
+    let(:data) do
+      {
+        'Id' => container.container_id,
+        'Config' => {
+            'Labels' => {}
+        }
       }
+    end
+
+    it 'updates container host_node' do
       node2
       subject.update_service_container('bbb', container, data)
       expect(container.reload.host_node).to eq(node2)
     end
+
+    it 'does not leak references' do
+      node2
+      subject.update_service_container('bbb', container, data)
+      expect(grid.containers.in_memory.size).to eq(0)
+    end
   end
 
   describe '#create_service_container' do
-    it 'creates a new container to grid' do
-      data = {
+    let(:data) do
+      {
         'Id' => SecureRandom.hex(32),
         'Config' => {
           'Labels' => {
@@ -41,9 +50,17 @@ describe Rpc::ContainerInfoMapper do
           }
         }
       }
+    end
+
+    it 'creates a new container to grid' do
       expect {
         subject.create_service_container(node.node_id, data)
       }.to change{ service.containers.count }.by(1)
+    end
+
+    it 'does not leak in memory references' do
+      subject.create_service_container(node.node_id, data)
+      expect(grid.containers.in_memory.size).to eq(0)
     end
   end
 
