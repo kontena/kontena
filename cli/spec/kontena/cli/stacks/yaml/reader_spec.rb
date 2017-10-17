@@ -117,6 +117,19 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           )
         end
 
+        it 'passes variables to extended file' do
+          allow(File).to receive(:exist?).with(fixture_path('docker-compose_v2_with_variables.yml')).and_call_original
+          allow(File).to receive(:read).with(fixture_path('docker-compose_v2_with_variables.yml')).and_call_original
+          allow(File).to receive(:exist?).with(fixture_path('kontena_v3.yml')).and_call_original
+          allow(File).to receive(:read).with(fixture_path('kontena_v3.yml')).and_return(fixture('kontena_v3_with_compose_variables.yml'))
+          expect(subject.execute['services']).to match array_including(
+            hash_including(
+              "name" => 'wordpress',
+              "env" => ["ENV_VAR=abcd"]
+            )
+          )
+        end
+
         it 'merges validation errors' do
           expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_return(fixture('docker-compose-invalid.yml'))
           outcome = subject.execute

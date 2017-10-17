@@ -1,0 +1,11 @@
+stack: user/stackname
+version: 0.1.1
+variables:
+  ENV_VAR:
+    type: string
+    value: abcd
+services:
+  wordpress:
+    extends:
+      file: docker-compose_v2_with_variables.yml
+      service: mysql
