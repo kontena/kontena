@@ -24,6 +24,8 @@ module Kontena
     CLOSE_TIMEOUT = 10.0
     WRITE_TIMEOUT = 10.0 # this one is a little odd
 
+
+
     # @param [String] api_uri
     # @param [String] node_id
     # @param [String] node_name
@@ -32,7 +34,7 @@ module Kontena
     # @param [Array<String>] node_labels
     # @param [Hash] ssl_params
     # @param [String] ssl_hostname
-      def initialize(api_uri, node_id, node_name:, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
+    def initialize(api_uri, node_id, node_name:, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
       @api_uri = api_uri
       @node_id = node_id
       @node_name = node_name
@@ -44,6 +46,7 @@ module Kontena
 
       @connected = false
       @connecting = false
+      @backoff_interval = 0
 
       if @node_token
         info "initialized with node token #{@node_token[0..8]}..., node ID #{@node_id}"
@@ -74,8 +77,16 @@ module Kontena
     end
 
     def start
-      every(CONNECT_INTERVAL) do
-        connect! if !connected? unless connecting?
+      loop do
+        if !connected? && !connecting?
+          connect!
+          # Backoff connect attempts between un-succesfull trys
+          sleep @backoff_interval
+          backoff_reconnect!
+        else
+          sleep CONNECT_INTERVAL
+        end
+
       end
     end
 
@@ -168,6 +179,14 @@ module Kontena
       ws.disconnect # close socket
     end
 
+    def backoff_reconnect!
+      @backoff_interval += 2 # exponential would make backoff really long with only few attempts
+    end
+
+    def reset_reconnect_backoff
+      @backoff_interval = 0
+    end
+
     # Websocket handshake complete.
     def on_open
       ssl_verify = ws.ssl_verify?
@@ -203,6 +222,7 @@ module Kontena
     def connected!
       @connected = true
       @connecting = false
+      reset_reconnect_backoff
 
       # NOTE: the server may still reject the websocket connection by closing it after the open handshake
       #       wait for the /agent/master_info RPC before emitting websocket:connected
