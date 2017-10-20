@@ -350,6 +350,9 @@ module Kontena::Cli::Stacks
 
       def from_external_file(filename, service_name)
         external_reader = FileLoader.new(filename, loader).reader
+        variables.to_a(with_value: true).each do |var|
+          external_reader.variables.build_option(var)
+        end
         outcome = external_reader.execute(service_name)
         errors.concat external_reader.errors unless external_reader.errors.empty? || errors.include?(external_reader.errors)
         notifications.concat external_reader.notifications unless external_reader.notifications.empty? || notifications.include?(external_reader.notifications)
