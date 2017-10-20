@@ -124,7 +124,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           allow(File).to receive(:read).with(fixture_path('kontena_v3.yml')).and_return(fixture('kontena_v3_with_compose_variables.yml'))
           expect(subject.execute['services']).to match array_including(
             hash_including(
-              "name" => 'wordpress',
+              "name" => 'mysql',
               "env" => ["ENV_VAR=abcd"]
             )
           )

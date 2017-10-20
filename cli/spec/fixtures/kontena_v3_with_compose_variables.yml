@@ -5,7 +5,7 @@ variables:
     type: string
     value: abcd
 services:
-  wordpress:
+  mysql:
     extends:
       file: docker-compose_v2_with_variables.yml
       service: mysql
