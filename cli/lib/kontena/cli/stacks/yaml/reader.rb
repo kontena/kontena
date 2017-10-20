@@ -46,10 +46,6 @@ module Kontena::Cli::Stacks
         @notifications    = []
       end
 
-      def is_compose?
-        internals_interpolated_yaml['version'] =~ /^[23](?:\.\d+)?$/
-      end
-
       # @param without_defaults [TrueClass,FalseClass] strip the GRID, STACK, etc from response
       # @param without_vault [TrueClass,FalseClass] strip out any values that are going to or coming from VAULT
       # @return [Hash] a hash of key value pairs representing the values of stack variables
@@ -204,10 +200,6 @@ module Kontena::Cli::Stacks
         raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid? || skip_validation
 
         validate unless skip_validation
-
-        if is_compose? && internals_interpolated_yaml['version'].split('.').first != '2'
-          notifications << { 'file' => "Docker compose yaml version #{internals_interpolated_yaml['version']} is not fully supported" }
-        end
 
         result = {}
         Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
