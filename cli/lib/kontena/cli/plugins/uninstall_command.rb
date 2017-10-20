@@ -7,6 +7,7 @@ module Kontena::Cli::Plugins
     include Kontena::PluginManager::Common
 
     parameter 'NAME', 'Plugin name'
+    option "--force", :flag, "Unused", hidden: true
 
     def uninstaller
       Kontena::PluginManager::Uninstaller.new(name)
