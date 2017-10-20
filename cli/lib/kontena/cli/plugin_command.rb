@@ -5,6 +5,7 @@ class Kontena::Cli::PluginCommand < Kontena::Command
   subcommand "search", "Search plugins", load_subcommand('plugins/search_command')
   subcommand "install", "Install a plugin", load_subcommand('plugins/install_command')
   subcommand "uninstall", "Uninstall a plugin", load_subcommand('plugins/uninstall_command')
+  subcommand "update", "Update plugins", load_subcommand('plugins/update_command')
 
   def execute
   end
