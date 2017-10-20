@@ -69,7 +69,7 @@ module Kontena
       @default_headers = {
         ACCEPT => CONTENT_JSON,
         CONTENT_TYPE => CONTENT_JSON,
-        'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
+        'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}+#{Kontena::Cli::BUILD_TAGS}"
       }.merge(options[:default_headers])
 
       if token
