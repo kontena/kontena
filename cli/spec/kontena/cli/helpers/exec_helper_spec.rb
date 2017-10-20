@@ -57,6 +57,44 @@ describe Kontena::Cli::Helpers::ExecHelper do
           "\n",
         ).and raise_error(EOFError)
       end
+
+      it 'yields chunks of UTF-8 input that are JSON-encodable' do
+        data = "f\u00e5\u00e5".encode('UTF-8').force_encoding('ASCII-8BIT')
+
+        expect(stdin_raw).to receive(:readpartial).and_return(data[0..2])
+        expect(stdin_raw).to receive(:readpartial).and_return(data[3..4])
+        expect(stdin_raw).to receive(:readpartial).and_raise(EOFError)
+
+        chunks = []
+
+        expect{subject.read_stdin(tty: true) do |chunk|
+          chunks << JSON.dump('stdin' => chunk)
+        end}.to raise_error(EOFError)
+
+        expect(chunks).to eq [
+          '{"stdin":"f' + "\u00e5" + '"}',
+          '{"stdin":"' + "\u00e5" + '"}',
+        ]
+      end
+
+      it 'yields tty control characters that are JSON-encodable' do
+        data = "\x03\x04".force_encoding('ASCII-8BIT')
+
+        expect(stdin_raw).to receive(:readpartial).and_return(data[0])
+        expect(stdin_raw).to receive(:readpartial).and_return(data[1])
+        expect(stdin_raw).to receive(:readpartial).and_raise(EOFError)
+
+        chunks = []
+
+        expect{subject.read_stdin(tty: true) do |chunk|
+          chunks << JSON.dump('stdin' => chunk)
+        end}.to raise_error(EOFError)
+
+        expect(chunks).to eq [
+          '{"stdin":"\\u0003"}',
+          '{"stdin":"\\u0004"}',
+        ]
+      end
     end
   end
 
