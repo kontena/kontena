@@ -1,7 +1,6 @@
 require 'kontena/cli/version'
 
 class Kontena::Cli::VersionCommand < Kontena::Command
-  include Kontena::Cli::Common
 
   option "--cli", :flag, "Only CLI version"
 

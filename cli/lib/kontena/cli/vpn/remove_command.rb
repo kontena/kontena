@@ -1,6 +1,5 @@
 module Kontena::Cli::Vpn
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced

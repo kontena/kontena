@@ -1,6 +1,5 @@
 module Kontena::Cli::Vault
   class UpdateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter 'NAME', 'Secret name'

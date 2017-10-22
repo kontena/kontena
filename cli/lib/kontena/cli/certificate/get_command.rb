@@ -1,10 +1,8 @@
-
 module Kontena::Cli::Certificate
   class GetCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    BANNER = "This command is now deprecated in favor of 'kontena certificate request' command".colorize(:red)
+    BANNER = "This command is now deprecated in favor of 'kontena certificate request' command"
 
     banner BANNER
 
@@ -12,9 +10,8 @@ module Kontena::Cli::Certificate
     option '--cert-type', 'CERT_TYPE', 'The type of certificate to get: fullchain, chain or cert', default: 'fullchain'
     parameter "DOMAIN ...", "Domain(s) to get certificate for"
 
-
     def execute
-      puts BANNER
+      warn pastel.red(BANNER)
 
       require_api_url
       token = require_token
@@ -24,7 +21,7 @@ module Kontena::Cli::Certificate
       response = client(token).post("certificates/#{current_grid}/certificate", data)
       puts "Certificate successfully received and stored into vault with keys:"
       response.each do |secret|
-        puts secret.colorize(:green)
+        puts pastel.green(secret)
       end
       puts "Use the #{secret}_BUNDLE with Kontena loadbalancer!"
 

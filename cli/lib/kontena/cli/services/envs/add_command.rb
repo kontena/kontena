@@ -2,7 +2,6 @@ require_relative '../services_helper'
 
 module Kontena::Cli::Services::Envs
   class AddCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
 

@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Etcd
   class GetCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
 

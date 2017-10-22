@@ -3,7 +3,6 @@ require "kontena/cli/helpers/health_helper"
 
 module Kontena::Cli::Grids
   class HealthCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::Helpers::HealthHelper
     include Common
 

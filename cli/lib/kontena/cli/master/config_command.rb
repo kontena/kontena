@@ -1,4 +1,3 @@
-
 module Kontena
   module Cli
     module Master
@@ -8,9 +7,6 @@ module Kontena
         subcommand "unset", "Clear a config value", load_subcommand('master/config/unset_command')
         subcommand ["load", "import"], "Upload config to Master", load_subcommand('master/config/import_command')
         subcommand ["dump", "export"], "Download config from Master", load_subcommand('master/config/export_command')
-
-        def execute
-        end
       end
     end
   end

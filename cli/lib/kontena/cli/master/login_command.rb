@@ -2,8 +2,6 @@ require 'uri'
 
 module Kontena::Cli::Master
   class LoginCommand < Kontena::Command
-    include Kontena::Cli::Common
-
     parameter "[URL]", "Kontena Master URL or name"
     option ['-j', '--join'], '[INVITE_CODE]', "Join master using an invitation code"
     option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token', environment_variable: 'KONTENA_TOKEN'

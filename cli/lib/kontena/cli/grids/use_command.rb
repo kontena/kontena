@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Grids
   class UseCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Common
 
     requires_current_master

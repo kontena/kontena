@@ -1,5 +1,4 @@
 class Kontena::Cli::WhoamiCommand < Kontena::Command
-  include Kontena::Cli::Common
 
   option '--bash-completion-path', :flag, 'Show bash completion path', hidden: true
   option '--token', :flag, 'Show current master token', hidden: true

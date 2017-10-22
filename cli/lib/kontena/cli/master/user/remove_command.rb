@@ -2,7 +2,6 @@ require_relative '../../common'
 
 module Kontena::Cli::Master::User
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "EMAIL ...", "List of emails"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced

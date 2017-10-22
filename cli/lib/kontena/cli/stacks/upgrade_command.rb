@@ -5,7 +5,6 @@ require 'json'
 
 module Kontena::Cli::Stacks
   class UpgradeCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
 

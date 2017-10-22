@@ -1,6 +1,5 @@
 module Kontena::Cli::Vault
   class ExportCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     banner "Exports secrets from Vault to STDOUT as YAML or JSON."

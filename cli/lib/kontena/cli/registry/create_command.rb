@@ -3,7 +3,6 @@ require 'securerandom'
 
 module Kontena::Cli::Registry
   class CreateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Stacks::StacksHelper
 

@@ -1,7 +1,6 @@
 module Kontena::Cli::Containers
   class ListCommand < Kontena::Command
     include Kontena::Util
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::TableGenerator::Helper
 

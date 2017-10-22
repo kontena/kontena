@@ -1,6 +1,5 @@
 module Kontena::Cli::Nodes::Labels
   class ListCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "NODE", "Node name"
 

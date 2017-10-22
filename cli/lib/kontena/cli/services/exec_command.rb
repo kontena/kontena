@@ -5,7 +5,6 @@ require_relative '../helpers/exec_helper'
 
 module Kontena::Cli::Services
   class ExecCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::ExecHelper
     include ServicesHelper

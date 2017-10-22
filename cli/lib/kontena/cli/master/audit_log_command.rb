@@ -1,6 +1,5 @@
 module Kontena::Cli::Master
   class AuditLogCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     option ["-l", "--lines"], "LINES", "Number of lines"
 

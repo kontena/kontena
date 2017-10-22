@@ -1,6 +1,5 @@
 module Kontena::Cli::Grids::TrustedSubnets
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter "SUBNET", "Trusted subnet"

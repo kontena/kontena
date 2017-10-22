@@ -3,7 +3,6 @@ require_relative '../helpers/time_helper'
 
 module Kontena::Cli::Nodes
   class ListCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
     include Kontena::Cli::Helpers::TimeHelper

@@ -1,8 +1,6 @@
 module Kontena::Cli::Cloud::Master
   class ShowCommand < Kontena::Command
 
-    include Kontena::Cli::Common
-
     callback_matcher 'cloud-master', 'show'
 
     requires_current_account_token

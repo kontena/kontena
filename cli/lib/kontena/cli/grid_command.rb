@@ -1,5 +1,4 @@
 class Kontena::Cli::GridCommand < Kontena::Command
-
   subcommand ["list","ls"], "List all grids", load_subcommand('grids/list_command')
   subcommand "create", "Create a new grid", load_subcommand('grids/create_command')
   subcommand "update", "Update grid", load_subcommand('grids/update_command')
@@ -15,7 +14,4 @@ class Kontena::Cli::GridCommand < Kontena::Command
   subcommand "cloud-config", "Generate cloud-config", load_subcommand('grids/cloud_config_command')
   subcommand "trusted-subnet", "Trusted subnet related commands", load_subcommand('grids/trusted_subnet_command')
   subcommand "health", "Check grid health", load_subcommand('grids/health_command')
-
-  def execute
-  end
 end

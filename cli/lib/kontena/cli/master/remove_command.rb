@@ -1,7 +1,5 @@
 module Kontena::Cli::Master
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
-
     parameter '[NAME]', "Master name"
 
     banner "Note: This command only removes the master from your local configuration file"

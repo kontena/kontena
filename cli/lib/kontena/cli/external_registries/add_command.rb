@@ -1,6 +1,5 @@
 module Kontena::Cli::ExternalRegistries
   class AddCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter '[URL]', 'Docker Registry url', default: 'https://index.docker.io/v2/'

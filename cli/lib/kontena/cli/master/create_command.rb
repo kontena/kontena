@@ -1,6 +1,5 @@
 module Kontena::Cli::Master
   class CreateCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     callback_matcher :master, :create_with_plugin_select
 

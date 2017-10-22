@@ -2,7 +2,6 @@ require_relative 'stacks_helper'
 
 module Kontena::Cli::Stacks
   class DeployCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include StacksHelper
 

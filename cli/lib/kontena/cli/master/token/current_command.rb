@@ -3,7 +3,6 @@ require_relative 'common'
 module Kontena::Cli::Master::Token
   class CurrentCommand < Kontena::Command
 
-    include Kontena::Cli::Common
     include Common
 
     requires_current_master

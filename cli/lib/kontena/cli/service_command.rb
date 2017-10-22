@@ -14,15 +14,9 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
   subcommand "events", "Show service events", load_subcommand('services/events_command')
   subcommand "stats", "Show service statistics", load_subcommand('services/stats_command')
   subcommand "monitor", "Monitor", load_subcommand('services/monitor_command')
-
   subcommand "env", "Environment variable specific commands", load_subcommand('services/env_command')
-
   subcommand "secret", "Secret specific commands", load_subcommand('services/secret_command')
-
   subcommand "link", "Link service to another service", load_subcommand('services/link_command')
   subcommand "unlink", "Unlink service from another service", load_subcommand('services/unlink_command')
   subcommand "exec", "Execute commands in service containers", load_subcommand('services/exec_command')
-
-  def execute
-  end
 end

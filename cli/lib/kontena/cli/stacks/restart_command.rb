@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Stacks
   class RestartCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
 
@@ -18,6 +17,5 @@ module Kontena::Cli::Stacks
         client.post("stacks/#{current_grid}/#{name}/restart", {})
       end
     end
-
   end
 end

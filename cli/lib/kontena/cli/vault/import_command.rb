@@ -1,6 +1,5 @@
 module Kontena::Cli::Vault
   class ImportCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     banner "Imports secrets to Vault from a YAML file. Secrets with a null value will be deleted from Vault."

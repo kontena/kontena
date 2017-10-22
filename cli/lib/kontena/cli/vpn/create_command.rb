@@ -2,7 +2,6 @@ require_relative '../stacks/stacks_helper'
 
 module Kontena::Cli::Vpn
   class CreateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Stacks::StacksHelper
 

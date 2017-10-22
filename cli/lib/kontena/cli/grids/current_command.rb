@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Grids
   class CurrentCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Common
 
     option ["--name"], :flag, "Show name only", default: false

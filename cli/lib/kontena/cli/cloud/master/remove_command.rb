@@ -1,8 +1,6 @@
 module Kontena::Cli::Cloud::Master
   class RemoveCommand < Kontena::Command
 
-    include Kontena::Cli::Common
-
     callback_matcher 'cloud-master', 'delete'
 
     requires_current_account_token

@@ -2,7 +2,6 @@ require_relative '../services/services_helper'
 
 module Kontena::Cli::Certificate
   class AuthorizeCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
 

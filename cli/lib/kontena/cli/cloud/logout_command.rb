@@ -1,9 +1,7 @@
 module Kontena::Cli::Cloud
   class LogoutCommand < Kontena::Command
-    include Kontena::Cli::Common
-
     def execute
-      config.accounts.each do |account|        
+      config.accounts.each do |account|
         use_refresh_token(account)
         account.token = nil
       end

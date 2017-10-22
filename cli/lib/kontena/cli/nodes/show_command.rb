@@ -1,6 +1,5 @@
 module Kontena::Cli::Nodes
   class ShowCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::BytesHelper
 

@@ -3,7 +3,6 @@ require_relative 'yaml/stack_file_loader'
 
 module Kontena::Cli::Stacks
   class InstallCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
 

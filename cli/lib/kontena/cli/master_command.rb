@@ -1,6 +1,4 @@
 class Kontena::Cli::MasterCommand < Kontena::Command
-  include Kontena::Util
-
   subcommand ["list", "ls"], "List masters where client has logged in", load_subcommand('master/list_command')
   subcommand ["remove", "rm"], "Remove a master from configuration", load_subcommand('master/remove_command')
   subcommand ["config", "cfg"], "Configure master settings", load_subcommand('master/config_command')
@@ -16,7 +14,4 @@ class Kontena::Cli::MasterCommand < Kontena::Command
   subcommand "create", "Install a new Kontena Master", load_subcommand('master/create_command') if experimental?
   subcommand "init-cloud", "Configure current master to use Kontena Cloud services", load_subcommand('master/init_cloud_command')
   subcommand "ssh", "Connect to the master via SSH", load_subcommand('master/ssh_command')
-
-  def execute
-  end
 end

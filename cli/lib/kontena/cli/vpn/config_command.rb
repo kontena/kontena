@@ -1,6 +1,5 @@
 module Kontena::Cli::Vpn
   class ConfigCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     def execute

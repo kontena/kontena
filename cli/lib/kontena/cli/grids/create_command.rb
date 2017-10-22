@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Grids
   class CreateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Common
 
     parameter "NAME", "Grid name"
@@ -37,6 +36,7 @@ module Kontena::Cli::Grids
       grid = spinner "Creating #{pastel.cyan(name)} grid " do
         client.post('grids', payload)
       end
+
       if grid
         spinner "Switching scope to #{pastel.cyan(name)} grid " do
           config.current_grid = grid['name']

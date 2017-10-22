@@ -3,7 +3,6 @@ require 'shellwords'
 
 module Kontena::Cli::Stacks
   class BuildCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Common
 
     banner "Build images listed in a stack file and push them to your image registry"

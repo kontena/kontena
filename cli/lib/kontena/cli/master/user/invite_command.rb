@@ -3,7 +3,6 @@ require_relative 'role/add_command'
 
 module Kontena::Cli::Master::User
   class InviteCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "EMAIL ...", "List of emails"
 

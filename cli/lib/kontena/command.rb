@@ -7,6 +7,8 @@ require 'excon/errors'
 
 class Kontena::Command < Clamp::Command
 
+  include Kontena::Cli::Common
+
   option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
     ENV['DEBUG'] ||= 'true'
     Kontena.reset_logger

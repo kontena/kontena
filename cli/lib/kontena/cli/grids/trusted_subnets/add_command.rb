@@ -1,6 +1,5 @@
 module Kontena::Cli::Grids::TrustedSubnets
   class AddCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter "SUBNET", "Trusted subnet"
