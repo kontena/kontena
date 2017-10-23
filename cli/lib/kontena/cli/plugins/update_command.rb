@@ -9,10 +9,15 @@ module Kontena::Cli::Plugins
 
     parameter '[PLUGIN_NAME]', 'Update a single plugin by name'
     option '--pre', :flag, 'Include pre-release versions'
+    option ['--silent'], :flag, 'Less verbose output'
+
+    def running_verbose?
+      !silent?
+    end
 
     def cleanup(*plugins)
       return if plugins.empty?
-      spinner "Running cleanup" do
+      vspinner "Running cleanup" do
         plugins.each do |name|
           Kontena::PluginManager::Cleaner.new(name).cleanup
         end
@@ -24,9 +29,10 @@ module Kontena::Cli::Plugins
     end
 
     def upgrade(name, from, to)
-      spinner "Upgrading #{pastel.cyan(name)} from #{pastel.cyan(from)} to #{pastel.cyan(to)}" do
+      vspinner "Upgrading #{pastel.cyan(name)} from #{pastel.cyan(from)} to #{pastel.cyan(to)}" do
         installer(name, version: to).install
       end
+      sputs "Upgraded #{name} from #{from} to #{to}" if silent?
     end
 
     def execute
@@ -38,12 +44,12 @@ module Kontena::Cli::Plugins
           upgrade(plugin_name, plugin.version.to_s, available_version)
           cleanup(plugin_name)
         else
-          puts "Plugin #{pastel.cyan(plugin_name)} already at latest version #{plugin.version}"
+          vputs "Plugin #{pastel.cyan(plugin_name)} already at latest version #{plugin.version}"
         end
       else
         upgradable = {}
 
-        spinner "Checking for updates" do
+        vspinner "Checking for updates" do
           plugins.each do |plugin|
             short = short_name(plugin.name)
             available_upgrade = installer(short).available_upgrade
@@ -54,7 +60,7 @@ module Kontena::Cli::Plugins
         end
 
         if upgradable.empty?
-          puts "Nothing updated"
+          vputs "Nothing updated"
         else
           upgradable.each do |name, data|
             upgrade(name, data[:from], data[:to])
