@@ -1,4 +1,5 @@
 require 'kontena/autoload_core'
+require 'set'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
@@ -147,12 +148,6 @@ module Kontena
     end
   end
 
-  DEBUG_KEYWORDS = Set.new(%w(true api websocket plugin))
-
-  def self.debug?
-    DEBUG_KEYWORDS.include?(ENV['DEBUG'].to_s)
-  end
-
   def self.logger
     return @logger if @logger
     if log_target.respond_to?(:tty?) && log_target.tty?
@@ -168,6 +163,13 @@ module Kontena
     logger.progname = 'CLI'
     @logger = logger
   end
+
+  DEBUG_KEYWORDS = Set.new(%w(true api websocket plugin))
+
+  def self.debug?
+    DEBUG_KEYWORDS.include?(ENV['DEBUG'].to_s)
+  end
+
 
 end
 
