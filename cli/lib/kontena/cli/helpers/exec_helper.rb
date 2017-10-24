@@ -6,7 +6,7 @@ module Kontena::Cli::Helpers
 
     websocket_log_level = if ENV["DEBUG"] == 'websocket'
       Logger::DEBUG
-    elsif ENV["DEBUG"]
+    elsif Kontena.debug?
       Logger::INFO
     else
       Logger::WARN

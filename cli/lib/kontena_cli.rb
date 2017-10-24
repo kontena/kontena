@@ -67,7 +67,7 @@ module Kontena
 
     @log_target = ENV['LOG_TARGET']
 
-    if ENV["DEBUG"]
+    if debug?
       @log_target ||= $stderr
     elsif @log_target.nil?
       @log_target = File.join(home, 'kontena.log')
@@ -147,6 +147,12 @@ module Kontena
     end
   end
 
+  DEBUG_KEYWORDS = Set.new(%w(true api websocket plugin))
+
+  def self.debug?
+    DEBUG_KEYWORDS.include?(ENV['DEBUG'].to_s)
+  end
+
   def self.logger
     return @logger if @logger
     if log_target.respond_to?(:tty?) && log_target.tty?
@@ -158,7 +164,7 @@ module Kontena
       require 'kontena/cli/log_formatters/strip_color'
       logger.formatter = Kontena::Cli::LogFormatter::StripColor.new
     end
-    logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    logger.level = debug? ? Logger::DEBUG : Logger::INFO
     logger.progname = 'CLI'
     @logger = logger
   end
