@@ -70,8 +70,8 @@ module Scheduler
       # @return [Float]
       def instance_rank(node, grid_service, instance_number)
         # ask all instances so that mongoid can cache query
-        current_instances = node.grid_service_instances.where(grid_service_id: grid_service.id).to_a
-        if current_instances.any? { |i| i.instance_number == instance_number}
+        current_instances = grid_service.grid_service_instances.to_a
+        if current_instances.any? { |i| i.host_node_id == node.id && i.instance_number == instance_number}
           -5.0
         else
           0.0
