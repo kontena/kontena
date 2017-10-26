@@ -15,7 +15,7 @@ module Scheduler
           key, comparator, flags, value = split_affinity(affinity)
 
           filtered_nodes = nodes.select { |node|
-            match_affinity?(key, comparator, value, node)
+            match_affinity?(key, comparator, value, node, service)
           }
 
           if filtered_nodes.size > 0
@@ -33,13 +33,14 @@ module Scheduler
       # @param [String] comparator
       # @param [String] value
       # @param [HostNode] node
+      # @param [GridService] service
       # @return [Boolean]
-      def match_affinity?(key, comparator, value, node)
+      def match_affinity?(key, comparator, value, node, service)
         match = case key
         when 'node'
           node_match?(node, value)
         when 'service'
-          service_match?(node, value)
+          service_match?(node, value, service)
         when 'container'
           container_match?(node, value)
         when 'label'
@@ -92,12 +93,13 @@ module Scheduler
 
       # @param [HostNode] node
       # @param [String] value
-      def service_match?(node, value)
-        service_names = node.grid_service_instances.includes(:grid_service).delete_if { |i|
-          i.grid_service.nil?
-        }.map { |i| i.grid_service.name }.uniq
+      # @param [GridService] service
+      def service_match?(node, value, service)
+        matching_service = service.resolve_service(value)
 
-        service_names.any?{|n| n == value}
+        return false unless matching_service
+
+        node.grid_service_instances.where(grid_service: matching_service).exists?
       end
 
       # @param [HostNode] node

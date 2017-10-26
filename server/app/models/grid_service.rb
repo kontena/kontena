@@ -220,6 +220,20 @@ class GridService
     self.net.to_s == 'bridge'
   end
 
+  # @param link [String] service, stack/service, /service
+  # @return [GridService, nil]
+  def resolve_service(link)
+    if link.include? '/'
+      stack_name, service_name = link.split('/', 2)
+      stack = self.grid.stacks.find_by(name: stack_name)
+    else
+      stack = self.stack
+      service_name = link
+    end
+
+    stack && stack.grid_services.find_by(name: service_name)
+  end
+
   ##
   # @return [Container,NilClass]
   def container_by_name(name)
