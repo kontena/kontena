@@ -169,6 +169,24 @@ describe Scheduler::Filter::Affinity do
           expect(filtered).to eq([nodes[1]])
         end
       end
+
+      describe 'service==nonexist' do
+        let(:service_affinity) { ['service==nonexist'] }
+
+        it 'does not find any matching nodes' do
+          expect{subject.for_service(service, 1, nodes)}.to raise_error(Scheduler::Error, 'Did not find any nodes for affinity filter: service==nonexist')
+        end
+      end
+
+      describe 'service!=nonexist' do
+        let(:service_affinity) { ['service!=nonexist'] }
+
+        it 'returns all nodes' do
+          filtered = subject.for_service(service, 1, nodes)
+          expect(filtered.size).to eq(3)
+          expect(filtered).to eq(nodes)
+        end
+      end
     end
 
     context 'soft affinity' do
