@@ -150,6 +150,16 @@ describe Scheduler::Filter::Affinity do
         )
       end
 
+      describe 'service==test-stack2/redis' do
+        let(:service_affinity) { ['service==test-stack2/redis'] }
+
+        it 'returns nodes with instances from the correct redis service' do
+          filtered = subject.for_service(service, 1, nodes)
+          expect(filtered.size).to eq(1)
+          expect(filtered).to eq([nodes[1]])
+        end
+      end
+
       describe 'service==redis' do
         let(:service_affinity) { ['service==redis'] }
 
