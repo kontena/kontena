@@ -165,7 +165,7 @@ module Kontena
   end
 
   def self.debug?
-    !ENV['DEBUG'].nil? && ENV['DEBUG'].to_s != 'false'
+    !['', 'false'].include?(ENV['DEBUG'].to_s)
   end
 end
 
