@@ -35,16 +35,26 @@ module Scheduler
       # @param [HostNode] node
       # @return [Boolean]
       def match_affinity?(key, comparator, value, node)
-        if key == 'node'
-          node_match?(node, comparator, value)
-        elsif key == 'service'
-          service_match?(node, comparator, value)
-        elsif key == 'container'
-          container_match?(node, comparator, value)
-        elsif key == 'label'
-          label_match?(node, comparator, value)
+        match = case key
+        when 'node'
+          node_match?(node, value)
+        when 'service'
+          service_match?(node, value)
+        when 'container'
+          container_match?(node, value)
+        when 'label'
+          label_match?(node, value)
         else
           raise StandardError, "Unknown affinity filter: #{key}"
+        end
+
+        case comparator
+        when '=='
+          return match
+        when '!='
+          return !match
+        else
+          raise StandardError, "Unknown affinity comparator: #{comparator}"
         end
       end
 
@@ -66,65 +76,34 @@ module Scheduler
       end
 
       # @param [HostNode] node
-      # @param [String] compare
       # @param [String] value
-      def node_match?(node, compare, value)
-        if compare == '=='
-          node.name == value
-        elsif compare == '!='
-          node.name != value
-        else
-          false
-        end
+      def node_match?(node, value)
+        node.name == value
       end
 
       # @param [HostNode] node
-      # @param [String] compare
       # @param [String] value
-      def container_match?(node, compare, value)
+      def container_match?(node, value)
         container_names = node.containers.map{|c|
           c.labels['io;kontena;container;name'].to_s
         }
-        if compare == '=='
-          container_names.any?{|n| n == value}
-        elsif compare == '!='
-          !container_names.any?{|n| n == value}
-        end
+        container_names.any?{|n| n == value}
       end
 
       # @param [HostNode] node
-      # @param [String] compare
       # @param [String] value
-      def service_match?(node, compare, value)
+      def service_match?(node, value)
         service_names = node.grid_service_instances.includes(:grid_service).delete_if { |i|
           i.grid_service.nil?
         }.map { |i| i.grid_service.name }.uniq
-        if compare == '=='
-          service_names.any?{|n| n == value}
-        elsif compare == '!='
-          !service_names.any?{|n| n == value}
-        end
+
+        service_names.any?{|n| n == value}
       end
 
       # @param [HostNode] node
-      # @param [String] compare
       # @param [String] value
-      def label_match?(node, compare, value)
-        if compare == '=='
-          if node.labels.nil?
-            return false
-          else
-            node.labels.include?(value)
-          end
-        elsif compare == '!='
-          if node.labels.nil?
-            true
-          else
-            !node.labels.include?(value)
-          end
-        else
-          false
-        end
+      def label_match?(node, value)
+        node.labels && node.labels.include?(value)
       end
     end
   end
