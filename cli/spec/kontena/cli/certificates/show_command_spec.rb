@@ -25,9 +25,8 @@ describe Kontena::Cli::Certificate::ShowCommand do
     expect{subject.run(['test.example.com'])}.to output_lines([
       'test-grid/test.example.com:',
       '  subject: test.example.com',
-      "  valid_until: '2017-12-14T13:34:00.000+00:00'",
-      '  alt_names: []',
-      '  auto_renewable: true',
+      "  valid until: '2017-12-14T13:34:00.000+00:00'",
+      '  auto renewable: true',
     ])
   end
 
@@ -48,10 +47,10 @@ describe Kontena::Cli::Certificate::ShowCommand do
       expect{subject.run(['test.example.com'])}.to output_lines([
         'test-grid/test.example.com:',
         '  subject: test.example.com',
-        "  valid_until: '2017-12-14T13:34:00.000+00:00'",
-        '  alt_names:',
+        "  valid until: '2017-12-14T13:34:00.000+00:00'",
+        '  alt names:',
         '  - test2.example.com',
-        '  auto_renewable: true',
+        '  auto renewable: true',
       ])
     end
   end
