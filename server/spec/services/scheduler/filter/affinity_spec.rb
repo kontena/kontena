@@ -14,41 +14,19 @@ describe Scheduler::Filter::Affinity do
     end
 
     it "returns three parts for eq" do
-      expect(subject.split_affinity('foo==bar')).to eq ['foo', '==', 'bar']
+      expect(subject.split_affinity('foo==bar')).to eq ['foo', '==', nil, 'bar']
     end
 
     it "returns three parts for soft eq" do
-      expect(subject.split_affinity('foo==~bar')).to eq ['foo', '==~', 'bar']
+      expect(subject.split_affinity('foo==~bar')).to eq ['foo', '==', '~', 'bar']
     end
 
     it "returns three parts for neq" do
-      expect(subject.split_affinity('foo!=bar')).to eq ['foo', '!=', 'bar']
+      expect(subject.split_affinity('foo!=bar')).to eq ['foo', '!=', nil, 'bar']
     end
 
     it "returns three parts for soft neq" do
-      expect(subject.split_affinity('foo!=~bar')).to eq ['foo', '!=~', 'bar']
-    end
-  end
-
-  describe '#hard_affinities' do
-    it 'returns empty array if no hard affinities' do
-      expect(subject.hard_affinities(['foo==~bar'])).to eq([])
-    end
-
-    it 'returns hard affinities' do
-      affinities = ['foo==bar', 'foo!=bar', 'bar==~baz', 'bar!=~baz']
-      expect(subject.hard_affinities(affinities)).to eq(['foo==bar', 'foo!=bar'])
-    end
-  end
-
-  describe '#soft_affinities' do
-    it 'returns empty array if no soft affinities' do
-      expect(subject.soft_affinities(['foo==bar'])).to eq([])
-    end
-
-    it 'returns soft affinities' do
-      affinities = ['foo==bar', 'foo!=bar', 'bar==~baz', 'bar!=~baz']
-      expect(subject.soft_affinities(affinities)).to eq(['bar==~baz', 'bar!=~baz'])
+      expect(subject.split_affinity('foo!=~bar')).to eq ['foo', '!=', '~', 'bar']
     end
   end
 

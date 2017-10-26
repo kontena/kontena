@@ -10,49 +10,23 @@ module Scheduler
       def for_service(service, instance_number, nodes)
         return nodes if service.affinity.nil? || service.affinity.size == 0
 
-        hard_affinities(service.affinity).each do |affinity|
+        service.affinity.each do |affinity|
           affinity = affinity % [instance_number.to_s]
-          key, comparator, value = split_affinity(affinity)
+          key, comparator, flags, value = split_affinity(affinity)
 
-          nodes = nodes.select { |node|
+          filtered_nodes = nodes.select { |node|
             match_affinity?(key, comparator, value, node)
           }
 
-          if nodes.empty?
+          if filtered_nodes.size > 0
+            nodes = filtered_nodes
+          elsif soft?(flags)
+            # ignore soft affinity, keep nodes as-is
+          else
             raise Scheduler::Error, "Did not find any nodes for affinity filter: #{affinity}"
           end
         end
-        soft_affinities(service.affinity).each do |affinity|
-          affinity = affinity % [instance_number.to_s]
-          key, comparator, value = split_affinity(affinity)
-
-          filtered_nodes = nodes.select { |node|
-            match_affinity?(key, comparator[0...-1], value, node)
-          }
-          if filtered_nodes.size > 0
-            nodes = filtered_nodes
-          end
-        end
-
         nodes
-      end
-
-      # @param [Array<String>] affinities
-      # @return [Array<String>]
-      def soft_affinities(affinities)
-        affinities.select do |affinity|
-          _, comparator, _ = split_affinity(affinity)
-          self.soft?(comparator)
-        end
-      end
-
-      # @param [Array<String>] affinities
-      # @return [Array<String>]
-      def hard_affinities(affinities)
-        affinities.select do |affinity|
-          _, comparator, _ = split_affinity(affinity)
-          !self.soft?(comparator)
-        end
       end
 
       # @param [String] key
@@ -76,9 +50,9 @@ module Scheduler
 
       # @param [String] affinity
       # @raise [Scheduler::Error] invalid filter
-      # @return [Array<(String, String, String)>, NilClass]
+      # @return [Array<(String, String, String|nil, String)>, NilClass]
       def split_affinity(affinity)
-        if match = affinity.match(/\A(.+)(==~|!=~|==|!=)(.+)/)
+        if match = affinity.match(/\A(.+)(==|!=)([~])?(.+)/)
           match.to_a[1..-1]
         else
           raise Scheduler::Error, "Invalid affinity filter: #{affinity}"
@@ -87,8 +61,8 @@ module Scheduler
 
       # @param [String] comparator
       # @return [Boolean]
-      def soft?(comparator)
-        comparator.end_with?('~')
+      def soft?(flags)
+        flags && flags.include?('~')
       end
 
       # @param [HostNode] node
