@@ -125,13 +125,23 @@ describe Scheduler::Filter::Affinity do
       end
     end
 
-    context 'service' do
-      let(:service) { GridService.create!(grid: grid, name: 'test', image_name: 'test:test')}
-      let(:redis_service) { GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')}
+    context 'with two similarly named services in different stacks' do
+      let(:stack) { Stack.create!(grid: grid, name: 'test-stack') }
+      let(:stack2) { Stack.create!(grid: grid, name: 'test-stack2') }
+      let(:service_affinity) { nil }
+      let(:service) { GridService.create!(grid: grid, stack: stack, name: 'test', image_name: 'test:test',
+        affinity: service_affinity,
+      ) }
+      let(:redis_service) { GridService.create!(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8') }
+      let(:redis_service2) { GridService.create!(grid: grid, stack: stack2, name: 'redis', image_name: 'redis:2.8') }
 
       before(:each) do
         redis_service.grid_service_instances.create!(
           host_node: nodes[0],
+          instance_number: 1
+        )
+        redis_service2.grid_service_instances.create!(
+          host_node: nodes[1],
           instance_number: 1
         )
         redis_service.grid_service_instances.create!(
@@ -140,18 +150,24 @@ describe Scheduler::Filter::Affinity do
         )
       end
 
-      it 'returns nodes 0+2 if affinity: service==redis' do
-        service.affinity = ['service==redis']
-        filtered = subject.for_service(service, 1, nodes)
-        expect(filtered.size).to eq(2)
-        expect(filtered).to eq([nodes[0], nodes[2]])
+      describe 'service==redis' do
+        let(:service_affinity) { ['service==redis'] }
+
+        it 'returns nodes with instances from the correct redis service' do
+          filtered = subject.for_service(service, 1, nodes)
+          expect(filtered.size).to eq(2)
+          expect(filtered).to eq([nodes[0], nodes[2]])
+        end
       end
 
-      it 'only returns node-1 if affinity: service!=redis' do
-        service.affinity = ['service!=redis']
-        filtered = subject.for_service(service, 1, nodes)
-        expect(filtered.size).to eq(1)
-        expect(filtered).to eq([nodes[1]])
+      describe 'service!=redis' do
+        let(:service_affinity) { ['service!=redis'] }
+
+        it 'only returns nodes without from the correct redis service' do
+          filtered = subject.for_service(service, 1, nodes)
+          expect(filtered.size).to eq(1)
+          expect(filtered).to eq([nodes[1]])
+        end
       end
     end
 
