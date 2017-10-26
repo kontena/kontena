@@ -164,13 +164,9 @@ module Kontena
     @logger = logger
   end
 
-  DEBUG_KEYWORDS = Set.new(%w(true api websocket plugin))
-
   def self.debug?
-    DEBUG_KEYWORDS.include?(ENV['DEBUG'].to_s)
+    !ENV['DEBUG'].nil? && ENV['DEBUG'].to_s != 'false'
   end
-
-
 end
 
 # Monkeypatching string to mimick 'colorize' gem
