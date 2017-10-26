@@ -85,10 +85,7 @@ module Scheduler
       # @param [HostNode] node
       # @param [String] value
       def container_match?(node, value)
-        container_names = node.containers.map{|c|
-          c.labels['io;kontena;container;name'].to_s
-        }
-        container_names.any?{|n| n == value}
+        node.containers.where(name: value).exists?
       end
 
       # @param [HostNode] node
