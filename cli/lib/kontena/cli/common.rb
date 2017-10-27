@@ -31,6 +31,7 @@ module Kontena
       def pastel
         Kontena.pastel
       end
+      module_function :pastel
 
       def spinner(msg, &block)
          Kontena::Cli::Spinner.spin(msg, &block)

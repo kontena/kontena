@@ -2,6 +2,7 @@ require 'ostruct'
 require 'singleton'
 require 'forwardable'
 require 'logger'
+require_relative 'common'
 autoload :JSON, 'json'
 
 module Kontena
@@ -104,7 +105,8 @@ module Kontena
 
         self.current_server = ENV['KONTENA_MASTER'] || settings['current_server']
         if self.current_server && !find_server(self.current_server)
-          warn "Master '#{self.current_server}' not found in configuration"
+          warn "Master '#{self.current_server}' set as current master, but not found in configuration"
+          self.current_server = nil
         end
 
         Array(settings['accounts']).each do |account_data|
@@ -176,7 +178,7 @@ module Kontena
       def default_settings
         debug { 'Configuration file not found, using default settings.' }
         {
-          'current_server' => 'default',
+          'current_server' => nil,
           'servers' => []
         }
       end
@@ -316,7 +318,7 @@ module Kontena
       # Raises unless current master has token.
       #
       # @return [Token] current_master_token
-      # @raise [ArgumentError] if no token available
+      # @raise [SystemExit] if no token available
       def require_current_master_token
         require_current_master
         token = current_master.token
@@ -324,31 +326,31 @@ module Kontena
           return token unless token.expired?
           raise TokenExpiredError, "The access token has expired and needs to be refreshed."
         end
-        raise ArgumentError, "You are not logged into a Kontena Master. Use: kontena master login"
+        Kontena::Cli::Common.exit_with_error "You are not logged into a Kontena Master. Use: kontena master login"
       end
 
       # Raises unless current master is selected.
       #
       # @return [Server] current_master
-      # @raise [ArgumentError] if no account is selected
+      # @raise [SystemExit] if no account is selected
       def require_current_master
         return current_master if current_master
-        raise ArgumentError, "You are not logged into a Kontena Master. Use: kontena master login"
+        Kontena::Cli::Common.exit_with_error "You are not logged into a Kontena Master. Use: kontena master login"
       end
 
       # Raises unless current account is selected.
       #
       # @return [Account] current_account
-      # @raise [ArgumentError] if no account is selected
+      # @raise [SystemExit] if no account is selected
       def require_current_account
         return @current_account if @current_account
-        raise ArgumentError, "You are not logged into an authorization provider. Use: kontena cloud login"
+        Kontena::Cli::Common.exit_with_error "You are not logged in to Kontena Cloud. Use: kontena cloud login"
       end
 
       def require_current_account_token
         account = require_current_account
         if !account || account.token.nil? || account.token.access_token.nil?
-          raise ArgumentError, "You are not logged in to Kontena Cloud. Use: kontena cloud login"
+          Kontena::Cli::Common.exit_with_error "You are not logged in to Kontena Cloud. Use: kontena cloud login"
         elsif account.token.expired?
           raise TokenExpiredError, "The cloud access token has expired and needs to be refreshed." unless cloud_client.refresh_token
         end
@@ -367,7 +369,7 @@ module Kontena
           if index
             self.current_server = servers[index].name
           else
-            raise ArgumentError, "Server '#{name}' does not exist, can't add as current master."
+            Kontena::Cli::Common.exit_with_error "Server '#{name}' does not exist, can't add as current master."
           end
         end
       end
@@ -378,7 +380,7 @@ module Kontena
       # @raise [ArgumentError] if no grid is selected
       def require_current_grid
         return current_grid if current_grid
-        raise ArgumentError, "You have not selected a grid. Use: kontena grid"
+        Kontena::Cli::Common.exit_with_error "You are not logged in to Kontena Cloud. Use: kontena cloud login"
       end
 
       # Name of the currently selected grid. Can override using

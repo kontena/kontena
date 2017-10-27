@@ -19,8 +19,8 @@ describe Kontena::Cli::Master::CurrentCommand do
     end
 
     it 'raises error when not logged in' do
-      expect(subject.config).to receive(:current_master).and_return(nil)
-      expect{subject.run([])}.to exit_with_error
+      allow(subject.config).to receive(:current_master).and_return(nil)
+      expect{subject.run([])}.to exit_with_error.and output(/not logged/).to_stderr
     end
   end
 end
