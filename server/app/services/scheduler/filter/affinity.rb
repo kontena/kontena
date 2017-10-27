@@ -2,6 +2,21 @@ module Scheduler
   module Filter
     class Affinity
 
+      # @param service [GridService] relative to service
+      # @param value [String] service, stack/service, /service
+      # @return [GridService, nil]
+      def resolve_service(service, value)
+        if value.include? '/'
+          stack_name, service_name = value.split('/', 2)
+          stack = service.grid.stacks.find_by(name: stack_name)
+        else
+          stack = service.stack
+          service_name = value
+        end
+
+        stack && stack.grid_services.find_by(name: service_name)
+      end
+
       ##
       # @param [GridService] service
       # @param [Integer] instance_number
@@ -16,7 +31,7 @@ module Scheduler
 
           if key == 'service'
             # value resolves to service if not found; accept for use with service!=...
-            value = service.resolve_service(value)
+            value = resolve_service(service, value)
           end
 
           filtered_nodes = nodes.select { |node|
