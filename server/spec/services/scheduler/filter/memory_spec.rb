@@ -13,7 +13,6 @@ describe Scheduler::Filter::Memory do
 
   describe '#for_service' do
     it 'returns all nodes with default memory available if memory consumption cannot be calculated' do
-      nodes.each{|n| n.update_attribute(:mem_total, 384.megabytes) }
       filtered = subject.for_service(test_service, 1, nodes)
       expect(filtered).to eq(nodes)
     end
