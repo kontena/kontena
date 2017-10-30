@@ -2,6 +2,12 @@ module Scheduler
   module Filter
     class Memory
 
+      attr_reader :cache
+
+      def initialize
+        @cache = {}
+      end
+
       ##
       # @param [GridService] service
       # @param [Integer] instance_number
@@ -11,7 +17,7 @@ module Scheduler
         candidates = nodes.dup
         memory = service.memory || service.memory_swap
         unless memory
-          memory = resolve_memory_from_stats(service, instance_number)
+          memory = resolve_memory_from_stats(service)
         end
 
         return candidates if memory == 0 # we cannot calculate so let's return all candidates
@@ -28,17 +34,21 @@ module Scheduler
       end
 
       # @param service [GridService]
-      # @param instance_number [Integer]
       # @return [Integer]
-      def resolve_memory_from_stats(service, instance_number)
-        memory = 0
-        service_instance = fetch_service_instance(service, instance_number)
-        if service_instance && !service_instance.latest_stats.empty?
-          usage = service_instance.latest_stats.dig('memory', 'usage')
-          memory = usage * 1.25 if usage
+      def resolve_memory_from_stats(service)
+        cache_key = "service_memory_peak:#{service.id}"
+        unless cache[cache_key] # aggregate needs to be cached manually
+          max_memory_usage = ContainerStat.where(
+            :grid_service_id => service.id,
+            :created_at.gt => 1.hour.ago
+          ).max(:'memory.usage')
+          if max_memory_usage
+            cache[cache_key] = max_memory_usage * 1.25
+          else
+            cache[cache_key] = 0.0
+          end
         end
-
-        memory.to_i
+        cache[cache_key].to_i
       end
 
       # @param service [GridService]

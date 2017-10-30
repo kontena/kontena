@@ -127,18 +127,27 @@ describe Scheduler::Filter::Memory do
         host_node: candidate,
         instance_number: 1
       )
-      expect(subject.resolve_memory_from_stats(test_service, 1)).to eq(0)
+      expect(subject.resolve_memory_from_stats(test_service)).to eq(0)
     end
 
-    it 'returns memory (+ 25%) if stats found' do
-      test_service.grid_service_instances.create!(
-        host_node: candidate,
-        instance_number: 1,
-        latest_stats: {
-          'memory' => { 'usage' => 34.megabytes }
+    it 'returns max memory (+ 25%) if stats found' do
+      3.times do |i|
+        ContainerStat.create(
+          grid_service_id: test_service.id,
+          created_at: (i + 1).minutes.ago,
+          memory: {
+            usage: 32.megabytes
+          }
+        )
+      end
+      ContainerStat.create(
+        grid_service_id: test_service.id,
+        created_at: 3.minutes.ago,
+        memory: {
+          usage: 64.megabytes
         }
       )
-      expect(subject.resolve_memory_from_stats(test_service, 1)).to eq(34.megabytes * 1.25)
+      expect(subject.resolve_memory_from_stats(test_service)).to eq(64.megabytes * 1.25)
     end
   end
 end
