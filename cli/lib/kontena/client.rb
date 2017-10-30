@@ -55,7 +55,7 @@ module Kontena
         write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 10,
         ssl_verify_peer: ignore_ssl_errors? ? false : true
       }
-      if ENV["DEBUG"]
+      if Kontena.debug?
         require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end

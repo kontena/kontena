@@ -7,9 +7,11 @@ require 'excon/errors'
 
 class Kontena::Command < Clamp::Command
 
-  option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
-    ENV['DEBUG'] ||= 'true'
-    Kontena.reset_logger
+  option ['-D', '--[no-]debug'], :flag, "Enable debug", environment_variable: 'DEBUG', attribute_name: :debug_option do |debug|
+    unless debug.kind_of?(String)
+      ENV['DEBUG'] = debug.to_s
+      Kontena.reset_logger
+    end
   end
 
   attr_accessor :arguments
@@ -230,7 +232,7 @@ class Kontena::Command < Clamp::Command
       abort(ex.message)
     end
   rescue Kontena::Errors::StandardError => ex
-    raise ex if ENV['DEBUG']
+    raise ex if debug?
     Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.status} : #{ex.message}")
   rescue Errno::EPIPE
@@ -239,7 +241,7 @@ class Kontena::Command < Clamp::Command
   rescue Clamp::HelpWanted, Clamp::UsageError
     raise
   rescue => ex
-    raise ex if ENV['DEBUG']
+    raise ex if debug?
     Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{Kontena.log_target} or run the command again with environment DEBUG=true set to see the full exception")
   end

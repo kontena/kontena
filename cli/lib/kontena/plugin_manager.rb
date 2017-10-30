@@ -11,7 +11,7 @@ module Kontena
     def init
       ENV["GEM_HOME"] = Common.install_dir
       Gem.paths = ENV
-      Common.use_dummy_ui unless ENV["DEBUG"]
+      Common.use_dummy_ui unless Kontena.debug?
       plugins
       true
     end
