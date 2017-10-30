@@ -35,12 +35,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     allow(actor).to receive(:async).and_return(async)
   end
 
-  before do
-    # run timers immediately, once
-    allow(subject.wrapped_object).to receive(:after) do |&block|
-      block.call
-    end
-  end
 
   describe '#initialize' do
     it 'is not connected' do
@@ -49,6 +43,13 @@ describe Kontena::WebsocketClient, :celluloid => true do
   end
 
   describe '#start' do
+    before do
+      # run timers immediately, once
+      allow(subject.wrapped_object).to receive(:after) do |&block|
+        block.call
+      end
+    end
+
     it 'connects' do
       expect(subject).to receive(:connect!)
 
@@ -454,11 +455,12 @@ describe Kontena::WebsocketClient, :celluloid => true do
     let(:ws_client) { instance_double(Kontena::Websocket::Client) }
 
     before do
-      subject.instance_variable_set('@connected', true)
-      subject.instance_variable_set('@ws', ws_client)
+      allow(subject.wrapped_object).to receive(:ws).and_return(ws_client)
+
+      subject.connected!
     end
 
-    it 'is not connected' do
+    it 'is connected' do
       expect(subject.connected?).to be true
     end
 
@@ -570,6 +572,31 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject).to receive(:warn).with(/server ping 3.20s of 5.00s timeout/)
 
         subject.on_pong(3.2)
+      end
+    end
+
+    describe '#disconnected!' do
+      it "reconnects" do
+        expect(subject.wrapped_object).to receive(:reconnect!)
+
+        subject.disconnected!
+
+        expect(subject).to_not be_connected
+      end
+    end
+
+    describe '#reconnect!' do
+      it "calls connect after initial backoff" do
+        expect(subject.wrapped_object).to receive(:after) do |backoff, &block|
+          expect(backoff).to be <= 1.0
+          expect(subject.wrapped_object).to receive(:connect!)
+
+          block.call
+        end
+
+        subject.reconnect!
+
+        expect(subject).to be_reconnecting
       end
     end
   end

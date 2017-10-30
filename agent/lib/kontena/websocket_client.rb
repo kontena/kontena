@@ -62,6 +62,11 @@ module Kontena
       @connected
     end
 
+    # @return [Boolean]
+    def reconnecting?
+      @reconnect_attempt > 0
+    end
+
     def rpc_server
       Celluloid::Actor[:rpc_server]
     end
