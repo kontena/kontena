@@ -155,9 +155,13 @@ module Cloud
       ws.disconnect
     end
 
-    def on_open
+    def connected!
       @connected = true
       @reconnect_attempt = 0
+    end
+
+    def on_open
+      connected!
 
       begin
         ssl_cert = @ws.ssl_cert!
@@ -210,8 +214,6 @@ module Cloud
     # @param code [Integer]
     # @param reason [String]
     def on_close(code, reason)
-      @connected = false
-
       case code
       when 1002
         error 'cloud does not accept our access token'
@@ -220,6 +222,12 @@ module Cloud
       end
 
       unsubscribe_events
+
+      disconnected!
+    end
+
+    def disconnected!
+      @connected = false
 
       reconnect
     end
