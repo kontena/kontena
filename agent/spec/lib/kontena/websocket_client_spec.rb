@@ -320,6 +320,24 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject.connected?).to be false
       end
 
+      it 'crashes without reconnecting if on_close fails', :log_celluloid_actor_crashes => false do
+        expect(ws_client).to receive(:connect)
+        expect(subject).to receive(:on_open)
+
+        expect(ws_client).to receive(:read) do |&block|
+          raise Kontena::Websocket::CloseError.new(1337, 'testing')
+        end
+        expect(ws_client).to receive(:disconnect)
+
+        expect(subject).not_to receive(:on_error)
+        expect(subject).to receive(:on_close).with(1337, 'testing').and_raise(RuntimeError)
+
+        expect(subject).to_not receive(:reconnect!)
+
+        expect{actor.connect_client(ws_client)}.to raise_error(RuntimeError)
+        expect(actor).to be_dead
+      end
+
       it 'handles websocket pongs as async calls' do
         expect(ws_client).to receive(:connect)
         expect(subject).to receive(:on_open)

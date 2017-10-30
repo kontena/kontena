@@ -170,21 +170,24 @@ module Kontena
     rescue Kontena::Websocket::CloseError => exc
       # server closed connection
       on_close(exc.code, exc.reason)
+      disconnected!
 
     rescue Kontena::Websocket::Error => exc
       # handle known errors, will reconnect or shutdown
       on_error exc
+      disconnected!
 
     rescue => exc
       # XXX: crash instead of reconnecting on unknown errors?
       error exc
+      disconnected!
 
     else
       # impossible: agent closed connection?!
       info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
+      disconnected!
 
     ensure
-      disconnected!
       ws.disconnect # close socket
     end
 
