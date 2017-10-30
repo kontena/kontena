@@ -39,6 +39,7 @@ class HostNode
   field :disconnected_at, type: Time
   field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
   field :availability, type: String, default: Availability::ACTIVE
+  field :latest_stats, type: Hash, default: {}
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
