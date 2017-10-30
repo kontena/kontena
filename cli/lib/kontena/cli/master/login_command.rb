@@ -159,7 +159,7 @@ module Kontena::Cli::Master
         elsif response.kind_of?(String) && response.length > 1
           exit_with_error response
         else
-          exit_with_error "Invalid response to authentication request : HTTP#{client.last_response.status} #{client.last_response.body if ENV["DEBUG"]}"
+          exit_with_error "Invalid response to authentication request : HTTP#{client.last_response.status} #{client.last_response.body if debug?}"
         end
       end
     end
