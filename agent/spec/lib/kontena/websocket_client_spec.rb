@@ -37,7 +37,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   before do
     # run timers immediately, once
-    allow(subject.wrapped_object).to receive(:every) do |&block|
+    allow(subject.wrapped_object).to receive(:after) do |&block|
       block.call
     end
   end
@@ -45,10 +45,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
   describe '#initialize' do
     it 'is not connected' do
       expect(subject.connected?).to be false
-    end
-
-    it 'is not connecting' do
-      expect(subject.connecting?).to be false
     end
   end
 
@@ -67,7 +63,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
       actor.connect!
 
-      expect(subject).to be_connecting
       expect(subject).to_not be_connected
       expect(subject.ws).to be_a Kontena::Websocket::Client
       expect(subject.ws.url).to eq 'ws://socket.example.com'
@@ -91,7 +86,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
         actor.connect!
 
-        expect(subject).to be_connecting
         expect(subject).to_not be_connected
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'ws://socket.example.com'
@@ -135,14 +129,13 @@ describe Kontena::WebsocketClient, :celluloid => true do
     let(:url) { 'http://api.example.com' }
 
     describe '#connect' do
-      it 'logs error and does not set connecting' do
+      it 'logs error and reconnects' do
         expect(subject).to receive(:error).with(ArgumentError) do |err|
           expect(err.message).to eq 'Invalid websocket URL: http://api.example.com'
         end
+        expect(subject).to receive(:reconnect!)
 
         actor.connect!
-
-        expect(subject.connecting?).to be false
       end
     end
   end
@@ -205,24 +198,11 @@ describe Kontena::WebsocketClient, :celluloid => true do
     let(:ws_client) { instance_double(Kontena::Websocket::Client) }
 
     before do
-      subject.instance_variable_set('@connecting', true)
       subject.instance_variable_set('@ws', ws_client)
     end
 
     it 'is not connected' do
       expect(subject.connected?).to be false
-    end
-
-    it 'is connecting' do
-      expect(subject.connecting?).to be true
-    end
-
-    describe '#start' do
-      it 'does not connect' do
-        expect(subject).not_to receive(:connect!)
-
-        actor.start
-      end
     end
 
     describe '#connect_client' do
@@ -232,7 +212,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
         end
       end
 
-      it 'runs the websocket client in a separate thread, and is no longer connecting after it returns' do
+      it 'runs the websocket client in a separate thread, and reconnects after it returns' do
         expect(ws_client).to receive(:connect) do
           expect(Celluloid.actor?).to be false
         end
@@ -251,11 +231,11 @@ describe Kontena::WebsocketClient, :celluloid => true do
         end
         expect(subject).to_not receive(:on_error)
         expect(subject).to receive(:disconnected!).and_call_original
+        expect(subject).to receive(:reconnect!)
         expect(ws_client).to receive(:disconnect)
 
         actor.connect_client(ws_client)
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -266,10 +246,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(ws_client).to receive(:disconnect)
 
         expect(subject).to receive(:on_error).with(Kontena::Websocket::SSLVerifyError)
+        expect(subject).to receive(:reconnect!)
 
         actor.connect_client(ws_client)
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -282,10 +262,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(ws_client).to receive(:disconnect)
 
         expect(subject).to receive(:on_error).with(Kontena::Websocket::TimeoutError)
+        expect(subject).to receive(:reconnect!)
 
         actor.connect_client(ws_client)
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -299,10 +279,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject).to receive(:on_close).with(1337, 'testing')
 
         expect(ws_client).to receive(:disconnect)
+        expect(subject).to receive(:reconnect!)
 
         actor.connect_client(ws_client)
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -317,10 +297,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject).to receive(:info).with('Agent closed connection with code 1337: testing')
 
         expect(ws_client).to receive(:disconnect)
+        expect(subject).to receive(:reconnect!)
 
         actor.connect_client(ws_client)
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -332,10 +312,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
         expect(subject).not_to receive(:on_error)
         expect(subject).to receive(:error)
+        expect(subject).to receive(:reconnect!)
 
         actor.connect_client(ws_client)
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -355,6 +335,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject).to_not receive(:on_error)
 
         expect(subject).to receive(:disconnected!).and_call_original
+        expect(subject).to receive(:reconnect!)
         expect(ws_client).to receive(:disconnect)
 
         actor.connect_client(ws_client)
@@ -374,13 +355,12 @@ describe Kontena::WebsocketClient, :celluloid => true do
           allow(ws_client).to receive(:ssl_verify?).and_return(false)
         end
 
-        it 'updates connecting -> connected and published websocket:open' do
+        it 'updates connected and published websocket:open' do
           expect(subject).to receive(:info).with('unsecure connection established without SSL')
           expect(subject).to receive(:publish).with('websocket:open', nil)
 
           actor.on_open
 
-          expect(subject.connecting?).to be false
           expect(subject.connected?).to be true
         end
       end
@@ -474,25 +454,12 @@ describe Kontena::WebsocketClient, :celluloid => true do
     let(:ws_client) { instance_double(Kontena::Websocket::Client) }
 
     before do
-      subject.instance_variable_set('@connecting', false)
       subject.instance_variable_set('@connected', true)
       subject.instance_variable_set('@ws', ws_client)
     end
 
     it 'is not connected' do
       expect(subject.connected?).to be true
-    end
-
-    it 'is not connecting' do
-      expect(subject.connecting?).to be false
-    end
-
-    describe '#start' do
-      it 'does not connect' do
-        expect(subject).not_to receive(:connect!)
-
-        actor.start
-      end
     end
 
     describe '#ws' do

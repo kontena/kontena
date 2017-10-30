@@ -93,6 +93,9 @@ module Kontena
       end
     end
 
+    # Connect to server, and start connect_client task
+    #
+    # Calls reconnect! on errors
     def connect!
       info "connecting to master at #{@api_uri}"
       headers = {
@@ -134,6 +137,8 @@ module Kontena
     # Connect the websocket client, and read messages.
     #
     # Keeps running as a separate defer thread as long as the websocket client is connected.
+    #
+    # Calls disconnected! -> reconnect! when done.
     #
     # @param ws [Kontena::Websocket::Client]
     def connect_client(ws)
