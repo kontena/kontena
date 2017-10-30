@@ -5,7 +5,7 @@ describe GridServiceScheduler do
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
   let(:nodes) do
     nodes = []
-    3.times { nodes << HostNode.create!(node_id: SecureRandom.uuid) }
+    3.times { nodes << HostNode.create!(node_id: SecureRandom.uuid, mem_total: 1.gigabytes) }
     nodes.map { |n| Scheduler::Node.new(n) }
   end
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
