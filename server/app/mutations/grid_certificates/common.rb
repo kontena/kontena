@@ -64,5 +64,33 @@ module GridCertificates
     rescue
       false
     end
+
+    def upsert_certificate(certificate)
+      if existing = certificate.grid.certificates.find_by(subject: certificate.subject)
+        existing.alt_names = certificate.alt_names
+        existing.valid_until = certificate.valid_until
+        existing.private_key = certificate.private_key
+        existing.certificate = certificate.certificate
+        existing.chain = certificate.chain
+        existing.save!
+
+        certificate = existing
+      else
+        certificate.save!
+      end
+
+      refresh_certificate_services(certificate)
+
+      return certificate
+    end
+
+    ##
+    # @param [Certificate]
+    def refresh_certificate_services(certificate)
+      certificate.grid.grid_services.where(:'certificates.subject' => certificate.subject).each do |grid_service|
+        info "force service #{grid_service.to_path} update for updated certificate #{certificate.subject}"
+        grid_service.set(updated_at: Time.now.utc)
+      end
+    end
   end
 end

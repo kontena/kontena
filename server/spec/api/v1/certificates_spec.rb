@@ -84,6 +84,17 @@ U3GffGoMbo0kTw==
       expect(json_response['subject']).to eq('kontena.io')
     end
 
+    it 'imports certificate' do
+      data = {
+        certificate: cert_pem,
+        chain: [ca_pem],
+        private_key: key_pem,
+      }
+      post "/v1/grids/#{grid.name}/certificates", data.to_json, request_headers
+      expect(response.status).to eq(201), response.body
+      expect(json_response['subject']).to eq('test')
+    end
+
     it 'fails in requesting new certificate' do
       outcome = double(
         :success? => false,
@@ -91,7 +102,11 @@ U3GffGoMbo0kTw==
         :errors => double(:message => 'kaboom')
       )
       expect(GridCertificates::RequestCertificate).to receive(:run).and_return(outcome)
-      post "/v1/grids/#{grid.name}/certificates", {}, request_headers
+
+      data = {
+        domains: ['kontena.io']
+      }
+      post "/v1/grids/#{grid.name}/certificates", data.to_json, request_headers
       expect(response.status).to eq(422), response.body
       expect(json_response['error']).to eq('kaboom')
     end
