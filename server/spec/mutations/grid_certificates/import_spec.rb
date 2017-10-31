@@ -11,14 +11,14 @@ wpUzwKt2lbtAZFmLIIJ53Pv0PZsgC6Q=
 -----END CERTIFICATE-----
 ' }
 
-  let(:cert_pem) {
-    '-----BEGIN CERTIFICATE-----
-MIIBBTCBsAIBAjANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJDQTAeFw0xNzEw
-MzExNzA2MzJaFw0xNzExMzAxNzA2MzJaMA8xDTALBgNVBAMMBHRlc3QwXDANBgkq
-hkiG9w0BAQEFAANLADBIAkEA+jOxPABMu7Kp4lfrlGXWm+kQWIj4FSi5pczK/ReE
-w1Gxhq49CEt3bIC3Li8slJU4H1WZbhbz8VWyEUsmaYEfiQIDAQABMA0GCSqGSIb3
-DQEBCwUAA0EAIHbczx/kmb/ji/5kDtAUldbicApY9vl75JbPxnAfU5yqyZjhsFiF
-uH6nBTUEAXS4Ic89vJ+J9e14hXh7YLzq1w==
+  let(:cert_pem) { '-----BEGIN CERTIFICATE-----
+MIIBJzCB0qADAgECAgEFMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNVBAMMAkNBMB4X
+DTE3MTAzMTE5MzA1MloXDTE3MTEzMDE5MzA1MlowDzENMAsGA1UEAwwEdGVzdDBc
+MA0GCSqGSIb3DQEBAQUAA0sAMEgCQQD6M7E8AEy7sqniV+uUZdab6RBYiPgVKLml
+zMr9F4TDUbGGrj0IS3dsgLcuLyyUlTgfVZluFvPxVbIRSyZpgR+JAgMBAAGjGzAZ
+MBcGA1UdEQQQMA6CBHRlc3SCBnRlc3QtMTANBgkqhkiG9w0BAQsFAANBAGVbIF1b
+n4U4FXPFU5/H0eOVZSC2ivbDa/RBArf4R7ib9qdH4rRQif7Gn6Lih4tuR6zMFBd/
+M1Qkkjz7IeynUtw=
 -----END CERTIFICATE-----
 ' }
 
@@ -64,8 +64,8 @@ o3pfKGbjf982rb1jAoAkG6GKEI8PTFNxn3xqDG6NJE8=
       }.to change {grid.certificates.count}.by (1)
 
       expect(cert.subject).to eq('test')
-      expect(cert.valid_until).to eq(DateTime.parse('Nov 30 17:06:32 2017 GMT'))
-      expect(cert.alt_names).to be_empty
+      expect(cert.valid_until).to eq(DateTime.parse('Nov 30 19:30:52 2017 GMT'))
+      expect(cert.alt_names).to eq ['test-1']
       expect(cert.private_key).to eq(key_rsa_pem) # XXX: converts from PKCS#8 -> PKCS#1 format
       expect(cert.certificate).to eq(cert_pem)
       expect(cert.chain).to eq(ca_pem)

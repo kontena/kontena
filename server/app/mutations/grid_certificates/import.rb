@@ -60,7 +60,7 @@ module GridCertificates
     # @param extension_name [String]
     def find_cert_extension(cert, extension_name)
       cert.extensions.each do |ext|
-        return ext.value if ext.name == extension_name
+        return ext.value if ext.oid == extension_name
       end
       return nil
     end
@@ -68,10 +68,10 @@ module GridCertificates
     # @return [Time]
     def find_cert_alt_names(cert)
       if value = find_cert_extension(cert, 'subjectAltName')
-        value.split(', ').map{|name|
-          case name
-          when /DNS:(.+)/
-            $2
+        value.split(',').map{|name|
+          name = name.strip
+          if name.start_with? 'DNS:'
+            name[4..-1]
           else
             nil
           end
@@ -93,7 +93,7 @@ module GridCertificates
     # @return [Certificate]
     def build_certificate
       Certificate.new(grid: self.grid, subject: @subject,
-        alt_names: find_cert_alt_names(@certificate),
+        alt_names: find_cert_alt_names(@certificate) - [@subject],
         valid_until: @certificate.not_after,
         private_key: @private_key.to_pem,
         certificate: @certificate.to_pem,
