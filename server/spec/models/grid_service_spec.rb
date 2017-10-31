@@ -41,6 +41,9 @@ describe GridService do
   let :stack do
     Stack.create(grid: grid, name: 'stack')
   end
+  let :stack2 do
+    Stack.create(grid: grid, name: 'stack2')
+  end
 
   let(:grid_service) do
     GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
@@ -163,7 +166,7 @@ describe GridService do
           volumes_from: ["redis-1"],
         ) }
 
-        it 'returns both dependant services' do
+        it 'returns both dependant services in the null stack' do
           expect(subject.dependant_services).to contain_exactly(
             backupper,
             follower,
@@ -180,11 +183,69 @@ describe GridService do
           image_name: 'follower:latest',
           affinity: ["service==redis"],
         ) }
+        let!(:external_avoider) { GridService.create!(grid: grid, stack: stack2, name: 'avoider',
+          image_name: 'follower:latest',
+          affinity: ["service!=redis"],
+        ) }
+        let!(:external_follower) { GridService.create!(grid: grid, stack: stack2, name: 'follower',
+          image_name: 'follower:latest',
+          affinity: ["service==redis"],
+        ) }
 
-        it 'returns both dependant services' do
+        it 'returns both dependant services in the null stack' do
           expect(subject.dependant_services).to contain_exactly(
             avoider,
             follower,
+          )
+        end
+      end
+
+      # TODO: container affinity
+    end
+
+    context 'with a stack service' do
+      let(:subject) { stack_service }
+
+      context 'with dependent volumes_from services across different stacks' do
+        let!(:stackless_follower) { GridService.create!(grid: grid, name: 'avoider',
+          image_name: 'test:latest',
+          affinity: ["service!=redis"],
+        )}
+        let!(:stackless_follower) { GridService.create!(grid: grid, name: 'follower',
+          image_name: 'test:latest',
+          affinity: ["service==redis"],
+        )}
+        let!(:avoider) { GridService.create!(grid: grid, stack: stack, name: 'avoider',
+          image_name: 'avoider:latest',
+          affinity: ["service!=redis"],
+        ) }
+        let!(:follower) { GridService.create!(grid: grid, stack: stack, name: 'follower',
+          image_name: 'follower:latest',
+          affinity: ["service==redis"],
+        ) }
+        let!(:external_avoider) { GridService.create!(grid: grid, name: 'external-avoider',
+          image_name: 'follower:latest',
+          affinity: ["service!=stack/redis"],
+        ) }
+        let!(:external_follower) { GridService.create!(grid: grid, name: 'external-follower',
+          image_name: 'follower:latest',
+          affinity: ["service==stack/redis"],
+        ) }
+        let!(:stack2_avoider) { GridService.create!(grid: grid, stack: stack2, name: 'avoider',
+          image_name: 'follower:latest',
+          affinity: ["service!=redis"],
+        ) }
+        let!(:stack2_follower) { GridService.create!(grid: grid, stack: stack2, name: 'follower',
+          image_name: 'follower:latest',
+          affinity: ["service==redis"],
+        ) }
+
+        it 'returns both dependant services in the same stack' do
+          expect(subject.dependant_services).to contain_exactly(
+            avoider,
+            follower,
+            external_avoider,
+            external_follower,
           )
         end
       end

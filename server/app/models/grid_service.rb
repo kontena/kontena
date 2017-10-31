@@ -246,8 +246,10 @@ class GridService
     dependant += grid.grid_services.where(:$or => [
         {:volumes_from => {:$regex => /^#{self.name}-%s/}},
         {:volumes_from => {:$regex => /^#{self.name}-\d+/}},
-        {:affinity => "service==#{self.name}"},
-        {:affinity => "service!=#{self.name}"},
+        {:affinity => "service==#{self.name}", :stack_id => self.stack.id},
+        {:affinity => "service!=#{self.name}", :stack_id => self.stack.id},
+        {:affinity => "service==#{self.stack.name}/#{self.name}"},
+        {:affinity => "service!=#{self.stack.name}/#{self.name}"},
         {:net => {:$regex => /^container:#{self.name}-%s/}},
         {:net => {:$regex => /^container:#{self.name}-\d+/}}
       ]
