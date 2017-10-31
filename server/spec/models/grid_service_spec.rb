@@ -156,7 +156,7 @@ describe GridService do
     context 'with a stackless service' do
       let(:subject) { grid_service }
 
-      context 'with depedent volumes_from services' do
+      context 'with dependent volumes_from services' do
         let!(:backupper) { GridService.create!(grid: grid, name: 'backupper',
           image_name: 'backupper:latest',
           volumes_from: ["redis-%s"],
@@ -165,11 +165,29 @@ describe GridService do
           image_name: 'follower:latest',
           volumes_from: ["redis-1"],
         ) }
+        let!(:external_backupper) { GridService.create!(grid: grid, stack: stack, name: 'backupper',
+          image_name: 'backupper:latest',
+          volumes_from: ["redis-%s"],
+        ) }
+        let!(:external_follower) { GridService.create!(grid: grid, stack: stack, name: 'follower',
+          image_name: 'follower:latest',
+          volumes_from: ["redis-1"],
+        ) }
+        let!(:stack2_backupper) { GridService.create!(grid: grid, stack: stack2, name: 'backupper',
+          image_name: 'backupper:latest',
+          volumes_from: ["stack3.redis-%s"],
+        ) }
+        let!(:stack2_follower) { GridService.create!(grid: grid, stack: stack2, name: 'follower',
+          image_name: 'follower:latest',
+          volumes_from: ["stack3.redis-1"],
+        ) }
 
-        it 'returns both dependant services in the null stack' do
+        it 'returns dependant services in the null stack and external stack' do
           expect(subject.dependant_services).to contain_exactly(
             backupper,
             follower,
+            external_backupper,
+            external_follower,
           )
         end
       end
@@ -233,6 +251,42 @@ describe GridService do
       let(:subject) { stack_service }
 
       context 'with dependent volumes_from services across different stacks' do
+        let!(:backupper) { GridService.create!(grid: grid, stack: stack, name: 'backupper',
+          image_name: 'backupper:latest',
+          volumes_from: ["redis-%s"],
+        ) }
+        let!(:follower) { GridService.create!(grid: grid, stack: stack, name: 'follower',
+          image_name: 'follower:latest',
+          volumes_from: ["redis-1"],
+        ) }
+        let!(:external_backupper) { GridService.create!(grid: grid, stack: stack2, name: 'external-backupper',
+          image_name: 'backupper:latest',
+          volumes_from: ["stack.redis-%s"],
+        ) }
+        let!(:external_follower) { GridService.create!(grid: grid, stack: stack2, name: 'external-follower',
+          image_name: 'follower:latest',
+          volumes_from: ["stack.redis-1"],
+        ) }
+        let!(:stack2_backupper) { GridService.create!(grid: grid, stack: stack2, name: 'backupper',
+          image_name: 'backupper:latest',
+          volumes_from: ["redis-%s"],
+        ) }
+        let!(:stack2_follower) { GridService.create!(grid: grid, stack: stack2, name: 'follower',
+          image_name: 'follower:latest',
+          volumes_from: ["redis-1"],
+        ) }
+
+        it 'returns dependant services in the local stack and external stack' do
+          expect(subject.dependant_services).to contain_exactly(
+            backupper,
+            follower,
+            external_backupper,
+            external_follower,
+          )
+        end
+      end
+
+      context 'with dependent service affinity services across different stacks' do
         let!(:stackless_follower) { GridService.create!(grid: grid, name: 'avoider',
           image_name: 'test:latest',
           affinity: ["service!=redis"],
