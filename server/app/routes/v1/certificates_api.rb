@@ -57,26 +57,22 @@ module V1
 
       # /v1/certificates/:grid/
       r.on ':grid' do |grid|
-
         load_grid(grid)
 
-        r.get do
-          r.on ':subject' do |subject|
-            @certificate = @grid.certificates.find_by(subject: subject)
-            if @certificate
+        r.on ':subject' do |subject|
+          @certificate = @grid.certificates.find_by(subject: subject)
+
+          halt_request(404, {error: 'Not found'}) unless @certificate
+
+          r.get do
+            r.is do
               response.status = 200
               render('certificates/show')
-            else
-              response.status = 404
-              {error: 'Not found'}
             end
           end
-        end
 
-        r.delete do
-          r.on ':subject' do |subject|
-            @certificate = @grid.certificates.find_by(subject: subject)
-            if @certificate
+          r.delete do
+            r.is do
               outcome = GridCertificates::RemoveCertificate.run(certificate: @certificate)
               if outcome.success?
                 response.status = 200
@@ -85,9 +81,6 @@ module V1
                 response.status = 422
                 {error: outcome.errors.message}
               end
-            else
-              response.status = 404
-              {error: 'Not found'}
             end
           end
         end
