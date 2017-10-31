@@ -10,6 +10,7 @@ describe HostNode do
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
   it { should have_fields(:last_seen_at).of_type(Time) }
+  it { should have_fields(:latest_stats).of_type(Hash) }
 
   it { should embed_many(:volume_drivers) }
   it { should embed_many(:network_drivers) }

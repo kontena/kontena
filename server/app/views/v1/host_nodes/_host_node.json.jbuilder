@@ -51,12 +51,12 @@ json.grid do
   end
 end
 json.resource_usage do
-  stats = node.host_node_stats.latest
-  if stats
-    json.memory stats.memory
-    json.load stats.load
-    json.filesystem stats.filesystem
-    json.usage stats.usage
-    json.cpu stats.cpu
+  stats = node.latest_stats
+  unless stats.empty?
+    json.memory stats['memory']
+    json.load stats['load']
+    json.filesystem stats['filesystem']
+    json.usage stats['usage']
+    json.cpu stats['cpu']
   end
 end
