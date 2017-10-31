@@ -252,8 +252,7 @@ class GridService
         {:affinity => "service==#{self.stack.name}/#{self.name}"},
         {:affinity => "service!=#{self.stack.name}/#{self.name}"},
         {:affinity => {:$regex => /^container(==|!=)#{self.name_with_stack}-(%s|\d+)$/}},
-        {:net => {:$regex => /^container:#{self.name}-%s/}},
-        {:net => {:$regex => /^container:#{self.name}-\d+/}}
+        {:net => {:$regex => /^container:#{self.name}-(%s|\d+)/}},
       ]
     )
     dependant.delete(self)
