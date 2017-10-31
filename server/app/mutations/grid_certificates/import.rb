@@ -47,10 +47,12 @@ module GridCertificates
 
     # @param cert [OpenSSL::X509::Certificate]
     # @return [String]
-    def find_cert_subject(cert)
+    def import_cert_subject(cert)
       cert.subject.to_a.each do |name, data|
         return data if name == 'CN'
       end
+
+      add_error(:certificate, :subject, "Unable to find CN from certificate subject: #{@certificate.subject}")
       return nil
     end
 
@@ -84,20 +86,13 @@ module GridCertificates
       @private_key = import_private_key(self.private_key)
       @chain = import_chain(self.chain)
 
-      if @certificate
-        unless @subject = find_cert_subject(@certificate)
-          add_error(:certificate, :subject, "Unable to find CN from certificate subject: #{@certificate.subject}")
-          return
-        end
-      end
+      return unless @certificate
+      return unless @subject = import_cert_subject(@certificate)
     end
-
 
     # @return [Certificate]
     def build_certificate
-      Certificate.create!(
-        grid: self.grid,
-        subject: @subject,
+      Certificate.new(grid: self.grid, subject: @subject,
         alt_names: find_cert_alt_names(@certificate),
         valid_until: @certificate.not_after,
         private_key: @private_key.to_pem,

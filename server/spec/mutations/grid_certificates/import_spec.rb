@@ -69,6 +69,23 @@ o3pfKGbjf982rb1jAoAkG6GKEI8PTFNxn3xqDG6NJE8=
       expect(cert.private_key).to eq(key_rsa_pem) # XXX: converts from PKCS#8 -> PKCS#1 format
       expect(cert.certificate).to eq(cert_pem)
       expect(cert.chain).to eq(ca_pem)
+
+      expect(grid.certificates.find_by(subject: 'test')).to eq cert
+    end
+
+  end
+
+  context 'with a pre-existing certificate' do
+    let!(:certificate) { Certificate.create!(grid: grid, subject: 'test', valid_until: Time.now) }
+
+    it 'updates certificate' do
+      outcome = nil
+
+      expect {
+        outcome = subject.run
+      }.to change{certificate.reload.certificate}
+
+      expect(outcome).to be_success
     end
   end
 end

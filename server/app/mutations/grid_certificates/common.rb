@@ -66,17 +66,17 @@ module GridCertificates
     end
 
     def upsert_certificate(certificate)
-      if existing = certificate.grid.certificates.find_by(subject: certificate.subject)
+      if existing = Certificate.find_by(grid: grid, subject: certificate.subject)
         existing.alt_names = certificate.alt_names
         existing.valid_until = certificate.valid_until
         existing.private_key = certificate.private_key
         existing.certificate = certificate.certificate
         existing.chain = certificate.chain
-        existing.save!
+        existing.save
 
         certificate = existing
       else
-        certificate.save!
+        certificate.save
       end
 
       refresh_certificate_services(certificate)
