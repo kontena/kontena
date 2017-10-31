@@ -250,6 +250,7 @@ class GridService
         {:affinity => "service!=#{self.name}", :stack_id => self.stack.id},
         {:affinity => "service==#{self.stack.name}/#{self.name}"},
         {:affinity => "service!=#{self.stack.name}/#{self.name}"},
+        {:affinity => {:$regex => /^container(==|!=)#{self.name_with_stack}-(%s|\d+)$/}},
         {:net => {:$regex => /^container:#{self.name}-%s/}},
         {:net => {:$regex => /^container:#{self.name}-\d+/}}
       ]

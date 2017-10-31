@@ -200,7 +200,33 @@ describe GridService do
         end
       end
 
-      # TODO: container affinity
+      context 'with dependent container affinity services' do
+        let!(:instance_avoider) { GridService.create!(grid: grid, name: 'instance-avoider',
+          image_name: 'avoider:latest',
+          affinity: ["container!=redis-1"],
+        ) }
+        let!(:instance_follower) { GridService.create!(grid: grid, name: 'instance-follower',
+          image_name: 'follower:latest',
+          affinity: ["container==redis-1"],
+        ) }
+        let!(:avoider) { GridService.create!(grid: grid, name: 'avoider',
+          image_name: 'avoider:latest',
+          affinity: ["container!=redis-%s"],
+        ) }
+        let!(:follower) { GridService.create!(grid: grid, name: 'follower',
+          image_name: 'follower:latest',
+          affinity: ["container==redis-%s"],
+        ) }
+
+        it 'returns all dependant services' do
+          expect(subject.dependant_services).to contain_exactly(
+            instance_avoider,
+            instance_follower,
+            avoider,
+            follower,
+          )
+        end
+      end
     end
 
     context 'with a stack service' do
@@ -246,6 +272,34 @@ describe GridService do
             follower,
             external_avoider,
             external_follower,
+          )
+        end
+      end
+
+      context 'with dependent container affinity services' do
+        let!(:instance_avoider) { GridService.create!(grid: grid, stack: stack2, name: 'instance-avoider',
+          image_name: 'avoider:latest',
+          affinity: ["container!=stack.redis-1"],
+        ) }
+        let!(:instance_follower) { GridService.create!(grid: grid, stack: stack2, name: 'instance-follower',
+          image_name: 'follower:latest',
+          affinity: ["container==stack.redis-1"],
+        ) }
+        let!(:avoider) { GridService.create!(grid: grid, stack: stack2, name: 'avoider',
+          image_name: 'avoider:latest',
+          affinity: ["container!=stack.redis-%s"],
+        ) }
+        let!(:follower) { GridService.create!(grid: grid, stack: stack2, name: 'follower',
+          image_name: 'follower:latest',
+          affinity: ["container==stack.redis-%s"],
+        ) }
+
+        it 'returns all dependant services' do
+          expect(subject.dependant_services).to contain_exactly(
+            instance_avoider,
+            instance_follower,
+            avoider,
+            follower,
           )
         end
       end
