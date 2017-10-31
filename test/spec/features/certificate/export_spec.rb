@@ -46,4 +46,14 @@ describe 'certificate import' do
 
     expect(k.out.gsub("\r\n", "\n")).to eq(ca_pem)
   end
+
+  it 'logs audit' do
+    k = run("kontena certificate export --chain test")
+    expect(k.code).to eq(0), k.out
+
+    k = run('kontena grid audit-log --lines=10')
+    expect(k.code).to eq(0), k.out
+
+    expect(k.out).to match /Certificate.*export/
+  end
 end
