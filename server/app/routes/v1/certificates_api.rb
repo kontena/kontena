@@ -69,6 +69,12 @@ module V1
               response.status = 200
               render('certificates/show')
             end
+
+            r.is 'export' do
+              audit_event(r, @grid, @certificate, 'export')
+              response.status = 200
+              render('certificates/export')
+            end
           end
 
           r.delete do
