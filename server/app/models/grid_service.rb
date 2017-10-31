@@ -246,7 +246,10 @@ class GridService
     dependant += grid.grid_services.where(:$or => [
         # if this is a stackless service, this also includes bare volumes_from service names in other stacks
         {:volumes_from => {:$regex => /^#{self.name_with_stack}-(%s|\d+)/}},
+
+        # the agent will resolve volumes_from: foo-1 to container stack.foo-1 if container foo-1 does not exist
         {:volumes_from => {:$regex => /^#{self.name}-(%s|\d+)/}, :stack_id => self.stack.id},
+
         {:affinity => "service==#{self.name}", :stack_id => self.stack.id},
         {:affinity => "service!=#{self.name}", :stack_id => self.stack.id},
         {:affinity => "service==#{self.stack.name}/#{self.name}"},
