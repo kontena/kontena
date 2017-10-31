@@ -49,18 +49,13 @@ describe GridService do
     GridService.create!(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')
   end
 
-  let(:stacked_service) do
-    stack = Stack.create!(name: 'stack')
-    GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
-  end
-
   describe '#qualified_name' do
-    it 'returns full path for stacked service' do
-      expect(stacked_service.qualified_name).to eq("#{stacked_service.stack.name}/#{stacked_service.name}")
+    it 'returns full path for stack_service service' do
+      expect(stack_service.qualified_name).to eq('stack/redis')
     end
 
     it 'returns path without stack for stackless service' do
-      expect(grid_service.qualified_name).to eq("#{grid_service.name}")
+      expect(grid_service.qualified_name).to eq('redis')
     end
   end
 
@@ -155,38 +150,44 @@ describe GridService do
   end
 
   describe '#dependant_services' do
-    let(:subject) { grid_service }
+    context 'with a stackless service' do
+      let(:subject) { grid_service }
 
-    it 'returns dependant by volumes_from' do
-      backupper = GridService.create!(
-        grid: grid, name: 'backupper',
-        image_name: 'backupper:latest', volumes_from: ["#{subject.name}-%s"]
-      )
-      follower = GridService.create!(
-        grid: grid, name: 'follower',
-        image_name: 'follower:latest', volumes_from: ["#{subject.name}-1"]
-      )
-      dependant_services = subject.dependant_services
-      expect(dependant_services.size).to eq(2)
-      expect(dependant_services).to include(backupper)
-      expect(dependant_services).to include(follower)
-    end
+      context 'with depedent volumes_from services' do
+        let!(:backupper) { GridService.create!(grid: grid, name: 'backupper',
+          image_name: 'backupper:latest',
+          volumes_from: ["redis-%s"],
+        ) }
+        let!(:follower) { GridService.create!(grid: grid, name: 'follower',
+          image_name: 'follower:latest',
+          volumes_from: ["redis-1"],
+        ) }
 
-    it 'returns dependant services by service affinity' do
-      avoider = GridService.create!(
-        grid: grid, name: 'avoider',
-        image_name: 'avoider:latest',
-        affinity: ["service!=#{subject.name}"]
-      )
-      follower = GridService.create!(
-        grid: grid, name: 'follower',
-        image_name: 'follower:latest',
-        affinity: ["service==#{subject.name}"]
-      )
-      dependant_services = subject.dependant_services
-      expect(dependant_services.size).to eq(2)
-      expect(dependant_services).to include(avoider)
-      expect(dependant_services).to include(follower)
+        it 'returns both dependant services' do
+          expect(subject.dependant_services).to contain_exactly(
+            backupper,
+            follower,
+          )
+        end
+      end
+
+      context 'with dependent service affinity services' do
+        let!(:avoider) { GridService.create!(grid: grid, name: 'avoider',
+          image_name: 'avoider:latest',
+          affinity: ["service!=redis"],
+        ) }
+        let!(:follower) { GridService.create!(grid: grid, name: 'follower',
+          image_name: 'follower:latest',
+          affinity: ["service==redis"],
+        ) }
+
+        it 'returns both dependant services' do
+          expect(subject.dependant_services).to contain_exactly(
+            avoider,
+            follower,
+          )
+        end
+      end
     end
   end
 
