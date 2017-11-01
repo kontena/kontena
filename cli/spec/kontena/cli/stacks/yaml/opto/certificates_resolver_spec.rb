@@ -36,10 +36,46 @@ describe Kontena::Cli::Stacks::YAML::Opto::Resolvers::Certificates do
 
         block.call(prompt_menu)
 
-        'test.example.com'
+        ['test.example.com']
       end
 
-      expect(subject.resolve).to eq 'test.example.com'
+      expect(subject.resolve).to eq ['test.example.com']
+    end
+
+    context 'with default value' do
+      let(:option_default) { ['test.example.com'] }
+
+      it 'lists grid certificates and prompts' do
+        expect(prompt).to receive(:multi_select).with(option_hint) do |&block|
+          expect(prompt_menu).to receive(:default).with(1)
+          expect(prompt_menu).to receive(:choice).with('test.example.com')
+          expect(prompt_menu).to receive(:choice).with('test-2.example.com')
+
+          block.call(prompt_menu)
+
+          ['test.example.com']
+        end
+
+        expect(subject.resolve).to eq ['test.example.com']
+      end
+    end
+
+    context 'with default values' do
+      let(:option_default) { ['test.example.com', 'test-2.example.com'] }
+
+      it 'lists grid certificates and prompts' do
+        expect(prompt).to receive(:multi_select).with(option_hint) do |&block|
+          expect(prompt_menu).to receive(:default).with(1, 2)
+          expect(prompt_menu).to receive(:choice).with('test.example.com')
+          expect(prompt_menu).to receive(:choice).with('test-2.example.com')
+
+          block.call(prompt_menu)
+
+          ['test.example.com', 'test-2.example.com']
+        end
+
+        expect(subject.resolve).to eq ['test.example.com', 'test-2.example.com']
+      end
     end
   end
 end
