@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.3.5.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.5.rc1) (2017-10-31)
+
+The 1.3.5 release fixes several issues in the 1.3 release, as well as some older issues.
+
+This release also includes a change to how the server estimates container memory utilization when selecting a node with sufficient free memory: instead of looking at the current memory utilization of the oldest service container, the server will now use the peak memory utilization across all service containers for the past hour.
+
+### Fixed issues
+
+* kontena node/labels update does not notify nodes #2746
+
+    This issue can cause new nodes being provisioned within the same `region` to establish weave connections using their public IP, instead of the private IP that nodes should be using within the same region. This affects nodes in AWS VPCs with security groups managed by `kontena aws node create` in particular. Workaround is to restart the `kontena-agent` on the nodes.
+
+    Introduced in version 1.3.0, does not affect 1.2 or earlier.
+
+* Server leaks memory if new containers are constantly created and destroyed #2895
+
+* Continual high CPU usage #2719
+
+    The background service re-scheduling is now more efficient, consuming significantly less CPU while idle.
+
+### Changes
+
+#### Master
+
+* Fix server ContainerInfoMapper memory leak (#2896) (#2940)
+* backport #2747 (#2941)
+* Improve scheduler performance (#2921) (#2973)
+
 ## [1.3.4](https://github.com/kontena/kontena/releases/tag/v1.3.4) (2017-07-20)
 
 ### Known issues
