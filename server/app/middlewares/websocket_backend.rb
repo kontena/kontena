@@ -154,7 +154,6 @@ class WebsocketBackend
   def find_node(req)
     node_id = req.env['HTTP_KONTENA_NODE_ID']
     node_name = req.env['HTTP_KONTENA_NODE_NAME']
-    node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
     init_attrs = {
       labels: req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(','),
       agent_version: req.env['HTTP_KONTENA_VERSION'].to_s,
