@@ -111,7 +111,7 @@ class WebsocketBackend
   # @param init_attrs [Hash] initialize attributes on new node
   # @raise [CloseError]
   # @return [HostNode] with node_id set
-  def find_node_by_node_token(node_id, node_token, init_attrs)
+  def find_node_by_node_token(node_id, node_token, labels: [], **init_attrs)
     node = HostNode.find_by(token: node_token.to_s)
 
     raise CloseError.new(4002), "Invalid node token" unless node
@@ -121,7 +121,10 @@ class WebsocketBackend
     if !node_by_id
       # atomically initialize the node_id
       created_node = HostNode.where(:id => node.id, :node_id => nil)
-        .find_one_and_update(:$set => {node_id: node_id, **init_attrs})
+        .find_one_and_update(
+          :$set => {node_id: node_id, **init_attrs},
+          :$addToSet => {labels: { :$each => labels } },
+        )
 
       if created_node
         logger.info "new node #{node} connected using node token with node_id #{node_id}"
@@ -170,7 +173,7 @@ class WebsocketBackend
       return find_node_by_grid_token(node_id, grid_token, node_name: node_name, **init_attrs)
 
     elsif node_token = req.env['HTTP_KONTENA_NODE_TOKEN']
-      return find_node_by_node_token(node_id, node_token, init_attrs)
+      return find_node_by_node_token(node_id, node_token, **init_attrs)
 
     else
       raise CloseError.new(4004), "Missing token"
