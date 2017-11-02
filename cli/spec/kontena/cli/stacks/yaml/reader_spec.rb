@@ -159,7 +159,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         it 'extends services from the same file' do
           app_svc = subject.execute['services'].find { |s| s['name'] == 'app' }
           expect(app_svc).not_to be_nil
-          puts app_svc.inspect
           expect(app_svc).to match hash_including(
             "image" => "base:latest",
             "instances" => 2,
@@ -525,6 +524,13 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       expect(outcome['services']).to match array_including(
         hash_including('name' => 'test', 'env' => ['ASDF=test'])
       )
+    end
+  end
+
+  context "yaml with anchors" do
+    subject { described_class.new(fixture_path('stack-with-anchors.yml')) }
+    it 'parses correctly' do
+      expect(subject.execute['services'].all? { |svc| svc['affinity'] == ['abc==dfg']}).to be_truthy
     end
   end
 end
