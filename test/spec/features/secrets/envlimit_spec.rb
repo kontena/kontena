@@ -24,7 +24,7 @@ describe 'secret env size limits' do
       end
 
       # still running?
-      cinfo = container_inspect(cid)
+      cinfo = inspect_container(cid)
       expect(cinfo['State']['Status']).to eq 'running'
     end
   end

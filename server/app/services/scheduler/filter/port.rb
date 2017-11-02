@@ -8,6 +8,8 @@ module Scheduler
       # @param [Array<HostNode>] nodes
       # @return [Array<HostNode>]
       def for_service(service, instance_number, nodes)
+        return nodes if service.ports.empty?
+
         candidates = nodes.dup
         ports = service.ports.map { |p| p['node_port'] }
         nodes.each do |node|

@@ -6,7 +6,7 @@ module Kontena::Cli::Helpers
 
     websocket_log_level = if ENV["DEBUG"] == 'websocket'
       Logger::DEBUG
-    elsif ENV["DEBUG"]
+    elsif Kontena.debug?
       Logger::INFO
     else
       Logger::WARN
@@ -27,7 +27,7 @@ module Kontena::Cli::Helpers
     # @param tty [Boolean] read stdin in raw mode, sending tty escapes for remote pty
     # @raise [ArgumentError] not a tty
     # @yield [data]
-    # @yieldparam data [String] data from stdin
+    # @yieldparam data [String] unicode data from stdin
     # @raise [ArgumentError] not a tty
     # @return EOF on stdin (!tty)
     def read_stdin(tty: nil)
@@ -38,11 +38,18 @@ module Kontena::Cli::Helpers
           # we do not expect EOF on a TTY, ^D sends a tty escape to close the pty instead
           loop do
             # raises EOFError, SyscallError or IOError
-            yield io.readpartial(1024)
+            chunk = io.readpartial(1024)
+
+            # STDIN.raw does not use the ruby external_encoding, it returns binary strings (ASCII-8BIT encoding)
+            # however, we use websocket text frames with JSON, which expects unicode strings encodable as UTF-8, and does not handle arbitrary binary data
+            # assume all stdin input is using ruby's external_encoding... the JSON.dump will fail if not.
+            chunk.force_encoding(Encoding.default_external)
+
+            yield chunk
           end
         }
       else
-        # line-buffered
+        # line-buffered, using the default external_encoding (probably UTF-8)
         while line = STDIN.gets
           yield line
         end
@@ -106,6 +113,7 @@ module Kontena::Cli::Helpers
             })
           end
           read_stdin(tty: tty) do |stdin|
+            logger.debug "websocket exec stdin with encoding=#{stdin.encoding}: #{stdin.inspect}"
             websocket_exec_write(ws, 'stdin' => stdin)
           end
           websocket_exec_write(ws, 'stdin' => nil) # EOF

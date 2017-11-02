@@ -28,10 +28,8 @@ module ContainerHelper
 
   # @raise [RuntimeError]
   # @return [Hash]
-  def container_inspect(id)
-    k = run "kontena container inspect #{id}"
-    fail "inspect failed with #{k.code}: #{k.out}" unless k.code.zero?
-
+  def inspect_container(container_id)
+    k = run("kontena container inspect #{container_id}")
     ::JSON.parse(k.out)
   end
 end
