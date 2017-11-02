@@ -16,11 +16,16 @@ describe GridCertificates::RequestCertificate do
   end
 
   let(:authz) {
-    opts = {
-      'record_name' => '_acme-challenge',
-      'record_content' => '1234567890'
-    }
-    GridDomainAuthorization.create!(grid: grid, domain: 'example.com', authorization_type: 'dns-01', challenge: {}, challenge_opts: opts)
+    GridDomainAuthorization.create!(grid: grid, domain: 'example.com',
+      state: 'created',
+      authorization_type: 'dns-01',
+      expires: Time.now + 300,
+      challenge: {},
+      challenge_opts: {
+        'record_name' => '_acme-challenge',
+        'record_content' => '1234567890'
+      },
+    )
   }
 
   describe '#validate' do
@@ -65,6 +70,20 @@ describe GridCertificates::RequestCertificate do
     it 'verifies domain succesfully' do
       expect(challenge).to receive(:request_verification).and_return(true)
       expect(challenge).to receive(:verify_status).and_return('valid', 'valid')
+
+      expect{
+        subject.verify_domain('example.com')
+      }.to change{authz.reload.state}.from(:created).to(:validated)
+
+      expect(authz.expires).to be nil
+      expect(authz.status).to eq :validated
+    end
+
+    it 'fails if verify becomes invalid' do
+      expect(challenge).to receive(:request_verification).and_return(true)
+      expect(challenge).to receive(:verify_status).and_return('pending', 'invalid', 'invalid')
+      expect(challenge).to receive(:error).and_return({'detail' => "Testing"})
+      expect(subject).to receive(:add_error).with(:challenge, :invalid, "Testing")
 
       subject.verify_domain('example.com')
     end

@@ -13,6 +13,7 @@ class GridDomainAuthorization
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
   field :authorization_type, type: String, default: 'tls-sni-01'
+  field :expires, type: DateTime
 
   belongs_to :grid_service_deploy
 
@@ -37,9 +38,10 @@ class GridDomainAuthorization
       :deploying # So that CLI or other clients know to wait before requesting the cert
     elsif self.grid_service_deploy && self.grid_service_deploy.finished? && self.grid_service_deploy.error?
       :deploy_error
+    elsif self.expires && Time.now > self.expires
+      :expired
     else
       self.state
     end
   end
-
 end

@@ -52,6 +52,8 @@ module GridCertificates
         challenge.verify_status != 'pending'
       }
 
+      domain_authorization.expires = nil # XXX: old version of acme-client does not update authorization expiration
+
       case challenge.verify_status
       when 'valid'
         domain_authorization.state = :validated
@@ -132,4 +134,3 @@ module GridCertificates
   end
 
 end
-
