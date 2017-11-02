@@ -32,13 +32,28 @@ class GridDomainAuthorization
     "#{self.grid.try(:name)}/#{self.domain}"
   end
 
+  # Challenge is waiting for the ACME server to either verify or reject it
+  def pending?
+    self.state == :created || self.state == :requested
+  end
+
+  # Challenge has expired, and can no longer be used for verification
+  def expired?
+    self.expires && Time.now > self.expires
+  end
+
+  # Domain authorization challenge is deployable to the linked grid service
+  def deployable?
+    self.authorization_type == 'tls-sni-01' && self.pending? && !expired?
+  end
+
   def status
-    if self.grid_service_deploy && !self.grid_service_deploy.finished?
+    if deployable? && self.grid_service_deploy && !self.grid_service_deploy.finished?
       # Deploy still in progress
       :deploying # So that CLI or other clients know to wait before requesting the cert
     elsif self.grid_service_deploy && self.grid_service_deploy.finished? && self.grid_service_deploy.error?
       :deploy_error
-    elsif self.expires && Time.now > self.expires
+    elsif expired?
       :expired
     else
       self.state
