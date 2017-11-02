@@ -89,10 +89,10 @@ describe Agent::NodePlugger do
         expect(node.websocket_connection.close_code).to be_nil
         expect(node.websocket_connection.close_reason).to be_nil
       end
-    end
 
-    describe '#send_node_info' do
       it "sends node info" do
+        expect(subject).to receive(:publish_update_event)
+
         expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
           name: 'test-node',
           grid: hash_including(
@@ -100,7 +100,7 @@ describe Agent::NodePlugger do
           ),
         ))
 
-        subject.send_node_info
+        subject.plugin! connected_at
       end
     end
   end
