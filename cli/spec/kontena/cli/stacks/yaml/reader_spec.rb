@@ -112,7 +112,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
               "links"=>[],
               "ports"=>[],
               "stateful"=>true,
-              "name"=>"mysql"
+              "name"=>"mysql",
+              "entrypoint" => "test"
             )
           )
         end
