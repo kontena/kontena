@@ -5,10 +5,10 @@ namespace :release do
   NAME = 'kontena-agent'
   DOCKER_NAME = 'kontena/agent'
   if VERSION.prerelease?
-    DOCKER_VERSIONS = ['edge']
+    DOCKER_VERSIONS = []
     DEB_COMPONENT = 'edge'
   else
-    DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+    DOCKER_VERSIONS = [VERSION.to_s.match(/(\d+\.\d+)/)[1]]
     DEB_COMPONENT = 'main'
   end
 
