@@ -4,7 +4,7 @@ namespace :release do
   if VERSION.prerelease?
     DOCKER_VERSIONS = []
   else
-    DOCKER_VERSIONS = [, VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+    DOCKER_VERSIONS = [VERSION.to_s.match(/(\d+\.\d+)/)[1]]
   end
 
   desc 'Build all'
