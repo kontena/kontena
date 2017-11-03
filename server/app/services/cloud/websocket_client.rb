@@ -64,14 +64,23 @@ module Cloud
       @connected
     end
 
-    def reconnect
-      if @reconnect_attempt > 16
+    # Using randomized full jitter to spread reconnect attempts across clients and reduce server contention
+    # See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+    #
+    # @param attempt [Integer]
+    # @return [Float]
+    def reconnect_backoff(attempt)
+      if attempt > 16
         backoff = RECONNECT_BACKOFF
       else
-        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** @reconnect_attempt].min
+        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** attempt].min
       end
 
       backoff *= rand
+    end
+
+    def reconnect
+      backoff = reconnect_backoff(@reconnect_attempt)
 
       @reconnect_attempt += 1
 
