@@ -11,6 +11,7 @@ module Cloud
     include Logging
 
     CONNECT_INTERVAL = 5.0
+    RECONNECT_BACKOFF = 120.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -42,13 +43,13 @@ module Cloud
       info "initialized with client ID #{@client_id} (secret #{@client_secret[0..8]}...)"
 
       @connected = false
-      @connecting = false
+      @reconnect_attempt = 0
     end
 
     # Called from CloudWebsocketConnectJob
     def start
-      every(CONNECT_INTERVAL) do
-        connect if !connected? unless connecting?
+      after(CONNECT_INTERVAL) do
+        connect
       end
     end
 
@@ -63,9 +64,31 @@ module Cloud
       @connected
     end
 
-    # @return [Boolean]
-    def connecting?
-      @connecting
+    # Using randomized full jitter to spread reconnect attempts across clients and reduce server contention
+    # See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+    #
+    # @param attempt [Integer]
+    # @return [Float]
+    def reconnect_backoff(attempt)
+      if attempt > 16
+        backoff = RECONNECT_BACKOFF
+      else
+        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** attempt].min
+      end
+
+      backoff *= rand
+    end
+
+    def reconnect
+      backoff = reconnect_backoff(@reconnect_attempt)
+
+      @reconnect_attempt += 1
+
+      info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
+
+      after(backoff) do
+        connect
+      end
     end
 
     # @return [String]
@@ -74,8 +97,6 @@ module Cloud
     end
 
     def connect
-      @connecting = true
-
       info "Connecting to cloud at #{@api_uri}"
 
       headers = {
@@ -96,9 +117,7 @@ module Cloud
 
     rescue => exc
       error exc
-
-      # abort connect, allow re-connecting
-      @connecting = false
+      reconnect
     end
 
     # Connect the websocket client, and read messages.
@@ -145,9 +164,13 @@ module Cloud
       ws.disconnect
     end
 
-    def on_open
+    def connected!
       @connected = true
-      @connecting = false
+      @reconnect_attempt = 0
+    end
+
+    def on_open
+      connected!
 
       begin
         ssl_cert = @ws.ssl_cert!
@@ -200,9 +223,6 @@ module Cloud
     # @param code [Integer]
     # @param reason [String]
     def on_close(code, reason)
-      @connected = false
-      @connecting = false
-
       case code
       when 1002
         error 'cloud does not accept our access token'
@@ -211,6 +231,14 @@ module Cloud
       end
 
       unsubscribe_events
+
+      disconnected!
+    end
+
+    def disconnected!
+      @connected = false
+
+      reconnect
     end
 
     # @param [Array] msg
