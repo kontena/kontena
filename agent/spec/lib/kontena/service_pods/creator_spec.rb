@@ -1,6 +1,7 @@
 
 describe Kontena::ServicePods::Creator do
 
+  let(:pod_secrets) { nil }
   let(:data) do
     {
       'service_id' => 'aa',
@@ -14,13 +15,14 @@ describe Kontena::ServicePods::Creator do
         'io.kontena.service.name' => 'redis-cache',
         'io.kontena.container.overlay_cidr' => '10.81.23.2/19'
       },
-      'stateful' => true,
+      'stateful' => false,
       'image_name' => 'redis:3.0',
       'devices' => [],
       'ports' => [],
       'env' => [
         'KONTENA_SERVICE_NAME=redis-cache'
       ],
+      'secrets' => pod_secrets,
       'net' => 'bridge',
       'volumes' => [
         {'name' => 'someVolume', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}}
@@ -51,6 +53,39 @@ describe Kontena::ServicePods::Creator do
     end
   end
 
+  describe '#perform' do
+    before do
+      expect(subject).to receive(:ensure_image).with('redis:3.0')
+      allow(subject).to receive(:wait_until!)
+
+    end
+
+    context 'for a pod with oversize envs' do
+      let(:pod_secrets) { (1..128).map{|i|
+        {
+          'name' => "SSL_CERTS",
+          'type' => 'env',
+          'value' => 'A' * 1024,
+        }
+      } }
+
+      context 'with an existing stateless container' do
+        let(:container) { instance_double(Docker::Container) }
+
+        before do
+          allow(subject).to receive(:get_container).with('aa', 2, 'volume').and_return(nil)
+          allow(subject).to receive(:get_container).with('aa', 2).and_return(container)
+        end
+
+        it 'fails before cleaning up the old container' do
+          expect(subject).to_not receive(:cleanup_container)
+          expect(subject).to_not receive(:create_container)
+
+          expect{subject.perform}.to raise_error(Kontena::Models::ServicePod::ConfigError, 'Env SSL_CERTS is too large at 131209 bytes')
+        end
+      end
+    end
+  end
 
   describe '#config_container' do
     let(:network_adapter) { instance_double(Kontena::NetworkAdapters::Weave) }
