@@ -51,7 +51,7 @@ module Docker
     end
 
     # Valid after setup()
-
+    #
     # @return [String] container exec RPC UUID
     def exec_id
       @exec_session['id']
