@@ -53,21 +53,35 @@ module Kontena
 
       # Craft a regular looking configuration based on ENV variables
       def load_settings_from_env
+        load_cloud_settings_from_env
+        load_master_settings_from_env
+      end
+
+      def load_master_settings_from_env
         return nil unless ENV['KONTENA_URL']
-        debug { 'Loading configuration from ENV' }
+
+        debug { 'Loading master configuration from ENV' }
         servers << Server.new(
           url: ENV['KONTENA_URL'],
           name: 'default',
-          token: Token.new(access_token: ENV['KONTENA_TOKEN'], parent_type: :master, parent_name: 'default'),
+          token: Token.new(access_token: ENV['KONTENA_TOKEN'],
+          parent_type: :master, parent_name: 'default'),
           grid: ENV['KONTENA_GRID'],
           parent_type: :master,
           parent_name: 'default'
         )
-        accounts << Account.new(kontena_account_data.merge(
-          token: Token.new(access_token: ENV['KONTENA_CLOUD_TOKEN'], parent_type: :account, parent_name: 'default')
-        ))
 
         self.current_master  = 'default'
+      end
+
+      def load_cloud_settings_from_env
+        return unless ENV['KONTENA_CLOUD_TOKEN']
+
+        debug { 'Loading cloud configuration from ENV' }
+        accounts << Account.new(kontena_account_data.merge(
+          token: Token.new(access_token: ENV['KONTENA_CLOUD_TOKEN'],
+          parent_type: :account, parent_name: 'default')
+        ))
         self.current_account = 'kontena'
       end
 
