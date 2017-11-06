@@ -64,8 +64,10 @@ module Kontena
         servers << Server.new(
           url: ENV['KONTENA_URL'],
           name: 'default',
-          token: Token.new(access_token: ENV['KONTENA_TOKEN'],
-          parent_type: :master, parent_name: 'default'),
+          token: Token.new(
+            access_token: ENV['KONTENA_TOKEN'],
+            parent_type: :master, parent_name: 'default'
+          ),
           grid: ENV['KONTENA_GRID'],
           parent_type: :master,
           parent_name: 'default'
@@ -79,8 +81,10 @@ module Kontena
 
         debug { 'Loading cloud configuration from ENV' }
         accounts << Account.new(kontena_account_data.merge(
-          token: Token.new(access_token: ENV['KONTENA_CLOUD_TOKEN'],
-          parent_type: :account, parent_name: 'default')
+          token: Token.new(
+            access_token: ENV['KONTENA_CLOUD_TOKEN'],
+            parent_type: :account, parent_name: 'default'
+          )
         ))
         self.current_account = 'kontena'
       end
