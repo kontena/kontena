@@ -141,9 +141,9 @@ U3GffGoMbo0kTw==
       expect(response.status).to eq(200)
       expect(json_response['id']).to eq("#{grid.name}/kontena.io")
       expect(json_response['subject']).to eq('kontena.io')
-      expect(json_response['certificate_pem']).to eq(cert_pem)
-      expect(json_response['chain_pem']).to eq(ca_pem)
-      expect(json_response['private_key_pem']).to eq(key_pem)
+      expect(json_response['certificate']).to eq(cert_pem)
+      expect(json_response['chain']).to eq(ca_pem)
+      expect(json_response['private_key']).to eq(key_pem)
     end
   end
 

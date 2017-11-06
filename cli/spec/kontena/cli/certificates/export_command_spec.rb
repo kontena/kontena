@@ -15,9 +15,9 @@ describe Kontena::Cli::Certificate::ExportCommand do
     {
       'id' => 'test/test.example.com',
       'subject' => 'test.example.com',
-      'certificate_pem' => cert_pem,
-      'chain_pem' => ca_pem,
-      'private_key_pem' => key_pem,
+      'certificate' => cert_pem,
+      'chain' => ca_pem,
+      'private_key' => key_pem,
     }
   }
 

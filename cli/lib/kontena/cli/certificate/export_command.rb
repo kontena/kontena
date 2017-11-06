@@ -20,9 +20,9 @@ module Kontena::Cli::Certificate
     def execute
       certificate = client.get("certificates/#{current_grid}/#{self.subject}/export")
 
-      puts certificate['certificate_pem'] if certificate? || bundle?
-      puts certificate['chain_pem'] if chain? || bundle?
-      puts certificate['private_key_pem'] if private_key? || bundle?
+      puts certificate['certificate'] if certificate? || bundle?
+      puts certificate['chain'] if chain? || bundle?
+      puts certificate['private_key'] if private_key? || bundle?
     end
   end
 end
