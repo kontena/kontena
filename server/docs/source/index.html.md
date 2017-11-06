@@ -1606,7 +1606,7 @@ Accept: application/json
 
 `GET /v1/certificates/{grid_id}/{subject}`
 
-## Create certificate
+## Request Let's Encrypt certificate
 
 ```http
 POST /v1/grids/my-grid/certificates HTTP/1.1
