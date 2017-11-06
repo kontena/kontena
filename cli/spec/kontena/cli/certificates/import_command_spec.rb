@@ -36,4 +36,20 @@ describe Kontena::Cli::Certificate::ImportCommand do
   it "imports the cert files" do
     subject.run(["--private-key=#{key_path}", "--chain=#{ca_path}", cert_path])
   end
+
+  describe "with non-existant --private-key= path" do
+    it "fails with a usage error" do
+      expect{
+        described_class.run('kontena', ["--private-key=/missing/path", "--chain=#{ca_path}", cert_path])
+      }.to exit_with_error.and output(/ERROR: option '--private-key': File not found: /).to_stderr
+    end
+  end
+
+  describe "with non-existant CERRT path" do
+    it "fails with a usage error" do
+      expect{
+        described_class.run('kontena', ["--private-key=#{key_path}", "--chain=#{ca_path}", '/nonexist'])
+      }.to exit_with_error.and output(/ERROR: parameter 'CERT_FILE': File not found: /).to_stderr
+    end
+  end
 end
