@@ -1548,6 +1548,21 @@ Accept: application/json
 
 Let's Encrypt certificate management.
 
+## Certificate
+
+```json
+{
+   "id" : "my-grid/example.com",
+   "alt_names" : [
+      "www.example.com",
+      "test.example.com"
+   ],
+   "subject" : "example.com",
+   "auto_renewable" : true,
+   "valid_until" : "2017-12-14T13:34:00.000+00:00"
+}
+```
+
 ## Register email to Let's Encrypt
 
 ```http
@@ -1567,10 +1582,67 @@ Register email to Let's Encrypt.
 
 `POST /v1/certificates/{grid_id}/register`
 
+## List certificates
+
+```http
+GET /v1/grids/my-grid/certificates HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/grids/{grid_id}/certificates`
+
+## Get certificate metadata
+
+```http
+GET /v1/certificates/my-grid/example.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/certificates/{grid_id}/{subject}`
+
+## Request Let's Encrypt certificate
+
+```http
+POST /v1/grids/my-grid/certificates HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+{
+   "domains" : [
+      "example.com",
+      "www.example.com",
+      "test.example.com"
+   ]
+}
+```
+
+Request a new certificate for the authorized domains from Let's Encrypt. The first domain becomes the certificate `subject`, and the remaining domains become `alt_names`.
+
+Each domain must have an associated domain authorizations created using the `v1/grids/my-grid/domain_authorizations` API. The domain authorization challenges will be verified as part of the request.
+
+### Endpoint
+
+`POST /v1/grids/{grid_id}/certificates`
+
+## Delete certificate
+
+```http
+DELETE /v1/certificates/my-grid/example.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+### Endpoint
+
+`DELETE /v1/certificates/{grid_id}/{subject}`
+
 ## Authorize a domain
 
-**DEPRECATED**
-Use `POST /v1/grids/my-grid/domain_authorizations` instead.
+**DEPRECATED**: Use `POST /v1/grids/my-grid/domain_authorizations` instead.
 
 ```http
 POST /v1/certificates/my-grid/authorize HTTP/1.1
@@ -1599,6 +1671,8 @@ record_content | A record content for the given domain
 `POST /v1/certificates/{grid_id}/authorize`
 
 ## Create a certificate
+
+**DEPRECATED**: Use `POST /v1/grids/my-grid/certificates` instead.
 
 ```http
 POST /v1/certificates/my-grid/certificate HTTP/1.1
