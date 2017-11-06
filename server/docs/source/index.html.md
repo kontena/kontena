@@ -1629,6 +1629,50 @@ Each domain must have an associated domain authorizations created using the `v1/
 
 `POST /v1/grids/{grid_id}/certificates`
 
+## Import certificate
+
+```http
+POST /v1/grids/my-grid/certificates HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+
+{
+   "private_key" : "-----BEGIN PRIVATE KEY-----\nMIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA+jOxPABMu7Kp4lfr\nlGXWm+kQWIj4FSi5pczK/ReEw1Gxhq49CEt3bIC3Li8slJU4H1WZbhbz8VWyEUsm\naYEfiQIDAQABAkBb0uTU1HdU23klrIa067sbdSmelIYXnd6kTsigoiUDWRo9mccV\nkPx4bL+L9bL2BX64+Sqjch2+EUYYqQSQLMzRAiEA/fpz9nR5feWi75URhS1oHi/0\nvpYxvQlTyt6LNBG6LxsCIQD8MYs+tUhwCfuKHPSfqE9oizOwAcfTUp/PVgLGhWcC\nKwIhAN3AQGGuHqmqx5GRwSNbmu3Ih1Okhbb8ntmhZz9GPx6DAiEAjPfApt+8Suw5\nj30Z+/if0ock8Dg+k1A3BjVEveUprBsCIQCjel8oZuN/3zatvWMCgCQboYoQjw9M\nU3GffGoMbo0kTw==\n-----END PRIVATE KEY-----\n",
+   "certificate" : "-----BEGIN CERTIFICATE-----\nMIIBJzCB0qADAgECAgEFMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNVBAMMAkNBMB4X\nDTE3MTAzMTE5MzA1MloXDTE3MTEzMDE5MzA1MlowDzENMAsGA1UEAwwEdGVzdDBc\nMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQD6M7E8AEy7sqniV+uUZdab6RBYiPgVKLml\nzMr9F4TDUbGGrj0IS3dsgLcuLyyUlTgfVZluFvPxVbIRSyZpgR+JAgMBAAGjGzAZ\nMBcGA1UdEQQQMA6CBHRlc3SCBnRlc3QtMTANBgkqhkiG9w0BAQsFAANBAGVbIF1b\nn4U4FXPFU5/H0eOVZSC2ivbDa/RBArf4R7ib9qdH4rRQif7Gn6Lih4tuR6zMFBd/\nM1Qkkjz7IeynUtw=\n-----END CERTIFICATE-----\n",
+   "chain" : [
+      "-----BEGIN CERTIFICATE-----\nMIIBYzCCAQ2gAwIBAgIJAIpNg6jylBQkMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNV\nBAMMAkNBMB4XDTE3MTAzMTE3MDEyN1oXDTE4MTAzMTE3MDEyN1owDTELMAkGA1UE\nAwwCQ0EwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAz/Ee36KUY7l0tRFREO/XOSoO\nXqyv48Jcvz0TnV7d+n3yapzCZfvDtX0qMpdZqd4Gr7v2Zgr64PJJNELfSE/vMQID\nAQABo1AwTjAdBgNVHQ4EFgQUcLvPScr8TZMmeiGGtFQecMBrt+IwHwYDVR0jBBgw\nFoAUcLvPScr8TZMmeiGGtFQecMBrt+IwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0B\nAQsFAANBAGjroEv8WBLeIbGbSDM6RMVHQjt8V5Pwd/RPI7pusWGsaJbOVXCwQSsd\nwpUzwKt2lbtAZFmLIIJ53Pv0PZsgC6Q=\n-----END CERTIFICATE-----\n"
+   ]
+}
+```
+
+Create a certificate from a pre-existing private key + certificate pair, with optional intermediate CA certificate chain.
+
+### Endpoint
+
+`POST /v1/grids/{grid_id}/certificates`
+
+## Export certificate
+
+```http
+GET /v1/certificates/my-grid/example.com/export HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+```json
+{
+   "id": "development/test",
+   "subject": "test",
+   "certificate": "-----BEGIN CERTIFICATE-----\nMIIBBTCBsAIBAjANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJDQTAeFw0xNzEw\nMzExNzA2MzJaFw0xNzExMzAxNzA2MzJaMA8xDTALBgNVBAMMBHRlc3QwXDANBgkq\nhkiG9w0BAQEFAANLADBIAkEA+jOxPABMu7Kp4lfrlGXWm+kQWIj4FSi5pczK/ReE\nw1Gxhq49CEt3bIC3Li8slJU4H1WZbhbz8VWyEUsmaYEfiQIDAQABMA0GCSqGSIb3\nDQEBCwUAA0EAIHbczx/kmb/ji/5kDtAUldbicApY9vl75JbPxnAfU5yqyZjhsFiF\nuH6nBTUEAXS4Ic89vJ+J9e14hXh7YLzq1w==\n-----END CERTIFICATE-----\n",
+   "chain": "",
+   "private_key": "-----BEGIN RSA PRIVATE KEY-----\nMIIBPAIBAAJBAPozsTwATLuyqeJX65Rl1pvpEFiI+BUouaXMyv0XhMNRsYauPQhL\nd2yAty4vLJSVOB9VmW4W8/FVshFLJmmBH4kCAwEAAQJAW9Lk1NR3VNt5JayGtOu7\nG3UpnpSGF53epE7IoKIlA1kaPZnHFZD8eGy/i/Wy9gV+uPkqo3IdvhFGGKkEkCzM\n0QIhAP36c/Z0eX3lou+VEYUtaB4v9L6WMb0JU8reizQRui8bAiEA/DGLPrVIcAn7\nihz0n6hPaIszsAHH01Kfz1YCxoVnAisCIQDdwEBhrh6pqseRkcEjW5rtyIdTpIW2\n/J7ZoWc/Rj8egwIhAIz3wKbfvErsOY99Gfv4n9KHJPA4PpNQNwY1RL3lKawbAiEA\no3pfKGbjf982rb1jAoAkG6GKEI8PTFNxn3xqDG6NJE8=\n-----END RSA PRIVATE KEY-----\n"
+}
+```
+
+### Endpoint
+
+`GET /v1/certificates/{grid_id}/{subject}/export`
+
 ## Delete certificate
 
 ```http
