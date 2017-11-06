@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.5.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.5.rc1) (2017-10-31)
+## [1.3.5](https://github.com/kontena/kontena/releases/tag/v1.3.5) (2017-11-03)
 
 The 1.3.5 release fixes several issues in the 1.3 release, as well as some older issues.
 
