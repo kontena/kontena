@@ -89,6 +89,23 @@ describe Kontena::Cli::Common do
       expect(subject.current_master['url']).to eq('someurl')
       expect(subject.current_master['name']).to eq('alias')
     end
+
+    context 'from env' do
+      before do
+        allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena_client.json')).and_return(false)
+        allow(ENV).to receive(:[]).with('KONTENA_URL').and_return('https://example.com')
+      end
+
+      it 'returns correct master info' do
+        expect(subject.current_master['url']).to eq 'https://example.com'
+        expect(subject.current_master['name']).to eq 'default'
+      end
+
+      it 'can set the master name' do
+        allow(ENV).to receive(:[]).with('KONTENA_MASTER').and_return('testmaster')
+        expect(subject.current_master['name']).to eq 'testmaster'
+      end
+    end
   end
 
   describe '#settings' do
