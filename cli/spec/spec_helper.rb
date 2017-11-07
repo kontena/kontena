@@ -48,8 +48,8 @@ RSpec.configure do |config|
     catch :exit_with_error do
       begin
         example.run
-      rescue SystemExit
-        puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
+      rescue SystemExit => exc
+        fail "SystemExit with code #{exc.status}: #{exc.message}"
       end
     end
   end
