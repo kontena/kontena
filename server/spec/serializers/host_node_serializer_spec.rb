@@ -20,6 +20,7 @@ describe HostNodeSerializer do
         created_at: "2017-03-27T08:21:55Z",
         updated_at: "2017-03-27T08:21:55Z",
         last_seen_at: nil,
+        connected_at: nil,
         disconnected_at: nil,
         status: 'offline',
         has_token: false,

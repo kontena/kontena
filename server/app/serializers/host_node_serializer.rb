@@ -7,6 +7,7 @@ class HostNodeSerializer < KontenaJsonSerializer
   attribute :created_at
   attribute :updated_at
   attribute :last_seen_at
+  attribute :connected_at
   attribute :disconnected_at
   attribute :status
   attribute :has_token
@@ -39,6 +40,10 @@ class HostNodeSerializer < KontenaJsonSerializer
 
   def last_seen_at
     object.last_seen_at.try(:iso8601)
+  end
+
+  def connected_at
+    object.connected_at.try(:iso8601)
   end
 
   def disconnected_at
