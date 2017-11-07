@@ -45,7 +45,7 @@ describe Kontena::Cli::GridOptions do
     end
 
     it 'fails if master is not found' do
-      expect{subject.run(['--master', 'foomaster'])}.to output(/not found/).to_stderr
+      expect{subject.run(['--master', 'foomaster'])}.to exit_with_error.and output(/does not exist/).to_stderr
     end
   end
 

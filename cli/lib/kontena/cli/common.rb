@@ -14,8 +14,8 @@ module Kontena
 
       def_delegators :prompt, :ask, :yes?
       def_delegators :config,
-        :current_grid=, :require_current_grid, :require_current_master_token,
-        :current_master=, :require_current_account,
+        :current_grid=, :require_current_grid, :current_master, :require_current_master_token,
+        :current_master=, :require_current_master, :require_current_account,
         :current_account
       def_delegator :config, :config_filename, :settings_filename
       def_delegator :client, :server_version, :api_url_version
@@ -252,20 +252,6 @@ module Kontena
 
       def current_grid
         @current_grid ||= (self.respond_to?(:grid) ? self.grid : nil) || config.current_grid
-      end
-
-      def current_master
-        return @current_master if @current_master
-        if self.respond_to?(:current_master_name) && self.current_master_name
-          begin
-            config.current_master = self.current_master_name
-          rescue
-            exit_with_error "Master #{pastel.cyan(current_master_name)} not found in config"
-          end
-          @current_master = config.current_master
-        else
-          @current_master = config.current_master
-        end
       end
 
       def current_master_index
