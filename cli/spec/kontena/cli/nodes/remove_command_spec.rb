@@ -49,7 +49,7 @@ describe Kontena::Cli::Nodes::RemoveCommand do
     it 'does not remove the node' do
       expect(client).not_to receive(:delete)
 
-      expect{subject.run(['node-1'])}.to exit_with_error.and output(" [error] Node node-1 is still online. You must terminate the node before removing it.\n").to_stderr
+      expect{subject.run(['node-1'])}.to exit_with_error.and output(" [error] Node node-1 is still connected using a grid token. You must terminate the node before removing it.\n").to_stderr
     end
   end
 
