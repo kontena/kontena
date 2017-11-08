@@ -192,13 +192,33 @@ describe Rpc::ServicePodSerializer do
         ) }
 
         let(:service_certificates) { [
-           GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERT_kontena_io'),
+           GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERTS'),
         ] }
 
         it 'includes service certificates as secrets' do
           expect(subject.to_hash[:secrets]).to eq [
-            { name: 'SSL_CERT_kontena_io', type: 'env', value: 'certificatechainprivate_key' }
+            { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' }
           ]
+        end
+
+        context 'and a TLS-SNI-01 challenge cert' do
+          let! :domain_auth_tls do
+            GridDomainAuthorization.create!(grid: grid,
+              state: :created,
+              authorization_type: 'tls-sni-01',
+              expires: Time.now + 300,
+              grid_service: service,
+              domain: 'www.kontena.io',
+              tls_sni_certificate: 'TLS_AUTH',
+            )
+          end
+
+          it 'includes the challenge cert as a secret after the normal certificate' do
+            expect(subject.to_hash[:secrets]).to eq [
+              { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' },
+              { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' },
+            ]
+          end
         end
       end
 
