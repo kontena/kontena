@@ -54,6 +54,7 @@ class HostNode
   has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
+  validates :grid, presence: true
   validates :node_number, presence: true
   validates :name, presence: true
   validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
