@@ -430,19 +430,52 @@ describe '/v1/grids', celluloid: true do
     describe '/domain_authorizations' do
       let(:grid) { david.grids.first }
 
-      it 'returns empty  array by default' do
+      it 'returns empty array by default' do
         get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['domain_authorizations'].size).to eq(0)
+        expect(json_response['domain_authorizations']).to eq []
       end
 
-      it 'returns all domain authorizations' do
-        grid.grid_domain_authorizations.create!(domain: 'foo.com', challenge: {:foo => :bar})
-        grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service, grid_service_deploy: GridServiceDeploy.create!(grid_service: db_service))
-        get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['domain_authorizations'].size).to eq(2)
-        expect(json_response['domain_authorizations'].find {|a| a['domain'] == 'foobar.com'}['linked_service']['id']).to eq(db_service.to_path)
+      context 'with different kinds of grid domain authorizations' do
+        let!(:created_authz) {
+          grid.grid_domain_authorizations.create!(domain: 'created.example.com',
+            challenge: {:foo => :bar},
+          )
+        }
+        let!(:deploying_authz) {
+          grid.grid_domain_authorizations.create!(domain: 'deploying.example.com',
+            challenge: {:foo => :bar},
+            grid_service: db_service,
+            grid_service_deploy: GridServiceDeploy.create!(grid_service: db_service),
+          )
+        }
+        let!(:validated_authz) {
+          grid.grid_domain_authorizations.create!(domain: 'validated.example.com',
+            state: :validated,
+          )
+        }
+
+        it 'returns all domain authorizations' do
+          get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
+          expect(response.status).to eq(200)
+          expect(json_response['domain_authorizations']).to contain_exactly(
+            hash_including(
+              'domain' => 'created.example.com',
+              'status' => 'created',
+            ),
+            hash_including(
+              'domain' => 'deploying.example.com',
+              'status' => 'deploying',
+              'linked_service' => {
+                'id' => db_service.to_path,
+              }
+            ),
+            hash_including(
+              'domain' => 'validated.example.com',
+              'status' => 'validated',
+            ),
+          )
+        end
       end
     end
   end
