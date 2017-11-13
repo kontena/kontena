@@ -4,7 +4,6 @@ require_relative 'services/mongodb/migrator'
 
 unless ENV['RACK_ENV'] == 'test' || ENV['NO_MONGO_PUBSUB']
   MongoPubsub.start!(PubsubChannel)
-  RpcServer.supervise(as: :rpc_server)
 
   JobSupervisor.run!
   WorkerSupervisor.run!
