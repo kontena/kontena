@@ -45,6 +45,8 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
+    stdout = $stdout
+    stderr = $stderr
     $stdout = $stderr = StringIO.new
 
     begin
@@ -52,8 +54,8 @@ RSpec.configure do |config|
     rescue SystemExit => exc
       fail "SystemExit with code #{exc.status}: \n#{$stderr.string}"
     ensure
-      $stdout = STDOUT
-      $stderr = STDERR
+      $stdout = stdout
+      $stderr = stderr
     end
   end
 end
