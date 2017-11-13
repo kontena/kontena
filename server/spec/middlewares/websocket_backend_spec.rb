@@ -3,12 +3,11 @@ require_relative '../../app/middlewares/websocket_backend'
 describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
+  let(:rpc_queue) { instance_double(SizedQueue) }
 
   let(:logger) { instance_double(Logger) }
   before do
-    # avoid spawning any RpcServer actor, because the actor thread will block on @queue.pop and Celluloid.shutdown will get stuck
-    # totally not needed because we don't have any specs for handle_rpc_* anyways
-    allow(RpcServer).to receive(:supervise)
+    allow(subject).to receive(:rpc_queue).and_return(rpc_queue)
     allow(subject).to receive(:logger).and_return(logger)
     allow(logger).to receive(:debug)
   end
