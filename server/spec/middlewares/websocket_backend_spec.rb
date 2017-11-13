@@ -6,16 +6,15 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
   let(:logger) { instance_double(Logger) }
   before do
+    # avoid spawning any RpcServer actor, because the actor thread will block on @queue.pop and Celluloid.shutdown will get stuck
+    # totally not needed because we don't have any specs for handle_rpc_* anyways
+    allow(RpcServer).to receive(:supervise)
     allow(subject).to receive(:logger).and_return(logger)
     allow(logger).to receive(:debug)
   end
 
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')
-  end
-
-  after(:each) do
-    subject.stop_rpc_server
   end
 
   describe '#our_version' do
