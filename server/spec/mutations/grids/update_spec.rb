@@ -9,7 +9,7 @@ describe Grids::Update do
   let(:grid_scheduler_job_async) { instance_double(GridSchedulerJob) }
 
   before do
-    allow(Celluloid::Actor).to receive(:[]).with(:grid_scheduler_job).and_return(grid_scheduler_job)
+    allow_any_instance_of(described_class).to receive(:grid_scheduler).and_return(grid_scheduler_job)
     allow(grid_scheduler_job).to receive(:async).and_return(grid_scheduler_job_async)
   end
 

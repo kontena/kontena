@@ -9,34 +9,19 @@ describe Stacks::Delete, celluloid: true do
     stack.reload
   }
   let(:default_stack) { grid.stacks.find_by(name: Stack::NULL_STACK) }
-  let(:worker_klass) do
-    Class.new do
-      include Celluloid
+  let(:stack_remove_worker) { instance_double(StackRemoveWorker) }
+  let(:stack_remove_worker_async) { instance_double(StackRemoveWorker) }
 
-      attr_reader :performed
-
-      def initialize
-        @performed = nil
-      end
-
-      def perform(id)
-        @performed = id
-      end
-    end
-  end
-  let(:worker) do
-    worker = worker_klass.new
-    Celluloid::Actor[:stack_remove_worker] = worker
-    worker
+  before do
+    allow_any_instance_of(described_class).to receive(:worker).with(:stack_remove).and_return(stack_remove_worker)
+    allow(stack_remove_worker).to receive(:async).and_return(stack_remove_worker_async)
   end
 
   describe '#run' do
     it 'calls stack remove worker' do
-      worker
+      expect(stack_remove_worker_async).to receive(:perform).with(stack.id)
       outcome = described_class.run(stack: stack)
       expect(outcome.success?).to be_truthy
-      sleep 0.01 until worker.performed
-      expect(worker.performed).to eq(stack.id)
     end
 
     it 'allows to remove stack that has links within stack' do
@@ -47,11 +32,11 @@ describe Stacks::Delete, celluloid: true do
           { name: 'stack/web', alias: 'web' }
         ]
       )
-      worker
+
+      expect(stack_remove_worker_async).to receive(:perform).with(stack.id)
+
       outcome = described_class.run(stack: stack)
       expect(outcome.success?).to be_truthy
-      sleep 0.01 until worker.performed
-      expect(worker.performed).to eq(stack.id)
     end
 
     it 'does not allow to remove default stack' do

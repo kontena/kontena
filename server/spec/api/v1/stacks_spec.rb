@@ -214,19 +214,16 @@ describe '/v1/stacks', celluloid: true do
   end
 
   describe 'DELETE /:name' do
-    let(:worker_klass) do
-      Class.new do
-        include Celluloid
-      end
-    end
+    let(:stack_remove_worker) { instance_double(StackRemoveWorker) }
+    let(:stack_remove_worker_async) { instance_double(StackRemoveWorker) }
 
-    let(:worker) do
-      worker = worker_klass.new
-      Celluloid::Actor[:stack_remove_worker] = worker
+    before do
+      allow_any_instance_of(Stacks::Delete).to receive(:worker).with(:stack_remove).and_return(stack_remove_worker)
+      allow(stack_remove_worker).to receive(:async).and_return(stack_remove_worker_async)
     end
 
     it 'deletes stack' do
-      expect(worker.wrapped_object).to receive(:perform)
+      expect(stack_remove_worker_async).to receive(:perform).with(stack.id)
       delete "/v1/stacks/#{stack.to_path}", nil, request_headers
       expect(response.status).to eq(200)
     end
@@ -238,20 +235,16 @@ describe '/v1/stacks', celluloid: true do
   end
 
   describe 'POST /:name/deploy' do
+    let(:stack_deploy_worker) { instance_double(StackDeployWorker) }
+    let(:stack_deploy_worker_async) { instance_double(StackDeployWorker) }
 
-    let(:deploy_worker_klass) do
-      Class.new do
-        include Celluloid
-      end
-    end
-
-    let(:deploy_worker) do
-      worker = deploy_worker_klass.new
-      Celluloid::Actor[:stack_deploy_worker] = worker
+    before do
+      allow_any_instance_of(Stacks::Deploy).to receive(:worker).with(:stack_deploy).and_return(stack_deploy_worker)
+      allow(stack_deploy_worker).to receive(:async).and_return(stack_deploy_worker_async)
+      allow(stack_deploy_worker_async).to receive(:perform)
     end
 
     it 'deploys stack services' do
-      allow(deploy_worker.wrapped_object).to receive(:async)
       expect {
         post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
@@ -259,14 +252,12 @@ describe '/v1/stacks', celluloid: true do
     end
 
     it 'returns stack deploy id' do
-      allow(deploy_worker.wrapped_object).to receive(:async)
       post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
       expect(response.status).to eq(200)
       expect(StackDeploy.find(json_response['id'])).not_to be_nil
     end
 
     it 'deploy creates audit log' do
-      allow(deploy_worker.wrapped_object).to receive(:async)
       expect {
         post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
