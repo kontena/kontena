@@ -1478,6 +1478,7 @@ Let's Encrypt domain authorization management for certificate handling.
 	},
 	"challenge_opts": null,
 	"authorization_type": "tls-sni-01",
+	"expires": "2017-11-13T09:28:35.454+00:00",
 	"linked_service": {
 		"id": "e2e/null/lb"
 	}
