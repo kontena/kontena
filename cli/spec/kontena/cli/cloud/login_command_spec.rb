@@ -20,18 +20,15 @@ describe Kontena::Cli::Cloud::LoginCommand do
   end
 
   it 'should give error if trying to use --code and --force' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(['--code', 'abcd', '--force'])
+    expect{subject.run(['--code', 'abcd', '--force'])}.to exit_with_error
   end
 
   it 'should give error if trying to use --token and --force' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(['--token', 'abcd', '--force'])
+    expect{subject.run(['--token', 'abcd', '--force'])}.to exit_with_error
   end
 
   it 'should give error if trying to use --token and --code' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(['--token', 'abcd', '--code', 'defg'])
+    expect{subject.run(['--token', 'abcd', '--code', 'defg'])}.to exit_with_error
   end
 
   context 'when config has token' do
@@ -180,8 +177,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
           'error' => 'foo'
         })
         expect(Launchy).to receive(:open).and_return(true)
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.run([])
+        expect{subject.run([])}.to exit_with_error.and output(/Authentication failed: foo/).to_stderr
       end
     end
   end
@@ -283,14 +279,12 @@ describe Kontena::Cli::Cloud::LoginCommand do
 
       it 'should exit with error if cloud responds with error' do
         expect(client).to receive(:get).and_return('error' => 'foo')
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.update_userinfo
+        expect{subject.update_userinfo}.to exit_with_error
       end
 
       it 'should exit with error if cloud responds with something silly' do
         expect(client).to receive(:get).and_return('foo')
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.update_userinfo
+        expect{subject.update_userinfo}.to exit_with_error
       end
     end
 
@@ -313,8 +307,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
       end
 
       it 'should give error when response has error' do
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.update_token('error' => 'fail!')
+        expect{subject.update_token('error' => 'fail!')}.to exit_with_error
       end
 
       it 'should raise if response is not a hash' do
