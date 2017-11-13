@@ -9,7 +9,7 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
-    HEALTHY_STATUSES = (200 .. 208).to_a.freeze
+    HEALTHY_STATUSES = (200 .. 299).to_a.freeze
 
     finalizer :log_exit
 
