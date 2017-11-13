@@ -29,11 +29,13 @@ class RpcServer
   attr_reader :handlers
 
   # @param [SizedQueue] queue
-  def initialize(queue)
+  def initialize(queue, autostart: true)
     @queue = queue
     @handlers = {}
     @counter = 0
     @processing = false
+
+    async.process! if autostart
   end
 
   def process!

@@ -38,8 +38,7 @@ class WebsocketBackend
     @msg_counter = 0
     @msg_dropped = 0
     @queue = SizedQueue.new(QUEUE_SIZE)
-    @rpc_server = RpcServer.new(@queue)
-    @rpc_server.async.process!
+    RpcServer.supervise(as: :rpc_server, args: [@queue])
     subscribe_to_rpc_channel
     watch_connections
     watch_queue
@@ -507,9 +506,5 @@ class WebsocketBackend
 
     # triggers on :close later, or after 30s timeout, but the client will already be gone
     client[:ws].close(code, reason)
-  end
-
-  def stop_rpc_server
-    Celluloid::Actor.kill(@rpc_server) if @rpc_server.alive?
   end
 end
