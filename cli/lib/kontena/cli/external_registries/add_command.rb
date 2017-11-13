@@ -14,6 +14,8 @@ module Kontena::Cli::ExternalRegistries
       require_current_grid
       token = require_token
 
+      self.url = 'https://' + self.url unless self.url.start_with?('http')
+
       data = { username: username, password: password, email: email, url: url }
       spinner "Adding #{url.colorize(:cyan)} to external registries " do
         client(token).post("grids/#{current_grid}/external_registries", data)
