@@ -3,8 +3,8 @@ describe MongoPubsub, :celluloid => true do
 
   describe '.publish' do
     it 'sends message to channel subscribers' do
-      david = spy(:david)
-      lisa = spy(:lisa)
+      david = double(:david)
+      lisa = double(:lisa)
       messages = []
       subs = []
       subs << described_class.subscribe('channel1') {|msg|
@@ -96,15 +96,18 @@ describe MongoPubsub, :celluloid => true do
       sub1.terminate
       sub2.terminate
 
-      thread_count = Thread.list.count
-
-      sub1 = described_class.subscribe('channel1') {|msg| }
-      sub2 = described_class.subscribe('channel1') {|msg| }
-      sub1.terminate
-      sub2.terminate
-
+      MongoPubsub.actor.inspect # ping to allow subscriptions to terminate
       GC.start
-      expect(thread_count == Thread.list.count).to be_truthy
+
+      expect{
+        sub1 = described_class.subscribe('channel1') {|msg| }
+        sub2 = described_class.subscribe('channel1') {|msg| }
+        sub1.terminate
+        sub2.terminate
+
+        MongoPubsub.actor.inspect # ping to allow subscriptions to terminate
+        GC.start
+      }.to_not change{Thread.list}
     end
 
     it 'should perform', performance: true do

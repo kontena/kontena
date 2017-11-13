@@ -81,6 +81,7 @@ describe EventStream do
 
   describe '#publish_async' do
     it 'publishes pub sub message to EventStream channel' do
+      expect(MongoPubsub).to receive(:started?).and_return(true)
       expect(MongoPubsub).to receive(:publish_async).with(EventStream.channel, {}).once
       subject.publish_async({})
     end
