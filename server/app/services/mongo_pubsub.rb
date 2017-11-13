@@ -110,40 +110,44 @@ class MongoPubsub
     @subscriptions = []
   end
 
+  # @return [Celluloid::Proxy::Cell<MongoPubsub>]
+  def self.actor
+    Celluloid::Actor[:mongo_pubsub]
+  end
+
+  # Celluloid has been booted and the supervised actor started.
+  # This will still return true if the actor has died.
+  #
+  # @return [Boolean]
+  def self.started?
+    !!self.actor
+  end
+
   # @param [String] channel
   # @param [Hash] data
   def self.publish(channel, data)
-    @supervisor.actors.first.publish(channel, data)
+    self.actor.publish(channel, data)
   end
 
   # @param [String] channel
   # @param [Hash] data
   def self.publish_async(channel, data)
-    @supervisor.actors.first.async.publish(channel, data)
+    self.actor.async.publish(channel, data)
   end
 
   # @param [String] channel
   # @return [Subscription]
   def self.subscribe(channel, &block)
-    @supervisor.actors.first.subscribe(channel, block)
+    self.actor.subscribe(channel, block)
   end
 
   # @param [Subscription] subscription
   def self.unsubscribe(subscription)
-    @supervisor.actors.first.unsubscribe(subscription)
-  end
-
-  def self.started?
-    !@supervisor.nil?
-  end
-
-  # @param [Mongoid::Document] model
-  def self.start!(model)
-    @supervisor = Celluloid.supervise(as: :mongo_pubsub, type: MongoPubsub, args: [model])
+    self.actor.unsubscribe(subscription)
   end
 
   def self.clear!
-    @supervisor.actors.first.clear!
+    self.actor.clear!
   end
 
   private

@@ -66,13 +66,7 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    MongoPubsub.start!(PubsubChannel)
-    sleep 0.1 until Mongoid.default_client.database.collection_names.include?(PubsubChannel.collection.name)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
-  end
-
-  config.before(:each) do
-    MongoPubsub.clear!
   end
 
   config.after(:each) do
@@ -85,8 +79,12 @@ RSpec.configure do |config|
 
   config.around :each, celluloid: true do |ex|
     Celluloid.boot
+    Celluloid::Actor[:mongo_pubsub] = MongoPubsub.new(PubsubChannel)
+
     ex.run
+
     Celluloid.actor_system.group.group.each { |t| t.kill if t.role == :future }
+    Celluloid::Actor[:mongo_pubsub].terminate
     Celluloid.shutdown
   end
 
