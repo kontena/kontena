@@ -242,6 +242,16 @@ describe Rpc::ServicePodSerializer do
         expect(labels).to include('io.kontena.health_check.initial_delay' => '10')
       end
 
+      it 'does not include health uri if tco check' do
+        service.health_check = GridServiceHealthCheck.new(port: 80, protocol: 'tcp')
+        expect(labels).to include('io.kontena.health_check.protocol' => 'tcp')
+        expect(labels).not_to include('io.kontena.health_check.uri' => '/')
+        expect(labels).to include('io.kontena.health_check.port' => '80')
+        expect(labels).to include('io.kontena.health_check.interval' => '60')
+        expect(labels).to include('io.kontena.health_check.timeout' => '10')
+        expect(labels).to include('io.kontena.health_check.initial_delay' => '10')
+      end
+
       it 'includes no health check labels if protocol nil' do
         service.health_check = GridServiceHealthCheck.new(uri: '/', port: 80)
         expect(labels).not_to include('io.kontena.health_check.protocol' => 'http')

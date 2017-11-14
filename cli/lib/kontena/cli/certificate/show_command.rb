@@ -11,9 +11,23 @@ module Kontena::Cli::Certificate
     requires_current_master_token
     requires_current_grid
 
+    def show_certificate(cert)
+      puts "#{cert['id']}:"
+      puts "  subject: #{cert['subject']}"
+      puts "  valid until: #{Time.parse(cert['valid_until']).utc.strftime("%FT%TZ")}"
+      if cert['alt_names'] && !cert['alt_names'].empty?
+        puts "  alt names:"
+        cert['alt_names'].each do |alt_name|
+          puts "    - #{alt_name}"
+        end
+      end
+      puts "  auto renewable: #{cert['auto_renewable']}"
+    end
+
     def execute
-      certificate = client.get("certificates/#{current_grid}/#{self.subject}")
-      puts YAML.dump(certificate)
+      cert = client.get("certificates/#{current_grid}/#{self.subject}")
+
+      show_certificate(cert)
     end
   end
 end

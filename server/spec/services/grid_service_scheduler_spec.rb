@@ -5,7 +5,7 @@ describe GridServiceScheduler do
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
   let(:grid_nodes) do
     (1..3).map { |i|
-      HostNode.create!(node_id: SecureRandom.uuid, name: "node-#{i}", node_number: i, mem_total: 1.gigabytes)
+      grid.create_node!("node-#{i}", node_id: SecureRandom.uuid, mem_total: 1.gigabytes)
     }
   end
   let(:nodes) do

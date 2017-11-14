@@ -1,17 +1,11 @@
 
 describe Scheduler::Filter::Port do
-
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', node_number: 1)
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', node_number: 2)
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', node_number: 3)
-    nodes
-  end
-
-  let(:grid) do
-    Grid.create!(name: 'test-grid')
-  end
+  let(:grid) { Grid.create(name: 'test') }
+  let(:nodes) { [
+    grid.create_node!('node-1'),
+    grid.create_node!('node-2'),
+    grid.create_node!('node-3'),
+  ] }
 
   let(:service) do
     GridService.create(

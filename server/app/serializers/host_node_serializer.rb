@@ -2,9 +2,15 @@ class HostNodeSerializer < KontenaJsonSerializer
 
   attribute :id
   attribute :connected
+  attribute :updated
+  attribute :availability
   attribute :created_at
   attribute :updated_at
   attribute :last_seen_at
+  attribute :connected_at
+  attribute :disconnected_at
+  attribute :status
+  attribute :has_token
   attribute :name
   attribute :os
   attribute :engine_root_dir
@@ -16,6 +22,7 @@ class HostNodeSerializer < KontenaJsonSerializer
   attribute :cpus
   attribute :public_ip
   attribute :private_ip
+  attribute :overlay_ip
   attribute :agent_version
   attribute :docker_version
   attribute :peer_ips
@@ -24,6 +31,8 @@ class HostNodeSerializer < KontenaJsonSerializer
   attribute :initial_member
   attribute :grid
   attribute :resource_usage
+  attribute :network_drivers
+  attribute :volume_drivers
 
   def id
     object.to_path
@@ -31,6 +40,30 @@ class HostNodeSerializer < KontenaJsonSerializer
 
   def last_seen_at
     object.last_seen_at.try(:iso8601)
+  end
+
+  def connected_at
+    object.connected_at.try(:iso8601)
+  end
+
+  def disconnected_at
+    object.disconnected_at.try(:iso8601)
+  end
+
+  def status
+    object.status.to_s
+  end
+
+  def has_token
+    !object.token.nil?
+  end
+
+  def network_drivers
+    object.network_drivers.as_json(only: [:name, :version])
+  end
+
+  def volume_drivers
+    object.volume_drivers.as_json(only: [:name, :version])
   end
 
   def engine_root_dir
