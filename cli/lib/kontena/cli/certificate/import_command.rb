@@ -1,7 +1,10 @@
+require_relative './common'
+
 module Kontena::Cli::Certificate
   class ImportCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Common
 
     # @raise [ArgumentError]
     def open_file(path)
@@ -25,7 +28,7 @@ module Kontena::Cli::Certificate
     requires_current_grid
 
     def execute
-      certificate = spinner "Importing certificate from #{cert_file}..." do
+      certificate = spinner "Importing certificate from #{cert_file.path}..." do
         client.post("grids/#{current_grid}/certificates",
           certificate: self.cert_file.read(),
           private_key: self.key_file.read(),
@@ -33,7 +36,7 @@ module Kontena::Cli::Certificate
         )
       end
 
-      puts YAML.dump(certificate)
+      show_certificate(certificate)
     end
   end
 end

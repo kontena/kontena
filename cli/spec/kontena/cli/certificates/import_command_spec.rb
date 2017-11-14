@@ -19,6 +19,8 @@ describe Kontena::Cli::Certificate::ImportCommand do
     {
       'id' => 'test/test.example.com',
       'subject' => 'test.example.com',
+      'valid_until' => (Time.now.utc + 3600).xmlschema,
+      'alt_names' => [],
       'certificate_pem' => cert_pem,
       'chain_pem' => ca_pem,
       'private_key_pem' => key_pem,
