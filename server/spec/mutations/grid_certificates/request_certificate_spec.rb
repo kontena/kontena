@@ -85,7 +85,12 @@ describe GridCertificates::RequestCertificate do
       expect(challenge).to receive(:error).and_return({'detail' => "Testing"})
       expect(subject).to receive(:add_error).with(:challenge, :invalid, "Testing")
 
-      subject.verify_domain('example.com')
+      expect{
+        subject.verify_domain('example.com')
+      }.to change{authz.reload.state}.from(:created).to(:invalid)
+
+      expect(authz.expires_at).to match DateTime
+      expect(authz.status).to eq :invalid
     end
 
     it 'adds error if verification timeouts' do
@@ -93,17 +98,25 @@ describe GridCertificates::RequestCertificate do
       expect(challenge).to receive(:verify_status).and_raise(Timeout::Error)
       expect(subject).to receive(:add_error)
 
-      subject.verify_domain('example.com')
+      expect{
+        subject.verify_domain('example.com')
+      }.to change{authz.reload.state}.from(:created).to(:requested)
+
+      expect(authz.expires_at).to match DateTime
+      expect(authz.status).to eq :requested
     end
 
     it 'adds error if acme client errors' do
       expect(challenge).to receive(:request_verification).and_raise(Acme::Client::Error)
       expect(subject).to receive(:add_error)
 
-      subject.verify_domain('example.com')
+      expect{
+        subject.verify_domain('example.com')
+      }.to_not change{authz.reload.state}.from(:created)
+
+      expect(authz.expires_at).to match DateTime
+      expect(authz.status).to eq :created
     end
-
-
   end
 
   describe '#execute' do
