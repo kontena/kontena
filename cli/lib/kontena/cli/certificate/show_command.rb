@@ -25,7 +25,7 @@ module Kontena::Cli::Certificate
 
       show_yaml(cert['id'],
         'subject'         => cert['subject'],
-        'valid until'     => cert['valid_until'],
+        'valid until'     => Time.parse(cert['valid_until']),
         'alt names'       => (alt_names && !alt_names.empty?) ? alt_names : nil,
         'auto renewable'  => cert['auto_renewable'],
       )
