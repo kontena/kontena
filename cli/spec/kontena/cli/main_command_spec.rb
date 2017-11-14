@@ -17,18 +17,16 @@ describe Kontena::MainCommand do
   end
 
   context 'for a command that raises RuntimeError' do
-    let(:test_fail_command) { Class.new(Kontena::Command) do
+    let(:command_class) { Class.new(Kontena::Command) do
       def execute
         fail 'test'
       end
     end}
 
-    before do
-      Kontena::MainCommand.subcommand 'test-fail1', "Test failures", test_fail_command
-    end
+    subject { command_class.new('test') }
 
     it 'logs an error and aborts' do
-      expect{subject.run(['test-fail1'])}.to raise_error(SystemExit).and output(/\[error\] RuntimeError : test\s+See .* or run the command again with environment DEBUG=true set to see the full exception/m).to_stderr
+      expect{subject.run([])}.to raise_error(SystemExit).and output(/\[error\] RuntimeError : test\s+See .* or run the command again with environment DEBUG=true set to see the full exception/m).to_stderr
     end
 
     context 'with DEBUG' do
@@ -37,25 +35,23 @@ describe Kontena::MainCommand do
       end
 
       it 'lets the error raise through' do
-        expect{subject.run(['test-fail1'])}.to raise_error(RuntimeError, 'test')
+        expect{subject.run([])}.to raise_error(RuntimeError, 'test')
       end
 
     end
   end
 
   context 'for a command that raises StandardError' do
-    let(:test_fail_command) { Class.new(Kontena::Command) do
+    let(:command_class) { Class.new(Kontena::Command) do
       def execute
         raise Kontena::Errors::StandardError.new(404, "Not Found")
       end
     end}
 
-    before do
-      Kontena::MainCommand.subcommand 'test-fail2', "Test failures", test_fail_command
-    end
+    subject { command_class.new('test') }
 
     it 'logs an error and aborts' do
-      expect{subject.run(['test-fail2'])}.to raise_error(SystemExit).and output(" [error] 404 : Not Found\n").to_stderr
+      expect{subject.run([])}.to raise_error(SystemExit).and output(" [error] 404 : Not Found\n").to_stderr
     end
 
     context 'with DEBUG' do
@@ -64,7 +60,7 @@ describe Kontena::MainCommand do
       end
 
       it 'lets the error raise through' do
-        expect{subject.run(['test-fail2'])}.to raise_error(Kontena::Errors::StandardError)
+        expect{subject.run([])}.to raise_error(Kontena::Errors::StandardError)
       end
     end
   end
