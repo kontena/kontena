@@ -8,6 +8,7 @@ module GridCertificates
 
     required do
       model :grid, class: Grid
+      string :subject
       string :certificate
       string :private_key
     end
@@ -87,13 +88,17 @@ module GridCertificates
       @chain = import_chain(self.chain)
 
       return unless @certificate
-      return unless @subject = import_cert_subject(@certificate)
+      return unless @certificate_subject = import_cert_subject(@certificate)
+
+      unless @certificate_subject == self.subject
+        add_error(:subject, :mismatch, "Certificate subject '#{@certificate_subject}' does not match expected subject '#{self.subject}'")
+      end
     end
 
     # @return [Certificate]
     def build_certificate
-      Certificate.new(grid: self.grid, subject: @subject,
-        alt_names: find_cert_alt_names(@certificate) - [@subject],
+      Certificate.new(grid: self.grid, subject: self.subject,
+        alt_names: find_cert_alt_names(@certificate) - [@certificate_subject],
         valid_until: @certificate.not_after,
         private_key: @private_key.to_pem,
         certificate: @certificate.to_pem,

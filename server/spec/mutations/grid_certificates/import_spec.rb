@@ -45,7 +45,10 @@ o3pfKGbjf982rb1jAoAkG6GKEI8PTFNxn3xqDG6NJE8=
 -----END RSA PRIVATE KEY-----
 '}
 
+  let(:subject_param) { 'test' }
+
   let(:subject) { described_class.new(grid: grid,
+    subject: subject_param,
     certificate: cert_pem,
     chain: [ca_pem],
     private_key: key_pem,
@@ -72,7 +75,16 @@ o3pfKGbjf982rb1jAoAkG6GKEI8PTFNxn3xqDG6NJE8=
 
       expect(grid.certificates.find_by(subject: 'test')).to eq cert
     end
+  end
 
+  context 'with the wrong subject name' do
+    let(:subject_param) { 'example' }
+
+    it 'fails validation' do
+      expect(outcome = subject.run).to_not be_success
+
+      expect(outcome.errors.message).to eq 'subject' => "Certificate subject 'test' does not match expected subject 'example'"
+    end
   end
 
   context 'with a pre-existing certificate' do
