@@ -8,5 +8,5 @@ class StackDeploy
   enum :deploy_state, [:created, :ongoing, :success, :error], default: :created
 
   belongs_to :stack
-  has_many :grid_service_deploys, dependent: :destroy
+  has_many :grid_service_deploys
 end

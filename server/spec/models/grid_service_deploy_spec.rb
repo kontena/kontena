@@ -8,6 +8,7 @@ describe GridServiceDeploy do
   it { should have_index_for(grid_service_id: 1).with_options(background: true) }
   it { should have_index_for(created_at: 1).with_options(background: true) }
   it { should have_index_for(started_at: 1).with_options(background: true) }
+  it { should have_index_for(finished_at: 1).with_options(background: true) }
 
   let(:grid) { Grid.create(name: 'test')}
   let(:service) { grid.grid_services.create(name: 'test', image_name: 'foo/bar:latest')}
