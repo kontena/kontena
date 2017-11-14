@@ -87,10 +87,10 @@ describe GridCertificates::RequestCertificate do
 
       expect{
         subject.verify_domain('example.com')
-      }.to change{authz.reload.state}.from(:created).to(:invalid)
+      }.to change{authz.reload.state}.from(:created).to(:error)
 
-      expect(authz.expires_at).to match DateTime
-      expect(authz.status).to eq :invalid
+      expect(authz.expires_at).to be nil
+      expect(authz.status).to eq :error
     end
 
     it 'adds error if verification timeouts' do

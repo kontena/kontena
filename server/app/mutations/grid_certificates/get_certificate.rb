@@ -74,8 +74,8 @@ module GridCertificates
         when 'valid'
           domain_authz.state = :validated
         when 'invalid'
-          domain_authz.state = :invalid
-          add_error(:challenge, :invalid, challenge.error['detail'])
+          domain_authz.state = :error
+          add_error(:challenge, :error, challenge.error['detail'])
         end
 
         domain_authz.save
