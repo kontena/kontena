@@ -14,7 +14,7 @@ module Kontena::Cli::Certificate
       raise ArgumentError, "File not found: #{path}"
     end
 
-    parameter 'CERT_FILE', "Path to PEM-encodede X.509 certificate file" do |path|
+    parameter 'CERT_FILE', "Path to PEM-encoded X.509 certificate file" do |path|
       open_file(path)
     end
     option '--subject', 'SUBJECT', "Import cert specific subject"
