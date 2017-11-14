@@ -1632,13 +1632,13 @@ Each domain must have an associated domain authorizations created using the `v1/
 ## Import certificate
 
 ```http
-POST /v1/grids/my-grid/certificates HTTP/1.1
+PUT /v1/certificates/my-grid/example.com HTTP/1.1
 Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 {
+   "certificate":"-----BEGIN CERTIFICATE-----\nMIIBDDCBtwIBBjANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJDQTAeFw0xNzEx\nMTQxNTE2MjJaFw0xNzEyMTQxNTE2MjJaMBYxFDASBgNVBAMMC2V4YW1wbGUuY29t\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPozsTwATLuyqeJX65Rl1pvpEFiI+BUo\nuaXMyv0XhMNRsYauPQhLd2yAty4vLJSVOB9VmW4W8/FVshFLJmmBH4kCAwEAATAN\nBgkqhkiG9w0BAQsFAANBAJaiH0KVOkU68OfCXzMZ5/6KBu2sR4Rvnfzg8Tj5MCEe\nFQLwFkAi4s/MxXz2dNFdKTlD0p8miyOhwnmVEw463Mk=\n-----END CERTIFICATE-----\n",
    "private_key" : "-----BEGIN PRIVATE KEY-----\nMIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA+jOxPABMu7Kp4lfr\nlGXWm+kQWIj4FSi5pczK/ReEw1Gxhq49CEt3bIC3Li8slJU4H1WZbhbz8VWyEUsm\naYEfiQIDAQABAkBb0uTU1HdU23klrIa067sbdSmelIYXnd6kTsigoiUDWRo9mccV\nkPx4bL+L9bL2BX64+Sqjch2+EUYYqQSQLMzRAiEA/fpz9nR5feWi75URhS1oHi/0\nvpYxvQlTyt6LNBG6LxsCIQD8MYs+tUhwCfuKHPSfqE9oizOwAcfTUp/PVgLGhWcC\nKwIhAN3AQGGuHqmqx5GRwSNbmu3Ih1Okhbb8ntmhZz9GPx6DAiEAjPfApt+8Suw5\nj30Z+/if0ock8Dg+k1A3BjVEveUprBsCIQCjel8oZuN/3zatvWMCgCQboYoQjw9M\nU3GffGoMbo0kTw==\n-----END PRIVATE KEY-----\n",
-   "certificate" : "-----BEGIN CERTIFICATE-----\nMIIBJzCB0qADAgECAgEFMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNVBAMMAkNBMB4X\nDTE3MTAzMTE5MzA1MloXDTE3MTEzMDE5MzA1MlowDzENMAsGA1UEAwwEdGVzdDBc\nMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQD6M7E8AEy7sqniV+uUZdab6RBYiPgVKLml\nzMr9F4TDUbGGrj0IS3dsgLcuLyyUlTgfVZluFvPxVbIRSyZpgR+JAgMBAAGjGzAZ\nMBcGA1UdEQQQMA6CBHRlc3SCBnRlc3QtMTANBgkqhkiG9w0BAQsFAANBAGVbIF1b\nn4U4FXPFU5/H0eOVZSC2ivbDa/RBArf4R7ib9qdH4rRQif7Gn6Lih4tuR6zMFBd/\nM1Qkkjz7IeynUtw=\n-----END CERTIFICATE-----\n",
    "chain" : [
       "-----BEGIN CERTIFICATE-----\nMIIBYzCCAQ2gAwIBAgIJAIpNg6jylBQkMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNV\nBAMMAkNBMB4XDTE3MTAzMTE3MDEyN1oXDTE4MTAzMTE3MDEyN1owDTELMAkGA1UE\nAwwCQ0EwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAz/Ee36KUY7l0tRFREO/XOSoO\nXqyv48Jcvz0TnV7d+n3yapzCZfvDtX0qMpdZqd4Gr7v2Zgr64PJJNELfSE/vMQID\nAQABo1AwTjAdBgNVHQ4EFgQUcLvPScr8TZMmeiGGtFQecMBrt+IwHwYDVR0jBBgw\nFoAUcLvPScr8TZMmeiGGtFQecMBrt+IwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0B\nAQsFAANBAGjroEv8WBLeIbGbSDM6RMVHQjt8V5Pwd/RPI7pusWGsaJbOVXCwQSsd\nwpUzwKt2lbtAZFmLIIJ53Pv0PZsgC6Q=\n-----END CERTIFICATE-----\n"
    ]
@@ -1649,7 +1649,7 @@ Create a certificate from a pre-existing private key + certificate pair, with op
 
 ### Endpoint
 
-`POST /v1/grids/{grid_id}/certificates`
+`PUT /v1/certificates/{grid_id}/{subject}`
 
 ## Export certificate
 

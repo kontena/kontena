@@ -84,17 +84,6 @@ U3GffGoMbo0kTw==
       expect(json_response['subject']).to eq('kontena.io')
     end
 
-    it 'imports certificate' do
-      data = {
-        certificate: cert_pem,
-        chain: [ca_pem],
-        private_key: key_pem,
-      }
-      post "/v1/grids/#{grid.name}/certificates", data.to_json, request_headers
-      expect(response.status).to eq(201), response.body
-      expect(json_response['subject']).to eq('test')
-    end
-
     it 'fails in requesting new certificate' do
       outcome = double(
         :success? => false,
@@ -144,6 +133,19 @@ U3GffGoMbo0kTw==
       expect(json_response['certificate']).to eq(cert_pem)
       expect(json_response['chain']).to eq(ca_pem)
       expect(json_response['private_key']).to eq(key_pem)
+    end
+  end
+
+  describe 'PUT /v1/certificates/<grid>/<subject>' do
+    it 'imports certificate' do
+      data = {
+        certificate: cert_pem,
+        chain: [ca_pem],
+        private_key: key_pem,
+      }
+      put "/v1/certificates/#{grid.name}/test", data.to_json, request_headers
+      expect(response.status).to eq(201), response.body
+      expect(json_response['subject']).to eq('test')
     end
   end
 

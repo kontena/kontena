@@ -5,13 +5,7 @@ V1::GridsApi.route('grid_certificates') do |r|
     data = parse_json_body
     data[:grid] = @grid
 
-    if data['domains']
-      outcome = GridCertificates::RequestCertificate.run(data)
-    elsif data['certificate']
-      outcome = GridCertificates::Import.run(data)
-    else
-      halt_request(422, {error: 'Invalid parameters, expected domains or certificate'})
-    end
+    outcome = GridCertificates::RequestCertificate.run(data)
 
     if outcome.success?
       response.status = 201

@@ -16,6 +16,7 @@ module Kontena::Cli::Certificate
     parameter 'CERT_FILE', "Path to PEM-encodede X.509 certificate file" do |path|
       open_file(path)
     end
+    option '--subject', 'SUBJECT', "Import cert specific subject", :required => true
     option ['--private-key', '--key'], 'KEY_FILE', "Path to private key file", :required => true, :attribute_name => :key_file do |path|
       open_file(path)
     end
@@ -29,7 +30,7 @@ module Kontena::Cli::Certificate
 
     def execute
       certificate = spinner "Importing certificate from #{cert_file.path}..." do
-        client.post("grids/#{current_grid}/certificates",
+        client.put("certificates/#{current_grid}/#{subject}",
           certificate: self.cert_file.read(),
           private_key: self.key_file.read(),
           chain: chain_file_list.map{|chain_file| chain_file.read() },
