@@ -13,7 +13,7 @@ class GridDomainAuthorization
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
   field :authorization_type, type: String, default: 'tls-sni-01'
-  field :expires, type: DateTime
+  field :expires_at, type: DateTime
 
   belongs_to :grid_service_deploy
 
@@ -39,7 +39,7 @@ class GridDomainAuthorization
 
   # Challenge has expired, and can no longer be used for verification
   def expired?
-    self.expires && Time.now > self.expires
+    self.expires_at && Time.now > self.expires_at
   end
 
   # Domain authorization challenge is deployable to the linked grid service

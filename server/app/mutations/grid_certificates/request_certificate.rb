@@ -52,7 +52,7 @@ module GridCertificates
         challenge.verify_status != 'pending'
       }
 
-      domain_authorization.expires = nil # XXX: old version of acme-client does not update authorization expiration
+      domain_authorization.expires_at = nil # XXX: old version of acme-client does not update authorization expiration
 
       case challenge.verify_status
       when 'valid'

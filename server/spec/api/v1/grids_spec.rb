@@ -442,14 +442,14 @@ describe '/v1/grids', celluloid: true do
 
         let!(:created_authz) {
           grid.grid_domain_authorizations.create!(domain: 'created.example.com',
-            expires: expires_future,
+            expires_at: expires_future,
             challenge: {:foo => :bar},
           )
         }
         let!(:deploying_authz) {
           grid.grid_domain_authorizations.create!(domain: 'deploying.example.com',
             challenge: {:foo => :bar},
-            expires: expires_future,
+            expires_at: expires_future,
             grid_service: db_service,
             grid_service_deploy: GridServiceDeploy.create!(grid_service: db_service),
           )
@@ -457,12 +457,12 @@ describe '/v1/grids', celluloid: true do
         let!(:validated_authz) {
           grid.grid_domain_authorizations.create!(domain: 'validated.example.com',
             state: :validated,
-            expires: nil,
+            expires_at: nil,
           )
         }
         let!(:expired_authz) {
           grid.grid_domain_authorizations.create!(domain: 'expired.example.com',
-            expires: expires_past,
+            expires_at: expires_past,
           )
         }
 
@@ -473,12 +473,12 @@ describe '/v1/grids', celluloid: true do
             hash_including(
               'domain' => 'created.example.com',
               'status' => 'created',
-              'expires' => String,
+              'expires_at' => String,
             ),
             hash_including(
               'domain' => 'deploying.example.com',
               'status' => 'deploying',
-              'expires' => String,
+              'expires_at' => String,
               'linked_service' => {
                 'id' => db_service.to_path,
               }
@@ -486,12 +486,12 @@ describe '/v1/grids', celluloid: true do
             hash_including(
               'domain' => 'validated.example.com',
               'status' => 'validated',
-              'expires' => nil,
+              'expires_at' => nil,
             ),
             hash_including(
               'domain' => 'expired.example.com',
               'status' => 'expired',
-              'expires' => String,
+              'expires_at' => String,
             ),
           )
         end

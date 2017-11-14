@@ -19,7 +19,7 @@ describe GridCertificates::RequestCertificate do
     GridDomainAuthorization.create!(grid: grid, domain: 'example.com',
       state: 'created',
       authorization_type: 'dns-01',
-      expires: Time.now + 300,
+      expires_at: Time.now + 300,
       challenge: {},
       challenge_opts: {
         'record_name' => '_acme-challenge',
@@ -75,7 +75,7 @@ describe GridCertificates::RequestCertificate do
         subject.verify_domain('example.com')
       }.to change{authz.reload.state}.from(:created).to(:validated)
 
-      expect(authz.expires).to be nil
+      expect(authz.expires_at).to be nil
       expect(authz.status).to eq :validated
     end
 

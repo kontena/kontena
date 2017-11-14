@@ -89,7 +89,7 @@ describe GridDomainAuthorizations::Authorize do
   end
 
   context 'tls-sni-01' do
-    let(:expires) { Time.now + 300 }
+    let(:expires_at) { Time.now + 300 }
     let(:web) {
       GridService.create(grid: grid, name: 'web', image_name: 'web:latest')
     }
@@ -101,7 +101,7 @@ describe GridDomainAuthorizations::Authorize do
       web
       auth = double(
         status: 'pending',
-        expires: expires,
+        expires: expires_at,
         tls_sni01: double(
           certificate: double(to_pem: 'CERTIFICATE'),
           private_key: double(to_pem: 'PRIVATE_KEY'),
@@ -116,7 +116,7 @@ describe GridDomainAuthorizations::Authorize do
       auth = grid.grid_domain_authorizations.find_by(domain: 'example.com')
       expect(auth.grid_service_deploy).not_to be_nil
       expect(auth.tls_sni_certificate).to eq('CERTIFICATEPRIVATE_KEY')
-      expect(auth.expires).to be > Time.now
+      expect(auth.expires_at).to be > Time.now
       expect(auth.status).to eq :deploying
     end
 
