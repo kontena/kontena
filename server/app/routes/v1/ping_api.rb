@@ -10,7 +10,7 @@ module V1
         r.get do
           begin
             Grid.count # test db connection
-            MongoPubsub.started? # test pubsub
+            MongoPubsub.actor.alive? # test pubsub
             render('show')
           rescue
             halt_request(500, {error: 'Internal server error'})
