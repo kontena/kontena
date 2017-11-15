@@ -36,6 +36,7 @@ class GridServiceDeploy
   index({ created_at: 1 }, { background: true })
   index({ queued_at: 1 }, { background: true })
   index({ started_at: 1 }, { background: true })
+  index({ finished_at: 1 }, { background: true })
 
   belongs_to :grid_service
   belongs_to :stack_deploy
