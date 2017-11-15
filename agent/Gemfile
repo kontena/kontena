@@ -18,5 +18,4 @@ group :development, :test do
   gem 'webmock', require: false
   gem 'simplecov', require: false
   gem 'ruby-prof', require: false
-  gem 'bundler-audit', require: false
 end

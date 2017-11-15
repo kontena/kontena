@@ -20,9 +20,6 @@ GEM
     bindata (2.3.1)
     bson (4.2.1)
     builder (3.2.3)
-    bundler-audit (0.6.0)
-      bundler (~> 1.2)
-      thor (~> 0.18)
     celluloid (0.17.3)
       celluloid-essentials
       celluloid-extras
@@ -141,7 +138,6 @@ GEM
     simplecov-html (0.9.0)
     symmetric-encryption (3.8.2)
       coercible (~> 1.0)
-    thor (0.20.0)
     thread_safe (0.3.6)
     tilt (1.4.1)
     tilt-jbuilder (0.6.1)
@@ -168,7 +164,6 @@ DEPENDENCIES
   activesupport (~> 4.2)
   authority
   bcrypt
-  bundler-audit
   celluloid (~> 0.17.3)
   dotenv
   faye-websocket (~> 0.10.7)
@@ -200,4 +195,4 @@ DEPENDENCIES
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.15.4
+   1.15.3
