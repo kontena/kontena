@@ -473,12 +473,12 @@ describe '/v1/grids', celluloid: true do
             hash_including(
               'domain' => 'created.example.com',
               'status' => 'created',
-              'expires_at' => String,
+              'expires_at' => expires_future.xmlschema(3),
             ),
             hash_including(
               'domain' => 'deploying.example.com',
               'status' => 'deploying',
-              'expires_at' => String,
+              'expires_at' => expires_future.xmlschema(3),
               'linked_service' => {
                 'id' => db_service.to_path,
               }
@@ -491,7 +491,7 @@ describe '/v1/grids', celluloid: true do
             hash_including(
               'domain' => 'expired.example.com',
               'status' => 'expired',
-              'expires_at' => String,
+              'expires_at' => expires_past.xmlschema(3),
             ),
           )
         end

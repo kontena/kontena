@@ -13,7 +13,7 @@ class GridDomainAuthorization
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
   field :authorization_type, type: String, default: 'tls-sni-01'
-  field :expires_at, type: DateTime
+  field :expires_at, type: Time
 
   belongs_to :grid_service_deploy
 
