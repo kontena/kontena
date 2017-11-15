@@ -191,7 +191,7 @@ describe GridCertificates::RequestCertificate do
     end
   end
 
-  describe '#refresh_grid_services' do
+  describe '#refresh_certificate_services' do
     let(:service) { GridService.create!(grid: grid, name: 'svc', image_name: 'redis:alpine') }
 
     let(:another_service) { GridService.create!(grid: grid, name: 'another-svc', image_name: 'redis:alpine') }
@@ -203,7 +203,7 @@ describe GridCertificates::RequestCertificate do
       service.save
 
       expect {
-        subject.refresh_grid_services(certificate)
+        subject.refresh_certificate_services(certificate)
       }.to change {service.reload.updated_at}.and not_change{another_service.reload.updated_at}
     end
   end

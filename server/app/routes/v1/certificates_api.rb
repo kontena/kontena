@@ -57,26 +57,46 @@ module V1
 
       # /v1/certificates/:grid/
       r.on ':grid' do |grid|
-
         load_grid(grid)
 
-        r.get do
-          r.on ':subject' do |subject|
-            @certificate = @grid.certificates.find_by(subject: subject)
-            if @certificate
+        r.on ':subject' do |subject|
+          @certificate = @grid.certificates.find_by(subject: subject)
+
+          r.get do
+            halt_request(404, {error: 'Not found'}) unless @certificate
+
+            r.is do
               response.status = 200
               render('certificates/show')
-            else
-              response.status = 404
-              {error: 'Not found'}
+            end
+
+            r.is 'export' do
+              audit_event(r, @grid, @certificate, 'export')
+              response.status = 200
+              render('certificates/export')
             end
           end
-        end
 
-        r.delete do
-          r.on ':subject' do |subject|
-            @certificate = @grid.certificates.find_by(subject: subject)
-            if @certificate
+          r.put do
+            r.is do
+              outcome = GridCertificates::Import.run(parse_json_body.merge(grid: @grid, subject: subject))
+
+              if outcome.success?
+                response.status = 201
+                @certificate = outcome.result
+                audit_event(r, @grid, @certificate, 'create', @certificate)
+                render('certificates/show')
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+          end
+
+          r.delete do
+            halt_request(404, {error: 'Not found'}) unless @certificate
+
+            r.is do
               outcome = GridCertificates::RemoveCertificate.run(certificate: @certificate)
               if outcome.success?
                 response.status = 200
@@ -85,9 +105,6 @@ module V1
                 response.status = 422
                 {error: outcome.errors.message}
               end
-            else
-              response.status = 404
-              {error: 'Not found'}
             end
           end
         end
