@@ -1,13 +1,5 @@
 
-describe StackRemoveWorker do
-  before(:each) do
-    Celluloid.boot
-  end
-
-  after(:each) do
-    Celluloid.shutdown
-  end
-
+describe StackRemoveWorker, :celluloid => true do
   let :grid do
     Grid.create(name: 'test')
   end
