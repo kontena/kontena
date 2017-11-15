@@ -66,7 +66,15 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
+    Celluloid::Actor[:mongo_pubsub] = MongoPubsub.new(PubsubChannel)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
+  end
+
+  config.before(:each) do
+    # instead of re-spawning the pubsub actor for each spec,
+    # keep the same actor but reset any subscriptions
+    # otherwise specs will fail with a race on the initialize -> async.tail!
+    Celluloid::Actor[:mongo_pubsub].clear!
   end
 
   config.after(:each) do
@@ -84,14 +92,19 @@ RSpec.configure do |config|
   end
 
   config.around :each, celluloid: true do |ex|
+    # horrible hack to keep the same pubsub actor across all specs
+    pubsub = Celluloid::Actor[:mongo_pubsub]
     Celluloid.boot
-    Celluloid::Actor[:mongo_pubsub] = MongoPubsub.new(PubsubChannel)
+    Celluloid::Actor[:mongo_pubsub] = pubsub
 
     ex.run
 
     Celluloid.actor_system.group.group.each { |t| t.kill if t.role == :future }
-    Celluloid::Actor[:mongo_pubsub].terminate
+
+    # hide the pubsub actor so that Celluloid.shutdown doesn't terminate it
+    Celluloid::Actor.delete(:mongo_pubsub)
     Celluloid.shutdown
+    Celluloid::Actor[:mongo_pubsub] = pubsub
   end
 
   config.around :each, eventmachine: true do |example|
