@@ -102,7 +102,7 @@ describe GridCertificates::RequestCertificate do
         subject.verify_domain('example.com')
       }.to change{authz.reload.state}.from(:created).to(:requested)
 
-      expect(authz.expires_at).to match DateTime
+      expect(authz.expires_at).to match Time
       expect(authz.status).to eq :requested
     end
 
@@ -114,7 +114,7 @@ describe GridCertificates::RequestCertificate do
         subject.verify_domain('example.com')
       }.to_not change{authz.reload.state}.from(:created)
 
-      expect(authz.expires_at).to match DateTime
+      expect(authz.expires_at).to match Time
       expect(authz.status).to eq :created
     end
   end
