@@ -232,7 +232,7 @@ class Kontena::Command < Clamp::Command
       abort(ex.message)
     end
   rescue Kontena::Errors::StandardError => ex
-    raise ex if debug?
+    raise ex if Kontena.debug?
     Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.status} : #{ex.message}")
   rescue Errno::EPIPE
