@@ -3,19 +3,17 @@ require_relative '../../app/middlewares/websocket_backend'
 describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
+  let(:rpc_queue) { instance_double(SizedQueue) }
 
   let(:logger) { instance_double(Logger) }
   before do
+    allow(subject).to receive(:rpc_queue).and_return(rpc_queue)
     allow(subject).to receive(:logger).and_return(logger)
     allow(logger).to receive(:debug)
   end
 
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')
-  end
-
-  after(:each) do
-    subject.stop_rpc_server
   end
 
   describe '#our_version' do

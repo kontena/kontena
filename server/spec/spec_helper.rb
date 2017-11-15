@@ -77,6 +77,12 @@ RSpec.configure do |config|
     end
   end
 
+  config.around :each do |ex|
+    Timeout.timeout(5.0) do
+      ex.run
+    end
+  end
+
   config.around :each, celluloid: true do |ex|
     Celluloid.boot
     Celluloid::Actor[:mongo_pubsub] = MongoPubsub.new(PubsubChannel)
