@@ -27,24 +27,32 @@ env:
     - TEST_DIR=agent
     - TEST_DIR=cli
     - TEST_DIR=server
-matrix:
-    exclude:
-    - rvm: 2.1.10
-      env: TEST_DIR=agent
-    - rvm: 2.1.10
-      env: TEST_DIR=server
-    - rvm: 2.2.6
-      env: TEST_DIR=agent
-    - rvm: 2.2.6
-      env: TEST_DIR=server
-    - rvm: 2.3.3
-      env: TEST_DIR=server
-    - rvm: 2.3.3
-      env: TEST_DIR=agent
 jobs:
   include:
     - stage: test
       script: ./build/travis/test.sh
+      rvm: 2.1.10
+      condition: $TEST_DIR = cli
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.2.6
+      condition: $TEST_DIR = cli
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.3.3
+      condition: $TEST_DIR = cli
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4.2
+      condition: $TEST_DIR = cli
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4.2
+      condition: $TEST_DIR = agent
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4.2
+      condition: $TEST_DIR = server
     - stage: test
       script: ./build/travis/test_e2e.sh
       condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
