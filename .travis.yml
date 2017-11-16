@@ -32,19 +32,19 @@ jobs:
     - stage: test
       script: ./build/travis/test.sh
       matrix:
-        exclude:
+        include:
           - rvm: 2.1.10
-            env: TEST_DIR=agent
-          - rvm: 2.1.10
-            env: TEST_DIR=server
+            env: TEST_DIR=cli
           - rvm: 2.2.6
-            env: TEST_DIR=agent
-          - rvm: 2.2.6
-            env: TEST_DIR=server
+            env: TEST_DIR=cli
           - rvm: 2.3.3
-            env: TEST_DIR=server
-          - rvm: 2.3.3
+            env: TEST_DIR=cli
+          - rvm: 2.4.2
+            env: TEST_DIR=cli
+          - rvm: 2.4.2
             env: TEST_DIR=agent
+          - rvm: 2.4.2
+            env: TEST_DIR=server
     - stage: test e2e
       script: ./build/travis/test_e2e.sh
       matrix:
