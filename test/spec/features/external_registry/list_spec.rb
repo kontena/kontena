@@ -12,6 +12,7 @@ describe 'external-registry ls' do
     context '-q' do
       it "outputs nothing" do
         k = run 'kontena external-registry ls -q'
+        expect(k.code).to be_zero
         expect(k.out.strip).to be_empty
       end
     end
