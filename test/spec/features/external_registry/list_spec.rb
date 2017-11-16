@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'external-registry ls' do
   context 'when empty' do
     it "outputs headers" do
-      k = run('kontena external registry ls')
+      k = run('kontena external-registry ls')
       expect(k.code).to be_zero
       expect(k.out).to match(/NAME/)
       expect(k.out.lines.size).to eq 1
@@ -28,7 +28,7 @@ describe 'external-registry ls' do
     end
 
     it "returns a list" do
-      k = run('kontena external registry ls')
+      k = run('kontena external-registry ls')
       expect(k.code).to be_zero
       expect(k.out.lines.first).to match(/NAME/)
       expect(k.out.lines.last).to start_with 'registry.domain.com'
