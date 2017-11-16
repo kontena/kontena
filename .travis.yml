@@ -1,11 +1,5 @@
 language: ruby
 sudo: required
-rvm:
-  - 2.1.10
-  - 2.2.6
-  - 2.3.3
-  - 2.4.2
-  - 2.5.0
 cache: bundler
 cache:
   directories:
@@ -23,10 +17,6 @@ env:
     - secure: "kj4oS3to1iKpJBbph2VHSnTauvniP6F/RaN6Smn60ZFJCiJHST+Yq6GHONIxb9aNTpyYJWlYA0A1ReqVurS/T3puIYYZvPW6QQs2llB2I2GwAyPeSJSOX2z0vQtQq6ybdeROUuJLHkGL4zCI4V5QlJgSnmSOjvdiEZPtxWfy384=" # GITHUB_TOKEN
     - DOCS_GA=UA-60024048-1
     - DOCS_HS=2126125
-  matrix:
-    - TEST_DIR=agent
-    - TEST_DIR=cli
-    - TEST_DIR=server
 jobs:
   include:
     - stage: test
