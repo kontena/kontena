@@ -32,6 +32,7 @@ class GridScheduler
       log_service_event(service, "service #{service.to_path} has wrong number of instances (or they are not distributed correctly)")
       return true
     end
+
     if lagging_behind?(service)
       info "service #{service.to_path} does have older versions running"
       log_service_event(service, "service #{service.to_path} does have older version running")
@@ -86,7 +87,8 @@ class GridScheduler
     return true if available_nodes.size == 0
 
     strategy = self.strategy(service.strategy)
-    current_nodes = service.grid_service_instances.map{ |c| c.host_node }.compact.uniq.sort
+    service_instances = service.grid_service_instances.includes(:host_node).to_a
+    current_nodes = service_instances.map{ |c| c.host_node }.compact.uniq.sort
     offline_within_grace_period = current_nodes.select { |n|
       !n.connected? && n.last_seen_at && n.last_seen_at > strategy.host_grace_period.ago
     }
@@ -96,7 +98,7 @@ class GridScheduler
     service_deployer = GridServiceDeployer.new(
       strategy, service_deploy, available_nodes
     )
-    return false if service_deployer.instance_count != service.grid_service_instances.has_node.count
+    return false if service_deployer.instance_count != service_instances.map{ |c| c.host_node }.compact.size
 
     selected_nodes = service_deployer.selected_nodes.uniq.sort
     selected_nodes == current_nodes

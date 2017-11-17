@@ -20,6 +20,7 @@ describe Agent::NodePlugger do
     describe '#plugin!' do
       it 'marks node as connected' do
         expect(subject).to receive(:send_node_info)
+        expect(subject).to receive(:publish_update_event)
 
         expect {
           subject.plugin! connected_at
@@ -30,6 +31,21 @@ describe Agent::NodePlugger do
         expect(node.websocket_connection.opened).to be true
         expect(node.websocket_connection.close_code).to be_nil
         expect(node.websocket_connection.close_reason).to be_nil
+      end
+
+      it 'publishes an update event with connected status' do
+        expect(subject).to receive(:send_node_info)
+
+        expect(node).to receive(:publish_async).with({
+          event: 'update',
+          type: 'HostNode',
+          object: hash_including(
+            name: 'test-node',
+            connected: true,
+          )
+        })
+
+        subject.plugin! connected_at
       end
     end
 
@@ -73,10 +89,10 @@ describe Agent::NodePlugger do
         expect(node.websocket_connection.close_code).to be_nil
         expect(node.websocket_connection.close_reason).to be_nil
       end
-    end
 
-    describe '#send_node_info' do
       it "sends node info" do
+        expect(subject).to receive(:publish_update_event)
+
         expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
           name: 'test-node',
           grid: hash_including(
@@ -84,7 +100,7 @@ describe Agent::NodePlugger do
           ),
         ))
 
-        subject.send_node_info
+        subject.plugin! connected_at
       end
     end
   end

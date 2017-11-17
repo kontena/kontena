@@ -9,7 +9,7 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
-    HEALTHY_STATUSES = [200]
+    HEALTHY_STATUSES = (200 .. 299).to_a.freeze
 
     finalizer :log_exit
 
@@ -55,7 +55,7 @@ module Kontena::Workers
         # Restart the container, master will handle re-scheduling logic
         info "About to restart container #{name} as it's reported to be unhealthy"
         emit_service_pod_event("service:health_check", "restarting #{name} because it's reported as unhealthy", Logger::WARN)
-        
+
         restart_container
       end
     end
@@ -74,7 +74,12 @@ module Kontena::Workers
         'id' => @container.id
       }
       begin
-        response = Excon.get(url, :connect_timeout => timeout, :headers => {"User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"})
+        response = Excon.get(url,
+          connect_timeout: timeout,
+          headers: {
+            "User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"
+          }
+        )
         debug "got status: #{response.status}"
         data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status

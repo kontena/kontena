@@ -52,6 +52,23 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('network_mode')).to be_falsey
     end
 
+    context 'entrypoint' do
+      it 'is optional' do
+        result = subject.validate_options({})
+        expect(result.errors.key?('entrypoint')).to be_falsey
+      end
+
+      it 'passes validation when string' do
+        result = subject.validate_options({'entrypoint' => 'abcd'})
+        expect(result.errors.key?('entrypoint')).to be_falsey
+      end
+
+      it 'fails validation when not a string' do
+        result = subject.validate_options({'entrypoint' => 1})
+        expect(result.errors.key?('entrypoint')).to be_truthy
+      end
+    end
+
     context 'affinity' do
       it 'is optional' do
         result = subject.validate_options({})

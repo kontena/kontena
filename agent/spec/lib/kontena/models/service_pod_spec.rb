@@ -195,6 +195,18 @@ describe Kontena::Models::ServicePod do
       expect(subject.service_config['Env'].last).to eq("SSL_CERTS=foo\nbar")
     end
 
+    it 'fails if the service env is too large' do
+      data['secrets'] = (1..128).map{|i|
+        {
+          'name' => "SSL_CERTS",
+          'type' => 'env',
+          'value' => 'A' * 1024,
+        }
+      }
+
+      expect{subject.service_config}.to raise_error(Kontena::Models::ServicePod::ConfigError, 'Env SSL_CERTS is too large at 131209 bytes')
+    end
+
     it 'does not include user if nil' do
       expect(subject.service_config['User']).to be_nil
     end

@@ -40,6 +40,10 @@ module Kontena
         Kontena::Cli::Config.instance
       end
 
+      def debug?
+        Kontena.debug?
+      end
+
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message
       # @param [Symbol] mode (prompt method: :ask, :multiline, etc)
@@ -100,7 +104,7 @@ module Kontena
       def vputs(msg = nil)
         if running_verbose?
           puts msg
-        elsif ENV["DEBUG"] && msg
+        elsif debug? && msg
           logger.debug msg
         end
       end

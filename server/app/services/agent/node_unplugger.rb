@@ -36,6 +36,8 @@ module Agent
 
       fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
 
+      node.reload # find_one_and_update does not update mongoid document attrs
+
       info "Disconnected node #{@node.to_path} connected at #{connected_at}"
     end
 

@@ -1,4 +1,15 @@
 describe 'stack validate' do
+  context 'keywords' do
+    context 'entrypoint' do
+      it 'sets stack entrypoint' do
+        with_fixture_dir("stack/keywords") do
+          k = run 'kontena stack validate entrypoint.yml'
+          expect(k.code).to be_zero
+          expect(k.out).to match(/entrypoint.+?foo.+?entrypoint.+?foo2/m)
+        end
+      end
+    end
+  end
   context 'service_link' do
     after(:each) do
       run 'kontena stack rm --force simple'

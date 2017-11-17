@@ -55,15 +55,22 @@ module V1
           end
 
           r.on 'exec' do
-            r.websocket do |ws|
-              executor = Docker::StreamingExecutor.new(container, ws)
-              if r['interactive'].to_s == 'true'
-                audit_event(r, container.grid, container, 'exec_interactive')
-                executor.start(r['shell'].to_s == 'true', true, r['tty'].to_s == 'true')
-              else
-                audit_event(r, container.grid, container, 'exec')
-                executor.start(r['shell'].to_s == 'true', false, r['tty'].to_s == 'true')
+            executor = Docker::StreamingExecutor.new(container,
+              interactive: r['interactive'].to_s == 'true',
+              shell: r['shell'].to_s == 'true',
+              tty: r['tty'].to_s == 'true',
+            )
+            audit_event(r, container.grid, container, executor.interactive? ? 'exec_interactive' : 'exec')
+
+            begin
+              executor.setup
+              r.websocket do |ws|
+                # this is not allowed to fail
+                executor.start(ws)
               end
+            ensure
+              # only relevant if the request wasn't actually a websocket request
+              executor.teardown unless executor.started?
             end
           end
         end

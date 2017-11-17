@@ -25,11 +25,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
   before do
     allow(subject.wrapped_object).to receive(:async).and_return(async_proxy)
-
-    # for testing #start
-    allow(subject.wrapped_object).to receive(:every) do |&block|
-      block.call
-    end
   end
 
   context 'for a disconnected client' do
@@ -37,11 +32,13 @@ describe Cloud::WebsocketClient, :celluloid => true do
       expect(subject.connected?).to be false
     end
 
-    it 'is not connecting' do
-      expect(subject.connecting?).to be false
-    end
-
     describe '#start' do
+      before do
+        allow(subject.wrapped_object).to receive(:after) do |&block|
+          block.call
+        end
+      end
+
       it 'connects' do
         expect(subject.wrapped_object).to receive(:connect)
 
@@ -63,7 +60,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
         subject.connect
 
-        expect(subject).to be_connecting
         expect(subject).to_not be_connected
       end
     end
@@ -85,24 +81,11 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
   context 'for a connecting websocket client' do
     before do
-      subject.wrapped_object.instance_variable_set('@connecting', true)
       subject.wrapped_object.instance_variable_set('@ws', ws)
     end
 
     it 'is not connected' do
       expect(subject.connected?).to be false
-    end
-
-    it 'is connecting' do
-      expect(subject.connecting?).to be true
-    end
-
-    describe '#start' do
-      it 'does not connect' do
-        expect(subject.wrapped_object).not_to receive(:connect)
-
-        subject.start
-      end
     end
 
     describe '#connect_client' do
@@ -143,7 +126,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
           subject.on_open
 
-          expect(subject.connecting?).to be false
           expect(subject.connected?).to be true
         end
       end
@@ -152,24 +134,12 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
   context 'for a connected client' do
     before do
-      subject.wrapped_object.instance_variable_set('@connected', true)
+      subject.connected!
       subject.wrapped_object.instance_variable_set('@ws', ws)
-    end
-
-    it 'is not connecting' do
-      expect(subject.connecting?).to be false
     end
 
     it 'is connected' do
       expect(subject.connected?).to be true
-    end
-
-    describe '#start' do
-      it 'does not connect' do
-        expect(subject.wrapped_object).not_to receive(:connect)
-
-        subject.start
-      end
     end
 
     describe '#on_message' do
@@ -204,7 +174,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
         subject.on_close(1337, 'testing')
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 

@@ -45,24 +45,17 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    catch :exit_with_error do
-      begin
-        example.run
-      rescue SystemExit
-        puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
-      end
-    end
-  end
+    stdout = $stdout
+    stderr = $stderr
+    $stdout = $stderr = StringIO.new
 
-  unless ENV["DEBUG"]
-    config.before(:each) do
-      $stdout = StringIO.new
-      $stderr = StringIO.new
-    end
-
-    config.after(:each) do
-      $stdout = STDOUT
-      $stderr = STDERR
+    begin
+      example.run
+    rescue SystemExit => exc
+      fail "SystemExit with code #{exc.status}: \n#{$stderr.string}"
+    ensure
+      $stdout = stdout
+      $stderr = stderr
     end
   end
 end

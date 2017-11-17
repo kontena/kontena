@@ -546,6 +546,20 @@ describe GridServices::Create do
       expect(outcome.errors.message).to eq 'env' => [ "Env[0] isn't in the right format" ]
     end
 
+    it 'validates env length' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'redis',
+        image: 'redis:2.8',
+        stateful: false,
+        env: [
+          "FOO=#{'A' * 1024 * 128}b",
+        ],
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'env' => [ "Env[0] is too long" ]
+    end
+
     it 'saves stop_grace_period with default if not given' do
       outcome = described_class.new(
           grid: grid,
