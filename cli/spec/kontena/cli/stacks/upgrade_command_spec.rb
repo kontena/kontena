@@ -76,7 +76,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
           'stacks/test-grid/stack-a', anything
         ).and_return({})
         expect(Kontena).not_to receive(:run!).with(['stack', 'deploy', 'stack-a'])
-        subject.run(['--no-deploy', 'stack-a', fixture_path('kontena_v3.yml')])
+        subject.run(['--no-deploy', '--force', 'stack-a', fixture_path('kontena_v3.yml')])
       end
     end
 

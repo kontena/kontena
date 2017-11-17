@@ -18,7 +18,7 @@ GEM
       rake (>= 0.8.7)
     bcrypt (3.1.11)
     bindata (2.3.1)
-    bson (4.2.1)
+    bson (4.2.2)
     builder (3.2.3)
     celluloid (0.17.3)
       celluloid-essentials
@@ -76,7 +76,7 @@ GEM
       rb-inotify (>= 0.9)
     lru_redux (1.1.0)
     minitest (5.10.2)
-    mongo (2.4.1)
+    mongo (2.4.3)
       bson (>= 4.2.1, < 5.0.0)
     mongoid (5.2.1)
       activemodel (~> 4.0)
@@ -195,4 +195,4 @@ DEPENDENCIES
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.15.3
+   1.16.0
