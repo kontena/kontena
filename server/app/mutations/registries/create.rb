@@ -8,6 +8,9 @@ module Registries
       string :url, matches: /\Ahttps?:\/\/[\S]+\z/
       string :username
       string :password
+    end
+
+    optional do
       string :email
     end
 
