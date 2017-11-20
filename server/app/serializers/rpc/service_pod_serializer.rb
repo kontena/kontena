@@ -118,7 +118,7 @@ module Rpc
         labels['io.kontena.load_balancer.mode'] = mode
       end
       if service.health_check && service.health_check.protocol
-        labels['io.kontena.health_check.uri'] = service.health_check.uri
+        labels['io.kontena.health_check.uri'] = service.health_check.uri if service.health_check.protocol == 'http'
         labels['io.kontena.health_check.protocol'] = service.health_check.protocol
         labels['io.kontena.health_check.interval'] = service.health_check.interval.to_s
         labels['io.kontena.health_check.timeout'] = service.health_check.timeout.to_s

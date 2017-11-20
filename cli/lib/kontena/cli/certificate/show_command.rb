@@ -1,9 +1,11 @@
 require_relative '../services/services_helper'
+require_relative './common'
 
 module Kontena::Cli::Certificate
   class ShowCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Common
 
     parameter "SUBJECT", "Certificate subject"
 
@@ -12,8 +14,9 @@ module Kontena::Cli::Certificate
     requires_current_grid
 
     def execute
-      certificate = client.get("certificates/#{current_grid}/#{self.subject}")
-      puts YAML.dump(certificate)
+      cert = client.get("certificates/#{current_grid}/#{self.subject}")
+
+      show_certificate(cert)
     end
   end
 end

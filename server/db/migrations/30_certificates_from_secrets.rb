@@ -64,4 +64,3 @@ class CertificatesFromSecrets < Mongodb::Migration
   end
 
 end
-
