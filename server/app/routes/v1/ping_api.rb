@@ -12,7 +12,8 @@ module V1
             Grid.count # test db connection
             MongoPubsub.actor.alive? # test pubsub
             render('show')
-          rescue
+          rescue => ex
+            Logging.logger.error(ex)
             halt_request(500, {error: 'Internal server error'})
           end
         end
