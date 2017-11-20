@@ -72,6 +72,29 @@ describe GridServices::Create do
       expect(outcome.errors.symbolic).to eq 'name' => :matches
     end
 
+    it 'does not allow a name that is too long' do
+      outcome = described_class.new(
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxxx39',
+        stateful: true
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxxx39-1.test-grid.kontena.local'
+    end
+
+    it 'does not allow a name that is too long for the number of instances' do
+      outcome = described_class.new(
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38',
+        stateful: true,
+        instances: 10
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38-10.test-grid.kontena.local'
+    end
+
     it 'does not allow duplicate name within a grid' do
       GridService.create!(name: 'redis', image_name: 'redis:latest', grid: grid)
       outcome = described_class.new(
@@ -115,6 +138,17 @@ describe GridServices::Create do
           user: 'redis'
       ).run
       expect(outcome.result.user).to eq('redis')
+    end
+
+    it 'saves cpus' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: true,
+          cpus: 2
+      ).run
+      expect(outcome.result.cpus).to eq(2)
     end
 
     it 'saves cpu_shares' do
@@ -453,6 +487,51 @@ describe GridServices::Create do
       end
     end
 
+    context 'with service_certificate' do
+      let :certificate do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      before do
+        certificate
+      end
+
+      it 'saves service cert' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            certificates: [
+              {subject: 'kontena.io', name: 'SSL_CERT'}
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.certificates.map{|s| s.attributes}).to match [hash_including(
+            'subject' => 'kontena.io',
+            'type' => 'env',
+            'name' => 'SSL_CERT',
+        )]
+      end
+
+      it 'fails to create service with invalid certificates' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          certificates: [
+            {subject: 'kotnena.io', name: 'SSL_CERT'}
+          ]
+        ).run
+        expect(outcome).to_not be_success
+      end
+    end
+
     it 'validates env syntax' do
       outcome = described_class.new(
         grid: grid,
@@ -466,7 +545,21 @@ describe GridServices::Create do
       expect(outcome).to_not be_success
       expect(outcome.errors.message).to eq 'env' => [ "Env[0] isn't in the right format" ]
     end
-    
+
+    it 'validates env length' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'redis',
+        image: 'redis:2.8',
+        stateful: false,
+        env: [
+          "FOO=#{'A' * 1024 * 128}b",
+        ],
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'env' => [ "Env[0] is too long" ]
+    end
+
     it 'saves stop_grace_period with default if not given' do
       outcome = described_class.new(
           grid: grid,
@@ -486,6 +579,157 @@ describe GridServices::Create do
           stop_grace_period: 'foo'
       ).run
       expect(outcome).not_to be_success
+    end
+
+    context 'stop_signal' do
+      it 'saves stop_signal' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            stop_signal: 'SIGQUIT'
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.stop_signal).to eq('SIGQUIT')
+      end
+
+      it 'validates stop_signal syntax' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: 'invalid'
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'stop_signal' => "Stop Signal isn't in the right format"
+      end
+
+      it 'does not allow empty strings' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: ''
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message.keys).to include('stop_signal')
+      end
+
+      it 'does not allow signal to start with - char' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: '-SIGQUIT'
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message.keys).to include('stop_signal')
+      end
+
+      it 'does not allow signal to end in - char' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: 'SIGRTMIN-'
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message.keys).to include('stop_signal')
+      end
+
+      it 'allows numeric strings as signals' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: '9'
+        ).run
+        expect(outcome).to be_success
+      end
+
+      it 'allows signals with offsets' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: 'SIGRTMIN+2'
+        ).run
+        expect(outcome).to be_success
+      end
+
+      it 'fails to save with invalid stop_signal' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            stop_signal: 'foo'
+        ).run
+        expect(outcome).not_to be_success
+      end
+    end
+
+    context 'hooks' do
+      it 'saves post_start hooks' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          hooks: {
+            post_start: [
+              {
+                name: 'sleep', cmd: 'sleep 10', instances: 1, oneshot: true
+              }
+            ]
+          }
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.hooks.size).to eq(1)
+      end
+
+      it 'saves pre_start hooks' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          hooks: {
+            pre_start: [
+              {
+                name: 'sleep', cmd: 'sleep 10', instances: 1, oneshot: true
+              }
+            ]
+          }
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.hooks.size).to eq(1)
+      end
+
+      it 'saves pre_stop hooks' do
+        outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          hooks: {
+            pre_stop: [
+              {
+                name: 'sleep', cmd: 'sleep 10', instances: 1, oneshot: true
+              }
+            ]
+          }
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.hooks.size).to eq(1)
+      end
     end
 
     context 'volumes' do

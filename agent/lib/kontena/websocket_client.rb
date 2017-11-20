@@ -17,6 +17,7 @@ module Kontena
     STRFTIME = '%F %T.%NZ'
 
     CONNECT_INTERVAL = 1.0
+    RECONNECT_BACKOFF = 90.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -43,7 +44,7 @@ module Kontena
       @ssl_hostname = ssl_hostname
 
       @connected = false
-      @connecting = false
+      @reconnect_attempt = 0
 
       if @node_token
         info "initialized with node token #{@node_token[0..8]}..., node ID #{@node_id}"
@@ -62,8 +63,8 @@ module Kontena
     end
 
     # @return [Boolean]
-    def connecting?
-      @connecting
+    def reconnecting?
+      @reconnect_attempt > 0
     end
 
     def rpc_server
@@ -74,14 +75,42 @@ module Kontena
     end
 
     def start
-      every(CONNECT_INTERVAL) do
-        connect! if !connected? unless connecting?
+      after(CONNECT_INTERVAL) do
+        connect!
       end
     end
 
-    def connect!
-      @connecting = true
+    # Using randomized full jitter to spread reconnect attempts across clients and reduce server contention
+    # See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+    #
+    # @param attempt [Integer]
+    # @return [Float]
+    def reconnect_backoff(attempt)
+      if attempt > 16
+        backoff = RECONNECT_BACKOFF
+      else
+        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** attempt].min
+      end
 
+      backoff *= rand
+    end
+
+    def reconnect!
+      backoff = reconnect_backoff(@reconnect_attempt)
+
+      @reconnect_attempt += 1
+
+      info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
+
+      after(backoff) do
+        connect!
+      end
+    end
+
+    # Connect to server, and start connect_client task
+    #
+    # Calls reconnect! on errors
+    def connect!
       info "connecting to master at #{@api_uri}"
       headers = {
           'Kontena-Node-Id' => @node_id.to_s,
@@ -116,14 +145,14 @@ module Kontena
 
     rescue => exc
       error exc
-
-      # abort connect, allow re-connecting
-      @connecting = false
+      reconnect!
     end
 
     # Connect the websocket client, and read messages.
     #
     # Keeps running as a separate defer thread as long as the websocket client is connected.
+    #
+    # Calls disconnected! -> reconnect! when done.
     #
     # @param ws [Kontena::Websocket::Client]
     def connect_client(ws)
@@ -150,21 +179,24 @@ module Kontena
     rescue Kontena::Websocket::CloseError => exc
       # server closed connection
       on_close(exc.code, exc.reason)
+      disconnected!
 
     rescue Kontena::Websocket::Error => exc
       # handle known errors, will reconnect or shutdown
       on_error exc
+      disconnected!
 
     rescue => exc
       # XXX: crash instead of reconnecting on unknown errors?
       error exc
+      disconnected!
 
     else
       # impossible: agent closed connection?!
       info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
+      disconnected!
 
     ensure
-      disconnected!
       ws.disconnect # close socket
     end
 
@@ -202,7 +234,7 @@ module Kontena
     # The websocket is connected: @ws is now valid and wen can send message
     def connected!
       @connected = true
-      @connecting = false
+      @reconnect_attempt = 0
 
       # NOTE: the server may still reject the websocket connection by closing it after the open handshake
       #       wait for the /agent/master_info RPC before emitting websocket:connected
@@ -219,10 +251,11 @@ module Kontena
     def disconnected!
       @ws = nil # prevent further send_message calls until reconnected
       @connected = false
-      @connecting = false
 
       # any queued up send_message calls will fail
       publish('websocket:disconnected', nil)
+
+      reconnect!
     end
 
     # Called from RpcServer, does not crash the Actor on errors.

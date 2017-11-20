@@ -19,6 +19,8 @@ class GridService
   field :env, type: Array, default: []
   field :memory, type: Integer
   field :memory_swap, type: Integer
+  field :shm_size, type: Integer
+  field :cpus, type: Float
   field :cpu_shares, type: Integer
   field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
@@ -38,6 +40,7 @@ class GridService
   field :revision, type: Integer, default: 1
   field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
+  field :stop_signal, type: String
   field :stop_grace_period, type: Fixnum, default: 10
 
   belongs_to :grid
@@ -50,11 +53,13 @@ class GridService
   has_many :audit_logs
   has_many :grid_service_deploys, dependent: :destroy
   has_many :event_logs
+  has_many :grid_domain_authorizations
   has_and_belongs_to_many :networks
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
   embeds_many :service_volumes, class_name: 'ServiceVolume'
+  embeds_many :certificates, class_name: 'GridServiceCertificate'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
   embeds_one :health_check, class_name: 'GridServiceHealthCheck'
 
@@ -95,6 +100,17 @@ class GridService
   # @return [Boolean]
   def default_stack?
     self.stack.try(:name).to_s == Stack::NULL_STACK
+  end
+
+  # @param [Integer] instance_number
+  # @return [String]
+  def instance_hostname(instance_number)
+    "#{self.name}-#{instance_number}"
+  end
+
+  # @return [String]
+  def domain
+    self.stack.domain
   end
 
   # @param [String] state

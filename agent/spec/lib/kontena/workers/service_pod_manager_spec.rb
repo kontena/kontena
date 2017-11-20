@@ -1,4 +1,4 @@
-describe Kontena::Workers::ServicePodManager do
+describe Kontena::Workers::ServicePodManager, :celluloid => true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
@@ -11,11 +11,9 @@ describe Kontena::Workers::ServicePodManager do
   end
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
     allow(subject.wrapped_object).to receive(:node).and_return(node)
   end
-  after(:each) { Celluloid.shutdown }
 
   describe '#populate_workers_from_master' do
     before(:each) do

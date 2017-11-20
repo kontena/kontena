@@ -1,0 +1,16 @@
+stack: test/redis
+description: Stateless Redis database
+version: 0.1.2
+expose: redis
+variables:
+  version:
+    type: string
+    default: 3.2-alpine
+    from:
+      env: VERSION
+      prompt: Redis version?
+
+services:
+  redis:
+    image: 'redis:${version}'
+    stateful: false

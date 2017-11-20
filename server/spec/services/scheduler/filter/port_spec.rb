@@ -1,17 +1,11 @@
 
 describe Scheduler::Filter::Port do
-
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', node_number: 1)
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', node_number: 2)
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', node_number: 3)
-    nodes
-  end
-
-  let(:grid) do
-    Grid.create!(name: 'test-grid')
-  end
+  let(:grid) { Grid.create(name: 'test') }
+  let(:nodes) { [
+    grid.create_node!('node-1'),
+    grid.create_node!('node-2'),
+    grid.create_node!('node-3'),
+  ] }
 
   let(:service) do
     GridService.create(
@@ -42,29 +36,18 @@ describe Scheduler::Filter::Port do
     end
 
     it 'does not filter out same service instance' do
-      service.containers.create!(
-        name: 'redis-1',
+      service.grid_service_instances.create!(
         host_node: nodes[1],
-        instance_number: 1,
-        network_settings: {
-          'ports' => {
-            '6379/tcp' => [{'node_port' => 6379, 'node_ip' => '0.0.0.0'}]
-          }
-        }
+        instance_number: 1
       )
       filtered = subject.for_service(service, 1, nodes)
       expect(filtered).to eq(nodes)
     end
 
     it 'returns filtered nodes' do
-      service2.containers.create!(
-        name: 'redis2-1',
+      service2.grid_service_instances.create!(
         host_node: nodes[1],
-        network_settings: {
-          'ports' => {
-            '6379/tcp' => [{'node_port' => 6379, 'node_ip' => '0.0.0.0'}]
-          }
-        }
+        instance_number: 1
       )
       filtered = subject.for_service(service, 1, nodes)
       expect(filtered.size).to eq(2)
@@ -73,15 +56,12 @@ describe Scheduler::Filter::Port do
     end
 
     it 'returns empty array if nodes does not have port free' do
+      i = 0
       nodes.each do |node|
-        service2.containers.create!(
-          name: "redis2-#{node.node_id}",
+        i += 1
+        service2.grid_service_instances.create!(
           host_node: node,
-          network_settings: {
-            'ports' => {
-              '6379/tcp' => [{'node_port' => 6379, 'node_ip' => '0.0.0.0'}]
-            }
-          }
+          instance_number: i
         )
       end
 

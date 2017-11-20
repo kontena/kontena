@@ -1,73 +1,55 @@
 require_relative 'logging'
-require_relative '../helpers/async_helper.rb'
 
 class MongoPubsub
   include Celluloid
   include Logging
 
   class Subscription
-    include AsyncHelper
+    include Logging
 
     attr_reader :channel
 
     # @param [String] channel
+    # @param [Proc] block
     def initialize(channel, block)
       @channel = channel
       @block = block
-      @queue = []
-      @process = false
-      @stopped = false
-    end
-
-    def processing?
-      @process == true
+      @queue = Queue.new
     end
 
     def terminate
       stop
-      MongoPubsub.unsubscribe(self)
     end
 
     def stop
-      @stopped = true
-    end
-
-    def stopped?
-      @stopped == true
+      @queue.close
     end
 
     def queue_message(data)
-      return if stopped?
       @queue << data
-      unless processing?
-        process
+    rescue ClosedQueueError
+      nil
+    end
+
+    # returns once stopped, and queued messages have been processed
+    def process
+      while data = @queue.shift
+        send_message(data)
       end
     end
 
     private
 
-    def process
-      @process = true
-      async_thread do
-        while @process == true && @stopped == false
-          data = @queue.shift
-          if data
-            send_message(data)
-          else
-            @process = false
-          end
-        end
-      end
-    end
-
     # @param [Hash] data
     def send_message(data)
       payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
       @block.call(payload)
+    rescue => exc
+      error exc
     end
   end
 
-  attr_accessor :collection, :subscriptions
+  attr_accessor :collection
 
   # @param [Mongoid::Document] model
   def initialize(model)
@@ -77,19 +59,29 @@ class MongoPubsub
     async.tail!
   end
 
+  # @param [Subscription] subscription
+  def process_subscription(subscription)
+    defer {
+      subscription.process
+    }
+  ensure
+    @subscriptions.delete(subscription)
+  end
+
   # @param [String] channel
   # @return [Subscription]
   def subscribe(channel, block)
     subscription = Subscription.new(channel, block)
-    self.subscriptions << subscription
+    @subscriptions << subscription
+
+    async.process_subscription(subscription)
 
     subscription
   end
 
   # @param [Subscription] subscription
   def unsubscribe(subscription)
-    subscription.stop unless subscription.stopped?
-    self.subscriptions.delete(subscription)
+    subscription.stop
   end
 
   # @param [String] channel
@@ -100,6 +92,22 @@ class MongoPubsub
       data: BSON::Binary.new(MessagePack.pack(data)),
       created_at: Time.now.utc
     )
+  end
+
+  # @param [String] channel
+  # @param [Hash] data
+  def queue_message(channel, data)
+    @subscriptions.each do |subscription|
+      subscription.queue_message(data.dup) if subscription.channel == channel
+    end
+  end
+
+  # Stop all subscribers
+  def clear!
+    @subscriptions.each do |subscription|
+      subscription.stop
+    end
+    @subscriptions = []
   end
 
   # @param [String] channel
@@ -135,20 +143,13 @@ class MongoPubsub
   end
 
   def self.clear!
-    actor = @supervisor.actors.first
-    actor.subscriptions.each do |subscription|
-      actor.unsubscribe(subscription)
-    end
-    actor.subscriptions = []
-  end
-
-  def self.subscriptions
-    @supervisor.actors.first.subscriptions
+    @supervisor.actors.first.clear!
   end
 
   private
 
   def tail!
+    actor = self.current_actor
     ensure_collection!
     defer {
       begin
@@ -158,14 +159,8 @@ class MongoPubsub
         self.collection.find(query, {cursor_type: :tailable_await, batch_size: 100}).sort(:$natural => 1).each do |item|
           channel = item['channel']
           data = item['data']
-          
-          subscribers = self.subscriptions.select{|s| s.channel == channel }
-          subscribers.each do |subscription|
-            begin
-              subscription.queue_message(data.dup) if subscription
-            rescue Celluloid::DeadActorError
-            end
-          end
+
+          actor.async.queue_message(channel, data)
         end
       rescue => exc
         error "error while tailing: #{exc.message}"

@@ -33,4 +33,8 @@ module Shell
       yield
     end
   end
+
+  def uncolorize(input)
+    input.gsub(/\e\[.+?m/, '')
+  end
 end

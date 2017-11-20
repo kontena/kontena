@@ -151,17 +151,13 @@ describe Scheduler::Filter::Affinity do
       let(:redis_service) { GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')}
 
       before(:each) do
-        redis_service.containers.create!(
-          name: 'redis-1', host_node: nodes[0], instance_number: 1,
-          labels: {
-            'io;kontena;service;name' => 'redis'
-          }
+        redis_service.grid_service_instances.create!(
+          host_node: nodes[0],
+          instance_number: 1
         )
-        redis_service.containers.create!(
-          name: 'redis-2', host_node: nodes[2], instance_number: 2,
-          labels: {
-            'io;kontena;service;name' => 'redis'
-          }
+        redis_service.grid_service_instances.create!(
+          host_node: nodes[2],
+          instance_number: 2
         )
       end
 

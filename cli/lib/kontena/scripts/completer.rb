@@ -90,7 +90,7 @@ class Helper
   def yml_services
     require 'yaml'
     if File.exist?('kontena.yml')
-      yaml = YAML.safe_load(File.read('kontena.yml'))
+      yaml = YAML.safe_load(File.read('kontena.yml'), [], [], true, 'kontena.yml')
       services = yaml['services']
       services.keys
     end

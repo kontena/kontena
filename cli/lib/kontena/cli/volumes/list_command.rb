@@ -16,7 +16,7 @@ module Kontena::Cli::Volumes
     end
 
     def fields
-      quiet? ? ['id'] : %w(name scope driver created_at)
+      quiet? ? ['name'] : %w(name scope driver created_at)
     end
 
     def execute
@@ -25,6 +25,5 @@ module Kontena::Cli::Volumes
         row['created_at'] = time_ago(row['created_at'])
       end
     end
-
   end
 end

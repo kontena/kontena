@@ -3,106 +3,235 @@ module Docker
     include Logging
 
     # @param [Container] container
-    # @param [#send,#close] ws
-    def initialize(container, ws)
-      @container = container
-      @ws = ws
-      @client = RpcClient.new(container.host_node.node_id)
-    end
-
-    # Starts normal exec session (without tty)
     # @param [Boolean] shell
     # @param [Boolean] stdin
     # @param [Boolean] tty
-    def start(shell, stdin, tty)
-      create_session
-      subscribe_to_session
-      if stdin 
-        register_stdin_ws_events(shell, tty)
-      else 
-        register_run_ws_events(shell, tty)
+    def initialize(container, shell: false, interactive: false, tty: false)
+      @container = container
+      @shell = shell
+      @interactive = interactive
+      @tty = tty
+
+      @rpc_client = container.host_node.rpc_client
+
+      @exec_session = nil
+      @subscription = nil
+      @started = false
+    end
+
+    # @return [Boolean]
+    def interactive?
+      !!@interactive
+    end
+
+    # @return [Boolean]
+    def tty?
+      !!@tty
+    end
+
+    def started!
+      @started = true
+    end
+
+    # start() was successful
+    # @return [Boolean]
+    def started?
+      @started
+    end
+
+    def running!
+      @running = true
+    end
+
+    # exec is running, and ready to accept input/tty_resize
+    #
+    # @return [Boolean]
+    def running?
+      @running
+    end
+
+    # Valid after setup()
+    #
+    # @return [String] container exec RPC UUID
+    def exec_id
+      @exec_session['id']
+    end
+
+    # Setup RPC state
+    def setup
+      @exec_session = exec_create
+      @subscription = subscribe_to_exec(@exec_session['id'])
+    end
+
+    # @return [Hash{:id => String}]
+    def exec_create
+      @rpc_client.request('/containers/create_exec', @container.container_id).tap do |session|
+        debug { "exec create: #{session.inspect}" }
       end
     end
 
-    def create_session
-      @exec_session = @client.request('/containers/create_exec', @container.container_id)
+    # @param cmd [Array<String>]
+    # @param tty [Boolean]
+    # @param stdin [Boolean]
+    def exec_run(cmd, shell: false, tty: false, stdin: false)
+      if shell
+        cmd = ['/bin/sh', '-c', cmd.join(' ')]
+      end
+
+      debug { "exec #{self.exec_id} run with shell=#{shell} tty=#{tty} stdin=#{stdin}: #{cmd.inspect}" }
+
+      @rpc_client.notify('/containers/run_exec', self.exec_id, cmd, tty, stdin)
+
+      running!
     end
 
-    def subscribe_to_session
-      @subscription = MongoPubsub.subscribe("container_exec:#{@exec_session['id']}") do |data|
+    # @param width [Integer]
+    # @param height [Integer]
+    def exec_resize(width, height)
+      raise ArgumentError, "width must be integer" unless Integer === width
+      raise ArgumentError, "height must be integer" unless Integer === height
+      raise ArgumentError, "width and height must be integers > 0" unless width > 0 && height > 0
+
+      tty_size = { 'width' => width, 'height' => height }
+
+      debug { "exec #{self.exec_id} resize: #{tty_size.inspect}" }
+
+      @rpc_client.notify('/containers/tty_resize', self.exec_id, tty_size)
+    end
+
+    # @param stdin [String]
+    def exec_input(stdin)
+      debug { "exec #{self.exec_id} input: #{stdin.inspect}" }
+
+      @rpc_client.notify('/containers/tty_input', self.exec_id, stdin)
+    end
+
+    def exec_terminate
+      debug { "exec #{self.exec_id} terminate" }
+
+      @rpc_client.notify('/containers/terminate_exec', self.exec_id)
+    end
+
+    # @return [MongoPubsub::Subscription]
+    def subscribe_to_exec(id)
+      MongoPubsub.subscribe("container_exec:#{id}") do |data|
+        debug { "subscribe exec #{id}: #{data.inspect}" }
+
         if data.has_key?('error')
-          @ws.send(JSON.dump({ error: data['error'] }))
-          @ws.close(4000)
+          websocket_write(error: data['error'])
+          websocket_close(4000)
         elsif data.has_key?('exit')
-          @ws.send(JSON.dump({ exit: data['exit'] }))
-          @ws.close(1000)
+          websocket_write(exit: data['exit'])
+          websocket_close(1000)
+        elsif data.has_key?('stream')
+          websocket_write(stream: data['stream'], chunk: data['chunk'])
         else
-          @ws.send(JSON.dump({ stream: data['stream'], chunk: data['chunk'] }))
+          error "invalid container exec #{id} RPC: #{data.inspect}"
         end
       end
     end
 
-    # @param [Boolean] shell
-    # @param [Boolean] tty
-    def register_stdin_ws_events(shell, tty)
-      init = true
+    # Does not raise.
+    #
+    # @param ws [Faye::Websocket]
+    def start(ws)
+      @ws = ws
+
       @ws.on(:message) do |event|
-        if init == true
-          begin
-            data = JSON.parse(event.data)
-            if data.has_key?('cmd')
-              if shell
-                cmd = ['/bin/sh', '-c', data['cmd'].join(' ')]
-              else 
-                cmd = data['cmd']
-              end
-              @client.notify('/containers/run_exec', @exec_session['id'], cmd, tty, true)
-              init = false
-            end
-          rescue JSON::ParserError
-            error "invalid handshake json"
-            @ws.close
-          end
-        else
-          begin
-            input = JSON.parse(event.data)
-            @client.notify('/containers/tty_input', @exec_session['id'], input['stdin']) if input.has_key?('stdin')
-          rescue JSON::ParserError
-            error "invalid tty_input json"
-            @ws.close
-          end
-        end
+        on_websocket_message(event.data)
+      end
+
+      @ws.on(:error) do |exc|
+        warn exc
       end
 
       @ws.on(:close) do |event|
-        @client.notify('/containers/terminate_exec', @exec_session['id'])
-        @subscription.terminate if @subscription
+        on_websocket_close(event.code, event.reason)
       end
+
+      started!
     end
 
-    # @param [Boolean] shell
-    # @param [Boolean] tty
-    def register_run_ws_events(shell, tty)
-      @ws.on(:message) do |event|
-        begin
-          data = JSON.parse(event.data)
-          if data.has_key?('cmd')
-            if shell
-              cmd = ['/bin/sh', '-c', data['cmd'].join(' ')]
-            else 
-              cmd = data['cmd']
-            end
-            @client.notify('/containers/run_exec', @exec_session['id'], cmd, tty, false)
-          end
-        rescue JSON::ParserError
-          error "invalid json"
-          @ws.close
-        end
+    # @param data [Hash] Write websocket JSON frame
+    def websocket_write(data)
+      debug { "websocket write: #{data.inspect}" }
+
+      msg = JSON.dump(data)
+
+      EventMachine.schedule {
+        @ws.send(msg)
+      }
+    end
+
+    # @param code [Integer]
+    # @param reason [String]
+    def websocket_close(code, reason = nil)
+      debug { "websocket close with code #{code}: #{reason}"}
+
+      EventMachine.schedule {
+        @ws.close(code, reason)
+      }
+    end
+
+    def on_websocket_message(msg)
+      data = JSON.parse(msg)
+
+      debug { "websocket message: #{data.inspect}"}
+
+      if data.has_key?('cmd')
+        fail "unexpected cmd: already running" if running?
+        exec_run(data['cmd'], shell: @shell, tty: @tty, stdin: @interactive)
       end
 
-      @ws.on(:close) do |event|
-        @client.notify('/containers/terminate_exec', @exec_session['id'])
-        @subscription.terminate if @subscription
+      if data.has_key?('stdin')
+        fail "unexpected stdin: not interactive" unless interactive?
+        fail "unexpected stdin: not running" unless running?
+        exec_input(data['stdin'])
+      end
+
+      if data.has_key?('tty_size')
+        fail "unexpected tty_size: not a tty" unless tty?
+        fail "unexpected tty_size: not running" unless running?
+        exec_resize(data['tty_size']['width'], data['tty_size']['height'])
+      end
+    rescue JSON::ParserError => exc
+      warn "invalid websocket JSON: #{exc}"
+      abort exc
+    rescue => exc
+      error exc
+      abort exc
+    end
+
+    # @param code [Integer]
+    # @param reason [String]
+    def on_websocket_close(code, reason)
+      debug "websocket closed with code #{code}: #{reason}"
+
+      self.teardown
+    end
+
+    # Abort exec on error.
+    #
+    # Closes client websocket, terminates the exec RPC.
+    #
+    # @param exc [Exception]
+    def abort(exc)
+      websocket_close(4000, "#{exc.class}: #{exc}")
+      self.teardown
+    end
+
+    # Release resources from #setup()
+    #
+    # Can be called multiple times (abort -> on_websocket_close)
+    def teardown
+      if @subscription
+        @subscription.terminate
+        @subscription = nil
+      end
+
+      if @exec_session
+        exec_terminate
+        @exec_session = nil
       end
     end
   end

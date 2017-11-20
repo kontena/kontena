@@ -582,6 +582,16 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "version": "0.1.0",
   "registry": "https://stack-registry.kontena.io",
   "expose": "peer",
+  "parent": {
+    "name": "parent-stack-name",
+    "id": "my-grid/parent-stack-name" # null when parent does not exist
+  },
+  "children": [
+    {
+      "name": "child-stack-name",
+      "id": "my-grid/child-stack-name"
+    }
+  ],
   "services": [
       {
           "name": "arbiter",
@@ -600,7 +610,8 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
           "stateful": true,
           "replicas": 3,
           "cmd": "--replset kontena --smallfiles",
-        "stop_grace_period": "1m23s",
+          "stop_signal": "SIGTERM",
+          "stop_grace_period": "1m23s",
           "health_check": {
               "protocol": "tcp",
               "port": 27017
@@ -662,6 +673,8 @@ registry | A stack registry where stack schema is originally fetched
 expose | A service that stack exposes to grid level DNS namespace
 services | A list of stack services (see [services](#services) for more info)
 volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
+parent | Null or an object referencing the parent stack in a stack dependency chain
+children | An array of objects referencing the child stacks in a stack dependency chain
 
 ### Volume attributes
 
@@ -669,7 +682,6 @@ Attribute | Description
 ---------- | -------
 name  | Name of the volume within the stack
 external | Name of the grid level volume definition to use
-
 
 ## Create a stack
 
@@ -683,7 +695,8 @@ Accept: application/json
     "stack": "my/redis",
     "version": "0.1.0",
     "registry": "file://",
-    "services": []
+    "services": [],
+    "parent_name": "parent-stack-name"
 }
 ```
 
@@ -870,6 +883,8 @@ follow | Stream logs
   ],
   "memory": 1024000000,
   "memory_swap": 4096000000,
+  "shm_size": 67108864,
+  "cpus": 1.5,
   "cpu_shares": 1024,
   "volumes": [
     "/data"
@@ -916,8 +931,11 @@ net | Network mode: bridge, host (default: bridge)
 ports | Array of exposed ports
 env | List of user-defined environment variables to set on the instances of the service (will override the image environment variables)
 secrets | Array of mapped secrets from Kontena Vault
+certificates | Array of mapped certificates from Kontena Vault
 memory | Memory limit (excluding optional swap)
 memory_swap | Allowed memory (including swap)
+shm_size | Size of `/dev/shm` in bytes
+cpus | Specify how much of the available CPU resources (CPU cores) a service instance can use.
 cpu_shares | Relative cpu shares (0-1024)
 volumes | A list of volumes
 volumes_from | A list of volumes to mount from other services
@@ -928,6 +946,7 @@ log_driver | Log driver (string)
 log_opts | Log driver options (object)
 hooks | Commands to be executed when service instance is deployed
 instance_counts | Stats about how many instances this service currently has
+stop_signal | Alternative signal to stop the container
 stop_grace_period | How long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with the image), before sending SIGKILL.
 health_status | Health status of the service instances. Only counted if there is a health check defined for the service.
 
@@ -999,6 +1018,14 @@ Attribute | Description
 secret | Secret name in the Kontena Vault
 name | Service local name for the secret
 type | How secret is exposed to a service container
+
+### Certificate attributes
+
+Attribute | Description
+--------- | -----------
+subject | Subject of the certiticate in the Kontena Vault
+name | Service local name for the certificate
+type | How certificate is exposed to a service container
 
 ## List services
 
@@ -1433,9 +1460,108 @@ Create an external registry.
 
 `DELETE /v1/grids/{grid_id}/external_registries`
 
+# Domain Authorizations
+
+Let's Encrypt domain authorization management for certificate handling.
+
+## Domain authorization
+
+```json
+{
+    "id": "e2e/kontena.io",
+    "domain": "kontena.io",
+	"status": "deploying",
+	"challenge": {
+		"token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
+		"uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
+		"type": "tls-sni-01"
+	},
+	"challenge_opts": null,
+	"authorization_type": "tls-sni-01",
+	"linked_service": {
+		"id": "e2e/null/lb"
+	}
+}
+```
+
+`challenge_opts` are challenge type specific details. For example in `dns-01` challenges there will be the DNS TXT records details.
+
+`status` can be any of the following:
+- `created`: authorization has been created, no firther actions yet taken
+- `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
+- `deploy_error`: The deployment of the linked service has errored out, more details can be found from the linked services event logs
+- `requested`: Authorization has been requested from Let's Encrypt
+- `validated`: Let's Encrypt has succesfully validated the challenge
+- `error`: Error has happened in the validation, re-authorization should be done
+
+## Authorize domain
+
+```http
+POST /v1/grids/my-grid/domain_authorizations HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+Content-Type: application/json
+
+{
+    "domain": "foo.domain.com",
+    "authorization_type": "tls-sni-01",
+    "linked_service": "infra/lb"
+}
+```
+
+Authorize a domain with Let's Encrypt.
+
+Authorization types currently supported are `tls-sni-01` and `dns-01`
+
+If `tls-sni-01` authorization type is used, then also `linked_service` attribute must be given as the newly created `tls-sni-01` special purpose certificate is bundled with that service. Usually the linked service is a Kontena loadbalancer exposed to internet.
+
+### Endpoint
+
+`POST /v1/grids/my-grid/domain_authorizations`
+
+## Get domain authorizations
+
+```http
+GET /v1/grids/my-grid/domain_authorizations HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/grids/my-grid/domain_authorizations`
+
+## Get domain authorization
+
+```http
+GET /v1/domain_authorizations/my-grid/foobar.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/domain_authorizations/my-grid/foobar.com`
+
+
 # Certificates
 
 Let's Encrypt certificate management.
+
+## Certificate
+
+```json
+{
+   "id" : "my-grid/example.com",
+   "alt_names" : [
+      "www.example.com",
+      "test.example.com"
+   ],
+   "subject" : "example.com",
+   "auto_renewable" : true,
+   "valid_until" : "2017-12-14T13:34:00.000+00:00"
+}
+```
 
 ## Register email to Let's Encrypt
 
@@ -1456,7 +1582,111 @@ Register email to Let's Encrypt.
 
 `POST /v1/certificates/{grid_id}/register`
 
+## List certificates
+
+```http
+GET /v1/grids/my-grid/certificates HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/grids/{grid_id}/certificates`
+
+## Get certificate metadata
+
+```http
+GET /v1/certificates/my-grid/example.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/certificates/{grid_id}/{subject}`
+
+## Request Let's Encrypt certificate
+
+```http
+POST /v1/grids/my-grid/certificates HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+{
+   "domains" : [
+      "example.com",
+      "www.example.com",
+      "test.example.com"
+   ]
+}
+```
+
+Request a new certificate for the authorized domains from Let's Encrypt. The first domain becomes the certificate `subject`, and the remaining domains become `alt_names`.
+
+Each domain must have an associated domain authorizations created using the `v1/grids/my-grid/domain_authorizations` API. The domain authorization challenges will be verified as part of the request.
+
+### Endpoint
+
+`POST /v1/grids/{grid_id}/certificates`
+
+## Import certificate
+
+```http
+PUT /v1/certificates/my-grid/example.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+
+{
+   "certificate":"-----BEGIN CERTIFICATE-----\nMIIBDDCBtwIBBjANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJDQTAeFw0xNzEx\nMTQxNTE2MjJaFw0xNzEyMTQxNTE2MjJaMBYxFDASBgNVBAMMC2V4YW1wbGUuY29t\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPozsTwATLuyqeJX65Rl1pvpEFiI+BUo\nuaXMyv0XhMNRsYauPQhLd2yAty4vLJSVOB9VmW4W8/FVshFLJmmBH4kCAwEAATAN\nBgkqhkiG9w0BAQsFAANBAJaiH0KVOkU68OfCXzMZ5/6KBu2sR4Rvnfzg8Tj5MCEe\nFQLwFkAi4s/MxXz2dNFdKTlD0p8miyOhwnmVEw463Mk=\n-----END CERTIFICATE-----\n",
+   "private_key" : "-----BEGIN PRIVATE KEY-----\nMIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA+jOxPABMu7Kp4lfr\nlGXWm+kQWIj4FSi5pczK/ReEw1Gxhq49CEt3bIC3Li8slJU4H1WZbhbz8VWyEUsm\naYEfiQIDAQABAkBb0uTU1HdU23klrIa067sbdSmelIYXnd6kTsigoiUDWRo9mccV\nkPx4bL+L9bL2BX64+Sqjch2+EUYYqQSQLMzRAiEA/fpz9nR5feWi75URhS1oHi/0\nvpYxvQlTyt6LNBG6LxsCIQD8MYs+tUhwCfuKHPSfqE9oizOwAcfTUp/PVgLGhWcC\nKwIhAN3AQGGuHqmqx5GRwSNbmu3Ih1Okhbb8ntmhZz9GPx6DAiEAjPfApt+8Suw5\nj30Z+/if0ock8Dg+k1A3BjVEveUprBsCIQCjel8oZuN/3zatvWMCgCQboYoQjw9M\nU3GffGoMbo0kTw==\n-----END PRIVATE KEY-----\n",
+   "chain" : [
+      "-----BEGIN CERTIFICATE-----\nMIIBYzCCAQ2gAwIBAgIJAIpNg6jylBQkMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNV\nBAMMAkNBMB4XDTE3MTAzMTE3MDEyN1oXDTE4MTAzMTE3MDEyN1owDTELMAkGA1UE\nAwwCQ0EwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAz/Ee36KUY7l0tRFREO/XOSoO\nXqyv48Jcvz0TnV7d+n3yapzCZfvDtX0qMpdZqd4Gr7v2Zgr64PJJNELfSE/vMQID\nAQABo1AwTjAdBgNVHQ4EFgQUcLvPScr8TZMmeiGGtFQecMBrt+IwHwYDVR0jBBgw\nFoAUcLvPScr8TZMmeiGGtFQecMBrt+IwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0B\nAQsFAANBAGjroEv8WBLeIbGbSDM6RMVHQjt8V5Pwd/RPI7pusWGsaJbOVXCwQSsd\nwpUzwKt2lbtAZFmLIIJ53Pv0PZsgC6Q=\n-----END CERTIFICATE-----\n"
+   ]
+}
+```
+
+Create a certificate from a pre-existing private key + certificate pair, with optional intermediate CA certificate chain.
+
+### Endpoint
+
+`PUT /v1/certificates/{grid_id}/{subject}`
+
+## Export certificate
+
+```http
+GET /v1/certificates/my-grid/example.com/export HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+```json
+{
+   "id": "development/test",
+   "subject": "test",
+   "certificate": "-----BEGIN CERTIFICATE-----\nMIIBBTCBsAIBAjANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJDQTAeFw0xNzEw\nMzExNzA2MzJaFw0xNzExMzAxNzA2MzJaMA8xDTALBgNVBAMMBHRlc3QwXDANBgkq\nhkiG9w0BAQEFAANLADBIAkEA+jOxPABMu7Kp4lfrlGXWm+kQWIj4FSi5pczK/ReE\nw1Gxhq49CEt3bIC3Li8slJU4H1WZbhbz8VWyEUsmaYEfiQIDAQABMA0GCSqGSIb3\nDQEBCwUAA0EAIHbczx/kmb/ji/5kDtAUldbicApY9vl75JbPxnAfU5yqyZjhsFiF\nuH6nBTUEAXS4Ic89vJ+J9e14hXh7YLzq1w==\n-----END CERTIFICATE-----\n",
+   "chain": "",
+   "private_key": "-----BEGIN RSA PRIVATE KEY-----\nMIIBPAIBAAJBAPozsTwATLuyqeJX65Rl1pvpEFiI+BUouaXMyv0XhMNRsYauPQhL\nd2yAty4vLJSVOB9VmW4W8/FVshFLJmmBH4kCAwEAAQJAW9Lk1NR3VNt5JayGtOu7\nG3UpnpSGF53epE7IoKIlA1kaPZnHFZD8eGy/i/Wy9gV+uPkqo3IdvhFGGKkEkCzM\n0QIhAP36c/Z0eX3lou+VEYUtaB4v9L6WMb0JU8reizQRui8bAiEA/DGLPrVIcAn7\nihz0n6hPaIszsAHH01Kfz1YCxoVnAisCIQDdwEBhrh6pqseRkcEjW5rtyIdTpIW2\n/J7ZoWc/Rj8egwIhAIz3wKbfvErsOY99Gfv4n9KHJPA4PpNQNwY1RL3lKawbAiEA\no3pfKGbjf982rb1jAoAkG6GKEI8PTFNxn3xqDG6NJE8=\n-----END RSA PRIVATE KEY-----\n"
+}
+```
+
+### Endpoint
+
+`GET /v1/certificates/{grid_id}/{subject}/export`
+
+## Delete certificate
+
+```http
+DELETE /v1/certificates/my-grid/example.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+### Endpoint
+
+`DELETE /v1/certificates/{grid_id}/{subject}`
+
 ## Authorize a domain
+
+**DEPRECATED**: Use `POST /v1/grids/my-grid/domain_authorizations` instead.
 
 ```http
 POST /v1/certificates/my-grid/authorize HTTP/1.1
@@ -1486,6 +1716,8 @@ record_content | A record content for the given domain
 
 ## Create a certificate
 
+**DEPRECATED**: Use `POST /v1/grids/my-grid/certificates` instead.
+
 ```http
 POST /v1/certificates/my-grid/certificate HTTP/1.1
 Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
@@ -1512,8 +1744,6 @@ For example `"secret_name": "FOO_DOMAIN_COM"` will write following secrets to th
 `POST /v1/certificates/{grid_id}/certificate`
 
 # Volumes
-
-**Volumes support is at experimental state which means that there might be breaking changes between versions until the experimental status is removed.**
 
 ## Volume
 

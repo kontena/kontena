@@ -1,23 +1,36 @@
 describe HostNodes::Remove do
-  include AsyncMock
-
   let(:grid) { Grid.create!(name: 'test') }
-  let(:node_a) { grid.create_node!('node-a', node_id: 'AA') }
-  let(:node_b) { grid.create_node!('node-b', node_id: 'BB') }
+  let(:node) { grid.create_node!('test-node', node_id: 'AAAA', connected: true) }
 
   describe '#run' do
-    let(:subject) { described_class.new(host_node: node_a) }
+    let(:subject) { described_class.new(host_node: node) }
 
-    it 'removes node' do
-      node_a; node_b
-      expect {
-        subject.run
-      }.to change{ grid.host_nodes.count }.by(-1)
+    before do
+      node
     end
 
-    it 'notifies grid nodes' do
-      expect(subject).to receive(:notify_grid).once.with(grid)
-      subject.run
+    it 'removes the node' do
+      expect {
+        subject.run!
+      }.to change{grid.reload.host_nodes.count}.from(1).to(0)
+    end
+
+    context 'with a second node in the same grid' do
+      let(:other_node) { grid.create_node!('other-node', node_id: 'BBBB', connected: true) }
+      let(:rpc_client) { instance_double(RpcClient) }
+
+      before do
+        other_node
+        allow(RpcClient).to receive(:new).with(other_node.node_id, Integer).and_return(rpc_client)
+      end
+
+      it 'notifies connected grid nodes' do
+        expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
+          peer_ips: [],
+        ))
+
+        subject.run!
+      end
     end
   end
 end

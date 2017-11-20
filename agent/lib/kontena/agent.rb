@@ -149,6 +149,10 @@ module Kontena
 
     def supervise_state
       @supervisor.supervise(
+        type: Kontena::Observable::Registry,
+        as: :observable_registry,
+      )
+      @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
         as: :node_info_worker,
         args: [self.node_id,

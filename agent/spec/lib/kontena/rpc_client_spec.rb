@@ -49,7 +49,6 @@ describe Kontena::RpcClient, :celluloid => true do
     it "returns a timeout error" do
       expect(ws_client).to receive(:send_request).with(Integer, "/test", ["foo"]) # do nothing..
 
-      expect(subject.wrapped_object).to receive(:warn).with(/timeout after waiting/)
       expect(subject.wrapped_object).to receive(:warn).with(Kontena::RpcClient::TimeoutError)
 
       expect{subject.request("/test", ["foo"], timeout: 0.01)}.to raise_error(Kontena::RpcClient::TimeoutError)

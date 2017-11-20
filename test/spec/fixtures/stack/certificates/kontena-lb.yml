@@ -1,0 +1,23 @@
+stack: test/cert-test
+variables:
+  certificate:
+    type: string
+services:
+  lb:
+    image: kontena/lb
+    ports:
+      - 80:80
+      - 443:443
+    certificates:
+      - subject: {{certificate}}
+        type: env
+        name: SSL_CERTS
+    deploy:
+      wait_for_port: 443
+  whoami:
+    image: jwilder/whoami
+    links:
+      - lb
+    environment:
+      - KONTENA_LB_VIRTUAL_PATH=/
+      - KONTENA_LB_INTERNAL_PORT=8000
