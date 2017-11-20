@@ -65,7 +65,7 @@ module Kontena
         debug { 'Loading master configuration from ENV' }
         servers << Server.new(
           url: ENV['KONTENA_URL'],
-          name: 'default',
+          name: master_name,
           token: Token.new(
             access_token: ENV['KONTENA_TOKEN'],
             parent_type: :master, parent_name: master_name
