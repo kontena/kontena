@@ -1,22 +1,18 @@
 
 describe Scheduler::Filter::Memory do
-
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1')
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2')
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3')
-    nodes
-  end
-
   let(:grid) { Grid.create(name: 'test') }
+  let(:nodes) { [
+    grid.create_node!('node-1', node_id: 'node1'),
+    grid.create_node!('node-2', node_id: 'node2'),
+    grid.create_node!('node-3', node_id: 'node3'),
+  ] }
 
   let(:test_service) {
     GridService.create(name: 'test-service', grid: grid, image_name: 'test-service:latest')
   }
 
   describe '#for_service' do
-    it 'returns all nodes if memory consumption cannot be calculated' do
+    it 'returns all nodes with default memory available if memory consumption cannot be calculated' do
       filtered = subject.for_service(test_service, 1, nodes)
       expect(filtered).to eq(nodes)
     end
@@ -50,14 +46,14 @@ describe Scheduler::Filter::Memory do
     end
 
     it 'rejects candidate if it does not have enough memory available' do
-      candidate.host_node_stats.create!(
-        memory: {
+      candidate.latest_stats = {
+        'memory' => {
           'total' => 1.gigabytes,
           'free' => 128.megabytes,
           'cached' => 128.megabytes,
           'buffers' => 128.megabytes
         }
-      )
+      }
       reject = subject.reject_candidate?(
         candidate, 500.megabytes, test_service, 1
       )
@@ -65,14 +61,14 @@ describe Scheduler::Filter::Memory do
     end
 
     it 'accepts candidate if there is enough free memory' do
-      candidate.host_node_stats.create!(
-        memory: {
+      candidate.latest_stats = {
+        'memory' => {
           'total' => 1.gigabytes,
           'free' => 512.megabytes,
           'cached' => 128.megabytes,
           'buffers' => 128.megabytes
         }
-      )
+      }
       reject = subject.reject_candidate?(
         candidate, 500.megabytes, test_service, 1
       )
@@ -80,16 +76,15 @@ describe Scheduler::Filter::Memory do
     end
 
     it 'accepts candidate if there is enough memory to swap service instance' do
-      candidate.host_node_stats.create!(
-        memory: {
+      candidate.latest_stats = {
+        'memory' => {
           'total' => 1.gigabytes,
           'free' => 128.megabytes,
           'cached' => 128.megabytes,
           'buffers' => 128.megabytes
         }
-      )
-      service_instance = test_service.containers.create!(
-        name: 'test-service-1',
+      }
+      test_service.grid_service_instances.create!(
         host_node: candidate,
         instance_number: 1
       )
@@ -100,16 +95,15 @@ describe Scheduler::Filter::Memory do
     end
 
     it 'accepts candidate if it is a replacement and stats are missing' do
-      candidate.host_node_stats.create!(
-        memory: {
+      candidate.latest_stats = {
+        'memory' => {
           'total' => 0,
           'free' => 0,
           'cached' => 0,
           'buffers' => 0
         }
-      )
-      service_instance = test_service.containers.create!(
-        name: 'test-service-1',
+      }
+      test_service.grid_service_instances.create!(
         host_node: candidate,
         instance_number: 1
       )
@@ -117,6 +111,42 @@ describe Scheduler::Filter::Memory do
         candidate, 500.megabytes, test_service, 1
       )
       expect(reject).to be_falsey
+    end
+  end
+
+  describe '#resolve_memory_from_stats' do
+    let(:candidate) {
+      candidate = nodes[0]
+      candidate.mem_total = 1.gigabytes
+      candidate
+    }
+
+    it 'returns zero if stats are empty' do
+      test_service.grid_service_instances.create!(
+        host_node: candidate,
+        instance_number: 1
+      )
+      expect(subject.resolve_memory_from_stats(test_service)).to eq(0)
+    end
+
+    it 'returns max memory (+ 25%) if stats found' do
+      3.times do |i|
+        ContainerStat.create(
+          grid_service_id: test_service.id,
+          created_at: (i + 1).minutes.ago,
+          memory: {
+            usage: 32.megabytes
+          }
+        )
+      end
+      ContainerStat.create(
+        grid_service_id: test_service.id,
+        created_at: 3.minutes.ago,
+        memory: {
+          usage: 64.megabytes
+        }
+      )
+      expect(subject.resolve_memory_from_stats(test_service)).to eq(64.megabytes * 1.25)
     end
   end
 end

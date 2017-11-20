@@ -6,5 +6,6 @@ agent:
   net: host
   environment:
     - KONTENA_PEER_INTERFACE=eth1
+    - RBTRACE=true
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock

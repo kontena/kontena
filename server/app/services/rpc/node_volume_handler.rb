@@ -1,6 +1,5 @@
 module Rpc
   class NodeVolumeHandler
-    include Celluloid
     include Logging
 
     def initialize(grid)

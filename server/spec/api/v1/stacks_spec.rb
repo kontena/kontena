@@ -58,9 +58,10 @@ describe '/v1/stacks', celluloid: true do
     outcome.result
   end
 
+
   let(:expected_attributes) do
     %w(id created_at updated_at name stack version revision
-    services state expose source variables registry)
+    services state expose source variables registry parent children)
   end
 
   describe 'GET /:name' do
@@ -84,6 +85,90 @@ describe '/v1/stacks', celluloid: true do
     it 'returns 404 for unknown stack' do
       get "/v1/stacks/#{grid.name}/unknown-stack", nil, request_headers
       expect(response.status).to eq(404)
+    end
+
+    context 'nested stacks' do
+
+      let!(:child_stack_1) do
+        outcome = Stacks::Create.run(
+          current_user: david,
+          grid: grid,
+          name: 'child-stack-1',
+          stack: 'another-stack',
+          parent_name: stack.name,
+          version: '0.2.1',
+          source: '...',
+          variables: { foo: 'bar' },
+          registry: 'file',
+          services: [
+            { name: 'app2', image: 'my/app:latest', stateful: false },
+            { name: 'redis', image: 'redis:2.8', stateful: true }
+          ]
+        )
+        outcome.result
+      end
+
+      let!(:child_stack_1_2) do
+        outcome = Stacks::Create.run(
+          current_user: david,
+          grid: grid,
+          name: 'child-stack-1-2',
+          stack: 'another-stack',
+          parent_name: child_stack_1.name,
+          version: '0.2.1',
+          source: '...',
+          variables: { foo: 'bar' },
+          registry: 'file',
+          services: [
+            { name: 'app2', image: 'my/app:latest', stateful: false },
+            { name: 'redis', image: 'redis:2.8', stateful: true }
+          ]
+        )
+        outcome.result
+      end
+
+      let!(:child_stack_2) do
+        outcome = Stacks::Create.run(
+          current_user: david,
+          grid: grid,
+          name: 'child-stack-2',
+          stack: 'another-stack',
+          parent_name: stack.name,
+          version: '0.2.1',
+          source: '...',
+          variables: { foo: 'bar' },
+          registry: 'file',
+          services: [
+            { name: 'app2', image: 'my/app:latest', stateful: false },
+            { name: 'redis', image: 'redis:2.8', stateful: true }
+          ]
+        )
+        outcome.result
+      end
+
+      it 'returns stack json including parent names' do
+        get "/v1/stacks/#{child_stack_1.to_path}", nil, request_headers
+        expect(json_response['parent']).to match hash_including('name' => stack.name, 'id' => "#{stack.grid.name}/#{stack.name}")
+      end
+
+      context 'when parent stack does not exist' do
+        it 'returns stack json with parent name excluding parent id' do
+          child_stack_1.destroy
+          get "/v1/stacks/#{child_stack_1_2.to_path}", nil, request_headers
+          expect(json_response['parent']).to match hash_including('name' => 'child-stack-1', 'id' => nil)
+        end
+      end
+
+      it 'returns stack json including children names' do
+        get "/v1/stacks/#{stack.to_path}", nil, request_headers
+        expect(json_response['children']).to match array_including(
+          hash_including('name' => child_stack_1.name, 'id' => "#{child_stack_1.grid.name}/#{child_stack_1.name}"),
+          hash_including('name' => child_stack_2.name, 'id' => "#{child_stack_2.grid.name}/#{child_stack_2.name}"),
+        )
+        get "/v1/stacks/#{child_stack_1.to_path}", nil, request_headers
+        remove_instance_variable(:@json_response)
+        expect(json_response['children']).to match [ hash_including('name' => child_stack_1_2.name, 'id' => "#{child_stack_1_2.grid.name}/#{child_stack_1_2.name}") ]
+      end
     end
   end
 
@@ -220,7 +305,7 @@ describe '/v1/stacks', celluloid: true do
       }.to change{AuditLog.count}.by(0)
     end
   end
-  
+
   describe 'POST /:id/restart' do
     it 'returns 200 when restart successful' do
       expect(Stacks::Restart).to receive(:run).once.and_return(double({:success? => true}))

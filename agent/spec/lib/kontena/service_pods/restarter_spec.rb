@@ -1,20 +1,20 @@
 
 describe Kontena::ServicePods::Restarter do
 
-  let(:service_id) { 'service-id' }
+  let(:service_id) { 'service_id' }
   let(:subject) { described_class.new(service_id, 1) }
 
   describe '#perform' do
 
     let(:container) do
-      double(:container, :running? => true, :name_for_humans => 'foo/bar-1')
+      double(:container, :running? => true, :name_for_humans => 'foo/bar-1', :stop_grace_period => 10)
     end
 
     before(:each) do
       allow(subject).to receive(:get_container).and_return(container)
     end
 
-    it 'does notthing if container if not running' do
+    it 'does nothing if container if not running' do
       allow(container).to receive(:running?).and_return(false)
       expect(container).not_to receive(:restart!)
       subject.perform

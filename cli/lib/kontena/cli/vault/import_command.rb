@@ -16,9 +16,7 @@ module Kontena::Cli::Vault
 
     def parsed_input
       require "json"
-      require "safe_yaml"
-      SafeYAML::OPTIONS[:default_mode] = :safe
-      json? ? JSON.load(input) : YAML.safe_load(input)
+      json? ? JSON.load(input) : YAML.safe_load(input, [], [], true, path)
     end
 
     def input

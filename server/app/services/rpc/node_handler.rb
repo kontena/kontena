@@ -1,8 +1,5 @@
-require_relative 'fixnum_helper'
-
 module Rpc
   class NodeHandler
-    include FixnumHelper
 
     def initialize(grid)
       @grid = grid
@@ -13,30 +10,34 @@ module Rpc
       )
     end
 
-    def get(id)
-      node = @grid.host_nodes.find_by(node_id: id)
-      if node
-        HostNodeSerializer.new(node).to_hash
-      else
-        {}
-      end
+    def get_node(node_id)
+      node = @grid.host_nodes.find_by(node_id: node_id)
+
+      raise "Missing HostNode: #{node_id}" unless node
+
+      return node
     end
 
+    # @param [String] node_id
+    def get(node_id)
+      node = get_node(node_id)
+
+      HostNodeSerializer.new(node).to_hash
+    end
+
+    # @param [String] node_id
     # @param [Hash] data
-    def update(data)
-      node = @grid.host_nodes.find_by(node_id: data['ID'])
-      if !node
-        node = @grid.host_nodes.build
-      end
+    def update(node_id, data)
+      node = get_node(node_id)
       node.attributes_from_docker(data)
+      node.updated = true # connection handshake complete after NodePlugger#plugin!
       node.save!
     end
 
+    # @param [String] node_id
     # @param [Hash] data
-    def stats(data)
-      node = @grid.host_nodes.find_by(node_id: data['id'])
-      return unless node
-      data = fixnums_to_float(data)
+    def stats(node_id, data)
+      node = get_node(node_id)
       time = data['time'] ? Time.parse(data['time']) : Time.now.utc
 
       stat = {
@@ -51,6 +52,15 @@ module Rpc
         created_at: time
       }
       @db_session[:host_node_stats].insert_one(stat)
+      node.set(
+        latest_stats: {
+          memory: data['memory'],
+          load: data['load'],
+          filesystem: data['filesystem'],
+          cpu: data['cpu'],
+          usage: data['usage']
+        }
+      )
     end
   end
 end

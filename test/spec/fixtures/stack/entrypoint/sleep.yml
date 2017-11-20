@@ -1,0 +1,7 @@
+stack: test/sleep
+services:
+  sleep:
+    image: alpine:3.2
+    entrypoint: /bin/sleep
+    command: "300"
+    stop_signal: SIGKILL

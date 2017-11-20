@@ -10,6 +10,7 @@ api:
     - VAULT_IV=kfsdfopweu09fewjlhfksdjifjpoweop
     - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
     - INITIAL_ADMIN_CODE=initialadmincode
+    - RBTRACE=true
   links:
    - mongodb
 mongodb:

@@ -4,6 +4,6 @@
 # after package is uninstalled.
 #
 
-echo "Kontena has been uninstalled!"
+[ -L /usr/local/bin/kontena ] && rm /usr/local/bin/kontena
 
 exit 0

@@ -8,8 +8,6 @@ module Kontena
       attr_accessor :version
 
       def initialize(stack, version = nil)
-        require "safe_yaml"
-        SafeYAML::OPTIONS[:default_mode] = :safe
         unless version
           stack, version = stack.split(':', 2)
         end
@@ -22,7 +20,7 @@ module Kontena
       end
 
       def load
-        YAML.safe_load(read)
+        ::YAML.safe_load(read, [], [], true, path)
       end
 
       def write(content)
@@ -79,7 +77,7 @@ module Kontena
         else
           dputs "Retrieving #{stack.stack}:#{stack.version} from registry"
           content = client.pull(stack.stack, stack.version)
-          yaml    = ::YAML.safe_load(content)
+          yaml    = ::YAML.safe_load(content, [], [], true, stack.stack)
           new_stack = CachedStack.new(yaml['stack'], yaml['version'])
           if new_stack.cached?
             dputs "Already cached"

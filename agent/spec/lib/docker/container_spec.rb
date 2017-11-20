@@ -46,12 +46,6 @@ describe Docker::Container do
     end
   end
 
-  describe '#restart_policy' do
-    it 'returns HostConfig.RestartPolicy hash' do
-      expect(subject.restart_policy).to include('Name' => 'always')
-    end
-  end
-
   describe '#load_balanced?' do
     it 'returns true if load balanced' do
       allow(subject).to receive(:labels).and_return({

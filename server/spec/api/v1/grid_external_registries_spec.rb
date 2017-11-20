@@ -54,6 +54,18 @@ describe '/v1/grids/:name/external_registries' do
       post "/v1/grids/#{grid.to_path}/external_registries", data.to_json
       expect(response.status).to eq(403)
     end
+
+    it 'handles validation errors' do
+      data = {username: 'david', password: 'secret', email: david.email, url: 'index.docker.io'}
+      expect {
+        post "/v1/grids/#{grid.to_path}/external_registries", data.to_json, request_headers
+      }.to_not change{ grid.registries.count }
+
+      expect(response.status).to eq(422)
+      expect(json_response).to eq(
+        'error' => { 'url' => "Url isn't in the right format" },
+      )
+    end
   end
 end
 

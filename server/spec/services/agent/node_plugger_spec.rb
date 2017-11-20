@@ -8,50 +8,91 @@ describe Agent::NodePlugger do
     allow(subject).to receive(:rpc_client).and_return(rpc_client)
   end
 
-  context 'for a brand new node' do
+  context 'for an initializing node' do
     let(:node) {
-      HostNode.create!(node_id: 'xyz')
+      grid.create_node!('test-node', node_id: 'xyz')
     }
 
-    it 'marks node as connected' do
-      expect(subject).to receive(:send_master_info)
-      expect(subject).to receive(:send_node_info)
-      expect {
+    before do
+      expect(node.status).to eq :offline
+    end
+
+    describe '#plugin!' do
+      it 'marks node as connected' do
+        expect(subject).to receive(:send_node_info)
+        expect(subject).to receive(:publish_update_event)
+
+        expect {
+          subject.plugin! connected_at
+        }.to change{ node.reload.connected? }.to be_truthy
+
+        expect(node.status).to eq :connecting
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.opened).to be true
+        expect(node.websocket_connection.close_code).to be_nil
+        expect(node.websocket_connection.close_reason).to be_nil
+      end
+
+      it 'publishes an update event with connected status' do
+        expect(subject).to receive(:send_node_info)
+
+        expect(node).to receive(:publish_async).with({
+          event: 'update',
+          type: 'HostNode',
+          object: hash_including(
+            name: 'test-node',
+            connected: true,
+          )
+        })
+
         subject.plugin! connected_at
-      }.to change{ node.reload.connected? }.to be_truthy
+      end
+    end
+
+    describe '#reject!' do
+      it 'marks node websocket connection as non-opened' do
+        subject.reject! connected_at, 1006, "asdf"
+
+        node.reload
+
+        expect(node.status).to eq :offline
+        expect(node.connected).to be false
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.opened).to be false
+        expect(node.websocket_connection.close_code).to eq 1006
+        expect(node.websocket_connection.close_reason).to eq "asdf"
+      end
     end
   end
 
   context 'for an existing node' do
     let(:node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         node_id: 'xyz',
-        grid: grid, name: 'test-node', labels: ['region=ams2'],
-        connected: false,
+        labels: ['region=ams2'],
+        connected: false, updated: true,
+        websocket_connection: {close_code: 1337, close_reason: "fail!" },
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
     }
 
     describe '#plugin!' do
-      it 'marks node as connected' do
+      it 'marks node as connected and clears connection error' do
         expect(subject).to receive(:publish_update_event)
-        expect(subject).to receive(:send_master_info)
         expect(subject).to receive(:send_node_info)
         expect {
           subject.plugin! connected_at
         }.to change{ node.reload.connected? }.to be_truthy
-      end
-    end
+        expect(node.status).to eq :connecting
 
-    describe '#send_master_info' do
-      it "sends version" do
-        expect(rpc_client).to receive(:notify).with('/agent/master_info', hash_including(version: String))
-        subject.send_master_info
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.close_code).to be_nil
+        expect(node.websocket_connection.close_reason).to be_nil
       end
-    end
 
-    describe '#send_node_info' do
       it "sends node info" do
+        expect(subject).to receive(:publish_update_event)
+
         expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
           name: 'test-node',
           grid: hash_including(
@@ -59,7 +100,7 @@ describe Agent::NodePlugger do
           ),
         ))
 
-        subject.send_node_info
+        subject.plugin! connected_at
       end
     end
   end
@@ -68,10 +109,10 @@ describe Agent::NodePlugger do
     let(:reconnected_at) { 2.seconds.ago }
     let(:connected_at) { 10.seconds.ago }
     let(:node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         node_id: 'xyz',
-        grid: grid, name: 'test-node', labels: ['region=ams2'],
-        connected: true, connected_at: reconnected_at,
+        labels: ['region=ams2'],
+        connected: true, connected_at: reconnected_at, updated: true,
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
     }
@@ -81,10 +122,18 @@ describe Agent::NodePlugger do
         expect(subject).to_not receive(:publish_update_event)
         expect(subject).to_not receive(:send_master_info)
         expect(subject).to_not receive(:send_node_info)
-        
+
         expect {
           subject.plugin! connected_at
         }.to_not change{ node.reload.connected_at }
+      end
+    end
+
+    describe '#reject!' do
+      it 'does not update node' do
+        expect {
+          subject.reject! connected_at, 1006, "asdf"
+        }.to_not change{ node.reload }
       end
     end
   end

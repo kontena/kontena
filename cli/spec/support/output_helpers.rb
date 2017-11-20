@@ -32,11 +32,13 @@ module OutputHelpers
     supports_block_expectations
 
     match do |block|
+      @errors = []
+
       @expected = lines
       begin
         @real = CaptureStdoutLines.capture(block)
       rescue Exception => error
-        @error = error
+        @errors = [error.to_s]
         return false
       end
 
@@ -52,23 +54,27 @@ module OutputHelpers
         line = 0
         @real.zip(@expected) do |real, expected|
           line += 1
-          error = values_match?(real.split(/\S+/), expected)
-          if error
-            @error ||= ""
-            @error << "\n#{error}"
-            @error.strip!
+          fields = real.split(/\s{2,}/)
+          unless values_match?(expected, fields)
+            @errors << [
+              "on line #{line}:",
+              " expected: #{expected}",
+              " received: #{fields}",
+            ].join("\n")
           end
         end
       else
-        @error = "expected #{@expected.size} lines but got #{@real.size} lines instead:\n"
-        @error += "Expected:\n#{@expected.map(&:inspect).join("\n")}"
-        @error += "Received:\n#{@real.map(&:inspect).join("\n")}"
+        @errors << [
+          "expected #{@expected.size} lines but got #{@real.size} lines instead:",
+          " Expected:", @expected.map{|l| l.inspect},
+          " Received:", @real.map{|l| l.split(/\s{2,}/).inspect},
+        ].join("\n")
       end
-      @error.nil?
+      @errors.empty?
     end
 
     failure_message do |block|
-      @error
+      @errors.join "\n"
     end
 
     chain :with_header do |header|
@@ -78,31 +84,16 @@ module OutputHelpers
     chain :without_header do
       @no_header = true
     end
-
-    failure_message do |block|
-      return @error
-    end
   end
 
   matcher :output_lines do |lines|
     supports_block_expectations
 
     match do |block|
-      stdout = lines.flatten.join("\n") + "\n"
+      @expected = lines.flatten
+      @actual = CaptureStdoutLines.capture(block)
 
-      begin
-        expect{@return = block.call}.to output(stdout).to_stdout
-      rescue Exception => error
-        @error = error
-
-        return false
-      else
-        return true
-      end
-    end
-
-    failure_message do |block|
-      return @error
+      values_match?(@expected, @actual)
     end
   end
 

@@ -52,6 +52,23 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('network_mode')).to be_falsey
     end
 
+    context 'entrypoint' do
+      it 'is optional' do
+        result = subject.validate_options({})
+        expect(result.errors.key?('entrypoint')).to be_falsey
+      end
+
+      it 'passes validation when string' do
+        result = subject.validate_options({'entrypoint' => 'abcd'})
+        expect(result.errors.key?('entrypoint')).to be_falsey
+      end
+
+      it 'fails validation when not a string' do
+        result = subject.validate_options({'entrypoint' => 1})
+        expect(result.errors.key?('entrypoint')).to be_truthy
+      end
+    end
+
     context 'affinity' do
       it 'is optional' do
         result = subject.validate_options({})
@@ -334,6 +351,25 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
           expect(result.errors.key?('volumes_from')).to be_falsey
         end
       end
+    end
+
+    context 'certificates' do
+      it 'validates certificates is array' do
+        result = subject.validate_options('certificates' => 'kontena.io')
+        expect(result.errors.key?('certificates')).to be_truthy
+
+        result = subject.validate_options('certificates' => [])
+        expect(result.errors.key?('certificates')).to be_falsey
+      end
+
+      it 'validates certificates has all needed keys' do
+        result = subject.validate_options('certificates' => [{}])
+        expect(result.errors.key?('certificates')).to be_truthy
+        expect(result.errors['certificates'].has_key?('subject')).to be_truthy
+        expect(result.errors['certificates'].has_key?('name')).to be_truthy
+        expect(result.errors['certificates'].has_key?('type')).to be_truthy
+      end
+
     end
   end
 

@@ -7,6 +7,7 @@ module V1
     include Auditor
 
     plugin :streaming
+    plugin :websockets, :adapter => :puma, :ping => 30
 
     route do |r|
 
@@ -51,6 +52,26 @@ module V1
           r.on 'inspect' do
             audit_event(r, container.grid, container, 'inspect')
             Docker::ContainerInspector.new(container).inspect_container
+          end
+
+          r.on 'exec' do
+            executor = Docker::StreamingExecutor.new(container,
+              interactive: r['interactive'].to_s == 'true',
+              shell: r['shell'].to_s == 'true',
+              tty: r['tty'].to_s == 'true',
+            )
+            audit_event(r, container.grid, container, executor.interactive? ? 'exec_interactive' : 'exec')
+
+            begin
+              executor.setup
+              r.websocket do |ws|
+                # this is not allowed to fail
+                executor.start(ws)
+              end
+            ensure
+              # only relevant if the request wasn't actually a websocket request
+              executor.teardown unless executor.started?
+            end
           end
         end
 

@@ -16,7 +16,17 @@ describe Kontena::Cli::Master::UseCommand do
     end
 
     it 'should abort with error message if master is not configured' do
-      expect { subject.run(['not_existing']) }.to output(/Could not resolve master with name: 'not_existing'/).to_stderr
+      expect { subject.run(['not_existing']) }.to exit_with_error.and output(/Could not resolve master by name 'not_existing'/).to_stderr
+    end
+
+    it 'should abort with error message if master is not given' do
+      expect { subject.run([]) }.to raise_error Clamp::UsageError
+    end
+
+    it 'should clear current master when --clear given' do
+      expect(subject.config).to receive(:write).and_return(true)
+      subject.run(['--clear'])
+      expect(subject.config.current_server).to be_nil
     end
   end
 end

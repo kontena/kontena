@@ -18,7 +18,7 @@ describe LogsHelpers do
 
   let(:nodes) do
     {
-      node1: grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid),
+      node1: grid.create_node!('node-1', node_id: SecureRandom.uuid),
 
     }
   end
@@ -90,6 +90,7 @@ describe LogsHelpers do
     before do
       stub_const('LogsHelpers::LOGS_LIMIT_DEFAULT', 10)
       stub_const('LogsHelpers::LOGS_LIMIT_MAX', 20)
+      stub_const('LogsHelpers::LOGS_STREAM_CHUNK', 20)
 
       allow(subject).to receive(:sleep)
     end

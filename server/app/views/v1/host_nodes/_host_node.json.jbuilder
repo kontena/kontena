@@ -1,9 +1,15 @@
-json.id node.node_id
-json.connected node.connected
+json.id node.to_path
+json.node_id node.node_id
+json.connected node.connected?
+json.updated node.updated?
+json.availability node.availability
 json.created_at node.created_at
 json.updated_at node.updated_at
 json.connected_at node.connected_at
 json.last_seen_at node.last_seen_at
+json.disconnected_at node.disconnected_at
+json.status node.status
+json.has_token !node.token.nil?
 json.name node.name
 json.os node.os
 json.engine_root_dir node.docker_root_dir
@@ -51,12 +57,12 @@ json.grid do
   end
 end
 json.resource_usage do
-  stats = node.host_node_stats.last
-  if stats
-    json.memory stats.memory
-    json.load stats.load
-    json.filesystem stats.filesystem
-    json.usage stats.usage
-    json.cpu stats.cpu
+  stats = node.latest_stats
+  unless stats.empty?
+    json.memory stats['memory']
+    json.load stats['load']
+    json.filesystem stats['filesystem']
+    json.usage stats['usage']
+    json.cpu stats['cpu']
   end
 end

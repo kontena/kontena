@@ -81,17 +81,19 @@ describe '/v1/services' do
     }
   end
 
+  EXPECTED_FIELDS = %w(
+        id created_at updated_at stack image affinity name stateful user
+        instances cmd entrypoint ports env memory memory_swap shm_size cpus cpu_shares
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision stop_signal stop_grace_period read_only certificates
+      ).sort
+
   describe 'GET /:id' do
     it 'returns stackless service json' do
       get "/v1/services/terminal-a/null/redis", nil, request_headers
       expect(response.status).to eq(200), response.body
-      expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at stack image affinity name stateful user
-        instances cmd entrypoint ports env memory memory_swap cpu_shares
-        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
-        strategy deploy_opts pid instance_counts net dns hooks secrets revision
-        stack_revision
-      ).sort)
+      expect(json_response.keys.sort).to eq(EXPECTED_FIELDS)
       expect(json_response['id']).to eq('terminal-a/null/redis')
       expect(json_response['image']).to eq(redis_service.image_name)
       expect(json_response['dns']).to eq('redis.terminal-a.kontena.local')
@@ -100,13 +102,7 @@ describe '/v1/services' do
     it 'returns stack service json' do
       get "/v1/services/terminal-a/teststack/redis", nil, request_headers
       expect(response.status).to eq(200), response.body
-      expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at stack image affinity name stateful user
-        instances cmd entrypoint ports env memory memory_swap cpu_shares
-        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
-        strategy deploy_opts pid instance_counts net dns hooks secrets revision
-        stack_revision
-      ).sort)
+      expect(json_response.keys.sort).to eq(EXPECTED_FIELDS)
       expect(json_response['id']).to eq('terminal-a/teststack/redis')
       expect(json_response['stack']['name']).to eq('teststack')
       expect(json_response['image']).to eq(stack_redis_service.image_name)
@@ -116,13 +112,7 @@ describe '/v1/services' do
     it 'returns stack service json with volumes' do
       get "/v1/services/terminal-a/null/redis-2", nil, request_headers
       expect(response.status).to eq(200), response.body
-      expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at stack image affinity name stateful user
-        instances cmd entrypoint ports env memory memory_swap cpu_shares
-        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
-        strategy deploy_opts pid instance_counts net dns hooks secrets revision
-        stack_revision
-      ).sort)
+      expect(json_response.keys.sort).to eq(EXPECTED_FIELDS)
       expect(json_response['volumes']).to eq(['volume:/data'])
     end
 
@@ -135,11 +125,14 @@ describe '/v1/services' do
     it 'returns health status' do
       redis_service.health_check = GridServiceHealthCheck.new(port: 5000, protocol: 'tcp')
       redis_service.save
-      container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', health_status: 'healthy')
+      redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', health_status: 'healthy')
+      redis_service.containers.create!(name: 'redis-2', container_id: 'bbb', health_status: 'unhealthy')
+      redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['health_status']['total']).to eq(1)
+      expect(json_response['health_status']['total']).to eq(3)
       expect(json_response['health_status']['healthy']).to eq(1)
+      expect(json_response['health_status']['unhealthy']).to eq(1)
     end
 
     it 'returns no health check or status if protocol nil' do
@@ -149,6 +142,31 @@ describe '/v1/services' do
       expect(response.status).to eq(200)
       expect(json_response['health_status']).to be_nil
       expect(json_response['health_check']).to be_nil
+    end
+
+    it 'returns stop_signal' do
+      redis_service.stop_signal = 'SIGQUIT'
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stop_signal']).to eq('SIGQUIT')
+    end
+
+    it 'returns stop_grace_period' do
+      redis_service.stop_grace_period = 37
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stop_grace_period']).to eq(37)
+    end
+
+    it 'returns certificates' do
+      redis_service.certificates << GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERTS', type: 'env')
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['certificates'].size).to eq(1)
+      expect(json_response['certificates'][0]).to eq({'subject' => 'kontena.io', 'name' => 'SSL_CERTS', 'type' => 'env'})
     end
   end
 

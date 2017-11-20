@@ -7,9 +7,11 @@ require 'excon/errors'
 
 class Kontena::Command < Clamp::Command
 
-  option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
-    ENV['DEBUG'] ||= 'true'
-    Kontena.reset_logger
+  option ['-D', '--[no-]debug'], :flag, "Enable debug", environment_variable: 'DEBUG', attribute_name: :debug_option do |debug|
+    unless debug.kind_of?(String)
+      ENV['DEBUG'] = debug.to_s
+      Kontena.reset_logger
+    end
   end
 
   attr_accessor :arguments
@@ -164,9 +166,10 @@ class Kontena::Command < Clamp::Command
     retried ||= false
     Kontena::Cli::Config.instance.require_current_master_token
   rescue Kontena::Cli::Config::TokenExpiredError
-    success = Kontena::Client.new(
-      Kontena::Cli::Config.instance.current_master.url,
-      Kontena::Cli::Config.instance.current_master.token
+    server = Kontena::Cli::Config.instance.current_master
+    success = Kontena::Client.new(server.url, server.token,
+      ssl_cert_path: server.ssl_cert_path,
+      ssl_subject_cn: server.ssl_subject_cn,
     ).refresh_token
     if success && !retried
       retried = true
@@ -180,6 +183,17 @@ class Kontena::Command < Clamp::Command
     return true if @arguments.include?('--help')
     return true if @arguments.include?('-h')
     false
+  end
+
+  # Returns an instance of the command, just like with Kontena.run! but before calling "execute"
+  # You can use it for specs or reuse of instancemethods.
+  # Example:
+  #   cmd = Kontena::FooCommand.instance(['-n', 'foo'])
+  #   cmd.fetch_stuff
+  def instance(arguments)
+    @arguments = arguments
+    parse @arguments
+    self
   end
 
   def run(arguments)
@@ -218,7 +232,7 @@ class Kontena::Command < Clamp::Command
       abort(ex.message)
     end
   rescue Kontena::Errors::StandardError => ex
-    raise ex if ENV['DEBUG']
+    raise ex if Kontena.debug?
     Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.status} : #{ex.message}")
   rescue Errno::EPIPE
@@ -227,7 +241,7 @@ class Kontena::Command < Clamp::Command
   rescue Clamp::HelpWanted, Clamp::UsageError
     raise
   rescue => ex
-    raise ex if ENV['DEBUG']
+    raise ex if Kontena.debug?
     Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{Kontena.log_target} or run the command again with environment DEBUG=true set to see the full exception")
   end

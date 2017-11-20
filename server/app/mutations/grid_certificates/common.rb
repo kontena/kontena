@@ -46,5 +46,51 @@ module GridCertificates
     def acme_endpoint
       ENV['ACME_ENDPOINT'] || ACME_ENDPOINT
     end
+
+    def resolve_service(grid, service_name)
+      stack_name, service = service_name.split('/')
+      stack = grid.stacks.find_by(name: stack_name)
+      return nil if stack.nil?
+
+      stack.grid_services.find_by(name: service)
+    end
+
+    def validate_dns_record(domain, expected_record)
+      resolv = Resolv::DNS.new()
+      info "validating domain:_acme-challenge.#{domain}"
+      resource = resolv.getresource("_acme-challenge.#{domain}", Resolv::DNS::Resource::IN::TXT)
+      info "got record: #{resource.strings}, expected: #{expected_record}"
+      expected_record == resource.strings[0]
+    rescue
+      false
+    end
+
+    def upsert_certificate(certificate)
+      if existing = Certificate.find_by(grid: grid, subject: certificate.subject)
+        existing.alt_names = certificate.alt_names
+        existing.valid_until = certificate.valid_until
+        existing.private_key = certificate.private_key
+        existing.certificate = certificate.certificate
+        existing.chain = certificate.chain
+        existing.save
+
+        certificate = existing
+      else
+        certificate.save
+      end
+
+      refresh_certificate_services(certificate)
+
+      return certificate
+    end
+
+    ##
+    # @param [Certificate]
+    def refresh_certificate_services(certificate)
+      certificate.grid.grid_services.where(:'certificates.subject' => certificate.subject).each do |grid_service|
+        info "force service #{grid_service.to_path} update for updated certificate #{certificate.subject}"
+        grid_service.set(updated_at: Time.now.utc)
+      end
+    end
   end
 end

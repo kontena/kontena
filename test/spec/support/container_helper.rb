@@ -1,3 +1,5 @@
+require 'json'
+
 module ContainerHelper
 
   # Checks if a deployed container exists with given name
@@ -17,4 +19,17 @@ module ContainerHelper
     end
   end
 
+  # Finds containers id based on name
+  # @param [String] name
+  def container_id(name)
+    k = run("kontena container list -q")
+    k.out.match("^(.+\/#{name})")[1]
+  end
+
+  # @raise [RuntimeError]
+  # @return [Hash]
+  def inspect_container(container_id)
+    k = run("kontena container inspect #{container_id}")
+    ::JSON.parse(k.out)
+  end
 end

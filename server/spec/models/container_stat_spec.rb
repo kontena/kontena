@@ -13,6 +13,21 @@ describe ContainerStat do
   it { should have_index_for(grid_service_id: 1).with_options(background: true) }
   it { should have_index_for(created_at: 1).with_options(background: true) }
 
+  describe '.latest' do
+    let(:grid) { Grid.create!(name: 'test-grid') }
+    let(:container) { Container.create!(grid: grid, name: 'test-1') }
+
+    it 'returns latest stat item' do
+      container.container_stats.create
+      last = container.container_stats.create
+      expect(described_class.latest).to eq(last)
+    end
+
+    it 'returns nil if no stats' do
+      expect(described_class.latest).to be_nil
+    end
+  end
+
   describe 'methods' do
     let(:stat) { ContainerStat.new({
         spec: {
@@ -43,9 +58,9 @@ describe ContainerStat do
   describe 'aggregations' do
     let(:grid_1) { Grid.create!(name: 'grid_1') }
     let(:grid_2) { Grid.create!(name: 'grid_2') }
-    let(:grid_1_node_1) { HostNode.create!(grid: grid_1, name: 'grid_1_node_1')}
-    let(:grid_1_node_2) { HostNode.create!(grid: grid_1, name: 'grid_1_node_2')}
-    let(:grid_2_node_1) { HostNode.create!(grid: grid_2, name: 'grid_2_node_1')}
+    let(:grid_1_node_1) { grid_1.create_node!('grid_1_node_1') }
+    let(:grid_1_node_2) { grid_1.create_node!('grid_1_node_2') }
+    let(:grid_2_node_1) { grid_2.create_node!('grid_2_node_1') }
     let(:grid_1_service_1) { GridService.create!(grid: grid_1, name: 'grid_1_service_1', image_name: 'i1') }
     let(:grid_1_service_2) { GridService.create!(grid: grid_1, name: 'grid_1_service_2', image_name: 'i2') }
     let(:grid_2_service_1) { GridService.create!(grid: grid_2, name: 'grid_2_service_1', image_name: 'i1') }

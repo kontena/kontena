@@ -50,25 +50,17 @@ module Kontena
 
       excon_opts = {
         omit_default_port: true,
-        connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 5,
+        connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 10,
         read_timeout:    ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_i    : 30,
-        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5,
+        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 10,
         ssl_verify_peer: ignore_ssl_errors? ? false : true
       }
-      if ENV["DEBUG"]
+      if Kontena.debug?
         require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end
-
-      cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
-      if File.exist?(cert_file) && File.readable?(cert_file)
-        excon_opts[:ssl_ca_file] = cert_file
-        key = OpenSSL::X509::Certificate.new(File.read(cert_file))
-        if key.issuer.to_s == "/C=FI/O=Test/OU=Test/CN=Test"
-          debug { "Key looks like a self-signed cert made by Kontena CLI, setting verify_peer_host to 'Test'" }
-          excon_opts[:ssl_verify_peer_host] = 'Test'
-        end
-      end
+      excon_opts[:ssl_ca_file] = @options[:ssl_cert_path]
+      excon_opts[:ssl_verify_peer_host] = @options[:ssl_subject_cn]
 
       debug { "Excon opts: #{excon_opts.inspect}" }
 

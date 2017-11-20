@@ -59,6 +59,17 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.affinity }.to(['az==b1'])
     end
 
+    it 'updates stop_grace_period' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service,
+            stop_grace_period: '1m23s'
+        ).run
+      }.to change{ redis_service.reload.stop_grace_period }.to(83)
+    end
+
     context 'deploy_opts' do
       it 'updates wait_for_port' do
         described_class.new(
@@ -208,6 +219,132 @@ describe GridServices::Update do
 
           expect(service.reload.secrets.map{|gss| gss.secret}).to eq ['SECRET1']
         end
+      end
+
+      context 'for a service with multiple names for the same secret' do
+        let(:secret1) { GridSecret.create!(grid: grid, name: 'SECRET1', value: 'secret') }
+
+        let(:service) {
+          GridService.create(grid: grid, stack: stack, name: 'redis',
+            image_name: 'redis:2.8',
+            secrets: [
+              {secret: secret1.name, name: 'SECRET1'},
+              {secret: secret1.name, name: 'SECRET2'},
+            ],
+          )
+        }
+
+        it 'keeps both secret names' do
+          subject = described_class.new(
+              grid_service: service,
+              secrets: [
+                {secret: secret1.name, name: 'SECRET1'},
+                {secret: secret1.name, name: 'SECRET2'},
+              ]
+          )
+          outcome = nil
+          expect {
+            outcome = subject.run
+
+            expect(outcome).to be_success
+          }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+
+          expect(outcome.result.secrets.map{|s| s.attributes}).to match [
+            hash_including(
+              'secret' => 'SECRET1',
+              'type' => 'env',
+              'name' => 'SECRET1',
+            ),
+            hash_including(
+              'secret' => 'SECRET1',
+              'type' => 'env',
+              'name' => 'SECRET2',
+            ),
+          ]
+
+        end
+      end
+    end
+
+    context 'for a service with certificates' do
+      let(:service) {
+        GridService.create(grid: grid, stack: stack, name: 'redis',
+          image_name: 'redis:2.8',
+          certificates: [
+            {subject: certificate.subject, name: 'SSL_CERT'},
+            {subject: certificate2.subject, name: 'SSL_CERT2'}
+          ],
+        )
+      }
+
+      let :certificate do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      let :certificate2 do
+        Certificate.create!(grid: grid,
+          subject: 'www.kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      it 'does not change existing certs' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'},
+              {subject: certificate2.subject, name: 'SSL_CERT2'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+      end
+
+      it 'changes existing certs' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'},
+              {subject: certificate2.subject, name: 'SSL_CERT2_FOO'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to change{service.reload.revision}.and change{service.reload.updated_at}
+      end
+
+      it 'removes certificate' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to change{service.reload.revision}.and change{service.reload.updated_at}
+
+        expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io']
+      end
+
+      it 'fails with invalid certificate' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: 'www.kotnena.io', name: 'SSL_CERT'},
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to_not be_success
+        }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+
+        expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io', 'www.kontena.io']
       end
     end
 
@@ -506,6 +643,27 @@ describe GridServices::Update do
             expect(outcome = subject.run).to be_success
           }.to change{service.reload.revision}.and change{service.reload.updated_at}.and change{service.reload.grid_service_links.first.alias}.from('redis2').to('redis3')
         end
+      end
+    end
+
+    context 'for a service with a very long name' do
+      let(:service) { GridService.create(grid: grid, name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38', image_name: 'redis:2.8')}
+
+      it 'allows scaling to single-digit instances' do
+        outcome = described_class.run(
+            grid_service: service,
+            instances: 9,
+        )
+        expect(outcome).to be_success
+      end
+
+      it 'does not allow scaling to double-digit instances' do
+        outcome = described_class.run(
+            grid_service: service,
+            instances: 10,
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38-10.test-grid.kontena.local'
       end
     end
   end

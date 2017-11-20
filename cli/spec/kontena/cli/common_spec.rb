@@ -167,14 +167,15 @@ describe Kontena::Cli::Common do
   end
 
   describe '#use_refresh_token' do
+    let(:token) { double }
     let(:server) do
-      spy
-    end
-
-    let(:token) do
-      token = double
-      allow(server).to receive(:token).and_return(token)
-      token
+      double(:server,
+        name: 'example',
+        url: 'http://www.example.org',
+        token: token,
+        ssl_cert_path: nil,
+        ssl_subject_cn: nil,
+      )
     end
 
     let(:client) do
@@ -203,8 +204,7 @@ describe Kontena::Cli::Common do
       end
 
       it 'creates refresh_token request to given server' do
-        allow(server).to receive(:url).and_return('http://www.example.org')
-        expect(Kontena::Client).to receive(:new).with('http://www.example.org', token).and_return(client)
+        expect(Kontena::Client).to receive(:new).with('http://www.example.org', token, ssl_cert_path: nil, ssl_subject_cn: nil).and_return(client)
         expect(client).to receive(:refresh_token).once
         subject.use_refresh_token(server)
       end

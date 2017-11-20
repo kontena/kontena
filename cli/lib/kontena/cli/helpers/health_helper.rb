@@ -49,5 +49,17 @@ module Kontena::Cli::Helpers
         return node['connected'] ? :ok : :offline
       end
     end
+
+    # @param node_etcd_health [Hash{health: String, error: String}]
+    # @return [Symbol, String]
+    def node_etcd_health(node_etcd_health)
+      if node_etcd_health['health']
+        return :ok, "healthy"
+      elsif node_etcd_health['error']
+        return :error, "unhealthy: #{node_etcd_health['error']}"
+      else
+        return :error, "unhealthy"
+      end
+    end
   end
 end

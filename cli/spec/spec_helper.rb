@@ -33,6 +33,11 @@ RSpec.configure do |config|
     Kontena::Cli::Config.reset_instance
   end
 
+  # disable pastel colors for all specs, regardless of order
+  config.before(:all) do
+    Kontena.pastel.resolver.color.disable!
+  end
+
   config.after(:each) do
     RSpec::Mocks.space.proxy_for(File).reset
     RSpec::Mocks.space.proxy_for(Kontena::Cli::Config).reset
@@ -40,24 +45,17 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    catch :exit_with_error do
-      begin
-        example.run
-      rescue SystemExit
-        puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
-      end
-    end
-  end
+    stdout = $stdout
+    stderr = $stderr
+    $stdout = $stderr = StringIO.new
 
-  unless ENV["DEBUG"]
-    config.before(:each) do
-      $stdout = StringIO.new
-      $stderr = StringIO.new
-    end
-
-    config.after(:each) do
-      $stdout = STDOUT
-      $stderr = STDERR
+    begin
+      example.run
+    rescue SystemExit => exc
+      fail "SystemExit with code #{exc.status}: \n#{$stderr.string}"
+    ensure
+      $stdout = stdout
+      $stderr = stderr
     end
   end
 end

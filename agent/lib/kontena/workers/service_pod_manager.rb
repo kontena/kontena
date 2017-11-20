@@ -6,11 +6,12 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::RpcHelper
-    include Kontena::Helpers::WaitHelper
 
     attr_reader :workers, :node
+
+    LOOP_INTERVAL = 30
 
     trap_exit :on_worker_exit
     finalizer :finalize
@@ -22,18 +23,15 @@ module Kontena::Workers
     end
 
     def start
-      observe(Actor[:node_info_worker]) do |node|
-        @node = node
-      end
+      @node = observe(Actor[:node_info_worker].observable, timeout: 300.0)
 
-      wait_until!("have node info", interval: 0.1, threshold: 10.0) { self.node }
       populate_workers_from_docker
 
       subscribe('service_pod:update', :on_update_notify)
       subscribe('service_pod:event', :on_pod_event)
       loop do
         populate_workers_from_master
-        sleep 30
+        sleep LOOP_INTERVAL
       end
     end
 

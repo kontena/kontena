@@ -8,6 +8,8 @@ rescue LoadError
 end
 
 require 'logger'
+require 'kontena/autoload_core'
+require 'set'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
@@ -18,6 +20,7 @@ end
 module Kontena
   module Cli
     autoload :Config, 'kontena/cli/config'
+    autoload :ShellSpinner, 'kontena/cli/spinner'
     autoload :Spinner, 'kontena/cli/spinner'
     autoload :Common, 'kontena/cli/common'
     autoload :TableGenerator, 'kontena/cli/table_generator'
@@ -29,6 +32,7 @@ module Kontena
   autoload :PluginManager, 'kontena/plugin_manager'
   autoload :MainCommand, 'kontena/main_command'
   autoload :Errors, 'kontena/errors'
+  autoload :Util, 'kontena/util'
 
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
@@ -74,7 +78,7 @@ module Kontena
 
     @log_target = ENV['LOG_TARGET']
 
-    if ENV["DEBUG"]
+    if debug?
       @log_target ||= $stderr
     elsif @log_target.nil?
       @log_target = File.join(home, 'kontena.log')
@@ -165,11 +169,14 @@ module Kontena
       require 'kontena/cli/log_formatters/strip_color'
       logger.formatter = Kontena::Cli::LogFormatter::StripColor.new
     end
-    logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    logger.level = debug? ? Logger::DEBUG : Logger::INFO
     logger.progname = 'CLI'
     @logger = logger
   end
 
+  def self.debug?
+    !['', 'false'].include?(ENV['DEBUG'].to_s)
+  end
 end
 
 # Monkeypatching string to mimick 'colorize' gem
@@ -182,8 +189,7 @@ end
 require 'retriable'
 Retriable.configure do |c|
   c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
-    return true unless ENV["DEBUG"]
-    puts "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
+    Kontena.logger.debug { "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}" }
   end
 end
 

@@ -2,22 +2,20 @@
 describe Scheduler::Filter::VolumePlugin do
 
   let(:grid) { Grid.create(name: 'test') }
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(
-      grid: grid, node_id: 'node1', name: 'node-1',
+  let(:nodes) { [
+    grid.create_node!('node-1',
+      node_id: 'node1',
       volume_drivers: [{'name' => 'local'}, {'name' => 'foo'}]
-    )
-    nodes << HostNode.create!(
-      grid: grid, node_id: 'node2', name: 'node-2',
+    ),
+    grid.create_node!('node-2',
+      node_id: 'node2',
       volume_drivers: [{'name' => 'foo'}]
-    )
-    nodes << HostNode.create!(
-      grid: grid, node_id: 'node3', name: 'node-3',
+    ),
+    grid.create_node!('node-3',
+      node_id: 'node3',
       volume_drivers: [{'name' => 'local'}, {'name' => 'bar'}]
-    )
-    nodes
-  end
+    ),
+  ] }
 
   let(:local_volume) do
     grid.volumes.create!(name: 'local', driver: 'local', scope: 'instance')

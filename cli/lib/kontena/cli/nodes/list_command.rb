@@ -1,10 +1,12 @@
 require_relative '../helpers/health_helper'
+require_relative '../helpers/time_helper'
 
 module Kontena::Cli::Nodes
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
+    include Kontena::Cli::Helpers::TimeHelper
     include Kontena::Cli::TableGenerator::Helper
 
     option ['-a', '--all'], :flag, 'List nodes for all grids', default: false
@@ -19,7 +21,20 @@ module Kontena::Cli::Nodes
     end
 
     def node_status(node)
-      node['connected'] ? pastel.green('online') : pastel.red('offline')
+      case node_status = node['status']
+      when 'created'
+        "#{pastel.dark('created')} #{time_since(node['created_at'], terse: true)}"
+      when 'connecting'
+        "#{pastel.cyan('connecting')} #{time_since(node['connected_at'], terse: true)}"
+      when 'online'
+        "#{pastel.green('online')} #{time_since(node['connected_at'], terse: true)}"
+      when 'drain'
+        "#{pastel.yellow('drain')}"
+      when 'offline'
+        "#{pastel.red('offline')} #{time_since(node['disconnected_at'], terse: true)}"
+      else
+        pastel.white(node_status.to_s)
+      end
     end
 
     def node_initial(node, grid)
@@ -34,12 +49,11 @@ module Kontena::Cli::Nodes
     def fields
       return ['name'] if quiet?
       {
-        ' ' =>   'health_icon',
         name:    'name',
         version: 'agent_version',
         status:  'status',
         initial: 'initial',
-        labels:  'labels'
+        labels:  'labels',
       }
     end
 
@@ -59,6 +73,7 @@ module Kontena::Cli::Nodes
           node['name'] = node_name(node, grid)
           grid_nodes << node
           next if quiet?
+          node['agent_version'] ||= '-'
           node['initial'] = node_initial(node, grid)
           node['status'] = node_status(node)
           node['labels'] = node_labels(node)
@@ -67,11 +82,11 @@ module Kontena::Cli::Nodes
         unless quiet?
           grid_health = grid_health(grid, grid_nodes)
           grid_nodes.each do |node|
-            node['health_icon'] = health_icon(node_health(node, grid_health))
+            node['name'] = health_icon(node_health(node, grid_health)) + " " + (node['name'] || node['node_id'])
           end
         end
 
-        grid_nodes.sort { |n| n['node_number'] }
+        grid_nodes.sort_by { |n| n['node_number'] }
       end
     end
 

@@ -12,13 +12,7 @@ module Kontena
       # @raise [Kontena::RpcClient::Error]
       # @return [Object]
       def rpc_request(method, params)
-        response, error = rpc_client.request_with_error(method, params)
-
-        if error
-          raise error
-        else
-          return response
-        end
+        rpc_client.request(method, params)
       end
     end
   end

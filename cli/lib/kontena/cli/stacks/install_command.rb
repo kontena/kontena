@@ -1,4 +1,5 @@
 require_relative 'common'
+require_relative 'yaml/stack_file_loader'
 
 module Kontena::Cli::Stacks
   class InstallCommand < Kontena::Command
@@ -16,21 +17,55 @@ module Kontena::Cli::Stacks
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
 
+    option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
+    option '--skip-dependencies', :flag, "Do not install any stack dependencies"
+
     requires_current_master
     requires_current_master_token
 
     def execute
-      stack = stack_read_and_dump(filename, name: name, values: values)
+      set_env_variables(stack_name, current_grid)
 
-      stack['name'] = name if name
-      spinner "Creating stack #{pastel.cyan(stack['name'])} " do
-        create_stack(stack)
-      end
-      Kontena.run!(['stack', 'deploy', stack['name']]) if deploy?
+      install_dependencies unless skip_dependencies?
+
+      stack # runs validations
+
+      hint_on_validation_notifications(reader.notifications)
+      abort_on_validation_errors(reader.errors)
+
+      dump_variables if values_to
+
+      create_stack
+      deploy_stack if deploy?
     end
 
-    def create_stack(stack)
-      client.post("grids/#{current_grid}/stacks", stack)
+    def install_dependencies
+      dependencies = loader.dependencies
+      return if dependencies.nil?
+      dependencies.each do |dependency|
+        target_name = "#{stack_name}-#{dependency['name']}"
+        caret "Installing dependency #{pastel.cyan(dependency['stack'])} as #{pastel.cyan(target_name)}"
+        cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
+
+        dependency['variables'].merge(dependency_values_from_options(dependency['name'])).each do |key, value|
+          cmd.concat ['-v', "#{key}=#{value}"]
+        end
+
+        cmd << '--no-deploy' unless deploy?
+
+        cmd << dependency['stack']
+        Kontena.run!(cmd)
+      end
+    end
+
+    def create_stack
+      spinner "Creating stack #{pastel.cyan(stack['name'])} " do
+        client.post("grids/#{current_grid}/stacks", stack)
+      end
+    end
+
+    def deploy_stack
+      Kontena.run!(['stack', 'deploy', stack['name']])
     end
   end
 end

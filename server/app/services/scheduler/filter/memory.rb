@@ -2,6 +2,12 @@ module Scheduler
   module Filter
     class Memory
 
+      attr_reader :cache
+
+      def initialize
+        @cache = {}
+      end
+
       ##
       # @param [GridService] service
       # @param [Integer] instance_number
@@ -11,15 +17,12 @@ module Scheduler
         candidates = nodes.dup
         memory = service.memory || service.memory_swap
         unless memory
-          container = service.containers.first
-          if container
-            stats = container.container_stats.last
-            memory = stats.memory['usage'] * 1.25 if stats
-          end
+          memory = resolve_memory_from_stats(service)
         end
 
-        return candidates unless memory # we cannot calculate so let's return all candidates
-        candidates.delete_if{|c|
+        return candidates if memory == 0 # we cannot calculate so let's return all candidates
+
+        candidates.delete_if { |c|
           reject_candidate?(c, memory, service, instance_number)
         }
 
@@ -30,20 +33,49 @@ module Scheduler
         candidates
       end
 
+      # @param service [GridService]
+      # @return [Integer]
+      def resolve_memory_from_stats(service)
+        cache_key = "service_memory_peak:#{service.id}"
+        unless cache[cache_key] # aggregate needs to be cached manually
+          max_memory_usage = ContainerStat.where(
+            :grid_service_id => service.id,
+            :created_at.gt => 1.hour.ago
+          ).max(:'memory.usage')
+          if max_memory_usage
+            cache[cache_key] = max_memory_usage * 1.25
+          else
+            cache[cache_key] = 0.0
+          end
+        end
+        cache[cache_key].to_i
+      end
+
+      # @param service [GridService]
+      # @param instance_number [Integer]
+      # @param candidate [HostNode]
+      # @return [GridServiceInstance, NilClass]
+      def fetch_service_instance(service, instance_number, candidate = nil)
+        service.grid_service_instances.to_a.find { |i|
+          i.instance_number == instance_number && (candidate.nil? || i.host_node_id == candidate.id)
+        }
+      end
+
       # @param [HostNode] candidate
       # @param [Float] memory
       # @param [GridService] service
       # @param [Integer] instance_number
       def reject_candidate?(candidate, memory, service, instance_number)
-        return false if candidate.containers.service_instance(service, instance_number).first
+        return false if fetch_service_instance(service, instance_number, candidate)
         return true if candidate.mem_total.to_i < memory
 
-        node_stat = candidate.host_node_stats.last
-        return false if node_stat.nil?
+        node_stat = candidate.latest_stats
+        return false if node_stat.empty?
 
-        all_used = node_stat.memory['total'] - node_stat.memory['free']
-        mem_used = all_used - (node_stat.memory['cached'] + node_stat.memory['buffers'])
-        mem_free = node_stat.memory['total'] - mem_used
+        node_mem = node_stat['memory']
+        all_used = node_mem['total'] - node_mem['free']
+        mem_used = all_used - (node_mem['cached'] + node_mem['buffers'])
+        mem_free = node_mem['total'] - mem_used
 
         return true if mem_free < memory
 

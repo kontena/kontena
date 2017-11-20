@@ -1,4 +1,5 @@
 require 'ipaddr'
+require 'securerandom'
 require_relative 'event_stream'
 
 class HostNode
@@ -6,11 +7,17 @@ class HostNode
   include Mongoid::Timestamps
   include EventStream
 
+  module Availability
+    ACTIVE = 'active'.freeze
+    DRAIN = 'drain'.freeze
+  end
+
   Error = Class.new(StandardError)
 
   field :node_id, type: String
   field :node_number, type: Integer
   field :name, type: String
+  field :token, type: String
   field :os, type: String
   field :docker_root_dir, type: String
   field :driver, type: String
@@ -28,10 +35,15 @@ class HostNode
   field :last_seen_at, type: Time
   field :agent_version, type: String
   field :docker_version, type: String
-  field :connected_at, type: DateTime
+  field :connected_at, type: Time
+  field :disconnected_at, type: Time
+  field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
+  field :availability, type: String, default: Availability::ACTIVE
+  field :latest_stats, type: Hash, default: {}
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
+  embeds_one :websocket_connection, class_name: 'HostNodeConnection'
 
   belongs_to :grid
   has_many :grid_service_instances, dependent: :nullify
@@ -42,12 +54,17 @@ class HostNode
   has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
-  after_save :reserve_node_number, :ensure_unique_name
+  validates :grid, presence: true
+  validates :node_number, presence: true
+  validates :name, presence: true
+  validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
 
   index({ grid_id: 1 })
-  index({ node_id: 1 })
+  index({ node_id: 1 }, { unique: true, sparse: true })
   index({ labels: 1 })
-  index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
+  index({ grid_id: 1, name: 1 }, { unique: true })
+  index({ grid_id: 1, node_number: 1 }, { unique: true })
+  index({ token: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
 
@@ -61,14 +78,19 @@ class HostNode
   end
 
   def to_path
-    "#{self.grid.try(:name)}/#{self.name}"
+    "#{self.grid.try(:name)}/#{self.name || self.node_id}"
+  end
+
+  # @param [String] name Name of the volume driver
+  # @return [HostNodeDriver, nil] Given driver or nil if not found
+  def volume_driver(name)
+    self.volume_drivers.find_by(name: name)
   end
 
   ##
   # @param [Hash] attrs
   def attributes_from_docker(attrs)
     self.attributes = {
-      node_id: attrs['ID'],
       os: attrs['OperatingSystem'],
       docker_root_dir: attrs['DockerRootDir'],
       driver: attrs['Driver'],
@@ -86,17 +108,62 @@ class HostNode
       volume_drivers: attrs.dig('Drivers', 'Volume') || [],
       network_drivers: attrs.dig('Drivers', 'Network') || [],
     }
-    if self.name.nil?
-      self.name = attrs['Name']
-    end
     if self.labels.nil? || self.labels.size == 0
       self.labels = attrs['Labels']
     end
   end
 
   # @return [Boolean]
+  def active?
+    self.availability == Availability::ACTIVE
+  end
+
+  # @return [Boolean]
+  def drain?
+    self.availability == Availability::DRAIN
+  end
+
+  # @return [Symbol]
+  def status
+    if self.node_id.nil?
+      return :created # node created with token, but agent has not yet connected
+    elsif !self.connected
+      return :offline # not yet connected by NodePlugger, or disconnected by NodeUnplugger
+    elsif !self.updated
+      return :connecting # connected by NodePlugger, waiting for /nodes/update RPC
+    elsif self.drain?
+      return :drain
+    else
+      return :online # connected by NodePlugger, updated by /nodes/update RPC
+    end
+  end
+
+  # @return [String]
+  def websocket_error
+    if self.connected
+      return nil
+    elsif !self.websocket_connection
+      return "Websocket is not connected"
+    elsif !self.websocket_connection.opened
+      # WebsocketBackend#on_open -> Agent::NodePlugger.reject!
+      return "Websocket connection rejected at #{self.connected_at} with code #{self.websocket_connection.close_code}: #{self.websocket_connection.close_reason}"
+    else
+      # WebsocketBackend#on_close -> Agent::NodeUnplugger.unplug!
+      return "Websocket disconnected at #{self.disconnected_at} with code #{self.websocket_connection.close_code}: #{self.websocket_connection.close_reason}"
+    end
+  end
+
+
+  # @return [Boolean]
   def connected?
     self.connected == true
+  end
+
+  # attributes are up to date
+  #
+  # @return [Boolean]
+  def updated?
+    self.connected && self.updated
   end
 
   # @return [Boolean]
@@ -112,9 +179,7 @@ class HostNode
   end
 
   def initial_member?
-    return false if self.node_number.nil?
-    return true if self.node_number <= self.grid.initial_size
-    false
+    self.node_number <= self.grid.initial_size
   end
 
   # @param label [String] match label name before =
@@ -166,31 +231,5 @@ class HostNode
   # @return [String] Overlay IP, without subnet mask
   def overlay_ip
     (IPAddr.new(self.grid.subnet) | self.node_number).to_s
-  end
-
-  private
-
-  def reserve_node_number
-    return unless self.node_number.nil?
-    return if self.grid.nil?
-
-    free_numbers = self.grid.free_node_numbers
-    begin
-      node_number = free_numbers.shift
-      raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
-      self.update_attribute(:node_number, node_number)
-    rescue Mongo::Error::OperationFailure
-      retry
-    end
-  end
-
-  def ensure_unique_name
-    return if self.name.to_s.empty?
-    return unless self.grid
-    return unless self.grid.respond_to?(:host_nodes)
-
-    if self.grid.host_nodes.unscoped.where(:id.ne => self.id, name: self.name).count > 0
-      self.set(name: "#{self.name}-#{self.node_number}")
-    end
   end
 end

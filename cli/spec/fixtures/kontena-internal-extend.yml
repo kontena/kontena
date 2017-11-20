@@ -1,8 +1,0 @@
-base:
-  stateful: true
-  instances: 2
-  deploy:
-    strategy: ha
-app:
-  extends: base
-  stateful: true  
