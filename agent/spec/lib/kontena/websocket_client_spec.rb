@@ -646,9 +646,9 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#close!' do
       it 'closes the websocket client' do
-        expect(ws_client).to receive(:close).with(1000, "Terminated")
+        expect(ws_client).to receive(:close).with(1000, "Testing")
 
-        actor.close!
+        actor.close! reason: "Testing"
       end
     end
   end

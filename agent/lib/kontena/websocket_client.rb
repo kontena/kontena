@@ -400,10 +400,10 @@ module Kontena
 
     # Close the websocket connection
     # The connect_client => defer thread will exit once the server acknowledges the close
-    def close!
+    def close!(code: 1000, reason: nil)
       if ws = @ws
         info "close..."
-        ws.close(1000, "Terminated")
+        ws.close(code, reason)
       else
         debug "close: not connected"
       end
@@ -414,7 +414,7 @@ module Kontena
     # Actor terminated, disconnect
     # NOTE: the connect_client task will get Celluloid::TaskTerminated, and will not see the disconnect
     def finalize
-      close!
+      close! reason: "Terminated"
 
       info "terminated"
     end
