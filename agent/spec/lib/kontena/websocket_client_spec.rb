@@ -298,6 +298,27 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject.connected?).to be false
       end
 
+      it 'handles server websocket connection rejections' do
+        expect(ws_client).to receive(:connect)
+        expect(subject).to receive(:on_open)
+
+        expect(ws_client).to receive(:read) do |&block|
+          raise Kontena::Websocket::CloseError.new(4010, 'test version upgrade')
+        end
+        expect(subject).to receive(:on_close).with(4010, 'test version upgrade').and_call_original
+        expect(subject).to receive(:handle_invalid_version).and_call_original
+        expect(Kontena::Agent).to receive(:shutdown)
+        expect(subject).to receive(:closed!).and_call_original
+
+        expect(ws_client).to receive(:disconnect)
+        expect(subject).to_not receive(:reconnect!)
+
+        actor.connect_client(ws_client)
+
+        expect(actor.connected?).to be false
+        expect(actor.closed?).to be true
+      end
+
       it 'handles websocket close' do
         expect(ws_client).to receive(:connect)
         expect(subject).to receive(:on_open)

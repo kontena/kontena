@@ -266,6 +266,12 @@ module Kontena
       reconnect! unless closed?
     end
 
+    # Called from close! to prevent reconnect! after client close
+    # May also be called from on_close to prevent reconnect! after server close
+    def closed!
+      @closed = true
+    end
+
     # Called from RpcServer, does not crash the Actor on errors.
     #
     # @param [String, Array] msg
@@ -351,7 +357,7 @@ module Kontena
 
       case code
       when 4001
-        handle_invalid_token
+        handle_invalid_token(reason)
       when 4010
         handle_invalid_version(reason)
       when 4040, 4041
@@ -361,20 +367,22 @@ module Kontena
       end
     end
 
-    def handle_invalid_token
-      error 'master does not accept our token, shutting down ...'
-      Kontena::Agent.shutdown
+    def handle_invalid_token(reason)
+      shutdown "master does not accept our token: #{reason}"
     end
 
     def handle_invalid_version(reason)
-      agent_version = Kontena::Agent::VERSION
-      error "master does not accept our version (#{agent_version}): #{reason}"
-      Kontena::Agent.shutdown
+      shutdown "master does not accept our version (#{Kontena::Agent::VERSION}): #{reason}"
     end
 
     def handle_invalid_connection(reason)
-      error "master indicates that this agent should not reconnect: #{reason}"
+      shutdown "master indicates that this agent should not reconnect: #{reason}"
+    end
+
+    def shutdown(reason)
+      error "shutting down: #{reason}"
       Kontena::Agent.shutdown
+      closed! # prevent reconnect
     end
 
     # @param [Array] msg
@@ -407,7 +415,9 @@ module Kontena
     # Close the websocket connection
     # The connect_client => defer thread will exit once the server acknowledges the close
     def close!(code: 1000, reason: nil)
-      @closed = true
+      # prevent reconnects, even if not connected or ws.close fails
+      closed!
+
       if ws = @ws
         info "close..."
         ws.close(code, reason)
