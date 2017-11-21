@@ -169,6 +169,14 @@ module Kontena
   end
 end
 
+# Monkeypatching string to mimick 'colorize' gem
+class String
+  def colorize(color_sym)
+    ::Kontena.pastel.send(color_sym, self)
+  end
+end
+
+
 require 'retriable'
 Retriable.configure do |c|
   c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
