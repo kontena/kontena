@@ -112,8 +112,21 @@ module Kontena
       end
     end
 
+    # yield websocket client actor if exists and alive
+    #
+    def close_websocket_client(**options)
+      if websocket_client = Celluloid::Actor[:websocket_client]
+        websocket_client.close!(**options)
+      end
+    rescue => exc
+      error exc
+    end
+
     def handle_shutdown
       info "Shutting down..."
+
+      close_websocket_client reason: "Agent shutting down..."
+
       @supervisor.shutdown # shutdown all actors
       @write_pipe.close # let run! break and return
     end
