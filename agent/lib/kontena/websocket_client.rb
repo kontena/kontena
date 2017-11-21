@@ -46,6 +46,7 @@ module Kontena
       @ssl_hostname = ssl_hostname
 
       @connected = false
+      @closed = false
       @reconnect_attempt = 0
 
       if @node_token
@@ -65,6 +66,11 @@ module Kontena
     end
 
     # @return [Boolean]
+    def closed?
+      @closed
+    end
+
+    # @return [Boolean]
     def reconnecting?
       @reconnect_attempt > 0
     end
@@ -78,7 +84,7 @@ module Kontena
 
     def start
       after(CONNECT_INTERVAL) do
-        connect!
+        connect! unless closed?
       end
     end
 
@@ -105,7 +111,7 @@ module Kontena
       info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
 
       after(backoff) do
-        connect!
+        connect! unless closed?
       end
     end
 
@@ -147,7 +153,7 @@ module Kontena
 
     rescue => exc
       error exc
-      reconnect!
+      reconnect! unless closed?
     end
 
     # Connect the websocket client, and read messages.
@@ -257,7 +263,7 @@ module Kontena
       # any queued up send_message calls will fail
       publish('websocket:disconnected', nil)
 
-      reconnect!
+      reconnect! unless closed?
     end
 
     # Called from RpcServer, does not crash the Actor on errors.
@@ -401,6 +407,7 @@ module Kontena
     # Close the websocket connection
     # The connect_client => defer thread will exit once the server acknowledges the close
     def close!(code: 1000, reason: nil)
+      @closed = true
       if ws = @ws
         info "close..."
         ws.close(code, reason)

@@ -621,7 +621,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#disconnected!' do
       it "reconnects" do
-        expect(subject.wrapped_object).to receive(:reconnect!)
+        expect(subject).to receive(:reconnect!)
 
         subject.disconnected!
 
@@ -649,6 +649,35 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(ws_client).to receive(:close).with(1000, "Testing")
 
         actor.close! reason: "Testing"
+
+        expect(subject).to be_closed
+      end
+    end
+
+    context 'which is closed?' do
+      before do
+        expect(ws_client).to receive(:close)
+
+        actor.close!
+      end
+
+      describe '#disconnected!' do
+        it 'does not reconnect' do
+          expect(subject).to_not receive(:reconnect!)
+
+          actor.disconnected!
+
+          expect(subject).to_not be_connected
+        end
+      end
+
+      describe '#reconnect!' do
+        it 'does not connect' do
+          expect(subject).to receive(:reconnect_backoff).and_return(0)
+          expect(subject).to_not receive(:connect!)
+
+          actor.reconnect!
+        end
       end
     end
   end
