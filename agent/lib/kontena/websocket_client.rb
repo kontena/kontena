@@ -14,6 +14,8 @@ module Kontena
     include Celluloid::Notifications
     include Kontena::Logging
 
+    finalizer :finalize
+
     STRFTIME = '%F %T.%NZ'
 
     CONNECT_INTERVAL = 1.0
@@ -192,7 +194,7 @@ module Kontena
       disconnected!
 
     else
-      # impossible: agent closed connection?!
+      # agent closed connection after close!
       info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
       disconnected!
 
@@ -394,6 +396,27 @@ module Kontena
       else
         debug "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
       end
+    end
+
+    # Close the websocket connection
+    # The connect_client => defer thread will exit once the server acknowledges the close
+    def close!
+      if ws = @ws
+        info "close..."
+        ws.close(1000, "Terminated")
+      else
+        debug "close: not connected"
+      end
+    rescue RuntimeError => exc
+      error "close failed: #{exc}"
+    end
+
+    # Actor terminated, disconnect
+    # NOTE: the connect_client task will get Celluloid::TaskTerminated, and will not see the disconnect
+    def finalize
+      close!
+
+      info "terminated"
     end
   end
 end
