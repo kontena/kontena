@@ -74,9 +74,9 @@ module Kontena::Workers
 
     # Start streaming and processing after etcd is running
     def start
-      exclusive {
-        wait_until!("etcd running") { Actor[:etcd_launcher].running? }
+      wait_until!("etcd running") { Actor[:etcd_launcher].running? }
 
+      exclusive {
         start_streaming unless streaming?
         resume_processing
       }

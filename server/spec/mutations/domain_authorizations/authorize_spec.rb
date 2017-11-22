@@ -56,15 +56,17 @@ describe GridDomainAuthorizations::Authorize do
       }
 
       it 'sends verification request and creates new authorization' do
-        auth = double({dns01: double(
-          {
+        auth = double(
+          status: 'pending',
+          expires: Time.now + 300,
+          dns01: double(
             record_name: '_acme_challenge',
             record_type: 'TXT',
             record_content: '123456789',
             to_h: {}
-          })})
+          )
+        )
         expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
-
 
         subject.execute
         # Domain authorization is always inserted "fresh"
@@ -87,6 +89,7 @@ describe GridDomainAuthorizations::Authorize do
   end
 
   context 'tls-sni-01' do
+    let(:expires_at) { Time.now + 300 }
     let(:web) {
       GridService.create(grid: grid, name: 'web', image_name: 'web:latest')
     }
@@ -96,11 +99,15 @@ describe GridDomainAuthorizations::Authorize do
 
     it 'sends verification request and creates new authorization' do
       web
-      auth = double(tls_sni01: double(
-        certificate: double(to_pem: 'CERTIFICATE'),
-        private_key: double(to_pem: 'PRIVATE_KEY'),
-        to_h: {}
-      ))
+      auth = double(
+        status: 'pending',
+        expires: expires_at,
+        tls_sni01: double(
+          certificate: double(to_pem: 'CERTIFICATE'),
+          private_key: double(to_pem: 'PRIVATE_KEY'),
+          to_h: {}
+        ),
+      )
       expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
 
       subject.validate
@@ -109,18 +116,19 @@ describe GridDomainAuthorizations::Authorize do
       auth = grid.grid_domain_authorizations.find_by(domain: 'example.com')
       expect(auth.grid_service_deploy).not_to be_nil
       expect(auth.tls_sni_certificate).to eq('CERTIFICATEPRIVATE_KEY')
+      expect(auth.expires_at).to be > Time.now
+      expect(auth.status).to eq :deploying
     end
 
     it 'fails if LE gives no challenge' do
-        auth = double(tls_sni01: nil)
-        expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
+      auth = double(tls_sni01: nil)
+      expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
 
-        expect {
-          subject.execute
-          expect(subject.has_errors?).to be_truthy
-        }.not_to change{GridDomainAuthorization.count}
+      expect {
+        subject.execute
+        expect(subject.has_errors?).to be_truthy
+      }.not_to change{GridDomainAuthorization.count}
 
-      end
+    end
   end
-
 end

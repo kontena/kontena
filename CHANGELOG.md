@@ -1,6 +1,54 @@
 # Changelog
 
-## [1.4.0](https://github.com/kontena/kontena/releases/tag/v1.4.0.rc2) (2017-10-16)
+## [1.4.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.4.1.rc1) (2017-11-22)
+
+**Master & Agents:**
+
+* Fix server to only deploy pending/active domain authorization challenge certs (#2994)
+* Fix agent LogWorker to not exclusively block in start until websocket connected (#3069)
+* Fix performance issue in vault secrets listing (#3061)
+* Fix ping api to check that process is healthy (#3036)
+* Fix server websocket backend to not overwrite node labels on initial connection (#2989)
+* Fix server node connected events (#2995)
+* Fix server websocket exec error handling (#2912)
+* Fix server to omit container io.kontena.health_check.uri label for non-http health-check protocols (#3023)
+* Fix agent healthchecks to accept any HTTP 2xx response as healthy (#3006)
+* Fix POST /v1/grids/:grid/external_registries API error response (#3043)
+* Fix server RpcServer to be supervised and restart on crashes (#3037)
+* Allow configuring of Mongo ssl_verify and ssl_ca_cert through env (#3071)
+* Improve scheduler performance (#2921)
+* Server/Agent websocket client reconnect backoff (#2916)
+* Validate service env size limits (#2951)
+* Validate HostNode grid presence (#3018)
+* Add missing HostNode attributes to HostNodeSerializer (#3017)
+* Update mongo driver to 2.4.3 (#3048)
+* Kontena certificate import/export (#2988)
+* Mongo debug logging with DEBUG_MONGO=true (#3049)
+
+**CLI:**
+
+* Fix exec --tty for valid non-ASCII unicode input (#2900)
+* Fix variable interpolation in extended stack files (#2945)
+* Fix command exception handling with DEBUG (#2993)
+* Fix cloud token env variable (#3013)
+* Fix kontena external-registry add to use https:// by default (#3034)
+* Fix certificate show output formatting (#2966)
+* Fix DEBUG=true with Kontena::Errors::StandardError (#3024)
+* Fix crash in kontena external registry ls -q (#3051)
+* Enable anchor/aliases support in YAML parsing (#2771)
+* Add stack variables certificates resolver (#2990)
+* Upgrade tty-table dependency to 0.9.0 (#3015)
+* Add support for entrypoint in stack files (#2950)
+* Turn off debugging by using DEBUG=false (#2960)
+
+**Other:**
+
+* Add server API docs for the new certificates API (#3011)
+* Bump travis ruby to 2.4.2 (#2944)
+* Fix CLI specs to not give false positives on SystemExit (#3021)
+* Use bundle audit to check gem vulnerabilities (#3047)
+
+## [1.4.0](https://github.com/kontena/kontena/releases/tag/v1.4.0) (2017-10-16)
 
 ### Highlights
 
