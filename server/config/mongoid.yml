@@ -25,6 +25,7 @@ production:
         max_pool_size: 40
         write:
           w: 1
+        ssl_verify: <%= ENV['MONGODB_SSL_VERIFY'] || true %>
       uri: <%= ENV['MONGODB_URI'] || ENV['MONGOHQ_URL'] %>
   options:
     use_utc: true
