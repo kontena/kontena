@@ -26,6 +26,9 @@ production:
         write:
           w: 1
         ssl_verify: <%= ENV['MONGODB_SSL_VERIFY'] || true %>
+        <% if ENV['MONGODB_SSL_CA_CERT'] %>
+        ssl_ca_cert: <%= ENV['MONGODB_SSL_CA_CERT'] %>
+        <% end %>
       uri: <%= ENV['MONGODB_URI'] || ENV['MONGOHQ_URL'] %>
   options:
     use_utc: true
