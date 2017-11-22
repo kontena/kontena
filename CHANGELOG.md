@@ -40,7 +40,7 @@
 * Upgrade tty-table dependency to 0.9.0 (#3015)
 * Add support for entrypoint in stack files (#2950)
 * Turn off debugging by using DEBUG=false (#2960)
-*
+
 **Other:**
 
 * Add server API docs for the new certificates API (#3011)
