@@ -224,6 +224,11 @@ module Docker
       (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
     end
 
+    # @return [Boolean]
+    def health_check?
+      !!self.labels['io.kontena.health_check.uri']
+    end
+
     def reload
       @cached_json = nil
       cached_json
