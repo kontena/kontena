@@ -122,7 +122,7 @@ Grid can be only created by users with master_admin role.
 ### JSON Attributes
 
 Attribute        | Default          | Example  | Description
----------------- | ---------------- | ---------
+---------------- | ---------------- | --------- | ------------
 name             | (required)       | `"test"`    | user provided name
 initial_size     | (required)       | `3`         | Initial (minimum) number of nodes in the grid ([Grids / Initial Nodes](http://www.kontena.io/docs/using-kontena/grids.html#initial-nodes))
 token            | (generated)      | `"J6d...ArKg=="` |(optional) Use a fixed grid token instead of having the server generate a new one
