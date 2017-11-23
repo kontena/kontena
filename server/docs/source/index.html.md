@@ -1468,26 +1468,36 @@ Let's Encrypt domain authorization management for certificate handling.
 
 ```json
 {
-    "id": "e2e/kontena.io",
-    "domain": "kontena.io",
-	"status": "deploying",
-	"challenge": {
-		"token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
-		"uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
-		"type": "tls-sni-01"
-	},
-	"challenge_opts": null,
-	"authorization_type": "tls-sni-01",
-	"expires_at": "2017-11-13T09:28:35.454+00:00",
-	"linked_service": {
-		"id": "e2e/null/lb"
-	}
+  "id": "e2e/kontena.io",
+  "domain": "kontena.io",
+  "status": "deploying",
+  "challenge": {
+    "token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
+    "uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
+    "type": "tls-sni-01"
+  },
+  "challenge_opts": null,
+  "authorization_type": "tls-sni-01",
+  "expires_at": "2017-11-13T09:28:35.454+00:00",
+  "linked_service": {
+    "id": "e2e/null/lb"
+  }
 }
 ```
 
-`challenge_opts` are challenge type specific details. For example in `dns-01` challenges there will be the DNS TXT records details.
+Attribute | Description
+--------- | -----------
+id | Unique ID used for `/v1/domain_authorizations/...` API
+domain | Unique domain
+status | Current status, which can change dynamically (see below)
+challenge | Let's Encrypt domain authorization challenge details
+challenge_opts | Challenge type specific details, e.g. the DNS TXT records for `dns-01` challenges
+authorization_type | The domain authorization challenge type used to request verification
+expires_at | Timestamp for when the challenge expires, `null` if unknown
+linked_service | Optional linked Kontena Loadbalancer service for `tls-sni-01` challenges
 
-`status` can be any of the following:
+### Status values
+
 - `created`: authorization has been created, no firther actions yet taken
 - `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
 - `deploy_error`: The deployment of the linked service has errored out, more details can be found from the linked services event logs
@@ -1555,15 +1565,25 @@ Let's Encrypt certificate management.
 ```json
 {
    "id" : "my-grid/example.com",
+   "subject" : "example.com",
+   "valid_until" : "2017-12-14T13:34:00.000+00:00",
    "alt_names" : [
       "www.example.com",
       "test.example.com"
    ],
-   "subject" : "example.com",
-   "auto_renewable" : true,
-   "valid_until" : "2017-12-14T13:34:00.000+00:00"
+   "auto_renewable" : true
 }
 ```
+
+Attribute | Description
+--------- | -----------
+id | Unique ID used in the `/v1/certificates/...` API
+subject | Unique certificate Subject
+valid_until | Timestamp for when the certificate expires
+alt_names | Optional certificate subjectAltNames
+auto_renewable | Kontena will auto-renew the certificate before it expires
+
+Certificates are `auto_renewable` if all `subject` and `alt_names` domains have Let's Encrypt domain authorizations using `tls-sni-01` with a linked Kontena Load Balancer service.
 
 ## Register email to Let's Encrypt
 
