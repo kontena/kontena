@@ -1,7 +1,8 @@
-
-require 'colorize'
-require 'dotenv'
-Dotenv.load
+begin
+  require 'dotenv'
+  Dotenv.load
+rescue LoadError
+end
 
 VERSION = File.read('./VERSION').strip
 UBUNTU_IMAGE = 'kontena-ubuntu-build'
@@ -11,7 +12,7 @@ PKG_REV = ENV['PKG_REV'] || '1'
 namespace :release do
 
   def headline(text)
-    puts text.colorize(:yellow)
+    puts "\e[0;33m#{text}\e[0m"
   end
 
   task :setup => [:bump_version] do
