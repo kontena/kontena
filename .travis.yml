@@ -23,6 +23,7 @@ env:
     - DOCS_GA=UA-60024048-1
     - DOCS_HS=2126125
     - LOG_TARGET=/dev/null
+    - LOG_LEVEL=5
   matrix:
     - TEST_DIR=agent
     - TEST_DIR=cli
