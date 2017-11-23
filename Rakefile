@@ -2,7 +2,7 @@ begin
   require 'dotenv'
   Dotenv.load
 rescue LoadError
-  fail "Gem 'dotenv' not installed, .env not loaded" if File.exist?('.env')
+  abort "Gem 'dotenv' not installed, .env not loaded" if File.exist?('.env')
 end
 
 VERSION = File.read('./VERSION').strip
