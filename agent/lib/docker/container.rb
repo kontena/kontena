@@ -226,7 +226,7 @@ module Docker
 
     # @return [Boolean]
     def health_check?
-      !!self.labels['io.kontena.health_check.uri']
+      !!self.labels['io.kontena.health_check.protocol']
     end
 
     def reload
