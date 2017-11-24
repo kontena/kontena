@@ -1,9 +1,10 @@
 # Changelog
 
-## [1.4.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.4.1.rc1) (2017-11-22)
+## [1.4.1](https://github.com/kontena/kontena/releases/tag/v1.4.1) (2017-11-23)
 
 **Master & Agents:**
 
+* Fix agent to start container healthchecks for non-http protocols (#3080)
 * Fix server to only deploy pending/active domain authorization challenge certs (#2994)
 * Fix agent LogWorker to not exclusively block in start until websocket connected (#3069)
 * Fix performance issue in vault secrets listing (#3061)
@@ -47,6 +48,8 @@
 * Bump travis ruby to 2.4.2 (#2944)
 * Fix CLI specs to not give false positives on SystemExit (#3021)
 * Use bundle audit to check gem vulnerabilities (#3047)
+* Docs: Fix broken JSON Attributes table in index.html.md (#3078)
+* Docs: certificate, domain authz API JSON fields (#3077)
 
 ## [1.4.0](https://github.com/kontena/kontena/releases/tag/v1.4.0) (2017-10-16)
 
