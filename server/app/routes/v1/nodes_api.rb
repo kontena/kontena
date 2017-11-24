@@ -26,8 +26,50 @@ module V1
       r.on ':grid_name/:node_id' do |grid_name, node_id|
         validate_access_token
         require_current_user
-
         @node = load_grid_node(grid_name, node_id)
+        r.on 'token' do
+          halt_request(403, {error: 'Access denied'}) unless current_user.can_update?(@grid)
+
+          r.is do
+            # GET /v1/nodes/:grid/:node/token
+            r.get do
+              halt_request(404, {error: "Host node does not have a node token"}) unless @node.token
+
+              render('host_nodes/token')
+            end
+
+            # PUT /v1/nodes/:grid/:node/token
+            r.put do
+              data = parse_json_body
+              outcome = HostNodes::UpdateToken.run(
+                host_node: @node,
+                token: data['token'],
+                reset_connection: data['reset_connection'],
+              )
+              if outcome.success?
+                @node = outcome.result
+                response.status = 200
+                render('host_nodes/token')
+              else
+                halt_request(422, {error: outcome.errors.message})
+              end
+            end
+
+            r.delete do
+              data = parse_json_body
+              outcome = HostNodes::UpdateToken.run(
+                host_node: @node,
+                clear_token: true,
+                reset_connection: data['reset_connection'],
+              )
+              if outcome.success?
+                {}
+              else
+                halt_request(422, {error: outcome.errors.message})
+              end
+            end
+          end
+        end
 
         r.get do
           r.is do
@@ -36,16 +78,15 @@ module V1
 
           # GET /v1/nodes/:grid/:node/health
           r.on 'health' do
-            rpc_client = @node.rpc_client(10)
+            outcome = HostNodes::HealthCheck.run(host_node: @node)
 
-            begin
-              @etcd_health = rpc_client.request("/etcd/health")
-            rescue RpcClient::TimeoutError => error
-              # overlap with any agent-side errors
-              @etcd_health = {error: error.message}
+            if outcome.success?
+              @node_health = outcome.result
+
+              render('host_nodes/health')
+            else
+              halt_request(422, {error: outcome.errors.message})
             end
-
-            render('host_nodes/health')
           end
 
           # GET /v1/nodes/:grid/:node/stats
@@ -72,6 +113,7 @@ module V1
             data = parse_json_body
             params = { host_node: @node }
             params[:labels] = data['labels'] if data['labels']
+            params[:availability] = data['availability'] if data['availability']
             outcome = HostNodes::Update.run(params)
             if outcome.success?
               @node = outcome.result

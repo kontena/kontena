@@ -2,8 +2,6 @@ module Kontena
   module Callbacks
     class InviteSelfAfterDeploy < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create', 'master init_cloud'
 
       def cloud_user_data
@@ -25,6 +23,7 @@ module Kontena
       end
 
       def after
+        extend Kontena::Cli::Common
         return unless current_master
         return unless command.exit_code == 0
         return nil if command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
@@ -37,7 +36,7 @@ module Kontena
         end
 
         return nil unless invite_response
-        ENV["DEBUG"] && $stderr.puts("Got invite code: #{invite_response['invite_code']}")
+        logger.debug { "Got invite code: #{invite_response['invite_code']}" }
 
         success = spinner "Adding master_admin role for #{cloud_user_data[:email]}" do |spin|
           spin.fail! unless Kontena.run(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]])

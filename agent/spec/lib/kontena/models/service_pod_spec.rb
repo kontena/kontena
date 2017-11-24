@@ -195,6 +195,18 @@ describe Kontena::Models::ServicePod do
       expect(subject.service_config['Env'].last).to eq("SSL_CERTS=foo\nbar")
     end
 
+    it 'fails if the service env is too large' do
+      data['secrets'] = (1..128).map{|i|
+        {
+          'name' => "SSL_CERTS",
+          'type' => 'env',
+          'value' => 'A' * 1024,
+        }
+      }
+
+      expect{subject.service_config}.to raise_error(Kontena::Models::ServicePod::ConfigError, 'Env SSL_CERTS is too large at 131209 bytes')
+    end
+
     it 'does not include user if nil' do
       expect(subject.service_config['User']).to be_nil
     end
@@ -217,9 +229,18 @@ describe Kontena::Models::ServicePod do
       expect(service_config['Entrypoint']).to be_nil
     end
 
-    it 'does not include Entrypoint if nil' do
+    it 'includes Entrypoint if set' do
       data['entrypoint'] = ['/bin/sh']
       expect(service_config['Entrypoint']).to eq(['/bin/sh'])
+    end
+    
+    it 'does not include StopSignal if nil' do
+      expect(service_config['StopSignal']).to be_nil
+    end
+
+    it 'includes StopSignal if set' do
+      data['stop_signal'] = 'SIGQUIT'
+      expect(service_config['StopSignal']).to eq('SIGQUIT')
     end
 
     it 'includes empty ExposedPorts if no ports are defined' do
@@ -269,8 +290,8 @@ describe Kontena::Models::ServicePod do
   describe '#service_host_config' do
     let(:host_config) { subject.service_host_config }
 
-    it 'sets RestartPolicy' do
-      expect(host_config['RestartPolicy']['Name']).to eq('unless-stopped')
+    it 'does not set RestartPolicy' do
+      expect(host_config['RestartPolicy']).to be_nil
     end
 
     it 'does not include Binds if no volumes are defined' do
@@ -321,9 +342,24 @@ describe Kontena::Models::ServicePod do
       expect(host_config['CpuShares']).to eq(500)
     end
 
+    it 'does not include CpuQuota if cpus not defined' do
+      expect(host_config['CpuShares']).to be_nil
+    end
+
+    it 'includes CpuPeriod & CpuQuota if cpus is defined' do
+      data['cpus'] = 1.5
+      expect(host_config['CpuPeriod']).to eq(100_000)
+      expect(host_config['CpuQuota']).to eq(150_000)
+    end
+
     it 'sets PidMode if set' do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
+    end
+
+    it 'sets ShmSize if set' do
+      data['shm_size'] = 64 * 1024 * 1024
+      expect(host_config['ShmSize']).to eq(data['shm_size'])
     end
   end
 

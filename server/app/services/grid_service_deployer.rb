@@ -128,7 +128,7 @@ class GridServiceDeployer
 
   # @return [Integer]
   def instance_count
-    available_nodes = self.nodes .map { |n| n.clone } # we don't want to touch originals here
+    available_nodes = self.nodes.map { |n| n.clone } # we don't want to touch originals here
     max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     nodes = []
     max_instances.times do |i|

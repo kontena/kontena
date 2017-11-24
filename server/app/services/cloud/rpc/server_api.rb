@@ -73,7 +73,7 @@ module Cloud
         info "\"#{opts[:method].to_s.upcase} #{path}\" #{status} #{headers['Content-Length']} #{(end_time-start_time).round(4)}"
         result
       ensure
-        @access_token.destroy
+        @access_token.destroy if @access_token
       end
     end
   end

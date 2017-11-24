@@ -2,7 +2,7 @@
 describe GridServiceInstanceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
-  let(:node) { HostNode.create!(name: "node", node_id: SecureRandom.uuid,
+  let(:node) { grid.create_node!("node", node_id: SecureRandom.uuid,
     connected: true,
   ) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
@@ -59,7 +59,7 @@ describe GridServiceInstanceDeployer do
 
         expect(subject).to receive(:deploy_service_instance).once.with(GridServiceInstance, node, deploy_rev, 'running').and_call_original
         expect(subject).to receive(:notify_node).with(node)
-        expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is running on node /node at #{deploy_rev}", timeout: 300) do
+        expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is running on node test-grid/node at #{deploy_rev}", timeout: 300) do
           grid_service.grid_service_instances.first.set(rev: deploy_rev, state: 'running')
         end
 
@@ -114,7 +114,7 @@ describe GridServiceInstanceDeployer do
 
         expect(subject).to receive(:deploy_service_instance).once.with(GridServiceInstance, node, deploy_rev, 'running').and_call_original
         expect(subject).to receive(:notify_node).with(node)
-        expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is running on node /node at #{deploy_rev}", timeout: 300) do
+        expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is running on node test-grid/node at #{deploy_rev}", timeout: 300) do
           grid_service.grid_service_instances.first.set(rev: deploy_rev, state: 'running')
         end
 
@@ -134,7 +134,7 @@ describe GridServiceInstanceDeployer do
 
   context "With an existing deployed instance on a different host node" do
     let(:old_rev) { 1.hours.ago.utc.to_s }
-    let(:old_node) { HostNode.create!(name: "old-node", node_id: SecureRandom.uuid) }
+    let(:old_node) { grid.create_node!("old-node", node_id: SecureRandom.uuid) }
 
     let(:service_instance) {
       grid_service.grid_service_instances.create!(
@@ -171,7 +171,7 @@ describe GridServiceInstanceDeployer do
         expect(subject).to receive(:deploy_service_instance).once.with(service_instance, old_node, deploy_rev, 'stopped')
         expect(subject).to receive(:deploy_service_instance).once.with(service_instance, node, deploy_rev, 'running').and_call_original
         expect(subject).to receive(:notify_node).with(node)
-        expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is running on node /node at #{deploy_rev}", timeout: 300) do
+        expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is running on node test-grid/node at #{deploy_rev}", timeout: 300) do
           grid_service.grid_service_instances.first.set(rev: deploy_rev, state: 'running')
         end
 

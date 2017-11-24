@@ -1,10 +1,6 @@
-require_relative 'stacks_client'
-require_relative 'cli/common'
-require_relative 'cli/stacks/common'
-require 'yaml'
-require 'uri'
-
 module Kontena
+  autoload :StacksClient, 'kontena/stacks_client'
+
   class StacksCache
     class CachedStack
 
@@ -24,7 +20,7 @@ module Kontena
       end
 
       def load
-        YAML.safe_load(read)
+        ::YAML.safe_load(read, [], [], true, path)
       end
 
       def write(content)
@@ -59,6 +55,8 @@ module Kontena
     end
 
     class RegistryClientFactory
+      require 'kontena/cli/common'
+      require 'kontena/cli/stacks/common'
       include Kontena::Cli::Common
       include Kontena::Cli::Stacks::Common
     end
@@ -69,7 +67,7 @@ module Kontena
       end
 
       def dputs(msg)
-        ENV["DEBUG"] && $stderr.puts(msg)
+        Kontena.logger.debug { msg }
       end
 
       def cache(stack, version = nil)
@@ -79,7 +77,7 @@ module Kontena
         else
           dputs "Retrieving #{stack.stack}:#{stack.version} from registry"
           content = client.pull(stack.stack, stack.version)
-          yaml    = ::YAML.safe_load(content)
+          yaml    = ::YAML.safe_load(content, [], [], true, stack.stack)
           new_stack = CachedStack.new(yaml['stack'], yaml['version'])
           if new_stack.cached?
             dputs "Already cached"

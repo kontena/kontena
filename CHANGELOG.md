@@ -1,5 +1,130 @@
 # Changelog
 
+## [1.3.1](https://github.com/kontena/kontena/releases/tag/v1.3.1) (2017-06-16)
+
+**Master & Agents:**
+
+- Allow server port to be set via env (#2455)
+- Increase RpcClient timeouts from 2s to 5s (#2461)
+- Fix oauth2 api request body www-form decoding (#2485)
+
+**CLI:**
+
+- Fix plugin installation SafeYAML errors (#2462)
+- Fix exit code when plugin install fails (#2471)
+- Show an initializing node name as (initializing) instead of nil error in node list (#2478)
+- Add a "Getting started" banner to main command help (#2385)
+
+**Other:**
+
+- Tests: Upgrade agent test vagrant docker-compose to version 1.13 (#2463)
+- Tests: Update test kommando to fix missing bash failures (#2475)
+- Tests: Fix container specs to use quiet option and with proper regexp (#2467)
+- Tests: bundle update Gemfile.lock with kommando 0.1.2, safe_yaml changes (#2481)
+- Docs: Add capped collection size envs (#2464)
+- Docs: add nodes to summary (#2473)
+- Docs: fix upgrading major.major typo (#2472)
+- Master-dev: Bump mongoid pool size (#2477)
+
+## [1.3.0](https://github.com/kontena/kontena/releases/tag/v1.3.0) (2017-06-09)
+
+### Highlights
+
+This release upgrades the used MongoDB driver to a version which supports newer MongoDB release than 3.0. It essentially means that now there's support for using hosted (e.g. Mongo Atlas) services as Kontena Master database. And naturally, the newer mongoid and underlying db driver boosts the stability of the server.
+
+We've also added support for using Kontena CLI to open an interactive terminals into running service instances. This makes debugging and executing any maintenance scripts a lot easier.
+
+All CLI list commands such as `kontena node list` or `kontena service list` now accept `-q` or `--quiet` parameter for outputting only the identifying column of the list, such as node name or container ID. This makes it easier to pipe the output to other commands. For example: `kontena service ls -q|xargs -n1 kontena service show`.
+
+### Breaking changes
+
+CLI trusted-subnet command has been refactored to match same pattern with other commands to use the current grid automatically. If a user has written some scripts that utilize any of these subcommands, after this change they will simply fail due to `ERROR: too many arguments` and not corrupt any data until the extra grid parameter is removed from said scripts.
+
+`kontena service exec` command has changed the meaning of short `-i` option. Now it means `--interactive`, the new option for executing on specific instance is `--instance`. This change is done to comply with `docker exec -it` options which users are accustomed to use tp get interactive terminals into running containers.
+
+### Deprecations
+
+CLI `kontena app ...` commands have been now deprecated in favor of `kontena stack` commands.
+
+
+**Master & Agents:**
+
+- Fix agent env validation abort, defaults (#2302)
+- Refactor agent WeaveHelper to avoid unnecessary sync actor calls (#2207)
+- Validate service envs on server, simplify syntax for parsing/validation (#2315)
+- Stack stop and restart commands (#2299)
+- Fix server stack services sorting (#1980)
+- Upgrade to Mongoid 5.2 (#2257)
+- Don't crash VolumeManager if volume remove fails (#2343)
+- Serialize all pubsub payloads to avoid issues with dotted fields (#2342)
+- Improve mutations to return multiple errors for a field (#2058)
+- Notify nodes when volumes are removed (#2352)
+- Fix server HealthCheckWorker pubsub payload (#2361)
+- Wrap server MongoPubsub subscribe payload in a HashWithIndifferentAccess (#2357)
+- Do not split www-authenticate header to multiple lines (#2329)
+- Increase master authentication logging (#2367)
+- Cleanup leftover HostNode methods (#2326)
+- Remove unused agent Kontena::Pubsub class (#2337)
+- Fix websocket node connection plug, unplug races (#2144)
+- Destroy access_token only if not nil (#2375)
+- Fix server mutations validations regexps (#2325)
+- Add tracking if service embedded docs changes (#2377)
+- Update JsonPath gem (#2382)
+- Do not send Content-Type in AuthProvider GET requests (#2386)
+- Service and container exec interactive tty support (#2271)
+- Improve platform identification on the Kontena Cloud (#2388)
+- Add tty as separate option in container/service exec (#2412)
+- Fix auth api debug message (#2429)
+- Terminate ContainerHealthCheckWorker less brutally (#2440)
+- Render service links with qualified name (#2421)
+
+
+**CLI:**
+
+- Activate plugin gem and dependencies before loading the plugin (#2180)
+- Remove broken/dead code for cli ssh command parameter handling  (#2309)
+- Make trusted-subnet subcommands use the current_grid or --grid (#2294)
+- Stack stop and restart commands (#2299)
+- Exit with non-zero exit code when commands run other commands that fail  (#2209)
+- Replace implementation of "press any key" dialog (#2052)
+- Add deprecation flag for app commands (#2336)
+- Fix subcommand loading bug when running init-cloud (#2350)
+- Fix stack YAML reader exception with invalid port syntax (#2332)
+- Remote cloud login (#2331)
+- Make all "kontena XX list" commands accept -q (or --quiet) to only output the id column without header (#2327)
+- Increase MEM_MAX_LIMITS readability (#2341)
+- Allow stack registry read operations without cloud authentication (#2328)
+- CLI error and debug logging improvements (#2263)
+- Speed up CLI loading by reducing the number of explicitly loaded files (#2335)
+- Revert any_key_to_continue implementation (#2379)
+- Make kontena master ssh work without server.provider set (#2380)
+- Service instance resolver undefined local variable or method  (#2381)
+- Finetune header formatting on list commands (#2397)
+- Fix completions that got broken in 1.3.0rc (#2395)
+- Replace websocket-client-simple with embedded ws client (#2396)
+- Add yaml loading to error handling (#2402)
+- Fix master join command option forwarding to master login (#2394)
+- Fix cloud master update endpoint (#2422)
+- Add tty as separate option in container/service exec (#2412)
+- Fix typo in service exec ws close (#2432)
+- Fix include/extend in the master deploy wizard (#2405)
+- Added requires for excon and json to plugin_manager (#2420)
+- Fix error in exec commands when master url does not have a trailing slash (#2424)
+- Avoid missing constants by using autoload (#2425)
+- Add autoload for StringIO (#2443)
+- Fix init-cloud call args during deploy wizard (#2444)
+
+
+**Other:**
+
+- E2E tests: service_link resolver requires kontena stack validate --online (#2285)
+- Fix Bearer token header examples in docs (#2330)
+- Fix flaky vpn E2E specs (#2370)
+- fix broken e2e link spec (#2363)
+- Statsd exporting example was missing grid name (#2389)
+
+
+
 ## [1.2.2](https://github.com/kontena/kontena/releases/tag/v1.2.2) (2017-05-10)
 
 The 1.2.2 release fixes several issues in the 1.2 release, as well as some older issues.

@@ -9,6 +9,9 @@ describe '/v1/services/:id/event_logs' do
   let! :grid do
     Grid.create!(name: 'terminal-a')
   end
+  let(:node) do
+    grid.create_node!('node', node_id: 'a')
+  end
 
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
@@ -60,7 +63,6 @@ describe '/v1/services/:id/event_logs' do
 
   describe 'DELETE /:id' do
     it 'removes service instance' do
-      node = HostNode.create(grid: grid, node_id: 'a')
       instance = redis_service.grid_service_instances.create!(
         instance_number: 2,
         deploy_rev: Time.now.utc.to_s,

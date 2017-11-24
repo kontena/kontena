@@ -1,4 +1,5 @@
 require_relative 'rpc/container_handler'
+require_relative 'rpc/container_exec_handler'
 require_relative 'rpc/node_handler'
 require_relative 'rpc/node_service_pod_handler'
 
@@ -6,8 +7,15 @@ class RpcServer
   include Celluloid
   include Logging
 
+  QUEUE_SIZE = 1000
+
+  def self.queue
+    @queue ||= SizedQueue.new(QUEUE_SIZE)
+  end
+
   HANDLERS = {
     'containers' => Rpc::ContainerHandler,
+    'container_exec' => Rpc::ContainerExecHandler,
     'nodes' => Rpc::NodeHandler,
     'node_service_pods' => Rpc::NodeServicePodHandler,
     'node_volumes' => Rpc::NodeVolumeHandler
@@ -27,11 +35,13 @@ class RpcServer
   attr_reader :handlers
 
   # @param [SizedQueue] queue
-  def initialize(queue)
-    @queue = queue
+  def initialize(autostart: true)
+    @queue = self.class.queue
     @handlers = {}
     @counter = 0
     @processing = false
+
+    async.process! if autostart
   end
 
   def process!

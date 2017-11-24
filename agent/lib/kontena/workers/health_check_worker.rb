@@ -40,7 +40,7 @@ module Kontena::Workers
 
     # @param [Docker::Container] container
     def start_container_check(container)
-      return if container.nil? || container.labels['io.kontena.health_check.uri'].nil?
+      return unless container && container.health_check?
 
       exclusive {
         unless workers[container.id]
@@ -56,8 +56,7 @@ module Kontena::Workers
     def stop_container_check(container_id)
       worker = workers.delete(container_id)
       if worker
-        # we have to use kill because worker is blocked by log stream
-        Celluloid::Actor.kill(worker) if worker.alive?
+        worker.terminate if worker.alive?
       end
     end
 

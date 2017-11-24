@@ -8,3 +8,4 @@ build
 release
 *.pem
 vendor
+docs

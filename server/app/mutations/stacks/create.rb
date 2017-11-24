@@ -8,7 +8,11 @@ module Stacks
 
     required do
       model :grid, class: Grid
-      string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :name, matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
+    end
+
+    optional do
+      string :parent_name
     end
 
     def validate
@@ -44,7 +48,8 @@ module Stacks
     def execute
       attributes = self.inputs.clone
       grid = attributes.delete(:grid)
-      stack = Stack.create(name: self.name, grid: grid)
+      parent = attributes.delete(:parent_name)
+      stack = Stack.create(name: self.name, grid: grid, parent_name: parent)
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)

@@ -58,10 +58,7 @@ describe '/v1/volumes' do
   end
 
   let! :node do
-    HostNode.create!(
-      grid: grid,
-      name: 'node-1'
-    )
+    grid.create_node!('node-1')
   end
 
   describe 'GET /' do
@@ -165,6 +162,4 @@ describe '/v1/volumes' do
       }.not_to change{Volume.count}
     end
   end
-
-
 end

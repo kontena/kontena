@@ -39,6 +39,7 @@ class AuthProvider
   attr_accessor :token_post_content_type
   attr_accessor :userinfo_scope
   attr_accessor :userinfo_endpoint
+  attr_accessor :userinfo_requires_basic_auth
   attr_accessor :userinfo_username_jsonpath
   attr_accessor :userinfo_email_jsonpath
   attr_accessor :userinfo_user_id_jsonpath
@@ -46,6 +47,7 @@ class AuthProvider
   attr_accessor :cloud_api_url
   attr_accessor :ignore_invalid_ssl
   attr_accessor :provider_is_kontena
+  attr_accessor :uuid
 
   def self.instance
     new(Configuration.decrypt_all)
@@ -62,6 +64,7 @@ class AuthProvider
     @token_post_content_type = config['oauth2.token_post_content_type'] || 'application/json'
     @userinfo_scope = config['oauth2.userinfo_scope'] || 'user:email'
     @userinfo_endpoint = config['oauth2.userinfo_endpoint']
+    @userinfo_requires_basic_auth = config['oauth2.userinfo_requires_basic_auth'].to_s == 'true'
     @userinfo_username_jsonpath = config['oauth2.userinfo_username_jsonpath'] || '$..username;$..login'
     @userinfo_email_jsonpath = config['oauth2.userinfo_email_jsonpath'] || '$..email;$..emails;$..primary_email'
     @userinfo_user_id_jsonpath = config['oauth2.userinfo_user_id_jsonpath'] || '$..id;$..uid;$..userid,$..user_id'
@@ -69,6 +72,7 @@ class AuthProvider
     @cloud_api_url = config['cloud.api_url'] || 'https://cloud-api.kontena.io'
     @ignore_invalid_ssl = config['cloud.ignore_invalid_ssl'].to_s == 'true'
     @provider_is_kontena = config['cloud.provider_is_kontena'].to_s == "true"
+    @uuid = config['server.uuid']
   end
 
   def is_kontena?
@@ -98,7 +102,8 @@ class AuthProvider
       data: {
         attributes: {
           'redirect-uri' => callback_url,
-          'url'          => self.root_url
+          'url'          => self.root_url,
+          'uuid'         => self.uuid
         }
       }
     }
@@ -226,14 +231,14 @@ class AuthProvider
       client.force_basic_auth = true
     end
 
+    headers = { 'Accept' => 'application/json' }
+    headers['Content-Type'] = self.token_post_content_type unless token_method == :get
+
     response = client.request(
       token_method,
       self.token_endpoint,
       follow_redirect: false,
-      header: {
-        'Accept' => 'application/json',
-        'Content-Type' => self.token_post_content_type
-      },
+      header: headers,
       body: body,
       query: query
     )
@@ -266,14 +271,25 @@ class AuthProvider
     if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
+
+    if userinfo_requires_basic_auth
+      client.set_auth(nil, self.client_id, self.client_secret)
+      client.force_basic_auth = true
+      auth_header = {}
+    else
+      auth_header = { 'Authorization' => "Bearer #{access_token}" }
+    end
+
     response = client.request(
       :get,
       uri.to_s,
       header: {
-        'Accept' => 'application/json',
-        'Authorization' => "Bearer #{access_token}"
-      }
+        'Accept' => 'application/json'
+      }.merge(auth_header)
     )
+
+    client.set_auth(nil, nil, nil)
+    client.force_basic_auth = false
 
     result = {}
 

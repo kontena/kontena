@@ -3,5 +3,3 @@
 # Perform necessary kontena setup steps
 # before package is installed.
 #
-
-echo "You're about to install Kontena!"

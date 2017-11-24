@@ -3,8 +3,8 @@ module Volumes
 
     required do
       model :grid, class: Grid
-      string :scope, matches: /instance|stack|grid/
-      string :name , matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :scope, in: ['instance', 'stack', 'grid']
+      string :name , matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
       string :driver
     end
 
@@ -15,6 +15,9 @@ module Volumes
     def validate
       if self.grid.volumes.find_by(name: self.name)
         add_error(:name, :already_exists, "Volume with given name already exists")
+      end
+      if self.driver.include?(':')
+        add_error(:driver, :tag, "Driver version tag cannot be used")
       end
     end
 

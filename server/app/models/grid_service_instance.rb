@@ -24,4 +24,14 @@ class GridServiceInstance
   def self.has_node
     where(:host_node_id.ne => nil)
   end
+
+  # @return [String]
+  def hostname
+    self.grid_service.instance_hostname(self.instance_number)
+  end
+
+  # @return [String]
+  def domain
+    self.grid_service.domain
+  end
 end

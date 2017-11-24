@@ -62,7 +62,8 @@ module OAuth2Api
           user = current_user
         end
 
-        debug { "User authentication request for #{user.email} accepted, redirecting to auth provider" }
+        email =  !user.nil? ? user.email : 'anonymous'
+        debug { "User authentication request for #{email} accepted, redirecting to auth provider" }
 
         response.redirect(
           auth_provider.authorize_url(

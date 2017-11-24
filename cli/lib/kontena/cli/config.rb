@@ -1,8 +1,8 @@
 require 'ostruct'
 require 'singleton'
 require 'forwardable'
-require 'json'
 require 'logger'
+autoload :JSON, 'json'
 
 module Kontena
   module Cli
@@ -29,6 +29,7 @@ module Kontena
       attr_accessor :current_server
       attr_reader :current_account
 
+
       def self.reset_instance
         Singleton.send :__init__, self
         self
@@ -38,33 +39,53 @@ module Kontena
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'CONFIG'
+        @logger = Kontena.logger
         load_settings_from_env || load_settings_from_config_file
 
-        logger.debug "Configuration loaded with #{servers.count} servers."
-        logger.debug "Current master: #{current_server || '(not selected)'}"
-        logger.debug "Current grid: #{current_grid || '(not selected)'}"
+        debug { "Configuration loaded with #{servers.count} servers." }
+        debug { "Current master: #{current_server || '(not selected)'}" }
+        debug { "Current grid: #{current_grid || '(not selected)'}" }
+      end
+
+      def debug(&block)
+        Kontena.logger.add(Logger::DEBUG, nil, 'CONFIG', &block)
       end
 
       # Craft a regular looking configuration based on ENV variables
       def load_settings_from_env
+        load_cloud_settings_from_env
+        load_master_settings_from_env
+      end
+
+      def load_master_settings_from_env
         return nil unless ENV['KONTENA_URL']
-        logger.debug 'Loading configuration from ENV'
+
+        debug { 'Loading master configuration from ENV' }
         servers << Server.new(
           url: ENV['KONTENA_URL'],
           name: 'default',
-          token: Token.new(access_token: ENV['KONTENA_TOKEN'], parent_type: :master, parent_name: 'default'),
+          token: Token.new(
+            access_token: ENV['KONTENA_TOKEN'],
+            parent_type: :master, parent_name: 'default'
+          ),
           grid: ENV['KONTENA_GRID'],
           parent_type: :master,
           parent_name: 'default'
         )
-        accounts << Account.new(kontena_account_data.merge(
-          token: Token.new(access_token: ENV['KONTENA_CLOUD_TOKEN'], parent_type: :account, parent_name: 'default')
-        ))
 
         self.current_master  = 'default'
+      end
+
+      def load_cloud_settings_from_env
+        return unless ENV['KONTENA_CLOUD_TOKEN']
+
+        debug { 'Loading cloud configuration from ENV' }
+        accounts << Account.new(kontena_account_data.merge(
+          token: Token.new(
+            access_token: ENV['KONTENA_CLOUD_TOKEN'],
+            parent_type: :account, parent_name: 'default'
+          )
+        ))
         self.current_account = 'kontena'
       end
 
@@ -94,7 +115,7 @@ module Kontena
           if servers.find { |s| s['name'] == server.name}
             server.name = "#{server.name}-2"
             server.name.succ! until servers.find { |s| s['name'] == server.name }.nil?
-            logger.debug "Renamed server to #{server.name} because a duplicate was found in config"
+            debug { "Renamed server to #{server.name} because a duplicate was found in config" }
           end
           servers << server
         end
@@ -168,7 +189,7 @@ module Kontena
       #
       # @return [Hash]
       def default_settings
-        logger.debug 'Configuration file not found, using default settings.'
+        debug { 'Configuration file not found, using default settings.' }
         {
           'current_server' => 'default',
           'servers' => []
@@ -180,7 +201,7 @@ module Kontena
       # @param [Hash] settings_hash
       # @return [Hash] migrated_settings_hash
       def migrate_legacy_settings(settings)
-        logger.debug "Migrating from legacy style configuration"
+        debug { "Migrating from legacy style configuration" }
         {
           'current_server' => 'default',
           'servers' => [
@@ -197,7 +218,7 @@ module Kontena
       #
       # @return [Hash] config_data
       def parse_config_file
-        logger.debug "Loading configuration from #{config_filename}"
+        debug { "Loading configuration from #{config_filename}" }
         settings = JSON.load(File.read(config_filename))
         if settings.has_key?('server')
           settings = migrate_legacy_settings(settings)
@@ -448,7 +469,7 @@ module Kontena
       # Does nothing if using settings from environment variables.
       def write
         return nil if ENV['KONTENA_URL']
-        logger.debug "Writing configuration to #{config_filename}"
+        debug { "Writing configuration to #{config_filename}" }
         File.write(config_filename, to_json)
       end
 
@@ -503,6 +524,39 @@ module Kontena
         def initialize(*args)
           super
           @table[:account] ||= 'master'
+        end
+
+        def uri
+          @uri ||= URI.parse(self.url)
+        end
+
+        # @return [String, nil] path to ~/.kontena/certs/*.pem
+        def ssl_cert_path
+          path = File.join(Dir.home, '.kontena', 'certs', "#{self.uri.host}.pem")
+
+          if File.exist?(path) && File.readable?(path)
+            return path
+          else
+            return nil
+          end
+        end
+
+        # @return [OpenSSL::X509::Certificate, nil]
+        def ssl_cert
+          if path = self.ssl_cert_path
+            return OpenSSL::X509::Certificate.new(File.read(path))
+          else
+            return nil
+          end
+        end
+
+        # @return [String, nil] ssl cert subject CN=
+        def ssl_subject_cn
+          if cert = self.ssl_cert
+            return cert.subject.to_a.select{|name, data, type| name == 'CN' }.map{|name, data, type| data }.first
+          else
+            nil
+          end
         end
       end
 

@@ -25,4 +25,4 @@ bundle exec omnibus build kontena --log-level info
     --repo kontena \
     --tag $GIT_TAG_NAME \
     --name "kontena-cli-osx-${GIT_TAG_NAME}-amd64.pkg" \
-    --file pkg/kontena-*.pkg
+    --file pkg/kontena-cli-*.pkg

@@ -4,7 +4,7 @@ class GridService
   include Mongoid::Timestamps
   include EventStream
 
-  LB_IMAGE = 'kontena/lb:latest'
+  LB_IMAGE = 'kontena/lb'
 
   field :image_name, type: String
   field :labels, type: Hash, default: {}
@@ -12,14 +12,16 @@ class GridService
   field :name, type: String
   field :stateful, type: Boolean, default: false
   field :user, type: String
-  field :container_count, type: Fixnum, default: 1
+  field :container_count, type: Integer, default: 1
   field :cmd, type: Array
   field :entrypoint, type: String
   field :ports, type: Array, default: []
   field :env, type: Array, default: []
-  field :memory, type: Fixnum
-  field :memory_swap, type: Fixnum
-  field :cpu_shares, type: Fixnum
+  field :memory, type: Integer
+  field :memory_swap, type: Integer
+  field :shm_size, type: Integer
+  field :cpus, type: Float
+  field :cpu_shares, type: Integer
   field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
   field :privileged, type: Boolean
@@ -31,12 +33,15 @@ class GridService
   field :log_opts, type: Hash, default: {}
   field :devices, type: Array, default: []
   field :pid, type: String
+  field :read_only, type: Boolean, default: false
 
   field :deploy_requested_at, type: DateTime
   field :deployed_at, type: DateTime
-  field :revision, type: Fixnum, default: 1
-  field :stack_revision, type: Fixnum
+  field :revision, type: Integer, default: 1
+  field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
+  field :stop_signal, type: String
+  field :stop_grace_period, type: Fixnum, default: 10
 
   belongs_to :grid
   belongs_to :image
@@ -48,11 +53,13 @@ class GridService
   has_many :audit_logs
   has_many :grid_service_deploys, dependent: :destroy
   has_many :event_logs
+  has_many :grid_domain_authorizations
   has_and_belongs_to_many :networks
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
   embeds_many :service_volumes, class_name: 'ServiceVolume'
+  embeds_many :certificates, class_name: 'GridServiceCertificate'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
   embeds_one :health_check, class_name: 'GridServiceHealthCheck'
 
@@ -63,7 +70,7 @@ class GridService
   validates_presence_of :name, :image_name, :grid_id, :stack_id
   validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
 
-  scope :load_balancer, -> { where(image_name: LB_IMAGE) }
+  scope :load_balancer, -> { where(image_name: /^#{LB_IMAGE}:.+/) }
 
   before_validation :ensure_stack
 
@@ -93,6 +100,17 @@ class GridService
   # @return [Boolean]
   def default_stack?
     self.stack.try(:name).to_s == Stack::NULL_STACK
+  end
+
+  # @param [Integer] instance_number
+  # @return [String]
+  def instance_hostname(instance_number)
+    "#{self.name}-#{instance_number}"
+  end
+
+  # @return [String]
+  def domain
+    self.stack.domain
   end
 
   # @param [String] state
@@ -251,10 +269,10 @@ class GridService
   # @return [Boolean]
   def depending_on_other_services?
     if self.affinity
-      if self.affinity.any?{|a| a.match(/^service(!=|==).+/)}
+      if self.affinity.any?{|a| a.match(/\Aservice(!=|==).+/)}
         return true
       end
-      if self.affinity.any?{|a| a.match(/^container(!=|==).+/)}
+      if self.affinity.any?{|a| a.match(/\Acontainer(!=|==).+/)}
         return true
       end
     end
@@ -263,19 +281,20 @@ class GridService
       return true if self.volumes_from.size > 0
     end
 
-    return true if self.net.to_s.match(/^container:.+/)
+    return true if self.net.to_s.match(/\Acontainer:.+/)
 
     false
   end
 
   def health_status
     healthy = 0
-
+    unhealthy = 0
     self.containers.each do |c|
       healthy += 1 if c.health_status == 'healthy'
+      unhealthy += 1 if c.health_status == 'unhealthy'
     end
 
-    {healthy: healthy, total: self.containers.count}
+    {healthy: healthy, unhealthy: unhealthy, total: self.containers.count}
   end
 
   def ensure_stack

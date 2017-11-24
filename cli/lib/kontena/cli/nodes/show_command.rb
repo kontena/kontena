@@ -4,21 +4,22 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::GridOptions
     include Kontena::Cli::BytesHelper
 
-    parameter "NODE_ID", "Node id"
+    parameter "NODE", "Node name"
 
     def execute
       require_api_url
       require_current_grid
       token = require_token
 
-      node = client(token).get("nodes/#{current_grid}/#{node_id}")
-      puts "#{node['name']}:"
-      puts "  id: #{node['id']}"
+      node = client(token).get("nodes/#{current_grid}/#{self.node}")
+      puts "#{node['id']}:"
+      puts "  id: #{node['node_id']}"
       puts "  agent version: #{node['agent_version']}"
       puts "  docker version: #{node['docker_version']}"
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"
-      puts "  last connect: #{node['updated_at']}"
+      puts "  last connect: #{node['connected_at']}"
       puts "  last seen: #{node['last_seen_at']}"
+      puts "  availability: #{node['availability']}"
       puts "  public ip: #{node['public_ip']}"
       puts "  private ip: #{node['private_ip']}"
       puts "  overlay ip: #{node['overlay_ip']}"
@@ -43,9 +44,10 @@ module Kontena::Cli::Nodes
         mem_used = mem['used'] - (mem['cached'] + mem['buffers'])
         puts "    memory: #{to_gigabytes(mem_used, 2)} of #{to_gigabytes(mem['total'], 2)} GB"
       end
-      if node['resource_usage']['filesystem']
+      fs = node.dig('resource_usage','filesystem')
+      if fs
         puts "    filesystem:"
-        node['resource_usage']['filesystem'].each do |filesystem|
+        fs.each do |filesystem|
           puts "      - #{filesystem['name']}: #{to_gigabytes(filesystem['used'], 2)} of #{to_gigabytes(filesystem['total'], 2)} GB"
         end
       end

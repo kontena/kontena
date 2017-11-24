@@ -20,7 +20,7 @@ module Rpc
     end
 
     def driver
-      object.volume.driver
+      object.driver
     end
 
     def driver_opts

@@ -29,7 +29,10 @@ module Kontena
       end
     end
 
+    exclusive :handle_notification
+
     ##
+    # @param ws_client [Kontena::WebsocketClient] celluloid actor proxy
     # @param [Array] message msgpack-rpc request array
     # @return [Array]
     def handle_request(ws_client, message)
@@ -56,7 +59,7 @@ module Kontena
     # @param [WebsocketClient] ws_client
     # @param [Array, Hash] msg
     def send_message(ws_client, msg)
-      ws_client.send_message(MessagePack.dump(msg).bytes)
+      ws_client.async.send_message(MessagePack.dump(msg).bytes)
     end
 
     ##

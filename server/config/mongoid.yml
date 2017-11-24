@@ -2,6 +2,8 @@ development:
   clients:
     default:
       uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_development' %>
+      options:
+        max_pool_size: 25
   options:
     use_utc: true
     raise_not_found_error: false
@@ -11,8 +13,6 @@ test:
       uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_test' %>
       options:
         max_pool_size: 25
-        read: 
-          mode: :primary
         write:
           w: 1
   options:
@@ -23,10 +23,12 @@ production:
     default:
       options:
         max_pool_size: 40
-        read: 
-          mode: :primary
         write:
           w: 1
+        ssl_verify: <%= ENV['MONGODB_SSL_VERIFY'] || true %>
+        <% if ENV['MONGODB_SSL_CA_CERT'] %>
+        ssl_ca_cert: <%= ENV['MONGODB_SSL_CA_CERT'] %>
+        <% end %>
       uri: <%= ENV['MONGODB_URI'] || ENV['MONGOHQ_URL'] %>
   options:
     use_utc: true

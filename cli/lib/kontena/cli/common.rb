@@ -1,26 +1,47 @@
-require 'pastel'
-require 'uri'
-require 'io/console'
-
-require 'kontena/cli/config'
-require 'kontena/cli/spinner'
-require 'kontena/cli/table_generator'
 require 'forwardable'
+require 'kontena_cli'
 
 module Kontena
+  autoload :Client, 'kontena/client'
+
   module Cli
+    autoload :ShellSpinner, 'kontena/cli/spinner'
+    autoload :Spinner, 'kontena/cli/spinner'
+    autoload :Config, 'kontena/cli/config'
+
     module Common
       extend Forwardable
 
-      def_delegators :Kontena, :pastel, :prompt
-      def_delegator Kontena::Cli::Spinner, :spin, :spinner
+      def_delegators :prompt, :ask, :yes?
+      def_delegators :config,
+        :current_grid=, :require_current_grid, :current_master,
+        :current_master=, :require_current_master, :require_current_account,
+        :current_account
+      def_delegator :config, :config_filename, :settings_filename
+      def_delegator :client, :server_version, :api_url_version
 
       def logger
-        return @logger if @logger
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = self.class.name
-        @logger
+        Kontena.logger
+      end
+
+      def prompt
+        Kontena.prompt
+      end
+
+      def pastel
+        Kontena.pastel
+      end
+
+      def spinner(msg, &block)
+         Kontena::Cli::Spinner.spin(msg, &block)
+      end
+
+      def config
+        Kontena::Cli::Config.instance
+      end
+
+      def debug?
+        Kontena.debug?
       end
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
@@ -83,7 +104,7 @@ module Kontena
       def vputs(msg = nil)
         if running_verbose?
           puts msg
-        elsif ENV["DEBUG"] && msg
+        elsif debug? && msg
           logger.debug msg
         end
       end
@@ -100,6 +121,24 @@ module Kontena
         end
       end
 
+      # Output a message like: "> Reading foofoo .."
+      # @param message [String] the message to display
+      # @param dots [TrueClass,FalseClass] set to false if you don't want to add ".." after the message
+      def caret(msg, dots: true)
+        puts "#{pastel.green('>')} #{msg}#{" #{pastel.green('..')}" if dots}"
+      end
+
+      # Run a spinner with a message for the block if a truthy value or a proc returns true.
+      # @example
+      #   spin_if(proc { prompt.yes?("for real?") }, "Doing as requested") do
+      #     # doing stuff
+      #   end
+      #   spin_if(a == 1, "Value of 'a' is 1, so let's do this") do
+      #     # doing stuff
+      #   end
+      # @param obj_or_proc [Object,Proc] something that responds to .call or is truthy/falsey
+      # @param message [String] the message to display
+      # @return anything the block returns
       def spin_if(obj_or_proc, message, &block)
         if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
           spinner(message, &block)
@@ -128,10 +167,7 @@ module Kontena
         $stderr.puts " [#{error}] #{msg}"
         exit code
       end
-
-      def config
-        Kontena::Cli::Config.instance
-      end
+      module_function :exit_with_error
 
       def require_api_url
         config.require_current_master.url
@@ -156,23 +192,14 @@ module Kontena
         return unless server.token
         return unless server.token.refresh_token
         return if server.token.expired?
-        client = Kontena::Client.new(server.url, server.token)
+        client = Kontena::Client.new(server.url, server.token,
+          ssl_cert_path: server.ssl_cert_path,
+          ssl_subject_cn: server.ssl_subject_cn,
+        )
         logger.debug "Trying to invalidate refresh token on #{server.name}"
         client.refresh_token
       rescue => ex
         logger.debug "Refreshing failed: #{ex.class.name} : #{ex.message}"
-      end
-
-      def require_current_master
-        config.require_current_master
-      end
-
-      def require_current_account
-        config.require_current_account
-      end
-
-      def current_account
-        config.current_account
       end
 
       def kontena_account
@@ -186,10 +213,6 @@ module Kontena
         true
       end
 
-      def api_url_version
-        client.server_version
-      end
-
       def cloud_client
         @cloud_client ||= Kontena::Client.new(kontena_account.url, kontena_account.token, prefix: '/')
       end
@@ -199,13 +222,17 @@ module Kontena
       end
 
       def client(token = nil, api_url = nil)
+        return @client if @client
+
         if token.kind_of?(String)
           token = Kontena::Cli::Config::Token.new(access_token: token)
         end
 
-        @client ||= Kontena::Client.new(
+        @client = Kontena::Client.new(
           api_url || require_current_master.url,
-          token || require_current_master.token
+          token || require_current_master.token,
+          ssl_cert_path: require_current_master.ssl_cert_path,
+          ssl_subject_cn: require_current_master.ssl_subject_cn,
         )
       end
 
@@ -213,24 +240,8 @@ module Kontena
         @client = nil
       end
 
-      def settings_filename
-        config.config_filename
-      end
-
-      def settings
-        config
-      end
-
       def api_url
         config.require_current_master.url
-      end
-
-      def current_grid=(grid)
-        config.current_grid=(grid)
-      end
-
-      def require_current_grid
-        config.require_current_grid
       end
 
       def clear_current_grid
@@ -246,33 +257,17 @@ module Kontena
         config.find_server_index(require_current_master.name)
       end
 
-      def current_master
-        config.current_master
-      end
-
-      def current_master=(master_alias)
-        config.current_master = master_alias
-      end
-
       def error(message = "Error")
         prompt.error(message)
         exit(1)
-      end
-
-      def ask(question = "")
-        prompt.ask(question)
-      end
-
-      def yes?(question = "")
-        prompt.yes?(question)
       end
 
       def confirm_command(name, message = nil)
         if self.respond_to?(:force?) && self.force?
           return
         end
-        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts message if message
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
         ask("Enter '#{name}' to confirm: ") == name || error("Confirmation did not match #{name}. Aborted command.")
@@ -310,7 +305,7 @@ module Kontena
         return nil if running_silent?
         return nil unless $stdout.tty?
         return any_key_to_continue_with_timeout(timeout) if timeout
-        prompt.keypress("Press any key to continue or ctrl-c to cancel..")
+        prompt.keypress("Press any key to continue or ctrl-c to cancel.. ")
       end
 
       def display_account_login_info
@@ -359,6 +354,7 @@ module Kontena
       def display_logo
         puts File.read(File.expand_path('../../../../LOGO', __FILE__))
       end
+      module_function :display_logo
     end
   end
 end
