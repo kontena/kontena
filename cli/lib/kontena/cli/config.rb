@@ -60,20 +60,20 @@ module Kontena
       def load_master_settings_from_env
         return nil unless ENV['KONTENA_URL']
 
+        master_name = ENV['KONTENA_MASTER'] || 'default'
+
         debug { 'Loading master configuration from ENV' }
         servers << Server.new(
           url: ENV['KONTENA_URL'],
-          name: 'default',
+          name: master_name,
           token: Token.new(
             access_token: ENV['KONTENA_TOKEN'],
-            parent_type: :master, parent_name: 'default'
+            parent_type: :master, parent_name: master_name
           ),
           grid: ENV['KONTENA_GRID'],
-          parent_type: :master,
-          parent_name: 'default'
         )
 
-        self.current_master  = 'default'
+        self.current_master  = master_name
       end
 
       def load_cloud_settings_from_env
