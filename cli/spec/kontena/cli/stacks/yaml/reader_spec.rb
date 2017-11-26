@@ -257,6 +257,16 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         subject.variables.option('tag').to[:env] = "TAG"
         expect{subject.execute}.not_to raise_error
       end
+
+      it 'considers variables declared when they are sent in via the values: hash' do
+        instance = described_class.new(YAML.dump('stack' => 'foo/foo', 'services' => { 'foo' => { 'environment' => ["BAR=${baz}"] } } ))
+        expect(instance.execute(values: { baz: 'foo' })).to match hash_including(
+          'variables' => hash_including('baz' => 'foo'),
+          'services' => array_including(
+            hash_including('name' => 'foo', 'env' => array_including('BAR=foo'))
+          )
+        )
+      end
     end
 
     context 'environment variables' do

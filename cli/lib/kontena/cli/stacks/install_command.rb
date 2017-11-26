@@ -19,14 +19,19 @@ module Kontena::Cli::Stacks
 
     option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
+    option '--dry-run', :flag, "Simulate install"
 
     requires_current_master
     requires_current_master_token
 
+    # @return [Hash] yaml reader execute result hash
     def execute
       set_env_variables(stack_name, current_grid)
 
-      install_dependencies unless skip_dependencies?
+      unless skip_dependencies?
+        values_from_dependencies = install_dependencies
+        values_from_installed_stacks.merge!(values_from_dependencies)
+      end
 
       stack # runs validations
 
@@ -36,12 +41,17 @@ module Kontena::Cli::Stacks
       dump_variables if values_to
 
       create_stack
+
       deploy_stack if deploy?
+
+      stack
     end
 
+    # @return [Hash{String => Hash}] A hash of hashes, first level key is dependent stack name, second level is variable name.
     def install_dependencies
       dependencies = loader.dependencies
-      return if dependencies.nil?
+      result = {}
+      return result if dependencies.nil?
       dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency['name']}"
         caret "Installing dependency #{pastel.cyan(dependency['stack'])} as #{pastel.cyan(target_name)}"
@@ -51,21 +61,33 @@ module Kontena::Cli::Stacks
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 
+        cmd << '--dry-run' if dry_run?
+
         cmd << '--no-deploy' unless deploy?
 
         cmd << dependency['stack']
-        Kontena.run!(cmd)
+        dependency_result = Kontena.run!(cmd)
+        dependency_result_variables = dependency_result['variables'] || {}
+        dependency_result_variables.each do |key, value|
+          result[dependency['name'] + '.' + key] = value
+        end
       end
+      result
     end
 
     def create_stack
+      return if dry_run?
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         client.post("grids/#{current_grid}/stacks", stack)
       end
     end
 
     def deploy_stack
-      Kontena.run!(['stack', 'deploy', stack['name']])
+      if dry_run?
+        caret "Stack #{stack['name']} deploy would be triggered", dots: false
+      else
+        Kontena.run!(['stack', 'deploy', stack['name']])
+      end
     end
   end
 end
