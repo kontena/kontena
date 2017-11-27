@@ -77,8 +77,6 @@ module Kontena
       end
 
       def load_cloud_settings_from_env
-        return unless ENV['KONTENA_CLOUD_TOKEN']
-
         debug { 'Loading cloud configuration from ENV' }
         accounts << Account.new(kontena_account_data.merge(
           token: Token.new(
