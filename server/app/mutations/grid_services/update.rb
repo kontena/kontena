@@ -1,8 +1,10 @@
 require_relative 'common'
+require_relative 'helpers'
 
 module GridServices
   class Update < Mutations::Command
     include Common
+    include Helpers
     include Logging
     include Duration
 
@@ -14,6 +16,7 @@ module GridServices
 
     optional do
       string :image
+      boolean :force
     end
 
     def name
@@ -45,15 +48,6 @@ module GridServices
       else
         validate_volumes()
       end
-    end
-
-    # List changed fields of model
-    # @param document [Mongoid::Document]
-    # @return [String] field, embedded{field}
-    def changed(document)
-      (document.changed + document._children.select{|child| child.changed? }.map { |child|
-        "#{child.metadata_name.to_s}{#{child.changed.join(", ")}}"
-      }).join(", ")
     end
 
     def execute
@@ -116,19 +110,9 @@ module GridServices
         embeds_changed ||= attributes[:certificates] != self.grid_service.certificates.to_a
       end
 
-
       grid_service.attributes = attributes
 
-      if grid_service.changed? || embeds_changed
-        info "updating service #{grid_service.to_path} with changes: #{changed(grid_service)}"
-        grid_service.revision += 1
-      else
-        debug "not updating service #{grid_service.to_path} without changes"
-      end
-
-      grid_service.save
-
-      grid_service
+      update_grid_service(grid_service, force: embeds_changed || self.force)
     end
 
     # @param [Array<String>] envs

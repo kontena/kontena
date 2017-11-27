@@ -77,7 +77,9 @@ class GridScheduler
 
   # @param [GridService] service
   def force_service_update(service)
-    service.set(updated_at: Time.now)
+    GridServices::Update.run!(grid_service: service,
+      force: true,
+    )
   end
 
   # @param [GridService] service
@@ -107,7 +109,7 @@ class GridScheduler
   # @param [GridService] service
   def reschedule_service(service)
     info "rescheduling service #{service.to_path}"
-    GridServiceDeploy.create(grid_service: service)
+    GridServices::Deploy.run!(grid_service: service)
   end
 
   # @param [String] name
