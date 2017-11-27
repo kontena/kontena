@@ -115,10 +115,6 @@ class Container
     self.status == 'deleted'
   end
 
-  def up_to_date?
-    self.image_version == self.grid_service.image.image_id && self.created_at > self.grid_service.updated_at
-  end
-
   # @param [String] status
   def set_health_status(status)
     health_status_changed = self.health_status != status
