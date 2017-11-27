@@ -58,6 +58,7 @@ class GridScheduler
   # @param [GridService] service
   # @return [Boolean]
   def lagging_behind?(service)
+    # TODO: check service.revision vs service_instance.service_revision instead?
     return true if service.deployed_at && service.updated_at > service.deployed_at
 
     false
