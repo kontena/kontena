@@ -17,8 +17,6 @@ module Kontena::Workers
     include Kontena::Helpers::WaitHelper
     include Kontena::Helpers::PortHelper
 
-    CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.0) # seconds
-
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed, :hook_manager
 
