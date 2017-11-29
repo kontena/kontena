@@ -97,6 +97,7 @@ describe MongoPubsub, :celluloid => true do
       sub2.terminate
 
       described_class.publish('test', nil)
+      sleep 0.1
       GC.start
 
       thread_list = Thread.list
@@ -106,7 +107,9 @@ describe MongoPubsub, :celluloid => true do
       sub1.terminate
       sub2.terminate
 
+      # XXX: the Thread.list tends to show some 'dead' threads still hanging around immediately after the terminate
       described_class.publish('test', nil)
+      sleep 0.1
       GC.start
 
       expect(Thread.list).to eq thread_list
