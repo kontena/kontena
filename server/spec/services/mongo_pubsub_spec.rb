@@ -99,7 +99,7 @@ describe MongoPubsub, :celluloid => true do
       MongoPubsub.actor.inspect # ping to allow subscriptions to terminate
       GC.start
 
-      thread_list = Thread.list
+      thread_list = Thread.list.select{|t| t.alive? }
 
       sub1 = described_class.subscribe('channel1') {|msg| }
       sub2 = described_class.subscribe('channel1') {|msg| }
@@ -109,7 +109,7 @@ describe MongoPubsub, :celluloid => true do
       MongoPubsub.actor.inspect # ping to allow subscriptions to terminate
       GC.start
 
-      expect(Thread.list).to eq thread_list
+      expect(Thread.list.select{|t| t.alive? }).to eq thread_list
     end
 
     it 'should perform', performance: true do
