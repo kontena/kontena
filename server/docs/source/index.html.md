@@ -122,7 +122,7 @@ Grid can be only created by users with master_admin role.
 ### JSON Attributes
 
 Attribute        | Default          | Example  | Description
----------------- | ---------------- | ---------
+---------------- | ---------------- | --------- | ------------
 name             | (required)       | `"test"`    | user provided name
 initial_size     | (required)       | `3`         | Initial (minimum) number of nodes in the grid ([Grids / Initial Nodes](http://www.kontena.io/docs/using-kontena/grids.html#initial-nodes))
 token            | (generated)      | `"J6d...ArKg=="` |(optional) Use a fixed grid token instead of having the server generate a new one
@@ -1478,6 +1478,7 @@ Let's Encrypt domain authorization management for certificate handling.
 	},
 	"challenge_opts": null,
 	"authorization_type": "tls-sni-01",
+	"expires_at": "2017-11-13T09:28:35.454+00:00",
 	"linked_service": {
 		"id": "e2e/null/lb"
 	}
@@ -1490,6 +1491,7 @@ Let's Encrypt domain authorization management for certificate handling.
 - `created`: authorization has been created, no firther actions yet taken
 - `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
 - `deploy_error`: The deployment of the linked service has errored out, more details can be found from the linked services event logs
+- `expired`: The domain authorization can no longer be used to request a certificate, the domain must be re-authorized
 - `requested`: Authorization has been requested from Let's Encrypt
 - `validated`: Let's Encrypt has succesfully validated the challenge
 - `error`: Error has happened in the validation, re-authorization should be done
