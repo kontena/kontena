@@ -122,13 +122,27 @@ module Kontena::Cli::Grids
       def self.included(base)
         base.option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
         base.option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
-        base.option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
+        base.option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder" do |log_forwarder|
+          if log_forwarder == 'none'
+            warn "[DEPRECATED] --log-forwarder none will be replaced with --no-log-forwarder"
+          end
+          log_forwarder
+        end
+        base.option "--no-log-forwarder", :flag, "Disable log forwarding"
         base.option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
       end
 
       def validate_log_opts
-        if !log_opt_list.empty? && log_forwarder.nil?
+        if !log_opt_list.empty? && (log_forwarder.nil? || no_log_forwarder?)
           raise Kontena::Errors::StandardError.new(1, "Need to specify --log-forwarder when using --log-opt")
+        end
+
+        if no_log_forwarder?
+          if log_forwarder && log_forwarder != "none"
+            exit_with_error "Can't use --log-forwarder and --no-log-forwarder together"
+          else
+            self.log_forwarder = "none"
+          end
         end
       end
 
