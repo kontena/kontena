@@ -11,9 +11,17 @@ module Kontena::Cli::Master::Token
     requires_current_master
     requires_current_master_token
 
+    option '--id', :flag, "Only output access token id", hidden: true
+
     def execute
       data = client.get("/oauth2/tokens/#{token_or_id}")
       output = token_data_to_hash(data)
+
+      if id?
+        puts output[:id]
+        return
+      end
+
       output.each do |key, value|
         puts "%26.26s : %s" % [key, value]
       end
