@@ -1,4 +1,15 @@
 module Shell
+  class Error < StandardError
+    def initialize(cmd, code, output)
+      @cmd = cmd
+      @code = code
+      @output = output
+    end
+
+    def message
+      "command failed with code #{@code}: #{@cmd}\n#{@output}"
+    end
+  end
 
   # @param [String] cmd
   # @param [Hash] opts
@@ -6,6 +17,16 @@ module Shell
   def run(cmd, opts = {})
     opts[:output] = debug? unless opts.has_key?(:output)
     Kommando.run(cmd, opts)
+  end
+
+  # @param [String] cmd
+  # @param [Hash] opts
+  # @raise [Error]
+  # @return [Kommando]
+  def run!(cmd, **opts)
+    k = run(cmd, **opts)
+    raise Error.new(cmd, k.code, k.out) if k.code != 0
+    return k
   end
 
   # @param [String] cmd
