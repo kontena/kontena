@@ -58,12 +58,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['cmd']).to eq(data['command'].split(' '))
       end
 
-      it 'does not return cmd if not set' do
+      it 'returns array if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result.has_key?('cmd')).to be_falsey
+        expect(result['cmd']).to eq([])
       end
     end
 
@@ -99,12 +99,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['user']).to eq('user')
       end
 
-      it 'does not return user if not set' do
+      it 'returns nil if user not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result.has_key?('user')).to be_falsey
+        expect(result['user']).to be_nil
       end
     end
 
@@ -158,12 +158,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['privileged']).to eq(false)
       end
 
-      it 'does not return privileged if not set' do
+      it 'returns false if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result['privileged']).to be_nil
+        expect(result['privileged']).to be_falsey
       end
     end
 
@@ -179,12 +179,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['cap_add']).to eq(data['cap_add'])
       end
 
-      it 'does not return cap_add if not set' do
+      it 'returns empty array if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result['cap_add']).to be_nil
+        expect(result['cap_add']).to eq([])
       end
     end
 
@@ -200,12 +200,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['cap_drop']).to eq(data['cap_drop'])
       end
 
-      it 'does not return cap_drop if not set' do
+      it 'returns empty array if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result['cap_drop']).to be_nil
+        expect(result['cap_drop']).to eq([])
       end
     end
 
@@ -219,7 +219,7 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['net']).to eq('host')
       end
 
-      it 'does not return pid if not set' do
+      it 'returns nil if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
@@ -238,7 +238,7 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['pid']).to eq('host')
       end
 
-      it 'does not return pid if not set' do
+      it 'returns nil if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
@@ -257,7 +257,7 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['log_driver']).to eq('syslog')
       end
 
-      it 'does not return log_driver if not set' do
+      it 'returns nil if not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
@@ -280,12 +280,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['log_opts']).to eq(data['log_opt'])
       end
 
-      it 'does not return log_opts if log_opt is not set' do
+      it 'returns empty array if log_opt is not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result['log_opts']).to be_nil
+        expect(result['log_opts']).to eq([])
       end
     end
 
@@ -359,7 +359,7 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['hooks']).to eq(data['hooks'])
       end
 
-      it 'does returns empty hook hash if not defined' do
+      it 'does return empty hook hash if not defined' do
         data = {'image' => 'foo/bar:latest'}
         result = subject.send(:parse_data, data)
         expect(result['hooks']).to eq({})
@@ -378,10 +378,10 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['secrets']).to eq(data['secrets'])
       end
 
-      it 'does not return secrets if not defined' do
+      it 'returns empty array if not defined' do
         data = {'image' => 'foo/bar:latest'}
         result = subject.send(:parse_data, data)
-        expect(result['secrets']).to be_nil
+        expect(result['secrets']).to eq([])
       end
     end
 

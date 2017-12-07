@@ -31,45 +31,43 @@ module Kontena::Cli::Stacks
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
       data['ports'] = parse_stringified_ports(options['ports'] || [])
-      data['memory'] = parse_memory(options['mem_limit'].to_s) if options['mem_limit']
-      data['memory_swap'] = parse_memory(options['memswap_limit'].to_s) if options['memswap_limit']
-      data['shm_size'] = parse_memory(options['shm_size'].to_s) if options['shm_size']
-      data['cpus'] = options['cpus'] if options['cpus']
-      data['cpu_shares'] = options['cpu_shares'] if options['cpu_shares']
+      data['memory'] = options['mem_limit'] ? parse_memory(options['mem_limit'].to_s) : nil
+      data['memory_swap'] = options['memswap_limit'] ? parse_memory(options['memswap_limit'].to_s) : nil
+      data['shm_size'] = options['shm_size'] ? parse_memory(options['shm_size'].to_s) : nil
+      data['cpus'] = options['cpus'] ? options['cpus'] : nil
+      data['cpu_shares'] = options['cpu_shares'] ? options['cpu_shares'] : nil
       data['volumes'] = options['volumes'] || []
       data['volumes_from'] = options['volumes_from'] || []
-      data['cmd'] = Shellwords.split(options['command']) if options['command']
+      data['cmd'] = options['command'] ? Shellwords.split(options['command']) : []
       data['affinity'] = options['affinity'] || []
-      data['user'] = options['user'] if options['user']
+      data['user'] = options['user'] ? options['user'] : nil
       data['stateful'] = options['stateful'] == true
-      data['privileged'] = options['privileged'] unless options['privileged'].nil?
-      data['cap_add'] = options['cap_add'] if options['cap_add']
-      data['cap_drop'] = options['cap_drop'] if options['cap_drop']
-      data['net'] = options['net'] if options['net']
-      data['pid'] = options['pid'] if options['pid']
-      data['log_driver'] = options['log_driver'] if options['log_driver']
-      data['log_opts'] = options['log_opt'] if options['log_opt'] && !options['log_opt'].empty?
+      data['privileged'] = options['privileged'] || false
+      data['cap_add'] = options['cap_add'] ? options['cap_add'] : []
+      data['cap_drop'] = options['cap_drop'] ? options['cap_drop'] : []
+      data['net'] = options['net'] ? options['net'] : nil
+      data['pid'] = options['pid'] ? options['pid'] : nil
+      data['log_driver'] = options['log_driver'] ? options['log_driver'] : nil
+      data['log_opts'] = options['log_opt'] ? options['log_opt'] : []
+      data['hooks'] = options['hooks'] || {}
+      data['secrets'] = options['secrets'] ? options['secrets'] : []
+      data['certificates'] = options['certificates'] ? options['certificates'] : []
+      data['build'] = options['build'] ? parse_build_options(options) : nil
+      data['health_check'] = parse_health_check(options)
+      data['stop_signal'] = options['stop_signal'] ? options['stop_signal'] : nil
+      data['stop_grace_period'] = options['stop_grace_period'] ? options['stop_grace_period'] : nil
+      data['read_only'] = options['read_only'] || false
+      data['entrypoint'] = options['entrypoint'] ? options['entrypoint'] : nil
+
       deploy_opts = options['deploy'] || {}
       data['strategy'] = deploy_opts['strategy'] if deploy_opts['strategy']
       deploy = {
         'wait_for_port' => deploy_opts['wait_for_port'],
         'min_health' => deploy_opts['min_health']
       }
-      if deploy_opts.has_key?('interval')
-        deploy['interval'] = parse_relative_time(deploy_opts['interval'])
-      else
-        deploy['interval'] = nil
-      end
+      deploy['interval'] = deploy_opts['interval'] ? parse_relative_time(deploy_opts['interval']) : nil
       data['deploy_opts'] = deploy
-      data['hooks'] = options['hooks'] || {}
-      data['secrets'] = options['secrets'] if options['secrets']
-      data['certificates'] = options['certificates'] if options['certificates']
-      data['build'] = parse_build_options(options) if options['build']
-      data['health_check'] = parse_health_check(options)
-      data['stop_signal'] = options['stop_signal'] if options['stop_signal']
-      data['stop_grace_period'] = options['stop_grace_period'] if options['stop_grace_period']
-      data['read_only'] = options['read_only'] || false
-      data['entrypoint'] = options['entrypoint'] if options['entrypoint']
+
       data
     end
 

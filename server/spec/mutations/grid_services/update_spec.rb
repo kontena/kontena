@@ -70,6 +70,27 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.stop_grace_period }.to(83)
     end
 
+    it 'resets stop_grace_period to default with nil' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service,
+            stop_grace_period: nil
+        ).run
+      }.to change{ redis_service.reload.stop_grace_period }.to(GridService.new.stop_grace_period)
+    end
+
+    it 'does not reset stop_grace_period if key not given' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service
+        ).run
+      }.not_to change{ redis_service.reload.stop_grace_period }
+    end
+
     context 'deploy_opts' do
       it 'updates wait_for_port' do
         described_class.new(

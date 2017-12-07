@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
 
     def parse_data(options)
       data = super(options)
-      data['net'] = options['network_mode'] if options['network_mode']
+      data['net'] = options['network_mode'] ? options['network_mode'] : nil
       data['log_driver'] = options.dig('logging', 'driver')
       data['log_opts'] = options.dig('logging', 'options')
       if options['depends_on']
