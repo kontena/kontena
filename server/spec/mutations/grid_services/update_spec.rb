@@ -44,6 +44,7 @@ describe GridServices::Update do
         described_class.new(
             grid_service: redis_service,
             env: ['FOO=bar'],
+            strategy: nil,
             links: [],
             ports: [],
             memory: nil,
