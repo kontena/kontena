@@ -43,6 +43,6 @@ describe Kontena::Cli::Stacks::DeployCommand do
     })
     expect(subject).to receive(:sleep).once
 
-    expect{subject.run(['test-stack'])}.to exit_with_error.and output(/deploy failed/).to_stderr
+    expect{subject.run(['test-stack'])}.to exit_with_error.and output(/Stack deploy failed/).to_stdout
   end
 end
