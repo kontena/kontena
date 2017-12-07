@@ -137,6 +137,10 @@ class MongoPubsub
     !@supervisor.nil?
   end
 
+  def self.actor
+    @supervisor.actors.first
+  end
+
   # @param [Mongoid::Document] model
   def self.start!(model)
     @supervisor = Celluloid.supervise(as: :mongo_pubsub, type: MongoPubsub, args: [model])

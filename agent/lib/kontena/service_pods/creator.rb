@@ -41,6 +41,7 @@ module Kontena
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
         wait_network_ready?
+        service_config = config_container(service_pod)
 
         if service_container
           hook_manager.on_pre_stop(service_container)
@@ -50,8 +51,6 @@ module Kontena
         end
 
         hook_manager.on_pre_start
-
-        service_config = config_container(service_pod)
 
         debug "creating container: #{service_pod.name}"
         service_container = create_container(service_config)

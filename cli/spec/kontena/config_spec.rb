@@ -59,11 +59,11 @@ describe Kontena::Cli::Config do
       allow(File).to receive(:read).and_return <<-EOB
         {"current_server": "test123",
           "servers" : [
-            { 
+            {
               "name": "test123",
               "url": "https://foo.example.com"
             },
-            { 
+            {
               "name": "test123",
               "url": "https://foo2.example.com"
             }
@@ -79,6 +79,21 @@ describe Kontena::Cli::Config do
       expect(subject.servers.size).to eq 2
       expect(subject.servers.first.name).not_to eq subject.servers.last.name
       expect(subject.servers.last.name).to eq "test123-2"
+    end
+  end
+
+  context 'environment variables' do
+    it 'sets cloud account on KONTENA_CLOUD_TOKEN' do
+      allow(ENV).to receive(:[]).with('KONTENA_CLOUD_TOKEN').and_return('abc')
+      expect(subject.current_account.token.access_token).to eq('abc')
+    end
+
+    it 'sets master information on KONTENA_URL, KONTENA_TOKEN & KONTENA_GRID' do
+      allow(ENV).to receive(:[]).with('KONTENA_URL').and_return('http://localhost')
+      allow(ENV).to receive(:[]).with('KONTENA_TOKEN').and_return('abc')
+      allow(ENV).to receive(:[]).with('KONTENA_GRID').and_return('test')
+      expect(subject.current_master.url).to eq('http://localhost')
+      expect(subject.current_master.grid).to eq('test')
     end
   end
 

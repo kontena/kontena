@@ -15,7 +15,7 @@ module Kontena::Cli::Stacks::Registry
     def execute
       require 'semantic'
       unless versions?
-        stack = ::YAML.safe_load(stacks_client.show(stack_name.stack_name, stack_name.version))
+        stack = ::YAML.safe_load(stacks_client.show(stack_name.stack_name, stack_name.version), [], [], true)
         puts "#{stack['stack']}:"
         puts "  #{"latest_" unless stack_name.version}version: #{stack['version']}"
         puts "  expose: #{stack['expose'] || '-'}"

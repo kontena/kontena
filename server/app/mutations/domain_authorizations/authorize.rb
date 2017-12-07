@@ -65,6 +65,7 @@ module GridDomainAuthorizations
         grid: self.grid,
         domain: self.domain,
         authorization_type: self.authorization_type,
+        expires_at: authorization.expires,
         challenge: challenge.to_h,
         challenge_opts: challenge_opts,
         tls_sni_certificate: verification_cert,

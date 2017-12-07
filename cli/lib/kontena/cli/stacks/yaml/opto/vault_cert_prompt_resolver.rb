@@ -9,7 +9,7 @@ module Kontena::Cli::Stacks::YAML::Opto::Resolvers
         s['name'].match(/(ssl|cert)/i)
       }
       if secrets.size > 0
-        prompt.multi_select(hint) do |menu|
+        prompt.multi_select(message) do |menu|
           menu.default(*default_indexes(secrets)) if option.default
           secrets.each do |s|
             menu.choice s['name']

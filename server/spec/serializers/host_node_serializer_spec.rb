@@ -20,6 +20,11 @@ describe HostNodeSerializer do
         created_at: "2017-03-27T08:21:55Z",
         updated_at: "2017-03-27T08:21:55Z",
         last_seen_at: nil,
+        connected_at: nil,
+        disconnected_at: nil,
+        status: 'offline',
+        has_token: false,
+        updated: false,
         name: "test-node",
         os: nil,
         engine_root_dir: nil,
@@ -31,7 +36,9 @@ describe HostNodeSerializer do
         cpus: nil,
         public_ip: nil,
         private_ip: nil,
+        overlay_ip: "10.81.0.1",
         agent_version: nil,
+        availability: "active",
         docker_version: nil,
         peer_ips: [],
         node_id: "wxyz",
@@ -46,7 +53,9 @@ describe HostNodeSerializer do
           },
           trusted_subnets:[]
         },
-        resource_usage: nil
+        resource_usage: nil,
+        network_drivers: [],
+        volume_drivers: []
       )
     end
   end

@@ -232,7 +232,7 @@ module GridServices
           end
           string :entrypoint
           array :env do
-            string matches: /\A[^=]+=/
+            string matches: /\A[^=]+=/, max_length: 128 * 1024
           end
           array :secrets do
             hash do

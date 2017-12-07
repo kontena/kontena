@@ -69,12 +69,6 @@ module Rpc
         secrets << item
       end
 
-      # Inject tls-sni based domain authz as secrets
-      # Why secrets? Well, secrets are already handled in a way they can be concatenated with same env names
-      service.grid_domain_authorizations.select {|d| d.authorization_type == 'tls-sni-01'}.each do |domain_auth|
-        secrets << {name: "SSL_CERTS", type: 'env', value: domain_auth.tls_sni_certificate}
-      end
-
       # Inject certificates as secrets
       service.certificates.each do |certificate|
         grid_cert = grid.certificates.find_by(subject: certificate.subject)
@@ -83,6 +77,13 @@ module Rpc
           item[:value] = grid_cert.bundle
         end
         secrets << item
+      end
+
+      # Inject tls-sni based domain authz as secrets
+      # Why secrets? Well, secrets are already handled in a way they can be concatenated with same env names
+      # Must be injected after any secrets/certificates, because the first certificate in `SSL_CERTS` is special
+      service.grid_domain_authorizations.select{|d| d.deployable?}.each do |domain_auth|
+        secrets << {name: "SSL_CERTS", type: 'env', value: domain_auth.tls_sni_certificate}
       end
 
       secrets
@@ -118,7 +119,7 @@ module Rpc
         labels['io.kontena.load_balancer.mode'] = mode
       end
       if service.health_check && service.health_check.protocol
-        labels['io.kontena.health_check.uri'] = service.health_check.uri
+        labels['io.kontena.health_check.uri'] = service.health_check.uri if service.health_check.protocol == 'http'
         labels['io.kontena.health_check.protocol'] = service.health_check.protocol
         labels['io.kontena.health_check.interval'] = service.health_check.interval.to_s
         labels['io.kontena.health_check.timeout'] = service.health_check.timeout.to_s

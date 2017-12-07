@@ -95,7 +95,7 @@ module Kontena::Cli::Stacks
         where.prepend InstanceMethods
 
         where.option '--values-from', '[FILE]', 'Read variable values from a YAML file', multivalued: true do |filename|
-          values_from_file.merge!(::YAML.safe_load(File.read(filename)))
+          values_from_file.merge!(::YAML.safe_load(File.read(filename), [], [], true, filename))
           filename
         end
 
@@ -110,6 +110,7 @@ module Kontena::Cli::Stacks
         where.option '-v', "VARIABLE=VALUE", "Set stack variable values, example: -v domain=example.com. Can be used multiple times.", multivalued: true, attribute_name: :var_option do |var_pair|
           var_name, var_value = var_pair.split('=', 2)
           values_from_value_options.merge!(::YAML.safe_load(::YAML.dump(var_name => var_value)))
+          var_pair
         end
       end
 
