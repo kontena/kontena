@@ -296,7 +296,7 @@ module GridServices
           array :cap_drop do
             string
           end
-          string :net, nils: true, matches: /\A(bridge|host|container:.+)\z/
+          string :net, default: 'bridge', matches: /\A(bridge|host|container:.+)\z/
           hash :log_opts do
             string :*
           end

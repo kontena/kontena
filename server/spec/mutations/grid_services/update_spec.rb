@@ -43,7 +43,38 @@ describe GridServices::Update do
       expect {
         described_class.new(
             grid_service: redis_service,
-            env: ['FOO=bar']
+            env: ['FOO=bar'],
+            links: [],
+            ports: [],
+            memory: nil,
+            memory_swap: nil,
+            shm_size: nil,
+            cpus: nil,
+            cpu_shares: nil,
+            volumes: [],
+            volumes_from: [],
+            cmd: [],
+            entrypoint: nil,
+            affinity: [],
+            user: nil,
+            stateful: true,
+            privileged: false,
+            cap_add: [],
+            cap_drop: [],
+            net: nil,
+            pid: nil,
+            log_driver: nil,
+            log_opts: {},
+            hooks: {},
+            secrets: [],
+            certificates: [],
+            build: nil,
+            health_check: {},
+            stop_signal: nil,
+            stop_grace_period: nil,
+            read_only: false,
+            deploy: {}
+
         ).run
       }.not_to change{ redis_service.reload.revision }
     end
