@@ -71,7 +71,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes cmd' do
-      expect(subject.to_hash).to include(:cmd => nil)
+      expect(subject.to_hash).to include(:cmd => [])
     end
 
     it 'includes memory' do
