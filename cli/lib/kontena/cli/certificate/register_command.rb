@@ -22,7 +22,7 @@ module Kontena::Cli::Certificate
     end
 
     def ask_continue
-      puts "By registering, you agree on Let's Encrypt Terms of Service: https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf"
+      puts "By registering, you agree on Let's Encrypt Terms of Service: https://letsencrypt.org/documents/2017.11.15-LE-SA-v1.2.pdf"
       exit_with_error "Registration canceled!" unless prompt.yes?("Continue?")
       true
     end
