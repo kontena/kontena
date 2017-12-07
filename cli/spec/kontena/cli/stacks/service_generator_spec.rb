@@ -280,12 +280,12 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['log_opts']).to eq(data['log_opt'])
       end
 
-      it 'returns empty array if log_opt is not set' do
+      it 'returns empty hash if log_opt is not set' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result['log_opts']).to eq([])
+        expect(result['log_opts']).to eq({})
       end
     end
 
