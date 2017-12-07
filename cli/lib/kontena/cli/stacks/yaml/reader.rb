@@ -273,8 +273,8 @@ module Kontena::Cli::Stacks
       # @param [String] service_name - optional service to parse
       # @return [Hash]
       def parse_services(service_name = nil)
-        services = self.services.dup # do not modify the fully_interpolated_yaml['services'] hash in-place
         if service_name.nil?
+          services = self.services.dup # do not modify the fully_interpolated_yaml['services'] hash in-place
           services.each do |name, config|
             services[name] = process_config(config, name)
             if process_hash?(config)
