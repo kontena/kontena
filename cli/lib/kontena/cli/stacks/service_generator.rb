@@ -48,7 +48,7 @@ module Kontena::Cli::Stacks
       data['net'] = options['net'] ? options['net'] : nil
       data['pid'] = options['pid'] ? options['pid'] : nil
       data['log_driver'] = options['log_driver'] ? options['log_driver'] : nil
-      data['log_opts'] = options['log_opt'] ? options['log_opt'] : []
+      data['log_opts'] = options['log_opt'] ? options['log_opt'] : {}
       data['hooks'] = options['hooks'] || {}
       data['secrets'] = options['secrets'] ? options['secrets'] : []
       data['certificates'] = options['certificates'] ? options['certificates'] : []

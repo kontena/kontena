@@ -77,7 +77,7 @@ module GridServices
       attributes[:health_check] = self.health_check if inputs.has_key?('health_check')
       attributes[:volumes_from] = self.volumes_from if inputs.has_key?('volumes_from')
       attributes[:stop_signal] = self.stop_signal if inputs.has_key?('stop_signal')
-      attributes[:read_only] = self.read_only unless inputs.has_key?('read_only')
+      attributes[:read_only] = self.read_only if inputs.has_key?('read_only')
 
       if inputs.has_key?('stop_grace_period')
         attributes[:stop_grace_period] = self.stop_grace_period ? parse_duration(self.stop_grace_period) : GridService.new.stop_grace_period
