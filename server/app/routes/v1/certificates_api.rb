@@ -59,7 +59,28 @@ module V1
       r.on ':grid' do |grid|
         load_grid(grid)
 
+        # Have the post endpoints first, otherwise Roda is too greedy with "r.on ':subject'" route
+        r.post do
+
+          # DEPRECATED
+          r.on 'authorize' do
+            data = parse_json_body
+            authorize_domain(data)
+          end
+          # DEPRECATED
+          r.on 'certificate' do
+            data = parse_json_body
+            get_certificate(data)
+          end
+
+          r.on 'register' do
+            data = parse_json_body
+            register(data)
+          end
+        end
+
         r.on ':subject' do |subject|
+
           @certificate = @grid.certificates.find_by(subject: subject)
 
           r.get do
@@ -109,23 +130,6 @@ module V1
           end
         end
 
-        r.post do
-          # DEPRECATED
-          r.on 'authorize' do
-            data = parse_json_body
-            authorize_domain(data)
-          end
-          # DEPRECATED
-          r.on 'certificate' do
-            data = parse_json_body
-            get_certificate(data)
-          end
-
-          r.on 'register' do
-            data = parse_json_body
-            register(data)
-          end
-        end
       end
 
     end
