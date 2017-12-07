@@ -7,7 +7,7 @@ json.name grid_service.name
 json.stateful grid_service.stateful?
 json.user grid_service.user
 json.instances grid_service.container_count
-json.cmd grid_service.cmd
+json.cmd grid_service.cmd.empty? ? nil : grid_service.cmd
 json.entrypoint grid_service.entrypoint
 json.net grid_service.net
 if grid_service.default_stack?
