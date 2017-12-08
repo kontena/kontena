@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.4.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.4.2.rc1) (2017-12-08)
+
+### Fixed issues
+
+* kontena certificate register Let's Encrypt TOS link is out of date #3105
+* HTTP 404 Not Found error on kontena certificate register #3104
+* kontena stack install fails in 1.4.1 with KONTENA_URL=... #3089
+* CLI stack validate outputs stack create API request instead of interpolated stack YAML #2887
+* cAdvisor queries missing containers over and over #2700
+
+### Changes
+
+#### Agent
+
+* Agent: Bump cadvisor to 0.27.2 (#3115)
+
+#### Server
+
+* Fix certificates API POST request routing (#3107)
+* Fix server to filter out node peer_ip duplicates (#3112)
+
+#### CLI
+
+* Fix stack deploy to not raise RuntimeError on deploy errors (#2931)
+* CLI: Use a unique temp dir for specs instead of /tmp (#3010)
+* Fix CLI volume driver opts parsing (#3101)
+* Update CLI kontena certificate register Let's Encrypt ToS link (#3106)
+* Fix CLI stack validate to output either interpolated stack YAML or API JSON (#2938)
+* Fix CLI config to correctly load both master server and cloud account settings from envs or config file (#3090)
+
 ## [1.4.1](https://github.com/kontena/kontena/releases/tag/v1.4.1) (2017-11-23)
 
 **Master & Agents:**
