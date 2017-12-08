@@ -32,7 +32,7 @@ module Rpc
         else
           n.public_ip
         end
-      }.compact
+      }.compact.uniq
     end
 
     def initial_member
