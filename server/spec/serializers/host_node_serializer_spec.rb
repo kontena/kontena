@@ -75,7 +75,7 @@ describe HostNodeSerializer do
 
     it 'does not return duplicate peer ips' do
       2.times do |i|
-        grid.create_node!('peer-node',
+        grid.create_node!("peer-node-#{i}",
           node_id: "abcd-#{i}",
           private_ip: '192.168.66.103'
         )
