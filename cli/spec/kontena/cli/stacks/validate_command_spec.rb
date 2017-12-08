@@ -37,8 +37,8 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
       )
     end
 
-    it 'outputs generated JSON' do
-      expect{Kontena.run!('stack', 'validate', '-v', 'copies=2', '--output-json', fixture_path('stack-with-liquid.yml'))}.to output_json(hash_including(
+    it 'outputs API JSON' do
+      expect{Kontena.run!('stack', 'validate', '-v', 'copies=2', '--format=api-json', fixture_path('stack-with-liquid.yml'))}.to output_json(hash_including(
         'stack' => 'user/stackname',
         'version' => '0.1.1',
         'name' => 'stackname',
