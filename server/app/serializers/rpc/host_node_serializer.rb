@@ -25,16 +25,6 @@ module Rpc
       object.updated_at.to_s
     end
 
-    def peer_ips
-      object.grid.host_nodes.ne(id: object.id).map{|n|
-        if n.region == object.region
-          n.private_ip
-        else
-          n.public_ip
-        end
-      }.compact.uniq
-    end
-
     def initial_member
       object.initial_member?
     end
