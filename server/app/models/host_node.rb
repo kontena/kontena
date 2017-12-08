@@ -232,4 +232,15 @@ class HostNode
   def overlay_ip
     (IPAddr.new(self.grid.subnet) | self.node_number).to_s
   end
+
+  # @return [Array<String>]
+  def peer_ips
+    self.grid.host_nodes.ne(id: self.id).map{|n|
+      if n.region == self.region
+        n.private_ip
+      else
+        n.public_ip
+      end
+    }.compact.uniq
+  end
 end
