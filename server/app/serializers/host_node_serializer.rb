@@ -78,7 +78,7 @@ class HostNodeSerializer < KontenaJsonSerializer
         else
           n.public_ip
         end
-      }.compact
+      }.compact.uniq
     else
       []
     end

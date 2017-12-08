@@ -26,13 +26,13 @@ json.private_ip node.private_ip
 json.overlay_ip node.overlay_ip
 json.agent_version node.agent_version
 json.docker_version node.docker_version
-json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|n|
+json.peer_ips node.grid.host_nodes.ne(id: node.id).map{ |n|
   if n.region == node.region
     n.private_ip
   else
     n.public_ip
   end
-}.compact
+}.compact.uniq
 json.node_number node.node_number
 json.initial_member node.initial_member?
 json.grid do

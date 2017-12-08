@@ -59,4 +59,32 @@ describe HostNodeSerializer do
       )
     end
   end
+
+  describe '#peer_ips' do
+    it 'returns empty array by default' do
+      expect(subject.peer_ips).to eq([])
+    end
+
+    it 'returns peer ips' do
+      peer = grid.create_node!('peer-node',
+        node_id: 'abcd',
+        private_ip: '192.168.66.103'
+      )
+      expect(subject.peer_ips).to eq([peer.private_ip])
+    end
+
+    it 'does not return duplicate peer ips' do
+      2.times do |i|
+        grid.create_node!('peer-node',
+          node_id: "abcd-#{i}",
+          private_ip: '192.168.66.103'
+        )
+      end
+      peer = grid.create_node!('peer-node',
+        node_id: 'abcd',
+        private_ip: '192.168.66.104'
+      )
+      expect(subject.peer_ips).to eq(['192.168.66.103', peer.private_ip])
+    end
+  end
 end
