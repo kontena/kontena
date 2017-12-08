@@ -1,6 +1,8 @@
 # Changelog
 
-## [1.4.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.4.2.rc1) (2017-12-08)
+## [1.4.2](https://github.com/kontena/kontena/releases/tag/v1.4.2) (2017-12-08)
+
+The 1.4.2 release fixes regressions in the 1.4.0 and 1.4.1 releases, as well as some other issues.
 
 ### Fixed issues
 
