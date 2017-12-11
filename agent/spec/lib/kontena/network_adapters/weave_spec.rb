@@ -1,6 +1,7 @@
 describe Kontena::NetworkAdapters::Weave, :celluloid => true do
   let(:actor) { described_class.new(start: false) }
   subject { actor.wrapped_object }
+  let(:observable) { instance_double(Kontena::Observable) }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
   let(:node_info_observable) { instance_double(Kontena::Observable) }
@@ -34,6 +35,7 @@ describe Kontena::NetworkAdapters::Weave, :celluloid => true do
 
     allow(subject).to receive(:ipam_client).and_return(ipam_client)
     allow(subject).to receive(:interface_ip).with('docker0').and_return(bridge_ip)
+    allow(subject).to receive(:observable).and_return(observable)
   end
 
   describe '#initialize' do
@@ -91,7 +93,7 @@ describe Kontena::NetworkAdapters::Weave, :celluloid => true do
 
     it 'ensures and updates observable' do
       expect(subject).to receive(:ensure).with(node_info).and_return(ensure_state)
-      expect(subject).to receive(:update_observable).with(ensure_state)
+      expect(observable).to receive(:update).with(ensure_state)
 
       actor.update(node_info)
       expect(actor).to be_updated
@@ -100,7 +102,7 @@ describe Kontena::NetworkAdapters::Weave, :celluloid => true do
     it 'logs errors and resets observable' do
       expect(subject).to receive(:ensure).with(node_info).and_raise(RuntimeError, 'test')
       expect(subject).to receive(:error).with(RuntimeError)
-      expect(subject).to receive(:reset_observable)
+      expect(observable).to receive(:reset)
 
       actor.update(node_info)
 
