@@ -35,8 +35,8 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
   describe '#start' do
     it 'observes and subscribes container:event' do
       expect(subject).to receive(:observe).with(weave_observable, etcd_observable) do |&block|
-        expect(subject).to receive(:ensure_containers_attached)
-        expect(subject).to receive(:ensure_etcd_dns).with(etcd_info)
+        expect(subject_async).to receive(:ensure_containers_attached)
+        expect(subject_async).to receive(:ensure_etcd_dns).with(etcd_info)
 
         block.call(weave_info, etcd_info)
       end
