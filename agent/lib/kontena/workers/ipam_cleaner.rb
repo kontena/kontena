@@ -1,7 +1,6 @@
 module Kontena::Workers
   class IpamCleaner
     include Celluloid
-    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Observer::Helper
 

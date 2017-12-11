@@ -4,7 +4,6 @@ require_relative '../helpers/launcher_helper'
 module Kontena::Launchers
   class Etcd
     include Celluloid
-    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Observer::Helper
     include Kontena::Observable::Helper

@@ -15,7 +15,6 @@ module Kontena::NetworkAdapters
 
   class WeaveExecutor
     include Celluloid
-    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::WeaveHelper
 

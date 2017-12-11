@@ -8,7 +8,6 @@ module Kontena::NetworkAdapters
   # The actual container runtime attach happens in the Kontena::Workers::WeaveWorker.
   class Weave
     include Celluloid
-    include Celluloid::Notifications
     include Kontena::Observable::Helper
     include Kontena::Observer::Helper
     include Kontena::Helpers::IfaceHelper
