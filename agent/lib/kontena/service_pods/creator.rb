@@ -12,6 +12,7 @@ module Kontena
       include Kontena::Logging
       include Common
       include Kontena::Helpers::RpcHelper
+      include Kontena::Helpers::WaitHelper
 
       attr_reader :service_pod, :image_credentials, :hook_manager
 

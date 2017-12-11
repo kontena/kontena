@@ -75,7 +75,7 @@ module Kontena::Workers
 
     # Start streaming and processing after etcd is running
     def start
-      observe(Actor[:etcd_launcher], timeout: 300.0)
+      observe(Actor[:etcd_launcher].observable, timeout: 300.0)
 
       exclusive {
         start_streaming unless streaming?

@@ -24,8 +24,7 @@ module Kontena::Launchers
       ensure_image(IMAGE)
 
       observe(Actor[:node_info_worker].observable, Actor[:weave_launcher].observable) do |node, weave|
-        # TODO: only update after both node-info and weave-launcher have updated?
-        # XXX: exclusive updates...
+        # TODO: wait for weave_launcher to update after node_info updates?
         self.update(node)
       end
     end
@@ -34,12 +33,12 @@ module Kontena::Launchers
     def update(node)
       state = self.ensure(node)
 
-      update_observable(state)
+      observable.update(state)
 
     rescue => exc
       error exc
 
-      reset_observable
+      observable.reset
     end
 
     # @param [Node] node

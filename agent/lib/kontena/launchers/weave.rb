@@ -31,8 +31,8 @@ module Kontena::Launchers
       self.ensure_image(Kontena::NetworkAdapters::WeaveExecutor::IMAGE)
 
       observe(Actor[:node_info_worker].observable) do |node|
-        # XXX: exclusive updates
-        update(node)
+        # TODO: schedule to make this pseudo-exclusive?
+        async.update(node)
       end
     end
 
@@ -40,12 +40,12 @@ module Kontena::Launchers
     def update(node)
       state = self.ensure(node)
 
-      update_observable(state)
+      observable.update(state)
 
     rescue => exc
       error exc
 
-      reset_observable
+      observable.reset
     end
 
     # Ensure weave router is running, using node configuration

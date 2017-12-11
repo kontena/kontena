@@ -26,12 +26,12 @@ module Kontena::Workers
       observe(Actor[:weave_launcher].observable, Actor[:etcd_launcher].observable) do |weave, etcd|
         # Only attach once
         # TODO: re-ensure based on @containers?
-        ensure_containers_attached unless containers_attached?
+        async.ensure_containers_attached unless containers_attached?
 
         # XXX: this fails if the etcd container restarts, weave will forget the DNS name...
         # XXX: this also fails if the weave container restarts... on_container_event -> ensure_* does not have access to the observed etcd state
         # TODO: the DNS names should be ensured from container events instead...
-        ensure_etcd_dns(etcd)
+        async.ensure_etcd_dns(etcd)
       end
 
       subscribe('container:event', :on_container_event)

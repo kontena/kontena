@@ -2,6 +2,7 @@
 describe Kontena::Launchers::Etcd, :celluloid => true do
   let(:actor) { described_class.new(false) }
   subject { actor.wrapped_object }
+  let(:observable) { instance_double(Kontena::Observable) }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
   let(:node_info_observable) { instance_double(Kontena::Observable) }
@@ -43,8 +44,8 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
 
     allow(subject).to receive(:inspect_container).with('kontena-etcd-data').and_return(data_container)
     allow(subject).to receive(:inspect_container).with('kontena-etcd').and_return(etcd_container)
-
     allow(subject).to receive(:docker_gateway).and_return('172.17.0.1')
+    allow(subject).to receive(:observable).and_return(observable)
   end
 
   describe '#initialize' do
@@ -70,7 +71,7 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
   describe '#update' do
     it 'ensures etcd and updates observable' do
       expect(subject).to receive(:ensure).with(node_info).and_return({ running: true })
-      expect(subject).to receive(:update_observable).with(running: true)
+      expect(observable).to receive(:update).with(running: true)
 
       actor.update(node_info)
     end
@@ -78,7 +79,7 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
     it 'logs errors and resets observable' do
       expect(subject).to receive(:ensure).with(node_info).and_raise(RuntimeError, 'test')
       expect(subject).to receive(:error).with(RuntimeError)
-      expect(subject).to receive(:reset_observable)
+      expect(observable).to receive(:reset)
 
       actor.update(node_info)
     end

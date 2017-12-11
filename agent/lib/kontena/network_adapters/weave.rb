@@ -67,7 +67,7 @@ module Kontena::NetworkAdapters
     def update(node)
       state = self.ensure(node)
 
-      update_observable(state)
+      observable.update(state)
 
       @updated = true
 
@@ -76,7 +76,7 @@ module Kontena::NetworkAdapters
 
       error exc
 
-      reset_observable
+      observable.reset
     end
 
     # @param node [Node]

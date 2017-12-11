@@ -2,6 +2,7 @@
 describe Kontena::Launchers::IpamPlugin, :celluloid => true do
   let(:actor) { described_class.new(false) }
   let(:subject) { actor.wrapped_object }
+  let(:observable) { instance_double(Kontena::Observable) }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
   let(:node_info_observable) { instance_double(Kontena::Observable) }
@@ -35,8 +36,8 @@ describe Kontena::Launchers::IpamPlugin, :celluloid => true do
     allow(etcd_launcher).to receive(:observable).and_return(etcd_observable)
 
     allow(subject).to receive(:inspect_container).with('kontena-ipam-plugin').and_return(container)
-
     allow(subject).to receive(:ipam_client).and_return(ipam_client)
+    allow(subject).to receive(:observable).and_return(observable)
   end
 
   describe '#initialize' do
@@ -62,7 +63,7 @@ describe Kontena::Launchers::IpamPlugin, :celluloid => true do
   describe '#update' do
     it 'ensures container and updates observable' do
       expect(subject).to receive(:ensure).with(node_info).and_return({ running: true })
-      expect(subject).to receive(:update_observable).with(running: true)
+      expect(observable).to receive(:update).with(running: true)
 
       actor.update(node_info)
     end
@@ -70,7 +71,7 @@ describe Kontena::Launchers::IpamPlugin, :celluloid => true do
     it 'logs errors and resets observable' do
       expect(subject).to receive(:ensure).with(node_info).and_raise(RuntimeError, 'test')
       expect(subject).to receive(:error).with(RuntimeError)
-      expect(subject).to receive(:reset_observable)
+      expect(observable).to receive(:reset)
 
       actor.update(node_info)
     end

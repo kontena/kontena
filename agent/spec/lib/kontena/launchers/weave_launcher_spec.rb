@@ -1,6 +1,7 @@
 describe Kontena::Launchers::Weave, :celluloid => true do
   let(:actor) { described_class.new(start: false) }
   subject { actor.wrapped_object }
+  let(:observable) { instance_double(Kontena::Observable) }
 
   let(:weave_executor) { instance_double(Kontena::NetworkAdapters::WeaveExecutor) }
   let(:weave_client) { instance_double(Kontena::NetworkAdapters::WeaveClient) }
@@ -56,6 +57,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
     allow(subject).to receive(:weave_executor).and_return(weave_executor)
     allow(subject).to receive(:weave_client).and_return(weave_client)
     allow(subject).to receive(:inspect_container).with('weave').and_return(container)
+    allow(subject).to receive(:observable).and_return(observable)
 
     allow(weave_executor).to receive(:ps!).with('weave:expose') do |&block|
       weave_exposed.each do |args|

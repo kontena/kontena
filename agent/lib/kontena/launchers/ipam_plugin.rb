@@ -45,12 +45,12 @@ module Kontena::Launchers
     def update(node)
       state = self.ensure(node)
 
-      update_observable(state)
+      observable.update(state)
 
     rescue => exc
       error exc
 
-      reset_observable
+      observable.reset
     end
 
     # @param [Node] node
