@@ -1,8 +1,9 @@
 
 describe Kontena::ServicePods::Starter do
 
-  let(:service_id) { 'service-1' }
-  let(:subject) { described_class.new(service_id, 1) }
+  let(:service_pod) { double(:service_pod, service_id: 'service_id', instance_number: 1)}
+  let(:hook_manager) { double(:hook_manager) }
+  let(:subject) { described_class.new(service_pod, hook_manager) }
 
   describe '#perform' do
 
@@ -11,6 +12,7 @@ describe Kontena::ServicePods::Starter do
     end
 
     before(:each) do
+      allow(hook_manager).to receive(:track)
       allow(subject).to receive(:get_container).and_return(container)
     end
 
@@ -20,15 +22,16 @@ describe Kontena::ServicePods::Starter do
       subject.perform
     end
 
-    it 'restarts container if not running' do
-      expect(container).to receive(:stop_grace_period).and_return(10)
-      expect(container).to receive(:restart!).with({'timeout' => 10})
+    it 'starts container if not running' do
+      expect(hook_manager).to receive(:on_pre_start).once
+      expect(hook_manager).to receive(:on_post_start).once
+      expect(container).to receive(:start!)
       subject.perform
     end
 
-    it 'fails if container restart fails' do
-      expect(container).to receive(:stop_grace_period).and_return(10)
-      expect(container).to receive(:restart!).with({'timeout' => 10}).and_raise(Docker::Error::ServerError, "failed")
+    it 'fails if container start fails' do
+      expect(hook_manager).to receive(:on_pre_start).once
+      expect(container).to receive(:start!).and_raise(Docker::Error::ServerError, "failed")
       expect{subject.perform}.to raise_error(Docker::Error::ServerError)
     end
   end

@@ -10,7 +10,7 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Stack name"
 
-    option '--[no-]wait', :flag, 'Do not wait service deployment', default: true
+    option '--[no-]wait', :flag, 'Do not wait for service deployment', default: true
 
     requires_current_master
     requires_current_master_token

@@ -3,7 +3,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
 
     CLEANUP_INTERVAL = (3*60) # Run cleanup every 3mins
     CLEANUP_DELAY = 30
@@ -15,7 +15,7 @@ module Kontena::Workers
     end
 
     def start
-      observe(Actor[:ipam_plugin_launcher]) do |status|
+      observe(Actor[:ipam_plugin_launcher].observable) do |status|
         async.run unless @running
       end
     end

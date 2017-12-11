@@ -4,7 +4,7 @@ rvm:
   - 2.1.10
   - 2.2.6
   - 2.3.3
-  - 2.4.1
+  - 2.4.2
 cache: bundler
 cache:
   directories:
@@ -50,16 +50,16 @@ deploy:
       rvm: 2.3.3
       repo: kontena/kontena
   - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/omnibus_deb.sh"
+    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
     on:
       tags: true
       condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
-      rvm: 2.3.3
+      rvm: 2.4.2 # separate from deploy_gem, ideally after
       repo: kontena/kontena
   - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
     on:
       tags: true
       condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
-      rvm: 2.4.1
+      rvm: 2.4.2
       repo: kontena/kontena

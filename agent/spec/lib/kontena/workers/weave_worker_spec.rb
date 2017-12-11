@@ -5,8 +5,10 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
 
   let(:weave_executor) { instance_double(Kontena::NetworkAdapters::WeaveExecutor) }
   let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
+  let(:weave_observable) { instance_double(Kontena::Observable) }
   let(:weave_info) { {} }
   let(:etcd_launcher) { instance_double(Kontena::Launchers::Etcd) }
+  let(:etcd_observable) { instance_double(Kontena::Observable) }
   let(:etcd_info) { {container_id: 'abcdef', overlay_ip: '10.81.0.2', dns_name: 'etcd.kontena.local'} }
 
   let(:weave_client) { instance_double(Kontena::NetworkAdapters::WeaveClient) }
@@ -16,6 +18,8 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
 
     allow(Celluloid::Actor).to receive(:[]).with(:weave_launcher).and_return(weave_launcher)
     allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(etcd_launcher)
+    allow(weave_launcher).to receive(:observable).and_return(weave_observable)
+    allow(etcd_launcher).to receive(:observable).and_return(etcd_observable)
 
     allow(subject).to receive(:weave_executor).and_return(weave_executor)
     allow(subject).to receive(:weave_client).and_return(weave_client)
@@ -30,7 +34,7 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
 
   describe '#start' do
     it 'observes and subscribes container:event' do
-      expect(subject).to receive(:observe).with(weave_launcher, etcd_launcher) do |&block|
+      expect(subject).to receive(:observe).with(weave_observable, etcd_observable) do |&block|
         expect(subject).to receive(:ensure_containers_attached)
         expect(subject).to receive(:ensure_etcd_dns).with(etcd_info)
 
@@ -133,12 +137,6 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
 
       subject.on_container_event('container:event', restart_event)
     end
-
-    it 'calls #ensure_containers_attached on weave restart event' do
-      expect(subject).to receive(:ensure_containers_attached)
-
-      subject.on_container_event('container:event', weave_restart_event)
-    end
   end
 
   describe '#inspect_containers' do
@@ -185,11 +183,27 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
       end
     end
 
-    context 'for an overlay container' do
+    context 'for an non-service overlay container' do
       let(:container) { double(:container, id: '12345',
         name: 'test',
         overlay_network: 'kontena',
         overlay_cidr: '10.81.128.6/16',
+        service_container?: false,
+      ) }
+
+      it 'attaches overlay and registers DNS' do
+        expect(subject).to receive(:start_container_overlay).with(container)
+        expect(subject).to_not receive(:register_container_dns).with(container)
+        subject.start_container(container)
+      end
+    end
+
+    context 'for an service container' do
+      let(:container) { double(:container, id: '12345',
+        name: 'test',
+        overlay_network: 'kontena',
+        overlay_cidr: '10.81.128.6/16',
+        service_container?: true,
       ) }
 
       it 'attaches overlay and registers DNS' do

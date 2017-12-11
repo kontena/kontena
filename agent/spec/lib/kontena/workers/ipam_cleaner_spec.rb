@@ -4,11 +4,13 @@ describe Kontena::Workers::IpamCleaner, :celluloid => true do
   let(:subject_async) { instance_double(described_class) }
 
   let(:ipam_plugin_launcher) { instance_double(Kontena::Launchers::IpamPlugin) }
+  let(:ipam_plugin_observable) { instance_double(Kontena::Observable) }
   let(:ipam_info) { double() }
   let(:ipam_client) { instance_double(Kontena::NetworkAdapters::IpamClient) }
 
   before do
     allow(Celluloid::Actor).to receive(:[]).with(:ipam_plugin_launcher).and_return(ipam_plugin_launcher)
+    allow(ipam_plugin_launcher).to receive(:observable).and_return(ipam_plugin_observable)
     allow(subject).to receive(:async).and_return(subject_async)
 
     allow(subject).to receive(:ipam_client).and_return(ipam_client)
@@ -23,7 +25,7 @@ describe Kontena::Workers::IpamCleaner, :celluloid => true do
 
   describe '#start' do
     it 'observes and calls run' do
-      expect(subject).to receive(:observe).with(ipam_plugin_launcher) do |&block|
+      expect(subject).to receive(:observe).with(ipam_plugin_observable) do |&block|
         expect(subject_async).to receive(:run)
 
         block.call(ipam_info)

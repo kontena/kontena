@@ -47,6 +47,28 @@ describe '/v1/nodes', celluloid: true do
       )
     end
 
+    it 'returns node peer ips' do
+      3.times do |i|
+        grid.create_node!("abc#{i}", node_id: "a:b:c:#{i}", private_ip: "192.168.66.10#{i}")
+      end
+      node = grid.create_node!('abc', node_id: 'a:b:c')
+      get "/v1/nodes/#{node.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response["peer_ips"]).to eq([
+        "192.168.66.100", "192.168.66.101", "192.168.66.102"
+      ])
+    end
+
+    it 'does not return duplicate peer ips' do
+      3.times do |i|
+        grid.create_node!("abc#{i}", node_id: "a:b:c:#{i}", private_ip: '192.168.66.111')
+      end
+      node = grid.create_node!('abc', node_id: 'a:b:c')
+      get "/v1/nodes/#{node.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response["peer_ips"]).to eq(["192.168.66.111"])
+    end
+
     it 'returns error with invalid id' do
       get "/v1/nodes/#{grid.name}/foo", nil, request_headers
       expect(response.status).to eq(404)
@@ -183,7 +205,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET /health' do
     let :node do
-      grid.create_node!('abc', node_id: 'a:b:c')
+      grid.create_node!('abc', node_id: 'a:b:c', connected: true, updated: true)
     end
 
     let :rpc_client do
@@ -194,25 +216,47 @@ describe '/v1/nodes', celluloid: true do
       allow_any_instance_of(HostNode).to receive(:rpc_client).and_return(rpc_client)
     end
 
+    it "returns error when node is offline" do
+      node.set(:connected => false)
+      expect(rpc_client).to_not receive(:request)
+      get "/v1/nodes/#{node.to_path}/health", nil, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response).to match hash_including(
+        'error' => { 'connection' => "Websocket is not connected" },
+      )
+    end
+
     it "returns etcd health when RPC returns health" do
       expect(rpc_client).to receive(:request).with('/etcd/health').and_return({health: true})
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['etcd_health']).to eq({'health' => true, 'error' => nil})
+      expect(json_response).to match hash_including(
+        'name' => 'abc',
+        'connected' => true,
+        'status' => 'online',
+        'etcd_health' => {'health' => true, 'error' => nil},
+      )
     end
 
     it "returns etcd error when RPC returns error" do
       expect(rpc_client).to receive(:request).with('/etcd/health').and_return({error: "unhealthy"})
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "unhealthy"})
+      expect(json_response).to match hash_including(
+        'name' => 'abc',
+        'connected' => true,
+        'status' => 'online',
+        'etcd_health' => {'health' => nil, 'error' => "unhealthy"},
+      )
     end
 
-    it "returns HTTP error when RPC fails" do
-      expect(rpc_client).to receive(:request).with('/etcd/health').and_raise(RpcClient::TimeoutError.new(503, "timeout"))
+    it "returns error when RPC fails" do
+      expect(rpc_client).to receive(:request).with('/etcd/health').and_raise(RpcClient::TimeoutError.new(503, "Timeout after 10.0s"))
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
-      expect(response.status).to eq(200)
-      expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "timeout"})
+      expect(response.status).to eq(422)
+      expect(json_response).to match hash_including(
+        'error' => { 'etcd_health' => "Timeout after 10.0s" },
+      )
     end
   end
 

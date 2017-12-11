@@ -10,12 +10,38 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Stack name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
+    option "--keep-dependencies", :flag, "Do not remove dependencies"
 
     requires_current_master
     requires_current_master_token
 
+    def fetch_stack
+      client.get("stacks/#{current_grid}/#{name}")
+    end
+
+    def confirm_remove(stack)
+      if stack['parent']
+        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack['parent']['name'])} depends on stack #{name}"
+      end
+      if stack['children'] && !stack['children'].empty?
+        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} has dependencies that will be removed:"
+        stack['children'].each do |child|
+          puts "- #{pastel.yellow(child['name'])}"
+        end
+      end
+      confirm_command(name)
+    end
+
     def execute
-      confirm_command(name) unless forced?
+      stack = fetch_stack
+      confirm_remove(stack) unless forced?
+      unless keep_dependencies?
+        stack.fetch('children', Hash.new).each do |child_stack|
+          caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
+          Kontena.run!(['stack', 'remove', '--force', child_stack['name']])
+        end
+      end
+
       spinner "Removing stack #{pastel.cyan(name)} " do
         remove_stack(name)
         wait_stack_removal(name)

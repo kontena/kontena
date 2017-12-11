@@ -3,8 +3,11 @@ describe Kontena::NetworkAdapters::Weave, :celluloid => true do
   subject { actor.wrapped_object }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:node_info_observable) { instance_double(Kontena::Observable) }
   let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
+  let(:weave_observable) { instance_double(Kontena::Observable) }
   let(:ipam_plugin_launcher) { instance_double(Kontena::Launchers::IpamPlugin) }
+  let(:ipam_plugin_observable) { instance_double(Kontena::Observable) }
 
   let(:weavewait_container) { double(Docker::Container,
 
@@ -25,6 +28,9 @@ describe Kontena::NetworkAdapters::Weave, :celluloid => true do
     allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_worker)
     allow(Celluloid::Actor).to receive(:[]).with(:weave_launcher).and_return(weave_launcher)
     allow(Celluloid::Actor).to receive(:[]).with(:ipam_plugin_launcher).and_return(ipam_plugin_launcher)
+    allow(node_info_worker).to receive(:observable).and_return(node_info_observable)
+    allow(weave_launcher).to receive(:observable).and_return(weave_observable)
+    allow(ipam_plugin_launcher).to receive(:observable).and_return(ipam_plugin_observable)
 
     allow(subject).to receive(:ipam_client).and_return(ipam_client)
     allow(subject).to receive(:interface_ip).with('docker0').and_return(bridge_ip)
@@ -41,7 +47,7 @@ describe Kontena::NetworkAdapters::Weave, :celluloid => true do
     it 'ensures weavewait and observes' do
       expect(subject).to receive(:ensure_weavewait)
 
-      expect(subject).to receive(:observe).with(node_info_worker, weave_launcher, ipam_plugin_launcher) do |&block|
+      expect(subject).to receive(:observe).with(node_info_observable, weave_observable, ipam_plugin_observable) do |&block|
         expect(subject).to receive(:update).with(node_info)
 
         block.call(node_info, weave_info, ipam_info)

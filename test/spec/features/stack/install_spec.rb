@@ -6,6 +6,50 @@ describe 'stack install' do
     run 'kontena stack rm --force simple'
   end
 
+  context 'from registry' do
+    after do
+      run "kontena stack rm --force hello-ascii"
+    end
+
+    context 'config from file' do
+      it 'installs a stack' do
+        k = run "kontena stack install -v scaling=1 kontena/hello-ascii"
+        expect(k.code).to be_zero
+        k = run 'kontena stack show hello-ascii'
+        expect(k.code).to eq(0)
+      end
+    end
+
+    context 'config from env' do
+      before do
+        @old_env = {
+          'KONTENA_URL' => ENV['KONTENA_URL'],
+          'KONTENA_TOKEN' => ENV['KONTENA_TOKEN'],
+          'KONTENA_GRID' => ENV['KONTENA_GRID']
+        }
+        k = run "kontena master current --url"
+        ENV['KONTENA_URL'] = k.out.strip
+        k = run "kontena master token current --token"
+        ENV['KONTENA_TOKEN'] = k.out.strip
+        k = run "kontena grid current --name"
+        ENV['KONTENA_GRID'] = k.out.strip
+      end
+
+      after do
+        @old_env.each do |k,v|
+          ENV[k] = v
+        end
+      end
+
+      it 'installs a stack' do
+        k = run "kontena stack install -v scaling=1 kontena/hello-ascii"
+        expect(k.code).to be_zero
+        k = run 'kontena stack show hello-ascii'
+        expect(k.code).to eq(0)
+      end
+    end
+  end
+
   context 'from file' do
 
     it 'installs a stack' do
@@ -79,6 +123,24 @@ describe 'stack install' do
       k = run 'kontena service show simple/redis'
       expect(k.code).to eq(0)
       expect(k.out.match(/read_only: no/)).to be_truthy, k.out
+    end
+  end
+
+  context 'For a stack with dependencies' do
+
+    after do
+      %w(twemproxy twemproxy-redis_from_registry twemproxy-redis_from_yml).each do |stack|
+        run "kontena stack rm --force #{stack}"
+      end
+    end
+
+    it 'installs all dependencies' do
+      with_fixture_dir("stack/depends") do
+        k = run 'kontena stack install'
+        expect(k.code).to eq (0)
+      end
+      k = run 'kontena stack ls -q'
+      expect(k.out.split(/[\r\n]/)).to match array_including('twemproxy', 'twemproxy-redis_from_registry', 'twemproxy-redis_from_yml')
     end
   end
 end

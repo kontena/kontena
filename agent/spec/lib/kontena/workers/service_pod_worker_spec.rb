@@ -4,16 +4,103 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   let(:node) { Node.new('id' => 'aa') }
   let(:service_pod) do
     Kontena::Models::ServicePod.new(
-      'id' => 'foo/2', 'instance_number' => 2,
-      'updated_at' => Time.now.to_s, 'deploy_rev' => Time.now.to_s
+      'id' => 'foo/2',
+      'instance_number' => 2,
+      'updated_at' => Time.now.to_s,
+      'deploy_rev' => Time.now.to_s,
     )
   end
   let(:subject) { described_class.new(node, service_pod) }
 
+  describe '#apply' do
+    let(:container_id) { '8919f1a9fd05a0730a4b36549771e25895d71b9dd54c426bd6f5be969d39773c' }
+    let(:overlay_ip) { '10.81.128.1' }
+    let(:container_started_at) { Time.now }
+    let(:container) {double(:container, id: container_id,
+      name: 'foo-2',
+      overlay_ip: overlay_ip,
+      started_at: container_started_at,
+    ) }
+    let(:restarted_container) {double(:container, id: container_id,
+      name: 'foo-2',
+      overlay_ip: overlay_ip,
+      started_at: container_started_at + 1.0,
+    ) }
+
+    it 'ensures the container, and syncs to master' do
+      expect(subject.wrapped_object).to receive(:ensure_desired_state).and_return(container)
+      expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, container)
+
+      subject.apply
+    end
+
+    it 'ensures the container, and syncs errors to master' do
+      expect(subject.wrapped_object).to receive(:ensure_desired_state).and_raise(RuntimeError.new('test'))
+      expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, nil, RuntimeError)
+
+      subject.apply
+    end
+
+    context 'with wait_for_port' do
+      let(:service_pod) do
+        Kontena::Models::ServicePod.new(
+          'id' => 'foo/2',
+          'instance_number' => 2,
+          'updated_at' => Time.now.to_s,
+          'deploy_rev' => Time.now.to_s,
+          'desired_state' => 'running',
+          'wait_for_port' => 1337,
+        )
+      end
+
+      it 'syncs state after waiting for the port' do
+        expect(subject.wrapped_object).to receive(:ensure_desired_state).and_return(container)
+        expect(subject.wrapped_object).to receive(:port_open?).with(overlay_ip, 1337, timeout: 1.0).and_return(true)
+        expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, container)
+
+        subject.apply
+      end
+
+      it 'aborts if the container crashes and restarts' do
+        expect(subject.wrapped_object).to receive(:ensure_desired_state).once.and_return(container)
+        expect(subject.wrapped_object).to receive(:port_open?).with(overlay_ip, 1337, timeout: 1.0).once do
+          expect(subject.wrapped_object).to receive(:ensure_desired_state).once.and_return(restarted_container)
+          expect(subject.wrapped_object).to receive(:wait_for_port)
+          # XXX: in this case both the failing initial wait_for_port, and the restart will report state...
+          expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, restarted_container)
+
+          subject.on_container_event('container:event', double(id: container_id, status: 'die'))
+
+          false
+        end
+        allow(subject.wrapped_object).to receive(:sleep)
+        allow(subject.wrapped_object).to receive(:port_open?).with(overlay_ip, 1337, timeout: 1.0).and_return(false)
+        expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, container, RuntimeError) do |pod, container, error|
+          expect(error.message).to match /container restarted/
+        end
+
+
+        subject.apply
+      end
+    end
+
+    describe 'when terminating a service pod' do
+      it 'ensures the container, and terminates' do
+        expect(subject.wrapped_object).to receive(:ensure_desired_state) do
+          expect(service_pod).to be_terminated
+          nil
+        end
+        expect(subject.wrapped_object).to receive(:terminate)
+        expect(subject.wrapped_object).to_not receive(:sync_state_to_master)
+
+        subject.destroy
+      end
+    end
+  end
+
   describe '#ensure_desired_state' do
     before(:each) do
-      mock_rpc_client
-      allow(rpc_client).to receive(:request)
+      allow(subject.wrapped_object).to receive(:migrate_container)
     end
 
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
@@ -69,6 +156,13 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
       expect(subject.ensure_desired_state).to be nil
     end
+
+    it 'migrates container' do
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.wrapped_object).to receive(:migrate_container).with(container)
+      subject.ensure_desired_state
+    end
   end
 
   describe '#state_in_sync' do
@@ -120,7 +214,6 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
 
     before(:each) do
       mock_rpc_client
-      allow(rpc_client).to receive(:request)
     end
 
     it 'sends correct data' do
@@ -128,7 +221,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
       )
-      subject.sync_state_to_master(container)
+      subject.sync_state_to_master(service_pod, container)
     end
 
     it 'sends error' do
@@ -136,7 +229,39 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
       )
-      subject.sync_state_to_master(nil, Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+      subject.sync_state_to_master(service_pod, nil, Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+    end
+
+    context 'that has already updated' do
+      before do
+        expect(rpc_client).to receive(:request).with('/node_service_pods/set_state', [node.id, hash_including(rev: service_pod.deploy_rev)])
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'updates again with a diffrent state' do
+        allow(container).to receive(:running?).and_return(false)
+        expect(rpc_client).to receive(:request).with('/node_service_pods/set_state', [node.id, hash_including(rev: service_pod.deploy_rev, state: 'stopped')])
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'does not update again with the same state' do
+        expect(rpc_client).to_not receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'updates again with a newer rev' do
+        allow(service_pod).to receive(:deploy_rev).and_return((Time.now + 1.0).to_s)
+
+        expect(rpc_client).to receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'does not send an update for an older rev' do
+        allow(service_pod).to receive(:deploy_rev).and_return((Time.now - 1.0).to_s)
+
+        expect(rpc_client).to_not receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
     end
   end
 

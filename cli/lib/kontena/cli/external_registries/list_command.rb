@@ -9,7 +9,7 @@ module Kontena::Cli::ExternalRegistries
     requires_current_grid
 
     def fields
-      quiet? ? %(name) : %w(name username email)
+      quiet? ? %w(name) : %w(name username email)
     end
 
     def external_registries

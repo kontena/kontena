@@ -26,7 +26,6 @@ require_relative 'kontena/observer'
 require_relative 'kontena/websocket_client'
 
 require_relative 'kontena/network_adapters/weave_client'
-require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/weave_executor'
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/ipam_client'

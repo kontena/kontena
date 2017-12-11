@@ -28,6 +28,7 @@ module Rpc
         entrypoint: service.entrypoint,
         memory: service.memory,
         memory_swap: service.memory_swap,
+        shm_size: service.shm_size,
         cpu_shares: service.cpu_shares,
         cpus: service.cpus,
         privileged: service.privileged,
@@ -38,13 +39,14 @@ module Rpc
         volumes: build_volumes,
         volumes_from: service.volumes_from,
         net: service.net,
-        hostname: build_hostname,
-        domainname: build_domainname,
+        hostname: service_instance.hostname,
+        domainname: service_instance.domain,
         exposed: service.stack_exposed?,
         log_driver: service.log_driver,
         log_opts: service.log_opts,
         pid: service.pid,
         wait_for_port: service.deploy_opts.wait_for_port,
+        stop_signal: service.stop_signal,
         stop_grace_period: service.stop_grace_period,
         env: build_env,
         secrets: build_secrets,
@@ -67,9 +69,20 @@ module Rpc
         secrets << item
       end
 
+      # Inject certificates as secrets
+      service.certificates.each do |certificate|
+        grid_cert = grid.certificates.find_by(subject: certificate.subject)
+        item = {name: certificate.name, type: certificate.type, value: nil}
+        if grid_cert
+          item[:value] = grid_cert.bundle
+        end
+        secrets << item
+      end
+
       # Inject tls-sni based domain authz as secrets
       # Why secrets? Well, secrets are already handled in a way they can be concatenated with same env names
-      service.grid_domain_authorizations.select {|d| d.authorization_type == 'tls-sni-01'}.each do |domain_auth|
+      # Must be injected after any secrets/certificates, because the first certificate in `SSL_CERTS` is special
+      service.grid_domain_authorizations.select{|d| d.deployable?}.each do |domain_auth|
         secrets << {name: "SSL_CERTS", type: 'env', value: domain_auth.tls_sni_certificate}
       end
 
@@ -106,7 +119,7 @@ module Rpc
         labels['io.kontena.load_balancer.mode'] = mode
       end
       if service.health_check && service.health_check.protocol
-        labels['io.kontena.health_check.uri'] = service.health_check.uri
+        labels['io.kontena.health_check.uri'] = service.health_check.uri if service.health_check.protocol == 'http'
         labels['io.kontena.health_check.protocol'] = service.health_check.protocol
         labels['io.kontena.health_check.interval'] = service.health_check.interval.to_s
         labels['io.kontena.health_check.timeout'] = service.health_check.timeout.to_s
@@ -123,8 +136,7 @@ module Rpc
       service.hooks.each do |hook|
         if hook.instances.include?('*') || hook.instances.include?(instance_number)
           unless hook.done_for?(instance_number)
-            hooks << {type: hook.type, cmd: hook.cmd}
-            hook.push(:done => instance_number) if hook.oneshot
+            hooks << { id: hook.id.to_s, type: hook.type, cmd: hook.cmd, oneshot: hook.oneshot }
           end
         end
       end
@@ -143,18 +155,6 @@ module Rpc
         }
       end
       networks
-    end
-
-    def build_hostname
-      "#{service.name}-#{service_instance.instance_number}"
-    end
-
-    def build_domainname
-      if service.stack.name == Stack::NULL_STACK
-        "#{service.grid.name}.kontena.local"
-      else
-        "#{service.stack.name}.#{service.grid.name}.kontena.local"
-      end
     end
 
     # @return [Hash,NilClass]

@@ -4,7 +4,9 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
   subject { actor.wrapped_object }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:node_info_observable) { instance_double(Kontena::Observable) }
   let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
+  let(:weave_observable) { instance_double(Kontena::Observable) }
   let(:node_info) { instance_double(Node,
     node_number: 1,
     overlay_ip: '10.81.0.1',
@@ -36,6 +38,8 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
   before do
     allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_worker)
     allow(Celluloid::Actor).to receive(:[]).with(:weave_launcher).and_return(weave_launcher)
+    allow(node_info_worker).to receive(:observable).and_return(node_info_observable)
+    allow(weave_launcher).to receive(:observable).and_return(weave_observable)
 
     allow(subject).to receive(:inspect_container).with('kontena-etcd-data').and_return(data_container)
     allow(subject).to receive(:inspect_container).with('kontena-etcd').and_return(etcd_container)
@@ -53,7 +57,7 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
   describe '#start' do
     it 'ensures image and observes' do
       expect(subject).to receive(:ensure_image).with('kontena/etcd:2.3.7')
-      expect(subject).to receive(:observe).with(node_info_worker, weave_launcher) do |&block|
+      expect(subject).to receive(:observe).with(node_info_observable, weave_observable) do |&block|
         expect(subject).to receive(:update).with(node_info)
 
         block.call(node_info)

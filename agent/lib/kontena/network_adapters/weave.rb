@@ -33,7 +33,7 @@ module Kontena::NetworkAdapters
     def start
       self.ensure_weavewait
 
-      observe(Actor[:node_info_worker], Actor[:weave_launcher], Actor[:ipam_plugin_launcher]) do |node, weave, ipam|
+      observe(Actor[:node_info_worker].observable, Actor[:weave_launcher].observable, Actor[:ipam_plugin_launcher].observable) do |node, weave, ipam|
         async.update(node) unless updated? # only once
       end
     end

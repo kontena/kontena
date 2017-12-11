@@ -6,8 +6,8 @@ module Kontena::Launchers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
-    include Kontena::Observable
+    include Kontena::Observer::Helper
+    include Kontena::Observable::Helper
     include Kontena::Helpers::LauncherHelper
     include Kontena::Helpers::IfaceHelper
 
@@ -23,7 +23,7 @@ module Kontena::Launchers
     def start
       ensure_image(IMAGE)
 
-      observe(Actor[:node_info_worker], Actor[:weave_launcher]) do |node, weave|
+      observe(Actor[:node_info_worker].observable, Actor[:weave_launcher].observable) do |node, weave|
         # TODO: only update after both node-info and weave-launcher have updated?
         # XXX: exclusive updates...
         self.update(node)

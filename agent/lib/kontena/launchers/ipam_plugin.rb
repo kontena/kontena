@@ -5,8 +5,8 @@ module Kontena::Launchers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
-    include Kontena::Observable
+    include Kontena::Observer::Helper
+    include Kontena::Observable::Helper
     include Kontena::Helpers::LauncherHelper
 
     IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2.2'
@@ -35,7 +35,7 @@ module Kontena::Launchers
     def start
       ensure_image(IMAGE)
 
-      observe(Actor[:node_info_worker], Actor[:etcd_launcher]) do |node, etcd|
+      observe(Actor[:node_info_worker].observable, Actor[:etcd_launcher].observable) do |node, etcd|
         # XXX: exclusive update
         self.update(node)
       end

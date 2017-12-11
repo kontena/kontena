@@ -19,8 +19,22 @@ module Kontena::Cli::Stacks
       default:   Kontena.pastel.dim('⊝').freeze
     }
 
-    def stacks
-      client.get("grids/#{current_grid}/stacks")['stacks']
+    def stacks_by_names(stacks, name_list)
+      name_list.map { |name| stacks.find { |stack| stack['name'] == name } }.compact
+    end
+
+    def build_depths(stacks)
+      stacks.sort_by { |s| s['name'] }.each do |stack|
+        stack['depth'] += 1
+        stacks_by_names(stacks, stack['children'].map { |n| n['name'] }).each do |child_stack|
+          child_stack['depth'] += stack['depth']
+        end
+      end
+      stacks
+    end
+
+    def get_stacks
+      client.get("grids/#{current_grid}/stacks")['stacks'].tap { |stacks| stacks.map { |stack| stack['depth'] = 0 } }
     end
 
     def fields
@@ -35,9 +49,11 @@ module Kontena::Cli::Stacks
     end
 
     def execute
-      print_table(stacks) do |row|
+    stacks = build_depths(get_stacks)
+
+    print_table(stacks) do |row|
         next if quiet?
-        row['name'] = health_icon(stack_health(row)) + " " + row['name']
+        row['name'] = health_icon(stack_health(row)) + " " + tree_icon(row) + row['name']
         row['stack'] = "#{row['stack']}:#{row['version']}"
         row['services_count'] = row['services'].size
         row['ports'] = stack_ports(row).join(',')
@@ -57,6 +73,23 @@ module Kontena::Cli::Stacks
 
     def health_icon(health)
       HEALTH_ICONS.fetch(health) { HEALTH_ICONS[:default] }
+    end
+
+    def tree_icon(row)
+      return '' unless $stdout.tty?
+      parent = row['parent']
+      children = row['children'] || []
+      if parent.nil? && children.empty?
+        # solo
+        char = ''
+      elsif parent.nil? && !children.empty?
+        char = ''
+      elsif !parent.nil?
+        char = '┗━'
+      end
+      left_pad = ' ' * (2 * (row['depth'] - 1))
+      right_pad = row['depth'] > 1 ? '━' : ''
+      left_pad + char + right_pad
     end
 
     # @param [Hash] stack

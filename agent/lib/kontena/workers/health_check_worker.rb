@@ -40,7 +40,7 @@ module Kontena::Workers
 
     # @param [Docker::Container] container
     def start_container_check(container)
-      return if container.nil? || container.labels['io.kontena.health_check.uri'].nil?
+      return unless container && container.health_check?
 
       exclusive {
         unless workers[container.id]

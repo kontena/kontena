@@ -6,8 +6,8 @@ module Kontena::Launchers
   class Weave
     include Celluloid
     include Kontena::Logging
-    include Kontena::Observer
-    include Kontena::Observable
+    include Kontena::Observer::Helper
+    include Kontena::Observable::Helper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Helpers::LauncherHelper
 
@@ -30,7 +30,7 @@ module Kontena::Launchers
       self.ensure_image(IMAGE)
       self.ensure_image(Kontena::NetworkAdapters::WeaveExecutor::IMAGE)
 
-      observe(Actor[:node_info_worker]) do |node|
+      observe(Actor[:node_info_worker].observable) do |node|
         # XXX: exclusive updates
         update(node)
       end

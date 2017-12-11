@@ -35,6 +35,7 @@ class Grid
   has_many :grid_domain_authorizations, dependent: :delete
   has_many :networks, dependent: :delete
   has_many :volumes, dependent: :destroy
+  has_many :certificates
   has_and_belongs_to_many :users
   embeds_one :grid_logs_opts, class_name: 'GridLogsOpts'
 
@@ -48,6 +49,11 @@ class Grid
   # @return [String]
   def to_path
     self.name
+  end
+
+  # @return [String]
+  def domain
+    "#{self.name}.kontena.local"
   end
 
   def to_json(args = {})

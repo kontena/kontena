@@ -21,6 +21,27 @@ describe Stacks::Create do
       }.to change{ Stack.count }.by(1)
     end
 
+    it 'creates a new grid stack with parent' do
+      grid
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+          parent_name: 'stack-parent'
+        ).run
+
+        expect(outcome).to be_success
+        expect(outcome.result.parent_name).to eq 'stack-parent'
+        expect(outcome.result.has_parent?).to be_truthy
+      }.to change{ Stack.count }.by(1)
+    end
+
     it 'creates stack revision' do
       outcome = described_class.new(
         grid: grid,
@@ -137,6 +158,21 @@ describe Stacks::Create do
       ).run
       expect(outcome).to_not be_success
       expect(outcome.errors.message.keys).to include('services')
+    end
+
+    it 'does not allow a service name that is too long for the stack' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'foo',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxx36', image: 'redis:2.8', stateful: true }]
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'services' => { 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxx36' => { 'name' => 'Total grid service name length 66 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxx36-1.foo.test-grid.kontena.local' } }
     end
 
     it 'creates new service linked to stack' do

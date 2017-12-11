@@ -45,11 +45,13 @@ describe Kontena::Launchers::Weave, :celluloid => true do
     overlay_ip: '10.81.0.1',
     overlay_cidr: '10.81.0.2/16',
   )}
-  let(:node_info_actor) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:node_info_observable) { instance_double(Kontena::Observable) }
 
   before do
     allow(ENV).to receive(:[]).with('KONTENA_TOKEN').and_return(grid_token)
-    allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_actor)
+    allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_worker)
+    allow(node_info_worker).to receive(:observable).and_return(node_info_observable)
 
     allow(subject).to receive(:weave_executor).and_return(weave_executor)
     allow(subject).to receive(:weave_client).and_return(weave_client)
@@ -67,7 +69,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
       expect(subject).to receive(:ensure_image).with('weaveworks/weave:1.9.3')
       expect(subject).to receive(:ensure_image).with('weaveworks/weaveexec:1.9.3')
 
-      expect(subject).to receive(:observe).with(node_info_actor) do |&block|
+      expect(subject).to receive(:observe).with(node_info_observable) do |&block|
         expect(subject).to receive(:update).with(node_info)
 
         block.call(node_info)

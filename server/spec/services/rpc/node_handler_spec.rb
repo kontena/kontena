@@ -3,6 +3,7 @@ describe Rpc::NodeHandler do
   let(:subject) { described_class.new(grid) }
   let(:node) { grid.create_node!('test-node',
       node_id: 'a', labels: ['region=ams2'],
+      connected: true, updated: false,
   ) }
 
   describe '#get' do
@@ -39,7 +40,7 @@ describe Rpc::NodeHandler do
 
       expect{
         subject.update('a', {'ID' => 'a', 'AgentVersion' => '1.4.0.dev'})
-      }.to change{node.reload.updated_at}
+      }.to change{node.reload.updated_at}.and change{node.reload.updated}.from(false).to(true).and change{node.status}.from(:connecting).to(:online)
 
       expect(node.agent_version).to eq '1.4.0.dev'
     end

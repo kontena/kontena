@@ -50,7 +50,7 @@ describe Kontena::Workers::ContainerLogWorker do
         instance: 1,
         type: 'stdout',
         data: 'log message',
-        time: '2016-02-29T07:26:07+00:00'
+        time: '2016-02-29T07:26:07.798612937Z'
       }
       expect(subject.wrapped_object).to receive(:publish_log).with(expected_log)
       subject.on_message('id', 'stdout', log)

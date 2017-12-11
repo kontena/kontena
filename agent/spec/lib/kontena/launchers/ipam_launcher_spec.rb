@@ -4,7 +4,9 @@ describe Kontena::Launchers::IpamPlugin, :celluloid => true do
   let(:subject) { actor.wrapped_object }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:node_info_observable) { instance_double(Kontena::Observable) }
   let(:etcd_launcher) { instance_double(Kontena::Launchers::Etcd) }
+  let(:etcd_observable) { instance_double(Kontena::Observable) }
 
   let(:ipam_client) { instance_double(Kontena::NetworkAdapters::IpamClient) }
 
@@ -29,6 +31,8 @@ describe Kontena::Launchers::IpamPlugin, :celluloid => true do
   before do
     allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_worker)
     allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(etcd_launcher)
+    allow(node_info_worker).to receive(:observable).and_return(node_info_observable)
+    allow(etcd_launcher).to receive(:observable).and_return(etcd_observable)
 
     allow(subject).to receive(:inspect_container).with('kontena-ipam-plugin').and_return(container)
 
@@ -45,7 +49,7 @@ describe Kontena::Launchers::IpamPlugin, :celluloid => true do
   describe '#start' do
     it 'ensures image and observes' do
       expect(subject).to receive(:ensure_image).with('kontena/ipam-plugin:0.2.2')
-      expect(subject).to receive(:observe).with(node_info_worker, etcd_launcher) do |&block|
+      expect(subject).to receive(:observe).with(node_info_observable, etcd_observable) do |&block|
         expect(subject).to receive(:update).with(node_info)
 
         block.call(node_info)

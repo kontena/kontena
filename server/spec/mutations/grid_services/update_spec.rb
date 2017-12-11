@@ -266,6 +266,88 @@ describe GridServices::Update do
       end
     end
 
+    context 'for a service with certificates' do
+      let(:service) {
+        GridService.create(grid: grid, stack: stack, name: 'redis',
+          image_name: 'redis:2.8',
+          certificates: [
+            {subject: certificate.subject, name: 'SSL_CERT'},
+            {subject: certificate2.subject, name: 'SSL_CERT2'}
+          ],
+        )
+      }
+
+      let :certificate do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      let :certificate2 do
+        Certificate.create!(grid: grid,
+          subject: 'www.kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      it 'does not change existing certs' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'},
+              {subject: certificate2.subject, name: 'SSL_CERT2'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+      end
+
+      it 'changes existing certs' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'},
+              {subject: certificate2.subject, name: 'SSL_CERT2_FOO'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to change{service.reload.revision}.and change{service.reload.updated_at}
+      end
+
+      it 'removes certificate' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to change{service.reload.revision}.and change{service.reload.updated_at}
+
+        expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io']
+      end
+
+      it 'fails with invalid certificate' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: 'www.kotnena.io', name: 'SSL_CERT'},
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to_not be_success
+        }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+
+        expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io', 'www.kontena.io']
+      end
+    end
+
     context 'hooks' do
       context 'for a service with hooks' do
         let(:service) {
@@ -561,6 +643,27 @@ describe GridServices::Update do
             expect(outcome = subject.run).to be_success
           }.to change{service.reload.revision}.and change{service.reload.updated_at}.and change{service.reload.grid_service_links.first.alias}.from('redis2').to('redis3')
         end
+      end
+    end
+
+    context 'for a service with a very long name' do
+      let(:service) { GridService.create(grid: grid, name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38', image_name: 'redis:2.8')}
+
+      it 'allows scaling to single-digit instances' do
+        outcome = described_class.run(
+            grid_service: service,
+            instances: 9,
+        )
+        expect(outcome).to be_success
+      end
+
+      it 'does not allow scaling to double-digit instances' do
+        outcome = described_class.run(
+            grid_service: service,
+            instances: 10,
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38-10.test-grid.kontena.local'
       end
     end
   end

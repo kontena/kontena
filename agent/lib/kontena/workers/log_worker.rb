@@ -7,7 +7,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::WaitHelper
 
@@ -75,9 +75,9 @@ module Kontena::Workers
 
     # Start streaming and processing after etcd is running
     def start
-      exclusive {
-        observe(Actor[:etcd_launcher], timeout: 300.0)
+      observe(Actor[:etcd_launcher], timeout: 300.0)
 
+      exclusive {
         start_streaming unless streaming?
         resume_processing
       }

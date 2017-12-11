@@ -5,7 +5,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::WeaveHelper
 
     def initialize(start: true)
@@ -23,7 +23,7 @@ module Kontena::Workers
     def start
       info "start..."
 
-      observe(Actor[:weave_launcher], Actor[:etcd_launcher]) do |weave, etcd|
+      observe(Actor[:weave_launcher].observable, Actor[:etcd_launcher].observable) do |weave, etcd|
         # Only attach once
         # TODO: re-ensure based on @containers?
         ensure_containers_attached unless containers_attached?
@@ -118,7 +118,7 @@ module Kontena::Workers
 
       if overlay_cidr
         start_container_overlay(container)
-        register_container_dns(container)
+        register_container_dns(container) if container.service_container?
       else
         debug "skip start for container=#{container.name} without overlay_cidr"
       end
