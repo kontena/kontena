@@ -51,7 +51,7 @@ class GridService
   has_many :container_logs
   has_many :container_stats
   has_many :audit_logs
-  has_many :grid_service_deploys, dependent: :destroy
+  has_many :grid_service_deploys
   has_many :event_logs
   has_many :grid_domain_authorizations
   has_and_belongs_to_many :networks
