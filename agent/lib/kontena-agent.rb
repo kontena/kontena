@@ -30,6 +30,8 @@ require_relative 'kontena/network_adapters/weave_exec'
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/ipam_client'
 require_relative 'kontena/network_adapters/container_configurer'
+require_relative 'kontena/network_adapters/container_attacher'
+require_relative 'kontena/network_adapters/container_releaser'
 
 require_relative 'kontena/launchers/weave'
 require_relative 'kontena/launchers/etcd'

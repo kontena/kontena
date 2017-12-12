@@ -9,10 +9,6 @@ module Kontena
         Kontena::NetworkAdapters::WeaveExec.weaveexec(*cmd, &block)
       end
 
-      def weave_client
-        @weave_client ||= Kontena::NetworkAdapters::WeaveClient.new
-      end
-
       def network_observable
         Celluloid::Actor[:network_adapter].observable
       end

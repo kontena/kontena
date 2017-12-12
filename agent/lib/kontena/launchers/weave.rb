@@ -19,6 +19,11 @@ module Kontena::Launchers
       ENV['KONTENA_TOKEN']
     end
 
+    # @return [Kontena::NetworkAdapters::WeaveClient]
+    def weave_client
+      @weave_client ||= Kontena::NetworkAdapters::WeaveClient.new
+    end
+
     # @param node_info [Kontena::Actor::Observable<Kontena::Models::NodeInfo>]
     def initialize(start: true)
       async.start if start

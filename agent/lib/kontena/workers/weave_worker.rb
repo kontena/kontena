@@ -11,13 +11,10 @@ module Kontena::Workers
     def initialize(start: true)
       info 'initialized'
 
-      @migrate_containers = nil # initialized by #ensure_containers_attached
+      # initialized by #ensure_containers_attached, used when first attaching the container
+      @migrate_containers = nil
 
       async.start if start
-    end
-
-    def ipam_client
-      @ipam_client ||= Kontena::NetworkAdapters::IpamClient.new
     end
 
     def start
@@ -92,7 +89,8 @@ module Kontena::Workers
           self.ensure_containers_attached
         end
       elsif event.status == 'destroy'
-        self.on_container_destroy(event)
+        # these can happen later
+        async.on_container_destroy(event)
       end
     end
 
@@ -121,11 +119,15 @@ module Kontena::Workers
     #
     # @param [Docker::Container] container
     def start_container(container)
-      overlay_cidr = container.overlay_cidr
+      if container.overlay_cidr
+        attacher = Kontena::NetworkAdapters::ContainerAttacher.new(container)
+        attacher.attach(
+          attached_cidrs: @migrate_containers[container.id[0...12]],
+        )
+        attacher.register_container_dns if container.service_container?
 
-      if overlay_cidr
-        start_container_overlay(container)
-        register_container_dns(container) if container.service_container?
+        # mark container as migrated
+        @migrate_containers.delete(container.id[0...12])
       else
         debug "skip start for container=#{container.name} without overlay_cidr"
       end
@@ -134,8 +136,8 @@ module Kontena::Workers
       debug "skip start for missing container=#{container.id}"
 
     rescue => exc
-      error "failed to start container: #{exc.class.name}: #{exc.message}"
-      error exc.backtrace.join("\n")
+      warn "failed to start container=#{container.id}: #{exc.class.name}: #{exc.message}"
+      error exc
     end
 
     # @param [Docker::Event] event
@@ -145,147 +147,18 @@ module Kontena::Workers
       overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
 
       if overlay_network && overlay_cidr
-        # release from IPAM
-        async.release_container_address(container_id, overlay_network, overlay_cidr)
+        releaser = Kontena::NetworkAdapters::ContainerReleaser.new(container_id)
+        releaser.release(overlay_network, overlay_cidr)
       end
     rescue => exc
-      error "failed to remove container: #{exc.class.name}: #{exc.message}"
-      error exc.backtrace.join("\n")
+      warn "failed to handle destroy event for container=#{event.id}: #{exc.class.name}: #{exc.message}"
+      error exc
     end
 
-    OVERLAY_SUFFIX = '16'
-
-    # @param [String] container_id
-    # @param [String] overlay_cidr
-    def start_container_overlay(container)
-      if container.overlay_network.nil?
-        # overlay network migration for 0.16 compat
-        # override overlay network /19 -> /16 suffix for existing containers that may need to be migrated
-        overlay_cidr = "#{container.overlay_ip}/#{OVERLAY_SUFFIX}"
-
-        # check for un-migrated containers cached at start
-        if migrate_cidrs = @migrate_containers[container.id[0...12]]
-          debug "Migrate container=#{container.name} with overlay_cidr=#{container.overlay_cidr} from #{migrate_cidrs} to #{overlay_cidr}"
-
-          migrate_container(container.id, overlay_cidr, migrate_cidrs)
-
-          # mark container as migrated
-          @migrate_containers.delete(container.id[0...12])
-        else
-          debug "Migrate container=#{container.name} with overlay_cidr=#{container.overlay_cidr} (not attached) -> #{overlay_cidr}"
-
-          attach_container(container.id, overlay_cidr)
-        end
-      else
-        attach_container(container.id, container.overlay_cidr)
-      end
-    end
-
-    # Attach container to weave with given CIDR address, first detaching any existing mismatching addresses
-    #
-    # @param [String] container_id
-    # @param [String] overlay_cidr '10.81.X.Y/16'
-    # @param [Array<String>] migrate_cidrs ['10.81.X.Y/19']
-    def migrate_container(container_id, cidr, attached_cidrs)
-      # first remove any existing addresses
-      # this is required, since weave will not attach if the address already exists, but with a different netmask
-      attached_cidrs.each do |attached_cidr|
-        if cidr != attached_cidr
-          warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
-          weaveexec! 'detach', attached_cidr, container_id
-        end
-      end
-
-      # attach with the correct address
-      attach_container(container_id, cidr)
-    end
-
-    # Attach container to weave with given CIDR address
-    #
-    # @param [String] container_id
-    # @param [String] overlay_cidr '10.81.X.Y/16'
-    def attach_container(container_id, cidr)
-      info "Attach container=#{container_id} at cidr=#{cidr}"
-
-      weaveexec! 'attach', cidr, '--rewrite-hosts', container_id
-    end
-
-    # Release container overlay network address from IPAM.
-    #
-    # @param container_id [String] may not exist anymore
-    # @param pool [String] IPAM pool ID from io.kontena.container.overlay_network
-    # @param cidr [String] IPAM overlay CIDR from io.kontena.container.overlay_cidr
-    def release_container_address(container_id, pool, cidr)
-      info "Release address for container=#{container_id} in pool=#{pool}: #{cidr}"
-
-      ipam_client.release_address(pool, cidr)
-    rescue Kontena::NetworkAdapters::IpamError => error
-      # Cleanup will take care of these later on
-      warn "Failed to release address for container=#{container_id} in pool=#{pool} at cidr=#{cidr}: #{error}"
-    end
-
-    # @param [Docker::Container]
-    def register_container_dns(container)
-      grid_name = container.labels['io.kontena.grid.name']
-      service_name = container.labels['io.kontena.service.name']
-      instance_number = container.labels['io.kontena.service.instance_number']
-      if container.config['Domainname'].to_s.empty?
-        domain_name = "#{grid_name}.kontena.local"
-      else
-        domain_name = container.config['Domainname']
-      end
-      if container.default_stack?
-        if container.labels['io.kontena.stack.name']
-          hostname = container.config['Hostname']
-        else
-          hostname = container.labels['io.kontena.container.name'] # legacy container
-        end
-        dns_names = default_stack_dns_names(hostname, service_name, domain_name)
-        dns_names = dns_names + stack_dns_names(hostname, service_name, domain_name)
-      else
-        hostname = container.config['Hostname']
-        dns_names = stack_dns_names(hostname, service_name, domain_name)
-        if container.labels['io.kontena.service.exposed']
-          dns_names = dns_names + exposed_stack_dns_names(instance_number, domain_name)
-        end
-      end
-      dns_names.each do |name|
-        weave_client.add_dns(container.id, container.overlay_ip, name)
-      end
-    end
-
-    # @param [String] hostname
-    # @param [String] service_name
-    # @param [String] domain_name
-    # @return [Array<String>]
-    def default_stack_dns_names(hostname, service_name, domain_name)
-      base_domain = domain_name.split('.', 2)[1]
-      [
-        "#{hostname}.#{base_domain}",
-        "#{service_name}.#{base_domain}"
-      ]
-    end
-
-    # @param [String] hostname
-    # @param [String] service_name
-    # @param [String] domain_name
-    # @return [Array<String>]
-    def stack_dns_names(hostname, service_name, domain_name)
-      [
-        "#{service_name}.#{domain_name}",
-        "#{hostname}.#{domain_name}"
-      ]
-    end
-
-    # @param [String] instance_number
-    # @param [String] domain_name
-    # @return [Array<String>]
-    def exposed_stack_dns_names(instance_number, domain_name)
-      stack, base_domain = domain_name.split('.', 2)
-      [
-        domain_name,
-        "#{stack}-#{instance_number}.#{base_domain}"
-      ]
+  private
+    # @return [Kontena::NetworkAdapters::WeaveClient]
+    def weave_client
+      @weave_client ||= Kontena::NetworkAdapters::WeaveClient.new
     end
   end
 end
