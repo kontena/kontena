@@ -23,11 +23,11 @@ module Kontena::Workers
     def start
       info "start..."
 
+      subscribe('container:event', :on_container_event)
+
       observe(Actor[:weave_launcher].observable, Actor[:etcd_launcher].observable) do |weave, etcd|
         async.apply(etcd)
       end
-
-      subscribe('container:event', :on_container_event)
     end
 
     # @param etcd [Hash{container_id, overlay_ip, dns_name}]
