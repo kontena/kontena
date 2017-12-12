@@ -17,9 +17,7 @@ describe GridDomainAuthorizations::Authorize do
   describe '#validate' do
 
     before :each do
-
       GridSecrets::Create.run(grid: grid, name: 'LE_PRIVATE_KEY', value: 'LE_PRIVATE_KEY')
-
     end
 
     it 'validate LE registration existence' do
@@ -35,11 +33,22 @@ describe GridDomainAuthorizations::Authorize do
     end
 
     it 'validates service existence when tls-sni used' do
-      GridService.create(grid: grid, name: 'web', image_name: 'web:latest')
+      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', ports: [443])
       mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
       expect(mutation.has_errors?).to be_falsey
     end
 
+    it 'validates service port existence when tls-sni used' do
+      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', ports: [443])
+      mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
+      expect(mutation.has_errors?).to be_falsey
+    end
+
+    it 'validates service port existence when tls-sni used' do
+      GridService.create(grid: grid, name: 'web', image_name: 'web:latest')
+      mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
+      expect(mutation.has_errors?).to be_truthy
+    end
   end
 
   let(:subject) { described_class.new(grid: grid, domain: 'example.com') }

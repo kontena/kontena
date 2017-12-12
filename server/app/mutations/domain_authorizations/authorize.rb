@@ -23,11 +23,16 @@ module GridDomainAuthorizations
       unless grid.grid_secrets.find_by(name: LE_PRIVATE_KEY)
         add_error(:le_registration, :missing, "Let's Encrypt registration missing")
       end
-      if self.authorization_type == 'tls-sni-01'
-        add_error(:linked_service, :missing, "Service link needs to be given for tls-sni-01 authorization type") unless self.linked_service
+      if self.authorization_type == 'tls-sni-01' && self.linked_service.nil?
+        add_error(:linked_service, :missing, "Service link needs to be given for tls-sni-01 authorization type")
       end
       if self.linked_service
-        add_error(:linked_service, :not_found, "Linked service needs to point to existing service") unless @linked_service = resolve_service(self.grid, linked_service)
+        @lb_service = resolve_service(self.grid, linked_service)
+        if @lb_service.nil?
+          add_error(:linked_service, :not_found, "Linked service needs to point to existing service")
+        elsif @lb_service && !@lb_service.ports.include?(443)
+          add_error(:linked_service, :invalid, "Linked service does not have port 443 open")
+        end
       end
     end
 
@@ -69,11 +74,12 @@ module GridDomainAuthorizations
         challenge: challenge.to_h,
         challenge_opts: challenge_opts,
         tls_sni_certificate: verification_cert,
-        grid_service: @linked_service)
+        grid_service: @lb_service
+      )
 
       if self.authorization_type == 'tls-sni-01'
         # We need to deploy the linked service to get the certs in place
-        outcome = GridServices::Deploy.run(grid_service: @linked_service, force: true)
+        outcome = GridServices::Deploy.run(grid_service: @lb_service, force: true)
         if outcome.success?
           authz.grid_service_deploy = outcome.result
           authz.save
@@ -86,6 +92,5 @@ module GridDomainAuthorizations
     rescue Acme::Client::Error::Unauthorized
       add_error(:acme_client, :unauthorized, "Registration probably missing for LE")
     end
-
   end
 end
