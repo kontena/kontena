@@ -35,21 +35,15 @@ module Kontena::Launchers
       ensure_image(IMAGE)
 
       observe(Actor[:node_info_worker].observable, Actor[:etcd_launcher].observable) do |node, etcd|
-        # XXX: exclusive update
-        self.update(node)
+        async.apply(node)
       end
     end
 
     # @param node [Node]
-    def update(node)
-      state = self.ensure(node)
-
-      observable.update(state)
-
-    rescue => exc
-      error exc
-
-      observable.reset
+    def apply(node)
+      exclusive {
+        self.observable.update(self.ensure(node))
+      }
     end
 
     # @param [Node] node

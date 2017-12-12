@@ -33,7 +33,7 @@ module Kontena::NetworkAdapters
       self.ensure_weavewait
 
       observe(Actor[:node_info_worker].observable, Actor[:weave_launcher].observable, Actor[:ipam_plugin_launcher].observable) do |node, weave, ipam|
-        async.update(node) unless updated? # only once
+        async.apply(node)
       end
     end
 
@@ -63,25 +63,16 @@ module Kontena::NetworkAdapters
     end
 
     # @param node [Node]
-    def update(node)
-      state = self.ensure(node)
-
-      observable.update(state)
-
-      @updated = true
-
-    rescue => exc
-      @updated = false
-
-      error exc
-
-      observable.reset
+    def apply(node)
+      exclusive {
+        self.observable.update(self.ensure(node))
+      }
     end
 
     # @param node [Node]
     # @return [Hash]
     def ensure(node)
-      @default_ipam_pool = self.ensure_default_pool(node.grid_subnet, node.grid_iprange)
+      @default_ipam_pool ||= self.ensure_default_pool(node.grid_subnet, node.grid_iprange)
 
       {
         ipam_pool: @default_ipam_pool['PoolID'],

@@ -24,17 +24,24 @@ module Kontena::Workers
       info "start..."
 
       observe(Actor[:weave_launcher].observable, Actor[:etcd_launcher].observable) do |weave, etcd|
+        async.apply(etcd)
+      end
+
+      subscribe('container:event', :on_container_event)
+    end
+
+    # @param etcd [Hash{container_id, overlay_ip, dns_name}]
+    def apply(etcd)
+      exclusive {
         # Only attach once
         # TODO: re-ensure based on @containers?
         async.ensure_containers_attached unless containers_attached?
 
-        # XXX: this fails if the etcd container restarts, weave will forget the DNS name...
-        # XXX: this also fails if the weave container restarts... on_container_event -> ensure_* does not have access to the observed etcd state
-        # TODO: the DNS names should be ensured from container events instead...
+        # XXX: the etcd observable needs to update if the etcd container restarts, because weave will forget the DNS name...
+        # XXX: the weave observable needs to update if the weave container restarts, so that we also re-ensure the etcd DNS name...
+        # TODO: maybe ensure the etcd container DNS name from the container events instead?
         async.ensure_etcd_dns(etcd)
-      end
-
-      subscribe('container:event', :on_container_event)
+      }
     end
 
     # Ensure DNS name for Kontena::Launchers::Etcd
@@ -81,7 +88,7 @@ module Kontena::Workers
         end
       elsif event.status == 'restart'
         if router_image?(event.from)
-          # XXX: should update the observer instead, to also ensure etcd...
+          # XXX: this does not update the etcd dns
           self.ensure_containers_attached
         end
       elsif event.status == 'destroy'

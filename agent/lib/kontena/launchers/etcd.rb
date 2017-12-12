@@ -24,20 +24,15 @@ module Kontena::Launchers
 
       observe(Actor[:node_info_worker].observable, Actor[:weave_launcher].observable) do |node, weave|
         # TODO: wait for weave_launcher to update after node_info updates?
-        self.update(node)
+        async.apply(node)
       end
     end
 
     # @param node [Node]
-    def update(node)
-      state = self.ensure(node)
-
-      observable.update(state)
-
-    rescue => exc
-      error exc
-
-      observable.reset
+    def apply(node)
+      exclusive {
+        self.observable.update(self.ensure(node))
+      }
     end
 
     # @param [Node] node
