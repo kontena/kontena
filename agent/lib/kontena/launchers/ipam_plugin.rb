@@ -7,6 +7,7 @@ module Kontena::Launchers
     include Kontena::Observer::Helper
     include Kontena::Observable::Helper
     include Kontena::Helpers::LauncherHelper
+    include Kontena::Helpers::WaitHelper
 
     IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2.2'
     IPAM_IMAGE = ENV['IPAM_IMAGE'] || 'kontena/ipam-plugin'
@@ -23,12 +24,6 @@ module Kontena::Launchers
 
     def ipam_client
       @ipam_client ||= Kontena::NetworkAdapters::IpamClient.new
-    end
-
-    def healthy?
-      ipam_client.activate
-    rescue # XXX
-      nil
     end
 
     def start
@@ -48,17 +43,29 @@ module Kontena::Launchers
 
     # @param [Node] node
     def ensure(node)
-      container = ensure_container(IMAGE, node)
+      container = ensure_container(IMAGE,
+        node_id: node.node_number,
+        supernet: node.grid_supernet,
+      )
+
+      ensure_activated
 
       {
         running: container.running?
       }
     end
 
+    # Blocks until the IPAM is activated
+    def ensure_activated
+      # TODO: log the activate API error on timeout?
+      wait_until!("IPAM activated") { ipam_client.activate? }
+    end
+
     # @param image [String]
-    # @param node [Hash]
+    # @param node_id [String]
+    # @param supernet [String]
     # @return [Docker::Container]
-    def ensure_container(image, node)
+    def ensure_container(image, node_id:, supernet: )
       container = inspect_container(CONTAINER)
 
       if container
@@ -83,8 +90,8 @@ module Kontena::Launchers
         env: [
           "LOG_LEVEL=#{LOG_LEVEL}",
           "ETCD_ENDPOINT=#{ETCD_ENDPOINT}",
-          "NODE_ID=#{node.node_number}",
-          "KONTENA_IPAM_SUPERNET=#{node.grid_supernet}",
+          "NODE_ID=#{node_id}",
+          "KONTENA_IPAM_SUPERNET=#{supernet}",
         ],
       )
     end

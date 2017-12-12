@@ -17,6 +17,7 @@ module Kontena::NetworkAdapters
     def release(pool, cidr)
       info "Release address for container=#{container_id} in pool=#{pool}: #{cidr}"
 
+      # does not wait for IPAM to be ready - this is allowed to fail instead
       ipam_client.release_address(pool, cidr)
     rescue Kontena::NetworkAdapters::IpamError => error
       # Cleanup will take care of these later on

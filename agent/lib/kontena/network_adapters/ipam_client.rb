@@ -27,6 +27,8 @@ module Kontena::NetworkAdapters
     # @return [Hash] nil on error
     def activate?
       activate
+    rescue Excon::Error::Socket
+      nil
     rescue IpamError
       nil
     end
