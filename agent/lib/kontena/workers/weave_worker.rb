@@ -108,7 +108,7 @@ module Kontena::Workers
     def inspect_containers
       containers = { }
 
-      weave_executor.ps! do |id, mac, *cidrs|
+      Kontena::NetworkAdapters::WeaveExec.ps do |id, mac, *cidrs|
         next if id == 'weave:expose'
 
         containers[id] = cidrs

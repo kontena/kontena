@@ -204,9 +204,6 @@ module Kontena
     end
 
     def supervise_network_adapter
-      @supervisor.pool(Kontena::NetworkAdapters::WeaveExecutor,
-        as: :weave_executor
-      )
       @supervisor.supervise(
         type: Kontena::NetworkAdapters::Weave,
         as: :network_adapter

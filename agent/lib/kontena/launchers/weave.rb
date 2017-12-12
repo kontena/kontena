@@ -28,7 +28,7 @@ module Kontena::Launchers
       info "start..."
 
       self.ensure_image(IMAGE)
-      self.ensure_image(Kontena::NetworkAdapters::WeaveExecutor::IMAGE)
+      self.ensure_image(Kontena::NetworkAdapters::WeaveExec::IMAGE)
 
       observe(Actor[:node_info_worker].observable) do |node|
         async.apply(node)
@@ -168,7 +168,7 @@ module Kontena::Launchers
     # @return [Array<String>, nil] exposed CIDRs
     def inspect_exposed
       exposed = nil
-      weave_executor.ps!('weave:expose') do |name, mac, *cidrs|
+      Kontena::NetworkAdapters::WeaveExec.ps('weave:expose') do |name, mac, *cidrs|
         # XXX: can't return because this is a celluloid block call
         exposed = cidrs
       end

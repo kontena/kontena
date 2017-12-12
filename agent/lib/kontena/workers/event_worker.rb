@@ -90,7 +90,7 @@ module Kontena::Workers
     # @param [String] image
     # @return [Boolean]
     def adapter_image?(image)
-      image.split(':').first == Kontena::NetworkAdapters::WeaveExecutor::WEAVEEXEC_IMAGE
+      image.split(':').first == Kontena::NetworkAdapters::WeaveExec::WEAVEEXEC_IMAGE
     end
 
     def stop_processing

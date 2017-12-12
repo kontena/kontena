@@ -48,7 +48,7 @@ module Kontena::NetworkAdapters
       unless container = inspect_container(WEAVEWAIT_NAME)
         container = Docker::Container.create(
           'name' => WEAVEWAIT_NAME,
-          'Image' => Kontena::NetworkAdapters::WeaveExecutor::IMAGE,
+          'Image' => Kontena::NetworkAdapters::WeaveExec::IMAGE,
           'Entrypoint' => ['/bin/false'],
           'Labels' => {
             'weavevolumes' => ''

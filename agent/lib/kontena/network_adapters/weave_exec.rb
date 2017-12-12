@@ -13,35 +13,58 @@ module Kontena::NetworkAdapters
     end
   end
 
-  class WeaveExecutor
-    include Celluloid
+  class WeaveExec
     include Kontena::Logging
     include Kontena::Helpers::WeaveHelper
 
     WEAVE_DEBUG = ENV['WEAVE_DEBUG']
     IMAGE = "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
 
+    # @raise [Docker::Error]
+    # @raise [WeaveExecError]
+    def self.weaveexec(*cmd, &block)
+      exec = new(cmd)
+      exec.run(&block)
+    end
+
+    # List network information for container(s)
+    #
+    # @param [Array<String>] what for given Docker IDs, 'weave:expose', or all
+    # @yield [name, mac, *cidrs]
+    # @yieldparam [Array<String>] cidrs
+    # @raise [Docker::Error]
+    # @raise [WeaveExecError]
+    # @return [Boolean]
+    def self.ps(*what)
+      weaveexec('ps', *what) do |line|
+        yield *line.split()
+      end
+    end
+
     # @param [Array<String>] cmd
-    def censor_password(command)
-      if command.include?('--password')
-        cmd = command.dup
+    def initialize(cmd)
+      @cmd = cmd
+    end
+
+    # @return [Array<String>]
+    def censored_command
+      if @cmd.include?('--password')
+        cmd = @cmd.dup
         passwd_index = cmd.index('--password')
         cmd[passwd_index + 1] = '<redacted>'
 
         cmd
       else
-        command
+        @cmd
       end
     end
 
-    # @param [Array<String>] *cmd
     # @raise [Docker::Error]
-    # @raise [WeaveExecError]
-    # @yield [line] Each line of output
-    def run(*cmd, &block)
+    # @return [Docker::Container]
+    def run_container
       container = Docker::Container.create(
         'Image' => IMAGE,
-        'Cmd' => ['--local'] + cmd,
+        'Cmd' => @cmd,
         'Volumes' => {
           '/var/run/docker.sock' => {},
           '/host' => {}
@@ -65,9 +88,27 @@ module Kontena::NetworkAdapters
         }
       )
       container.start!
-      response = container.wait
+      container
+    end
 
-      command = censor_password(cmd)
+    # @param container [Docker::Container]
+    def cleanup_container(container)
+      container.delete(force: true, v: true)
+    rescue Docker::Error::DockerError => exc
+      # known cases of storage driver errors causing container delete to fail (#1631)
+      # can't do anything sensible to recover from delete errors
+      # no reason to have the weavexec command itself fail either
+      # TODO: separate task to cleanup orphaned containers?
+      warn "weaveexec container cleanup failed: #{exc}"
+    end
+
+    # @raise [Docker::Error]
+    # @raise [WeaveExecError]
+    # @yield [line] Each line of output
+    def run(&block)
+      container = run_container
+
+      response = container.wait
       status_code = response["StatusCode"]
 
       if status_code != 0
@@ -76,57 +117,14 @@ module Kontena::NetworkAdapters
       elsif block
         stderr = container.streaming_logs(stderr: true)
         stdout = container.streaming_logs(stdout: true)
-        debug "weaveexec stream #{command}:\n#{stderr}"
+        debug "weaveexec stream #{self.censored_command}:\n#{stderr}"
         stdout.each_line &block
       else
         output = container.streaming_logs(stdout: true, stderr: true)
-        debug "weaveexec ok: #{command}\n#{output}"
+        debug "weaveexec ok: #{self.censored_command}\n#{output}"
       end
     ensure
-      begin
-        container.delete(force: true, v: true) if container
-      rescue Docker::Error::DockerError => exc
-        # known cases of storage driver errors causing container delete to fail (#1631)
-        # can't do anything sensible to recover from delete errors
-        # no reason to have the weavexec command itself fail either
-        # TODO: separate task to cleanup orphaned containers?
-        warn "weaveexec container cleanup failed: #{exc}"
-      end
-    end
-
-    # Wrapper that aborts celluloid calls on exceptions
-    def weaveexec!(*cmd, &block)
-      run(*cmd, &block)
-    rescue => exc
-      abort exc
-    end
-
-    # Wrapper that does not raise exceptions
-    #
-    # @see #weavexec!
-    # @return [Boolean]
-    def weaveexec(*cmd, &block)
-      run(*cmd, &block)
-    rescue Docker::Error => exc
-      error "weaveexec #{cmd}: #{exc}"
-      return false
-    rescue WeaveExecError => exc
-      error exc
-      return false
-    else
-      return true
-    end
-
-    # List network information for container(s)
-    #
-    # @param [Array<String>] what for given Docker IDs, 'weave:expose', or all
-    # @yield [name, mac, *cidrs]
-    # @yieldparam [Array<String>] cidrs
-    # @return [Boolean]
-    def ps!(*what)
-      weaveexec!('ps', *what) do |line|
-        yield *line.split()
-      end
+      cleanup_container(container) if container
     end
   end
 end
