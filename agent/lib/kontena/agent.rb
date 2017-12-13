@@ -138,6 +138,10 @@ module Kontena
       info "Dump cellulooid actor and thread stacks: done"
     end
 
+    # Setup a Kontena::Watchdog to kill the process, allowing it to be restarted if:
+    # * the main celluloid supervisor crashes
+    #
+    # @return [Kontena::Watchdog]
     def watchdog
       Kontena::Watchdog.watch do
         fail "Celluloid::Supervision::Container died" unless @supervisor.alive?
