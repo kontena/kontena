@@ -13,17 +13,17 @@ class Kontena::Watchdog
   end
 
   def self.watch(**options, &block)
-    new(Thread.current, block, **options)
+    # pass block as a proc, instead of as a celluloid block proxy
+    new(block, **options)
   end
 
-  def initialize(thread, block, interval: INTERVAL, threshold: THRESHOLD, timeout: TIMEOUT, abort: true)
-    @thread = thread
+  def initialize(block, interval: INTERVAL, threshold: THRESHOLD, timeout: TIMEOUT, abort_exit: true)
     @block = block
 
     @interval = interval
     @threshold = threshold
     @timeout = timeout
-    @abort = abort
+    @abort_exit = abort_exit
 
     async.start
   end
@@ -83,7 +83,7 @@ class Kontena::Watchdog
 
   # @return [Array<String>] current target thread stack
   def trace
-    @ping_thread ? @ping_thread.backtrace : []
+    (@ping_thread && @ping_thread.backtrace) || []
   end
 
   # warn when @ping delay exceeds @threshold
@@ -106,7 +106,7 @@ class Kontena::Watchdog
     # only abort once
     stop
 
-    # assume that the thread has abort_on_exception and it does not rescue non-StandardError
-    @thread.raise Abort, "#{exc.class}: #{exc.message}" if @abort
+    # exit, hard, without running at_exit handlers
+    exit! if @abort_exit
   end
 end
