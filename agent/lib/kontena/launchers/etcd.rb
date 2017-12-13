@@ -100,24 +100,23 @@ module Kontena::Launchers
         cluster_state = nil
       end
 
-      options = {
-        name: "node-#{node.node_number}",
-        overlay_ip: node.overlay_ip,
-        docker_ip: docker_gateway,
-        cluster_token: node.grid['name'],
-        cluster_state: cluster_state,
-        initial_cluster: initial_cluster(node),
-      }
-
       info "creating etcd service: #{options.inspect}"
 
-      return create_container(image, **options)
+      return create_container(image,
+        cmd: build_cmd(
+          name: "node-#{node.node_number}",
+          overlay_ip: node.overlay_ip,
+          docker_ip: docker_gateway,
+          initial_cluster: initial_cluster(node),
+          cluster_token: node.grid['name'],
+          cluster_state: cluster_state,
+        ),
+      )
     end
 
-    # @param cluster_state [String, nil] proxy if nil, else cluster member
-    # @raise [Docker::Error]
-    # @return [Docker::Container]
-    def create_container(image, name:, overlay_ip:, docker_ip:, initial_cluster:, cluster_state:, cluster_token:)
+    # @param [Node] node
+    # @return [Array<String>]
+    def build_cmd(name:, overlay_ip:, docker_ip:, initial_cluster:, cluster_state:, cluster_token:)
       cmd = [
         '--name', name, '--data-dir', '/var/lib/etcd',
         '--listen-client-urls', "http://127.0.0.1:2379,http://#{overlay_ip}:2379,http://#{docker_ip}:2379",
@@ -136,6 +135,13 @@ module Kontena::Launchers
         cmd = cmd + ['--proxy', 'on']
       end
 
+      cmd
+    end
+
+    # @param cluster_state [String, nil] proxy if nil, else cluster member
+    # @raise [Docker::Error]
+    # @return [Docker::Container]
+    def create_container(image, cmd:)
       container = Docker::Container.create(
         'name' => 'kontena-etcd',
         'Image' => image,
