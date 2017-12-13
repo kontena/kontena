@@ -46,6 +46,7 @@ class Kontena::Watchdog
     @timer.cancel
   end
 
+  # Start new watchdog ping
   def ping
     ping = @ping = Time.now
 
@@ -58,6 +59,7 @@ class Kontena::Watchdog
     @pong = Time.now if @ping == ping
   end
 
+  # Watchdog has not yet seen any @pong for the latest @ping, warn on threshold and abort on timeout
   def check
     delay = Time.now - @ping
 
@@ -70,15 +72,20 @@ class Kontena::Watchdog
     end
   end
 
+  # warn when @ping delay exceeds @threshold
+  # @param delay [Float] > @threshold
   def bark(delay)
     warn "watchdog delayed by %.3fs" % [delay]
   end
 
+  # abort when @ping delay exceeds @timeout
+  # @param delay [Float] > @timeout
   def bite(delay)
     exc = Timeout::Error.new "watchdog timeout after %.3fs" % [delay]
     abort(exc)
   end
 
+  # kill the watched Thread
   def abort(exc)
     error exc
 

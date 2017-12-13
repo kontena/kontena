@@ -33,6 +33,9 @@ describe Kontena::Watchdog, :celluloid => true do
       sleep 1
     end
 
+    expect(subject.wrapped_object).to receive(:bark).at_least(:once).and_call_original
+    expect(subject.wrapped_object).to receive(:bite).once.and_call_original
+
     expect{
       subject
       sleep 0.5
