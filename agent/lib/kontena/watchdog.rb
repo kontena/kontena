@@ -51,12 +51,21 @@ class Kontena::Watchdog
     ping = @ping = Time.now
 
     defer {
+      @ping_thread = Thread.current
+
       @block.call
+
+      @ping_thread = nil
     }
+
   rescue => exc
     abort(exc)
   else
-    @pong = Time.now if @ping == ping
+    pong(ping, Time.now)
+  end
+
+  def pong(ping, pong)
+    @pong = pong if @ping == ping
   end
 
   # Watchdog has not yet seen any @pong for the latest @ping, warn on threshold and abort on timeout
@@ -72,16 +81,21 @@ class Kontena::Watchdog
     end
   end
 
+  # @return [Array<String>] current target thread stack
+  def trace
+    @ping_thread ? @ping_thread.backtrace : []
+  end
+
   # warn when @ping delay exceeds @threshold
   # @param delay [Float] > @threshold
   def bark(delay)
-    warn "watchdog delayed by %.3fs" % [delay]
+    warn "watchdog delayed by %.3fs @ %s" % [delay, trace.join("\n\t")]
   end
 
   # abort when @ping delay exceeds @timeout
   # @param delay [Float] > @timeout
   def bite(delay)
-    exc = Timeout::Error.new "watchdog timeout after %.3fs" % [delay]
+    exc = Timeout::Error.new "watchdog timeout after %.3fs @ %s" % [delay, trace.join("\n\t")]
     abort(exc)
   end
 
