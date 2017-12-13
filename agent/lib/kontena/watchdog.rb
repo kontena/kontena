@@ -42,6 +42,7 @@ class Kontena::Watchdog
   def ping
     start = Time.now
 
+    # use exclusive mode to prevent the task from suspending and causing the Timeout::Error to crash the actor thread instead
     exclusive {
       Timeout.timeout(@timeout) do
         @block.call
