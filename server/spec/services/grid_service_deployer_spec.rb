@@ -135,7 +135,7 @@ describe GridServiceDeployer do
         end
 
         it "fails the service deploy if one of the concurrent instance deploys fail", :celluloid => true do
-          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, Time) do |total_instances, deploy_futures, instance_number, deploy_rev|
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
 
@@ -146,7 +146,7 @@ describe GridServiceDeployer do
               )
             }
           end
-          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 2, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 2, Time) do |total_instances, deploy_futures, instance_number, deploy_rev|
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
 
@@ -171,7 +171,7 @@ describe GridServiceDeployer do
         end
 
         it "fails the service deploy if aborted", :celluloid => true do
-          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, Time) do |total_instances, deploy_futures, instance_number, deploy_rev|
             grid_service_deploy.abort! "testing"
 
             deploy_futures << Celluloid::Future.new {

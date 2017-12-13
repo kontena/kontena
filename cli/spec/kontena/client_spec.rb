@@ -239,7 +239,7 @@ describe Kontena::Client do
         expect(http_client).to receive(:request).with(
           hash_including(path: '/v1/coffee', method: :brew)
         ) {
-          raise Excon::Errors::HTTPStatusError.new("I'm a teapot",
+          raise Excon::Error::HTTPStatus.new("I'm a teapot",
             {
               method: 'brew',
               path: '/v1/coffee',

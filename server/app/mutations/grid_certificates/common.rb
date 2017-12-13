@@ -2,10 +2,11 @@ require 'openssl'
 require 'acme-client'
 
 require_relative '../../services/logging'
+require_relative '../grid_services/helpers'
 
 module GridCertificates
   module Common
-
+    include GridServices::Helpers
     include Logging
 
     LE_PRIVATE_KEY = 'LE_PRIVATE_KEY'.freeze
@@ -89,7 +90,7 @@ module GridCertificates
     def refresh_certificate_services(certificate)
       certificate.grid.grid_services.where(:'certificates.subject' => certificate.subject).each do |grid_service|
         info "force service #{grid_service.to_path} update for updated certificate #{certificate.subject}"
-        grid_service.set(updated_at: Time.now.utc)
+        update_grid_service(grid_service, force: true)
       end
     end
   end

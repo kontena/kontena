@@ -134,6 +134,11 @@ module Docker
       (self.labels['io.kontena.service.name'] || self.name).to_s
     end
 
+    # @return [Integer]
+    def service_revision
+      self.labels['io.kontena.container.service_revision'].to_i
+    end
+
     def stack_name
       (self.labels['io.kontena.stack.name'] || 'system').to_s
     end
