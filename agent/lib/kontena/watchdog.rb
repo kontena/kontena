@@ -1,6 +1,7 @@
 # Run the given block in a separate Thread every interval, and abort if it times out or fails
 class Kontena::Watchdog
   include Celluloid
+  include Kontena::Logging
 
   INTERVAL = 10.0
   THRESHOLD = 10.0
@@ -27,12 +28,8 @@ class Kontena::Watchdog
     async.start
   end
 
-  def logger
-    Kontena::Logging.logger
-  end
-
   def start
-    logger.info "watchdog start"
+    info "watchdog start"
     @timer = every(@interval) do
       if !@ping || @ping < @pong
         async.ping
@@ -56,8 +53,7 @@ class Kontena::Watchdog
       @block.call
     }
   rescue => exc
-    logger.fatal "watchdog error: #{exc}"
-    abort(exc) if @abort
+    abort(exc)
   else
     @pong = Time.now if @ping == ping
   end
@@ -70,25 +66,26 @@ class Kontena::Watchdog
     elsif delay > @threshold
       bark(delay)
     else
-      logger.debug { "watchdog delay is %.3fs" % [delay] }
+      debug { "watchdog delay is %.3fs" % [delay] }
     end
   end
 
   def bark(delay)
-    logger.warn "watchdog delayed by %.3fs" % [delay]
+    warn "watchdog delayed by %.3fs" % [delay]
   end
 
   def bite(delay)
     exc = Timeout::Error.new "watchdog timeout after %.3fs" % [delay]
-    logger.fatal exc.message
-    abort(exc) if @abort
+    abort(exc)
   end
 
   def abort(exc)
+    error exc
+
     # only abort once
     stop
 
     # assume that the thread has abort_on_exception and it does not rescue non-StandardError
-    @thread.raise Abort, "#{exc.class}: #{exc.message}"
+    @thread.raise Abort, "#{exc.class}: #{exc.message}" if @abort
   end
 end
