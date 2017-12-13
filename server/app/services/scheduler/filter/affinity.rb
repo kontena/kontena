@@ -30,7 +30,7 @@ module Scheduler
           key, comparator, flags, value = split_affinity(affinity)
 
           if key == 'service'
-            # value resolves to service if not found; accept for use with service!=...
+            # value resolves to nil if not found; accept for use with service!=...
             value = resolve_service(service, value)
           end
 
