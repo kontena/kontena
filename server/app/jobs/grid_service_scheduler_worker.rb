@@ -45,7 +45,7 @@ class GridServiceSchedulerWorker
     error "aborting deploy on un-handled error: #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     service_deploy.abort! "service deploy aborted: #{exc.message}" if service_deploy
-    
+
     nil
   end
 
@@ -66,19 +66,8 @@ class GridServiceSchedulerWorker
   # @param service_deploy [GridServiceDeploy]
   def deploy(service_deploy)
     self.deployer(service_deploy).deploy
-    self.deploy_dependant_services(service_deploy.grid_service)
   ensure
     service_deploy.set(:finished_at => Time.now.utc)
-  end
-
-  # Create deploys for dependent services.
-  #
-  # @param grid_service [GridService]
-  def deploy_dependant_services(grid_service)
-    grid_service.dependant_services.each do |service|
-      info "deploying dependent service #{service.to_path} of deployed service #{grid_service.to_path}"
-      GridServiceDeploy.create!(grid_service: service)
-    end
   end
 
   # @param [GridServiceDeploy] grid_service_deploy
