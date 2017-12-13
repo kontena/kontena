@@ -9,7 +9,6 @@ class Kontena::Watchdog
   include Kontena::Logging
 
   INTERVAL = 10.0
-  THRESHOLD = 10.0
   TIMEOUT = 30.0
 
   def self.watch(**options, &block)
@@ -17,11 +16,10 @@ class Kontena::Watchdog
     new(block, **options)
   end
 
-  def initialize(block, interval: INTERVAL, threshold: THRESHOLD, timeout: TIMEOUT, abort_exit: true)
+  def initialize(block, interval: INTERVAL, timeout: TIMEOUT, abort_exit: true)
     @block = block
 
     @interval = interval
-    @threshold = threshold
     @timeout = timeout
     @abort_exit = abort_exit
 
@@ -31,13 +29,7 @@ class Kontena::Watchdog
   def start
     info "watchdog start"
     @timer = every(@interval) do
-      if !@ping || (@pong && @ping < @pong)
-        async.ping
-      elsif !@pong || @pong < @ping
-        check
-      else
-
-      end
+      ping
     end
   end
 
@@ -48,57 +40,18 @@ class Kontena::Watchdog
 
   # Start new watchdog ping
   def ping
-    ping = @ping = Time.now
+    start = Time.now
 
-    defer {
-      @ping_thread = Thread.current
-
+    Timeout.timeout(@timeout) do
       @block.call
-
-      @ping_thread = nil
-    }
+    end
 
   rescue => exc
     error exc
     abort(exc)
   else
-    pong(ping, Time.now)
-  end
-
-  def pong(ping, pong)
-    @pong = pong if @ping == ping
-  end
-
-  # Watchdog has not yet seen any @pong for the latest @ping, warn on threshold and abort on timeout
-  def check
-    delay = Time.now - @ping
-
-    if delay > @timeout
-      bite(delay)
-    elsif delay > @threshold
-      bark(delay)
-    else
-      debug { "watchdog delay is %.3fs" % [delay] }
-    end
-  end
-
-  # @return [Array<String>] current target thread stack
-  def trace
-    (@ping_thread && @ping_thread.backtrace) || []
-  end
-
-  # warn when @ping delay exceeds @threshold
-  # @param delay [Float] > @threshold
-  def bark(delay)
-    warn "watchdog delayed by %.3fs @ %s" % [delay, trace.join("\n\t")]
-  end
-
-  # abort when @ping delay exceeds @timeout
-  # @param delay [Float] > @timeout
-  def bite(delay)
-    exc = Timeout::Error.new "watchdog timeout after %.3fs @ %s" % [delay, trace.join("\n\t")]
-    error exc
-    abort(exc)
+    delay = Time.now - start
+    debug { "watchdog delay is %.3fs" % [delay] }
   end
 
   # kill the process

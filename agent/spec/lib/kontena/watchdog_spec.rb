@@ -1,6 +1,6 @@
 describe Kontena::Watchdog, :celluloid => true do
   subject do
-    @watchdog = described_class.new(block, interval: 0.01, threshold: 0.05, timeout: 0.1, abort_exit: false)
+    @watchdog = described_class.new(block, interval: 0.01, timeout: 0.1, abort_exit: false)
   end
 
   after do
@@ -39,8 +39,6 @@ describe Kontena::Watchdog, :celluloid => true do
     end}
 
     it "aborts" do
-      expect(subject.wrapped_object).to receive(:bark).at_least(:once).and_call_original
-      expect(subject.wrapped_object).to receive(:bite).once.and_call_original
       expect(subject.wrapped_object).to receive(:abort).with(Timeout::Error).and_call_original
 
       subject
