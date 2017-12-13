@@ -139,7 +139,7 @@ module Kontena
     end
 
     def watchdog
-       Kontena::Watchdog.watch do
+      Kontena::Watchdog.watch do
         fail "Celluloid::Supervision::Container died" unless @supervisor.alive?
       end
     end

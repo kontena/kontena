@@ -31,7 +31,7 @@ class Kontena::Watchdog
   def start
     info "watchdog start"
     @timer = every(@interval) do
-      if !@ping || @ping < @pong
+      if !@ping || (@pong && @ping < @pong)
         async.ping
       elsif !@pong || @pong < @ping
         check
@@ -59,7 +59,7 @@ class Kontena::Watchdog
   end
 
   def check
-    delay = @pong && @pong > @ping ? @pong - @ping : Time.now - @ping
+    delay = Time.now - @ping
 
     if delay > @timeout
       bite(delay)
