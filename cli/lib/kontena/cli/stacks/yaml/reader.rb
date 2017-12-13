@@ -83,7 +83,7 @@ module Kontena::Cli::Stacks
               substitutions: default_envs,
               warnings: false
             )
-          )
+          ), [], [], true, file
         )
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
@@ -104,7 +104,7 @@ module Kontena::Cli::Stacks
               use_opto: true,
               raise_on_unknown: true
             )
-          )
+          ), [], [], true, file
         )
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
@@ -273,6 +273,7 @@ module Kontena::Cli::Stacks
       # @param [String] service_name - optional service to parse
       # @return [Hash]
       def parse_services(service_name = nil)
+        services = self.services.dup # do not modify the fully_interpolated_yaml['services'] hash in-place
         if service_name.nil?
           services.each do |name, config|
             services[name] = process_config(config, name)

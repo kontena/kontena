@@ -6,6 +6,50 @@ describe 'stack install' do
     run 'kontena stack rm --force simple'
   end
 
+  context 'from registry' do
+    after do
+      run "kontena stack rm --force hello-ascii"
+    end
+
+    context 'config from file' do
+      it 'installs a stack' do
+        k = run "kontena stack install -v scaling=1 kontena/hello-ascii"
+        expect(k.code).to be_zero
+        k = run 'kontena stack show hello-ascii'
+        expect(k.code).to eq(0)
+      end
+    end
+
+    context 'config from env' do
+      before do
+        @old_env = {
+          'KONTENA_URL' => ENV['KONTENA_URL'],
+          'KONTENA_TOKEN' => ENV['KONTENA_TOKEN'],
+          'KONTENA_GRID' => ENV['KONTENA_GRID']
+        }
+        k = run "kontena master current --url"
+        ENV['KONTENA_URL'] = k.out.strip
+        k = run "kontena master token current --token"
+        ENV['KONTENA_TOKEN'] = k.out.strip
+        k = run "kontena grid current --name"
+        ENV['KONTENA_GRID'] = k.out.strip
+      end
+
+      after do
+        @old_env.each do |k,v|
+          ENV[k] = v
+        end
+      end
+
+      it 'installs a stack' do
+        k = run "kontena stack install -v scaling=1 kontena/hello-ascii"
+        expect(k.code).to be_zero
+        k = run 'kontena stack show hello-ascii'
+        expect(k.code).to eq(0)
+      end
+    end
+  end
+
   context 'from file' do
 
     it 'installs a stack' do

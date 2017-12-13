@@ -128,6 +128,11 @@ module Docker
       (self.labels['io.kontena.service.name'] || self.name).to_s
     end
 
+    # @return [Integer]
+    def service_revision
+      self.labels['io.kontena.container.service_revision'].to_i
+    end
+
     def stack_name
       (self.labels['io.kontena.stack.name'] || 'system').to_s
     end
@@ -222,6 +227,11 @@ module Docker
     # @return [Integer]
     def stop_grace_period
       (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
+    # @return [Boolean]
+    def health_check?
+      !!self.labels['io.kontena.health_check.protocol']
     end
 
     def reload

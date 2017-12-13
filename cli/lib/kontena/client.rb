@@ -55,7 +55,7 @@ module Kontena
         write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 10,
         ssl_verify_peer: ignore_ssl_errors? ? false : true
       }
-      if ENV["DEBUG"]
+      if Kontena.debug?
         require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end
@@ -284,7 +284,7 @@ module Kontena
       retried ||= false
 
       if auth && token_expired?
-        raise Excon::Errors::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master" : "cloud"} login"
+        raise Excon::Error::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master" : "cloud"} login"
       end
 
       request_headers = request_headers(headers, auth)
@@ -325,7 +325,7 @@ module Kontena
       @last_response = http_client.request(request_options)
 
       parse_response(@last_response)
-    rescue Excon::Errors::Unauthorized
+    rescue Excon::Error::Unauthorized
       if token
         debug { 'Server reports access token expired' }
 
@@ -337,7 +337,7 @@ module Kontena
         retry if refresh_token
       end
       raise Kontena::Errors::StandardError.new(401, 'Unauthorized')
-    rescue Excon::Errors::HTTPStatusError => error
+    rescue Excon::Error::HTTPStatus => error
       debug { "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}" }
 
       handle_error_response(error.response)

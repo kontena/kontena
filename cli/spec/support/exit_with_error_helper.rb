@@ -1,3 +1,4 @@
+RSpec::Matchers.define_negated_matcher :exit_without_error, :exit_with_error
 RSpec::Matchers.define :exit_with_error do
 
   def supports_block_expectations?

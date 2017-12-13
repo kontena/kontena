@@ -55,6 +55,8 @@ module Agent
         .find_one_and_update({:$set => {connected_at: connected_at, **attrs}})
 
       fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
+
+      node.reload # find_one_and_update does not update mongoid document attrs
     end
 
     def publish_update_event

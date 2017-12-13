@@ -9,6 +9,7 @@ module Kontena
 
       # Docker create configuration for ServicePod
       # @param [ServicePod] service_pod
+      # @raise [Kontena::Models::ServicePod::ConfigError]
       # @return [Hash] Docker create API JSON object
       def config_container(service_pod)
         service_config = service_pod.service_config

@@ -20,7 +20,7 @@ module Kontena
       # @param plugin_name [String]
       def cleanup
         options = []
-        options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
+        options += ['-q', '--no-verbose'] unless Kontena.debug?
         command.handle_options options
         command.execute
         true

@@ -237,61 +237,6 @@ class GridService
     self.grid.grid_services.where(:'grid_service_links.linked_grid_service_id' => self.id)
   end
 
-  # Resolve services that depend on us
-  #
-  # @return [Array<GridService>]
-  def dependant_services
-    grid = self.grid
-    dependant = []
-    dependant += grid.grid_services.where(:$or => [
-        # if this is a stackless service, this also includes bare volumes_from service names in other stacks
-        {:volumes_from => {:$regex => /^#{self.name_with_stack}-(%s|\d+)/}},
-
-        # the agent will resolve volumes_from: foo-1 to container stack.foo-1 if container foo-1 does not exist
-        {:volumes_from => {:$regex => /^#{self.name}-(%s|\d+)/}, :stack_id => self.stack.id},
-
-        {:affinity => "service==#{self.name}", :stack_id => self.stack.id},
-        {:affinity => "service!=#{self.name}", :stack_id => self.stack.id},
-        {:affinity => "service==#{self.stack.name}/#{self.name}"},
-        {:affinity => "service!=#{self.stack.name}/#{self.name}"},
-        {:affinity => {:$regex => /^container(==|!=)#{self.name_with_stack}-(%s|\d+)$/}},
-        {:net => {:$regex => /^container:#{self.name}-(%s|\d+)/}},
-      ]
-    )
-    dependant.delete(self)
-
-    dependant
-  end
-
-  # Are there any dependant services?
-  #
-  # @return [Boolean]
-  def dependant_services?
-    self.dependant_services.size > 0
-  end
-
-  # Is service depending on other services?
-  #
-  # @return [Boolean]
-  def depending_on_other_services?
-    if self.affinity
-      if self.affinity.any?{|a| a.match(/\Aservice(!=|==).+/)}
-        return true
-      end
-      if self.affinity.any?{|a| a.match(/\Acontainer(!=|==).+/)}
-        return true
-      end
-    end
-
-    if self.volumes_from
-      return true if self.volumes_from.size > 0
-    end
-
-    return true if self.net.to_s.match(/\Acontainer:.+/)
-
-    false
-  end
-
   def health_status
     healthy = 0
     unhealthy = 0

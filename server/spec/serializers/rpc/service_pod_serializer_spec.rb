@@ -10,6 +10,7 @@ describe Rpc::ServicePodSerializer do
       image_name: 'kontena/lb:latest'
     )
   end
+  let(:service_certificates) { nil }
   let(:service) do
     GridService.create!(
       name: 'app',
@@ -20,7 +21,8 @@ describe Rpc::ServicePodSerializer do
       networks: [grid.networks.first],
       service_volumes: [ServiceVolume.new(volume: volume, path:'/data'), ServiceVolume.new(volume: ext_vol, path: '/foo')],
       stop_signal: 'SIGQUIT',
-      stop_grace_period: 20
+      stop_grace_period: 20,
+      certificates: service_certificates,
     )
   end
 
@@ -40,14 +42,6 @@ describe Rpc::ServicePodSerializer do
 
   let! :ext_vol do
     Volume.create(grid: grid, name: 'ext-vol', scope: 'instance', driver: 'local')
-  end
-
-  let! :domain_auth_dns do
-    GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
-  end
-
-  let! :domain_auth_tls do
-    GridDomainAuthorization.create!(grid: grid, authorization_type: 'tls-sni-01', grid_service: service, domain: 'www.kontena.io', tls_sni_certificate: 'TLS_AUTH')
   end
 
   describe '#to_hash' do
@@ -154,7 +148,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes secrets' do
-      expect(subject.to_hash[:secrets].size).to eq(1)
+      expect(subject.to_hash[:secrets]).to eq []
     end
 
     it 'includes default network' do
@@ -167,11 +161,6 @@ describe Rpc::ServicePodSerializer do
 
     it 'stop_grace_period' do
       expect(subject.to_hash).to include(:stop_grace_period => 20)
-    end
-
-    it 'includes domain auth as secret' do
-
-      expect(subject.to_hash[:secrets].find { |s| s[:name] == 'SSL_CERTS'}[:value]).to eq('TLS_AUTH')
     end
 
     describe '[:env]' do
@@ -193,20 +182,144 @@ describe Rpc::ServicePodSerializer do
     end
 
     describe '[:secrets]' do
-      it 'includes certificates as secrets' do
-        Certificate.create!(grid: grid,
+      context 'with a service certificate' do
+        let!(:cerificate) { Certificate.create!(grid: grid,
           subject: 'kontena.io',
           valid_until: Time.now + 90.days,
           private_key: 'private_key',
           certificate: 'certificate',
-          chain: 'chain')
-        service.certificates.create!(subject: 'kontena.io', name: 'CERT')
-        subject = described_class.new(service_instance)
-        secrets = subject.to_hash[:secrets]
+          chain: 'chain',
+        ) }
 
-        expect(secrets.size).to eq(2) # There's also the tls domain auth secret
+        let(:service_certificates) { [
+           GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERTS'),
+        ] }
 
-        expect(secrets.find{ |s| s[:name] == 'CERT'}[:value]).to eq('certificatechainprivate_key')
+        it 'includes service certificates as secrets' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' }
+          ]
+        end
+
+        context 'and a TLS-SNI-01 challenge cert' do
+          let! :domain_auth_tls do
+            GridDomainAuthorization.create!(grid: grid,
+              state: :created,
+              authorization_type: 'tls-sni-01',
+              expires_at: Time.now + 300,
+              grid_service: service,
+              domain: 'www.kontena.io',
+              tls_sni_certificate: 'TLS_AUTH',
+            )
+          end
+
+          it 'includes the challenge cert as a secret after the normal certificate' do
+            expect(subject.to_hash[:secrets]).to eq [
+              { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' },
+              { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' },
+            ]
+          end
+        end
+      end
+
+      context 'with a DNS-01 domain authorization' do
+        let! :domain_auth_dns do
+          GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
+        end
+
+        it 'does not include any challenge secrets' do
+          expect(subject.to_hash[:secrets]).to eq []
+        end
+
+      end
+
+      context 'with a created TLS-SNI-01 domain authorization' do
+        let! :domain_auth_tls do
+          GridDomainAuthorization.create!(grid: grid,
+            state: :created,
+            authorization_type: 'tls-sni-01',
+            expires_at: Time.now + 300,
+            grid_service: service,
+            domain: 'www.kontena.io',
+            tls_sni_certificate: 'TLS_AUTH',
+          )
+        end
+
+        it 'includes the challenge cert as a secret' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' }
+          ]
+        end
+      end
+
+      context 'with a requested TLS-SNI-01 domain authorization' do
+        let! :domain_auth_tls do
+          GridDomainAuthorization.create!(grid: grid,
+            state: :requested,
+            authorization_type: 'tls-sni-01',
+            expires_at: Time.now + 30,
+            grid_service: service,
+            domain: 'www.kontena.io',
+            tls_sni_certificate: 'TLS_AUTH',
+          )
+        end
+
+        it 'includes the challenge cert as a secret' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' }
+          ]
+        end
+      end
+
+      context 'with a failed TLS-SNI-01 domain authorization' do
+        let! :domain_auth_tls do
+          GridDomainAuthorization.create!(grid: grid,
+            state: :error,
+            authorization_type: 'tls-sni-01',
+            expires_at: nil,
+            grid_service: service,
+            domain: 'www.kontena.io',
+            tls_sni_certificate: 'TLS_AUTH',
+          )
+        end
+
+        it 'does not include the challenge cert as a secret' do
+          expect(subject.to_hash[:secrets]).to eq []
+        end
+      end
+
+      context 'with an already-validated TLS-SNI-01 domain authorization' do
+        let! :domain_auth_tls do
+          GridDomainAuthorization.create!(grid: grid,
+            state: :validated,
+            authorization_type: 'tls-sni-01',
+            expires_at: nil,
+            grid_service: service,
+            domain: 'www.kontena.io',
+            tls_sni_certificate: 'TLS_AUTH',
+          )
+        end
+
+        it 'does not include the challenge cert as a secret' do
+          expect(subject.to_hash[:secrets]).to eq []
+        end
+      end
+
+      context 'with an expired TLS-SNI-01 domain authorization' do
+        let! :domain_auth_tls do
+          GridDomainAuthorization.create!(grid: grid,
+            state: :requested,
+            authorization_type: 'tls-sni-01',
+            expires_at: Time.now - 30,
+            grid_service: service,
+            domain: 'www.kontena.io',
+            tls_sni_certificate: 'TLS_AUTH',
+          )
+        end
+
+        it 'does not include the challenge cert as a secret' do
+          expect(subject.to_hash[:secrets]).to eq []
+        end
       end
     end
 
@@ -236,6 +349,16 @@ describe Rpc::ServicePodSerializer do
         service.health_check = GridServiceHealthCheck.new(uri: '/', port: 80, protocol: 'http')
         expect(labels).to include('io.kontena.health_check.protocol' => 'http')
         expect(labels).to include('io.kontena.health_check.uri' => '/')
+        expect(labels).to include('io.kontena.health_check.port' => '80')
+        expect(labels).to include('io.kontena.health_check.interval' => '60')
+        expect(labels).to include('io.kontena.health_check.timeout' => '10')
+        expect(labels).to include('io.kontena.health_check.initial_delay' => '10')
+      end
+
+      it 'does not include health uri if tco check' do
+        service.health_check = GridServiceHealthCheck.new(port: 80, protocol: 'tcp')
+        expect(labels).to include('io.kontena.health_check.protocol' => 'tcp')
+        expect(labels).not_to include('io.kontena.health_check.uri' => '/')
         expect(labels).to include('io.kontena.health_check.port' => '80')
         expect(labels).to include('io.kontena.health_check.interval' => '60')
         expect(labels).to include('io.kontena.health_check.timeout' => '10')

@@ -45,7 +45,7 @@ class GridServiceDeployer
     info "starting to deploy #{self.grid_service.to_path}"
     log_service_event("service #{self.grid_service.to_path} deploy started")
     self.grid_service_deploy.set(:_deploy_state => :ongoing)
-    deploy_rev = Time.now.utc.to_s
+    deploy_rev = Time.now.utc
     self.grid_service.set(:deployed_at => deploy_rev)
 
     deploy_futures = []
@@ -95,7 +95,7 @@ class GridServiceDeployer
   # @param [Integer] total_instances
   # @param [Array<Celluloid::Future>] deploy_futures
   # @param [Integer] instance_number
-  # @param [String] deploy_rev
+  # @param [Time] deploy_rev
   # @raise [DeployError]
   def deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
     begin
@@ -113,7 +113,7 @@ class GridServiceDeployer
 
     deploy_futures << Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(grid_service_instance_deploy)
-      instance_deployer.deploy(deploy_rev)
+      instance_deployer.deploy(deploy_rev.to_s) # XXX: loss of precision
     }
     pending_deploys = deploy_futures.select{|f| !f.ready?}
     if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size >= 20
@@ -128,7 +128,7 @@ class GridServiceDeployer
 
   # @return [Integer]
   def instance_count
-    available_nodes = self.nodes .map { |n| n.clone } # we don't want to touch originals here
+    available_nodes = self.nodes.map { |n| n.clone } # we don't want to touch originals here
     max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     nodes = []
     max_instances.times do |i|

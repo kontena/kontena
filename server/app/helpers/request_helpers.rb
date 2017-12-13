@@ -6,16 +6,14 @@ module RequestHelpers
     base.plugin :default_headers, 'Content-Type'=>'application/json'
     base.plugin :render, cache: true, engine: 'json.jbuilder', views: 'app/views/v1'
     base.plugin :error_handler do |e|
+      log_message = "\n#{e.class} (#{e.message}):\n"
+      log_message << "  " << e.backtrace.join("\n  ") << "\n\n" if e.backtrace
+      puts log_message
+
       if e.is_a?(RpcClient::Error)
         { code: e.code, message: e.message, backtrace: e.backtrace }
       else
-        response.status = 500
-        log_message = "\n#{e.class} (#{e.message}):\n"
-        log_message << "  " << e.backtrace.join("\n  ") << "\n\n" if e.backtrace
-        puts log_message
-        json = { message: 'Internal server error' }
-
-        json
+        { message: 'Internal server error' }
       end
     end
   end

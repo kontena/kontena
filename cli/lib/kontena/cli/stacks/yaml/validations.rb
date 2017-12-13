@@ -82,7 +82,8 @@ module Kontena::Cli::Stacks::YAML
         }),
         'stop_signal' => optional('string'),
         'stop_grace_period' => optional(/(\d+(?:\.\d+)?)([hms])/),
-        'read_only' => optional('boolean')
+        'read_only' => optional('boolean'),
+        'entrypoint' => optional('string')
       }
     end
 

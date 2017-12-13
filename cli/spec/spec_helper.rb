@@ -27,7 +27,8 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = 'random'
   config.before(:each) do
-    allow(Dir).to receive(:home).and_return('/tmp/')
+    @_temp_home_dir = Dir.mktmpdir
+    allow(Dir).to receive(:home).and_return(@_temp_home_dir)
     allow(ENV).to receive(:[]).with(anything).and_call_original
     allow(ENV).to receive(:[]).with('DEBUG').and_call_original
     Kontena::Cli::Config.reset_instance
@@ -41,28 +42,21 @@ RSpec.configure do |config|
   config.after(:each) do
     RSpec::Mocks.space.proxy_for(File).reset
     RSpec::Mocks.space.proxy_for(Kontena::Cli::Config).reset
-    File.unlink(Kontena::Cli::Config.default_config_filename) if File.exist?(Kontena::Cli::Config.default_config_filename)
+    FileUtils.remove_entry @_temp_home_dir if @_temp_home_dir
   end
 
   config.around(:each) do |example|
-    catch :exit_with_error do
-      begin
-        example.run
-      rescue SystemExit
-        puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
-      end
-    end
-  end
+    stdout = $stdout
+    stderr = $stderr
+    $stdout = $stderr = StringIO.new
 
-  unless ENV["DEBUG"]
-    config.before(:each) do
-      $stdout = StringIO.new
-      $stderr = StringIO.new
-    end
-
-    config.after(:each) do
-      $stdout = STDOUT
-      $stderr = STDERR
+    begin
+      example.run
+    rescue SystemExit => exc
+      fail "SystemExit with code #{exc.status}: \n#{$stderr.string}"
+    ensure
+      $stdout = stdout
+      $stderr = stderr
     end
   end
 end
