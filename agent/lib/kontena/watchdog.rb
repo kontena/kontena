@@ -7,11 +7,6 @@ class Kontena::Watchdog
   THRESHOLD = 10.0
   TIMEOUT = 30.0
 
-  # this is not a StandardError, it is supposed to abort the thread
-  class Abort < Exception
-
-  end
-
   def self.watch(**options, &block)
     # pass block as a proc, instead of as a celluloid block proxy
     new(block, **options)
