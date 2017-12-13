@@ -2,6 +2,8 @@
 #
 # The watchdog takes a block, which gets run in a separate thread every interval.
 # The watchdog will abort if the block times out or fails with an exception.
+#
+# The watchdog abort will immediately exit! the process, without running any at_exit hooks for shutdown.
 class Kontena::Watchdog
   include Celluloid
   include Kontena::Logging
