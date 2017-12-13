@@ -33,9 +33,22 @@ describe Kontena::Watchdog, :celluloid => true do
     end
   end
 
-  context "with a block that times out" do
+  context "with a block that times out in a hard thread suspend" do
     let(:block) { Proc.new do
-      sleep 1
+      Kernel.sleep 1
+    end}
+
+    it "aborts" do
+      expect(subject.wrapped_object).to receive(:abort).with(Timeout::Error).and_call_original
+
+      subject
+      sleep 0.2
+    end
+  end
+
+  context "with a block that times out in a celluloid task suspend" do
+    let(:block) { Proc.new do
+      Celluloid.sleep 1.0
     end}
 
     it "aborts" do

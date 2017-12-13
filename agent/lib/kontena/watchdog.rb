@@ -42,10 +42,15 @@ class Kontena::Watchdog
   def ping
     start = Time.now
 
-    Timeout.timeout(@timeout) do
-      @block.call
-    end
+    exclusive {
+      Timeout.timeout(@timeout) do
+        @block.call
+      end
+    }
 
+  rescue Timeout::Error => exc
+    error exc
+    abort(exc)
   rescue => exc
     error exc
     abort(exc)
