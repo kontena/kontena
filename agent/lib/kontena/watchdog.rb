@@ -54,6 +54,7 @@ class Kontena::Watchdog
     }
 
   rescue => exc
+    error exc
     abort(exc)
   else
     pong(ping, Time.now)
@@ -91,13 +92,12 @@ class Kontena::Watchdog
   # @param delay [Float] > @timeout
   def bite(delay)
     exc = Timeout::Error.new "watchdog timeout after %.3fs @ %s" % [delay, trace.join("\n\t")]
+    error exc
     abort(exc)
   end
 
-  # kill the watched Thread
+  # kill the process
   def abort(exc)
-    error exc
-
     # only abort once
     stop
 
