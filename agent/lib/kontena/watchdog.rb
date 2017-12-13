@@ -1,4 +1,7 @@
-# Run the given block in a separate Thread every interval, and abort if it times out or fails
+# The watchdog is intended to recover the agent from unrepairable errors by killing it, and allowing it to be restarted.
+#
+# The watchdog takes a block, which gets run in a separate thread every interval.
+# The watchdog will abort if the block times out or fails with an exception.
 class Kontena::Watchdog
   include Celluloid
   include Kontena::Logging
