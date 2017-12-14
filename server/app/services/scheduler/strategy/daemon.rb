@@ -15,34 +15,26 @@ module Scheduler
         10.minutes
       end
 
-      # @param [GridService] grid_service
-      # @param [Integer] instance_number
-      # @param [Array<Scheduler::Node>] nodes
-      # @return [Scheduler::Node,NilClass]
-      def find_stateless_node(grid_service, instance_number, nodes)
-        prev_instance = grid_service.grid_service_instances.has_node.find_by(
-          instance_number: instance_number
-        )
-        if prev_instance
-          node = nodes.find { |n| n.node == prev_instance.host_node }
-          unless node
-            selector = (instance_number.to_f / nodes.size.to_f).floor
-            candidates = self.sort_candidates(nodes, grid_service, instance_number)
-            node = candidates.select { |c| c.schedule_counter <= selector }.last
-          end
-          node
-        else
-          candidates = self.sort_candidates(nodes, grid_service, instance_number)
-          candidates.first
-        end
-      end
-
       # @param [Array<Scheduler::Node>] nodes
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       def sort_candidates(nodes, grid_service, instance_number)
+        total_instances = nodes.size * grid_service.container_count
+        service_instances = grid_service.grid_service_instances.to_a
+        service_instance = service_instances.find { |i| i.instance_number == instance_number }
+
         nodes.sort_by { |node|
-          [node.schedule_counter, node.node_number]
+          if service_instance && service_instance.host_node_id == node.id
+            instance_rank = -1
+          else
+            instance_rank = service_instances.select { |i| i.host_node_id == node.id && i.instance_number <= total_instances }.size
+          end
+
+          rank = [instance_rank + node.schedule_counter, node.node_number]
+
+          puts "rank ##{instance_number}@#{node.node_number} = #{rank}"
+
+          rank
         }
       end
     end
