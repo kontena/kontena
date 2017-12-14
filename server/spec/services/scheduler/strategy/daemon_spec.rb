@@ -173,6 +173,32 @@ describe Scheduler::Strategy::Daemon do
       end
     end
 
+    context 'with newly added nodes and high container count' do
+      let(:host_node_count) { 3 }
+      let(:container_count) { 2 }
+
+      before(:each) do
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[0], instance_number: 1)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[1], instance_number: 2)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[0], instance_number: 3)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[1], instance_number: 4)
+      end
+
+      it 'schedules the instances evenly' do
+        nodes = scheduler_nodes
+
+        scheduled = []
+        (nodes.size * container_count).times do |i|
+          node = subject.find_node(stateless_service, i + 1, nodes)
+          node.schedule_counter += 1
+          scheduled << node
+        end
+        expect(scheduled.map {|s| s.node_number}).to eq([
+          1, 2, 1, 2, 3, 3
+        ])
+      end
+    end
+
     context 'with newly added nodes' do
       before(:each) do
         host_nodes[0..-3].each do |n|
