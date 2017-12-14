@@ -30,11 +30,7 @@ module Scheduler
             instance_rank = service_instances.select { |i| i.host_node_id == node.id && i.instance_number <= total_instances }.size
           end
 
-          rank = [instance_rank + node.schedule_counter, node.node_number]
-
-          puts "rank ##{instance_number}@#{node.node_number} = #{rank}"
-
-          rank
+          [instance_rank + node.schedule_counter, node.node_number]
         }
       end
     end
