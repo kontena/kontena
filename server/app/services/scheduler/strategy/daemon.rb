@@ -24,13 +24,15 @@ module Scheduler
         service_instance = service_instances.find { |i| i.instance_number == instance_number }
 
         nodes.sort_by { |node|
+          scheduled_instances = Set.new
+          scheduled_instances.merge service_instances.select { |i| i.host_node_id == node.id && i.instance_number <= total_instances }.map{|i| i.instance_number}
+          scheduled_instances.merge node.scheduled_instances
+
           if service_instance && service_instance.host_node_id == node.id
             instance_rank = -1
           else
-            instance_rank = service_instances.select { |i| i.host_node_id == node.id && i.instance_number <= total_instances }.size
+            instance_rank = scheduled_instances.size
           end
-
-          instance_rank += node.schedule_counter - service_instances.select { |i| i.host_node_id == node.id && i.instance_number < instance_number }.size
 
           [instance_rank, node.node_number]
         }
