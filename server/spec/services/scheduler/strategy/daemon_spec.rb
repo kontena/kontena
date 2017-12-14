@@ -28,7 +28,7 @@ describe Scheduler::Strategy::Daemon do
       nodes = scheduler_nodes
       nodes.each do |n|
         node = subject.find_node(stateless_service, n.node_number, nodes)
-        node.schedule_counter += 1
+        node.scheduled_instance! n.node_number
         expect(node).to eq(nodes[n.node_number - 1])
       end
     end
@@ -51,7 +51,7 @@ describe Scheduler::Strategy::Daemon do
         scheduled = []
         nodes.each_with_index do |n, i|
           node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
+          node.scheduled_instance! i + 1
           scheduled << node
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
@@ -71,7 +71,7 @@ describe Scheduler::Strategy::Daemon do
           scheduled = []
           (nodes.size * container_count).times do |i|
             node = subject.find_node(stateless_service, i + 1, nodes)
-            node.schedule_counter += 1
+            node.scheduled_instance! i + 1
             scheduled << node
           end
           expect(scheduled.map {|s| s.node_number}).to eq([
@@ -93,7 +93,7 @@ describe Scheduler::Strategy::Daemon do
           scheduled = []
           (nodes.size * container_count).times do |i|
             node = subject.find_node(stateless_service, i + 1, nodes)
-            node.schedule_counter += 1
+            node.scheduled_instance! i + 1
             scheduled << node
           end
           expect(scheduled.map {|s| s.node_number}).to eq([
@@ -110,7 +110,7 @@ describe Scheduler::Strategy::Daemon do
         scheduled = []
         nodes.each_with_index do |n, i|
           node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
+          node.scheduled_instance! i + 1
           scheduled << node
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
@@ -140,7 +140,7 @@ describe Scheduler::Strategy::Daemon do
         scheduled = []
         (nodes.size * container_count).times do |i|
           node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
+          node.scheduled_instance! i + 1
           scheduled << node
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
@@ -164,7 +164,7 @@ describe Scheduler::Strategy::Daemon do
         scheduled = []
         (nodes.size * container_count).times do |i|
           node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
+          node.scheduled_instance! i + 1
           scheduled << node
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
@@ -190,7 +190,7 @@ describe Scheduler::Strategy::Daemon do
         scheduled = []
         (nodes.size * container_count).times do |i|
           node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
+          node.scheduled_instance! i + 1
           scheduled << node
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
@@ -214,7 +214,7 @@ describe Scheduler::Strategy::Daemon do
         scheduled = []
         nodes.each_with_index do |n, i|
           node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
+          node.scheduled_instance! i + 1
           scheduled << node
         end
         expect(scheduled.map { |s| s.node_number}).to eq([
