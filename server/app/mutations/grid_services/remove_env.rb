@@ -1,5 +1,9 @@
+require_relative 'helpers'
+
 module GridServices
   class RemoveEnv < Mutations::Command
+    include Helpers
+
     required do
       model :grid_service
       string :env
@@ -12,10 +16,8 @@ module GridServices
           self.grid_service.env.delete(e)
         end
       end
-      if self.grid_service.changed?
-        self.grid_service.revision += 1
-      end
-      self.grid_service.save
+
+      update_grid_service(grid_service)
     end
   end
 end
