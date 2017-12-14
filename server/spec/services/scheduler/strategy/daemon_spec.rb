@@ -3,8 +3,9 @@ describe Scheduler::Strategy::Daemon do
 
   let(:grid) { Grid.create(name: 'test') }
 
+  let(:host_node_count) { 10 }
   let(:host_nodes) do
-    10.times.map do |i|
+    host_node_count.times.map do |i|
       n = i + 1
       HostNode.create!(
         node_id: "node#{n}", name: "node-#{n}", connected: true, grid: grid, node_number: n
@@ -114,6 +115,36 @@ describe Scheduler::Strategy::Daemon do
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
           1, 2, 3, 4, 5, 6, 7, 8
+        ])
+      end
+    end
+
+    context 'with existing unevenly distributed instances' do
+      let(:host_node_count) { 3 }
+      let(:container_count) { 2 }
+
+      before(:each) do
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[2], instance_number: 1)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[1], instance_number: 2)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[0], instance_number: 3)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[0], instance_number: 4)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[1], instance_number: 5)
+        stateless_service.grid_service_instances.create!(host_node: host_nodes[2], instance_number: 6)
+      end
+
+      it 'minimizes shuffle when node 2 is missing' do
+        nodes = scheduler_nodes.tap do |n|
+          n.delete_at(1)
+        end
+
+        scheduled = []
+        (nodes.size * container_count).times do |i|
+          node = subject.find_node(stateless_service, i + 1, nodes)
+          node.schedule_counter += 1
+          scheduled << node
+        end
+        expect(scheduled.map {|s| s.node_number}).to eq([
+          3, 3, 1, 1,
         ])
       end
     end
