@@ -30,7 +30,9 @@ module Scheduler
             instance_rank = service_instances.select { |i| i.host_node_id == node.id && i.instance_number <= total_instances }.size
           end
 
-          [instance_rank + node.schedule_counter, node.node_number]
+          instance_rank += node.schedule_counter - service_instances.select { |i| i.host_node_id == node.id && i.instance_number < instance_number }.size
+
+          [instance_rank, node.node_number]
         }
       end
     end
