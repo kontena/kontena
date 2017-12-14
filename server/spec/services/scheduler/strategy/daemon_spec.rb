@@ -16,8 +16,10 @@ describe Scheduler::Strategy::Daemon do
     host_nodes.map{|n| Scheduler::Node.new(n)}
   end
 
+  let(:container_count) { 1 }
+
   let(:stateless_service) do
-    GridService.create!(name: 'test', grid: grid, image_name: 'foo/bar:latest', stateful: false)
+    GridService.create!(name: 'test', grid: grid, image_name: 'foo/bar:latest', stateful: false, container_count: container_count)
   end
 
   describe '#find_node' do
@@ -33,18 +35,17 @@ describe Scheduler::Strategy::Daemon do
     context 'with existing nodes' do
       before(:each) do
         host_nodes.each do |n|
-          stateless_service.grid_service_instances.create!(
-            host_node: n,
-            instance_number: n.node_number
-          )
+          container_count.times do |i|
+            si = stateless_service.grid_service_instances.create!(
+              host_node: n,
+              instance_number: (i * host_nodes.size) + n.node_number,
+            )
+          end
         end
       end
 
-      it 'minimizes shuffle when nodes 2 & 3 are missing' do
-        nodes = scheduler_nodes.tap do |n|
-          n.delete_at(1)
-          n.delete_at(1)
-        end
+      it 'minimizes shuffle' do
+        nodes = scheduler_nodes
 
         scheduled = []
         nodes.each_with_index do |n, i|
@@ -53,27 +54,55 @@ describe Scheduler::Strategy::Daemon do
           scheduled << node
         end
         expect(scheduled.map {|s| s.node_number}).to eq([
-          1, 10, 9, 4, 5, 6, 7, 8
+          1, 2, 3, 4, 5, 6, 7, 8, 9, 10
         ])
       end
 
-      it 'minimizes shuffle when nodes 2 & 3 are missing (2 instances per node)' do
-        nodes = scheduler_nodes.tap do |n|
-          n.delete_at(1)
-          n.delete_at(1)
-        end
+      context "with 2 instances per node" do
+        let(:container_count) { 2 }
 
-        scheduled = []
-        16.times do |i| # 2 instances per node
-          node = subject.find_node(stateless_service, i + 1, nodes)
-          node.schedule_counter += 1
-          scheduled << node
+        it 'minimizes shuffle when nodes 2 & 3 are missing' do
+          nodes = scheduler_nodes.tap do |n|
+            n.delete_at(1)
+            n.delete_at(1)
+          end
+
+          scheduled = []
+          (nodes.size * container_count).times do |i|
+            node = subject.find_node(stateless_service, i + 1, nodes)
+            node.schedule_counter += 1
+            scheduled << node
+          end
+          expect(scheduled.map {|s| s.node_number}).to eq([
+            1, 7, 8, 4, 5, 6, 7, 8, 9, 10,
+            1, 9, 10, 4, 5, 6
+          ])
         end
-        expect(scheduled.map {|s| s.node_number}).to eq([
-          1, 10, 9, 4, 5, 6, 7, 8,
-          9, 10, 1, 4, 5, 6, 7, 8
-        ])
       end
+
+      context "with 3 instances per node" do
+        let(:container_count) { 3 }
+
+        it 'minimizes shuffle when nodes 2 & 3 are missing' do
+          nodes = scheduler_nodes.tap do |n|
+            n.delete_at(1)
+            n.delete_at(1)
+          end
+
+          scheduled = []
+          (nodes.size * container_count).times do |i|
+            node = subject.find_node(stateless_service, i + 1, nodes)
+            node.schedule_counter += 1
+            scheduled << node
+          end
+          expect(scheduled.map {|s| s.node_number}).to eq([
+            1, 5, 6, 4, 5, 6, 7, 8, 9, 10,
+            1, 7, 8, 4, 5, 6, 7, 8, 9, 10,
+            1, 9, 10, 4,
+            ])
+        end
+      end
+
 
       it 'minimizes shuffle when last two nodes are missing' do
         nodes = scheduler_nodes[0..-3]
