@@ -26,7 +26,7 @@ class GridServiceDeployer
   # @return [Array<HostNode>]
   def selected_nodes
     count = self.instance_count
-    available_nodes = self.nodes.map { |n| n.clone }
+    available_nodes = self.nodes.map { |n| Scheduler::Node.new(n.node) }
     nodes = []
     count.times do |i|
       begin
@@ -128,7 +128,7 @@ class GridServiceDeployer
 
   # @return [Integer]
   def instance_count
-    available_nodes = self.nodes.map { |n| n.clone } # we don't want to touch originals here
+    available_nodes = self.nodes.map { |n| Scheduler::Node.new(n.node) } # we don't want to touch originals here
     max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     nodes = []
     max_instances.times do |i|

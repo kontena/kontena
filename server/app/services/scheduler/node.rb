@@ -21,7 +21,7 @@ module Scheduler
     end
 
     def to_s
-      "#{@node.name}: #{@schedule_counter}"
+      "#{@node.name}: #{schedule_counter}"
     end
 
     private
