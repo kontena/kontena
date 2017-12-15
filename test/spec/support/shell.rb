@@ -24,9 +24,9 @@ module Shell
   # @raise [Error]
   # @return [Kommando]
   def run!(cmd, **opts)
-    k = run(cmd, **opts)
-    raise Error.new(cmd, k.code, k.out) if k.code != 0
-    return k
+    run(cmd, **opts).tap do |k|
+      raise Error.new(cmd, k.code, k.out) unless k.code.zero?
+    end
   end
 
   # @param [String] cmd
