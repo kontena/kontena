@@ -46,5 +46,6 @@ describe 'container exec' do
       end
     end
     expect(k.run).to be_truthy
+    expect(k.code).to be_zero, k.out
   end
 end
