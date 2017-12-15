@@ -47,6 +47,7 @@ describe 'service exec' do
         end
       end
       expect(k.run).to be_truthy
+      expect(k.out).to match /lib64/
     end
 
     it 'runs a command with tty control input' do
