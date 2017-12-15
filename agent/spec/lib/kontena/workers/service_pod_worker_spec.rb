@@ -2,12 +2,14 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   include RpcClientMocks
 
   let(:node) { Node.new('id' => 'aa') }
+  let(:service_revision) { 1 }
   let(:service_pod) do
     Kontena::Models::ServicePod.new(
       'id' => 'foo/2',
       'instance_number' => 2,
       'updated_at' => Time.now.to_s,
       'deploy_rev' => Time.now.to_s,
+      'service_revision' => service_revision,
     )
   end
   let(:subject) { described_class.new(node, service_pod) }
@@ -122,18 +124,21 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       expect(subject.ensure_desired_state).to eq container
     end
 
-    it 'calls ensure_running if updated_at is newer than container' do
-      container = double(:container,
+    context 'with an updated service pod' do
+      let(:service_revision) { 2 }
+      let(:container) { double(:container,
         :running? => true, :restarting? => false,
-        :info => { 'Created' => (Time.now - 30).to_s },
         :name => 'foo-2',
-      )
-      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
-      allow(service_pod).to receive(:running?).and_return(true)
-      allow(service_pod).to receive(:service_rev).and_return(1)
-      expect(subject.wrapped_object).to receive(:ensure_running)
-      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
-      expect(subject.ensure_desired_state).to eq container
+        :service_revision => 1,
+      ) }
+
+      it 'calls ensure_running if service revision is newer than container' do
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+        allow(service_pod).to receive(:running?).and_return(true)
+        expect(subject.wrapped_object).to receive(:ensure_running)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+        expect(subject.ensure_desired_state).to eq container
+      end
     end
 
     it 'calls ensure_stopped if container is running and service_pod desired_state is stopped' do
@@ -437,36 +442,40 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   end
 
   describe '#container_outdated?' do
-    it 'returns true if container created_at is older than service_pod updated_at' do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 120).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc - 60).to_s)
-      expect(subject.container_outdated?(service_container)).to be_truthy
+    context 'with an up-to-date container revision' do
+      let(:service_revision) { 1 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 1,
+      ) }
+
+      it 'returns false' do
+        expect(subject.container_outdated?(service_container)).to be_falsey
+      end
     end
 
-    it 'returns false if container created_at is newer than service_pod updated_at' do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 20).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc - 60).to_s)
-      expect(subject.container_outdated?(service_container)).to be_falsey
+    context 'with an out-of-date container revision' do
+      let(:service_revision) { 2 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 1,
+      ) }
+
+      it 'returns true' do
+        expect(subject.container_outdated?(service_container)).to be_truthy
+      end
     end
 
-    it 'fails if service_pod updated_at is too far in the future', log_celluloid_actor_crashes: false do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 20).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 60.0).to_s)
-      expect{subject.container_outdated?(service_container)}.to raise_error(/service updated_at .* is in the future/)
-    end
+    context 'with an invalid container revision' do
+      let(:service_revision) { 1 }
 
-    it 'returns true if service_pod updated_at is slightly in the future' do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 0.5).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 0.5).to_s)
-      expect(subject.container_outdated?(service_container)).to be_truthy
+      let(:service_container) { double(:service_container,
+        service_revision: 2,
+      ) }
+
+      it 'returns false' do
+        expect(subject.container_outdated?(service_container)).to be_falsey
+      end
     end
   end
 

@@ -6,8 +6,8 @@ module Kontena::Cli::ExternalRegistries
     parameter '[URL]', 'Docker Registry url', default: 'https://index.docker.io/v2/'
 
     option ['-u', '--username'], 'USERNAME', 'Username', required: true
-    option ['-e', '--email'], 'EMAIL', 'Email', required: true
     option ['-p', '--password'], 'PASSWORD', 'Password', required: true
+    option ['-e', '--email'], 'EMAIL', 'Email', required: false
 
     def execute
       require_api_url
