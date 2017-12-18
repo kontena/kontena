@@ -198,6 +198,7 @@ module Kontena::Cli::Stacks
         caret "Installing new dependency #{cmd.last} as #{added_stack}"
         deployable_stacks << added_stack
         Kontena.run!(cmd)
+        set_env_variables(stack_name, current_grid)
       end
       deployable_stacks
     end
@@ -219,6 +220,7 @@ module Kontena::Cli::Stacks
     def run_deploys(deployable_stacks)
       deployable_stacks.each do |deployable_stack|
         Kontena.run!(['stack', 'deploy', deployable_stack])
+        set_env_variables(stack_name, current_grid)
       end
     end
 
