@@ -39,19 +39,19 @@ module Kontena::Cli::Stacks
     end
 
     def execute
-      if online?
-        set_env_variables(stack_name, require_current_grid)
-      else
-        config.current_master = nil
-        set_env_variables(stack_name, 'validate', 'validate-platform')
-      end
-
       if dependency_tree?
         puts ::YAML.dump('name' => stack_name, 'stack' => source, 'depends' => stack['dependencies'])
         exit 0
       end
 
       validate_dependencies if dependencies?
+
+      if online?
+        set_env_variables(stack_name, require_current_grid)
+      else
+        config.current_master = nil
+        set_env_variables(stack_name, 'validate', 'validate-platform')
+      end
 
       stack # runs validations
 
