@@ -22,6 +22,8 @@ env:
     - secure: "kj4oS3to1iKpJBbph2VHSnTauvniP6F/RaN6Smn60ZFJCiJHST+Yq6GHONIxb9aNTpyYJWlYA0A1ReqVurS/T3puIYYZvPW6QQs2llB2I2GwAyPeSJSOX2z0vQtQq6ybdeROUuJLHkGL4zCI4V5QlJgSnmSOjvdiEZPtxWfy384=" # GITHUB_TOKEN
     - DOCS_GA=UA-60024048-1
     - DOCS_HS=2126125
+    - LOG_TARGET=/dev/null
+    - LOG_LEVEL=5
   matrix:
     - TEST_DIR=agent
     - TEST_DIR=cli
