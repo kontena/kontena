@@ -218,7 +218,6 @@ module Kontena::Cli::Stacks
       deployable_stacks.each do |deployable_stack|
         Kontena.run!(['stack', 'deploy', deployable_stack])
       end
-      set_env_variables(stack_name, current_grid)
     end
 
     def update_stack(name, data)
