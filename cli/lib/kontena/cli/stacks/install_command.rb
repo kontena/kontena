@@ -42,6 +42,9 @@ module Kontena::Cli::Stacks
     def install_dependencies
       dependencies = loader.dependencies
       return if dependencies.nil?
+
+      original_env = current_stack_env
+
       dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency['name']}"
         caret "Installing dependency #{pastel.cyan(dependency['stack'])} as #{pastel.cyan(target_name)}"
@@ -55,8 +58,19 @@ module Kontena::Cli::Stacks
 
         cmd << dependency['stack']
         Kontena.run!(cmd)
+        original_env.each { |k,v| ENV[k] = v }
       end
+
     end
+
+    def current_stack_env
+      {
+        'STACK' => ENV['STACK'],
+        'GRID' => ENV['GRID'],
+        'PLATFORM' => ENV['PLATFORM']
+      }
+    end
+
 
     def create_stack
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
