@@ -30,7 +30,7 @@ module GridDomainAuthorizations
         @lb_service = resolve_service(self.grid, linked_service)
         if @lb_service.nil?
           add_error(:linked_service, :not_found, "Linked service needs to point to existing service")
-        elsif @lb_service && !https_open?(@lb_service)
+        elsif !https_open?(@lb_service)
           add_error(:linked_service, :invalid, "Linked service does not have port 443 open")
         end
       end
