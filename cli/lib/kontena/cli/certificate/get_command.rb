@@ -4,7 +4,7 @@ module Kontena::Cli::Certificate
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    BANNER = "This command is now deprecated in favor of 'kontena certificate request' command".colorize(:red)
+    BANNER = Kontena.pastel.yellow("[DEPRECATED] This command is now deprecated in favor of 'kontena certificate request' command")
 
     banner BANNER
 
@@ -14,7 +14,7 @@ module Kontena::Cli::Certificate
 
 
     def execute
-      puts BANNER
+      warn BANNER
 
       require_api_url
       token = require_token
