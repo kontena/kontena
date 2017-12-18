@@ -33,18 +33,28 @@ describe GridDomainAuthorizations::Authorize do
     end
 
     it 'validates service existence when tls-sni used' do
-      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', ports: [443])
+      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', ports: [
+        { 'node_port' => 443 }
+      ])
       mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
       expect(mutation.has_errors?).to be_falsey
     end
 
     it 'validates service port existence when tls-sni used' do
-      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', ports: [443])
+      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', ports: [
+        { 'node_port' => 443 }
+      ])
       mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
       expect(mutation.has_errors?).to be_falsey
     end
 
-    it 'validates service port existence when tls-sni used' do
+    it 'validates service host network when tls-sni used' do
+      GridService.create(grid: grid, name: 'web', image_name: 'web:latest', net: 'host')
+      mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
+      expect(mutation.has_errors?).to be_falsey
+    end
+
+    it 'returns validation error when when tls-sni used and port 443 is not exposed' do
       GridService.create(grid: grid, name: 'web', image_name: 'web:latest')
       mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'null/web', authorization_type: 'tls-sni-01')
       expect(mutation.has_errors?).to be_truthy
