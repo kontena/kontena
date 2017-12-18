@@ -149,7 +149,7 @@ describe 'stack install' do
         expect(k.code).to eq (0)
       end
       k = run 'kontena service show twemproxy/twemproxy'
-      expect(k.out).to match(/STACKNAME=twemproxy$/m)
+      expect(k.out).to match(/STACKNAME=twemproxy[\r\n]/)
     end
   end
 end
