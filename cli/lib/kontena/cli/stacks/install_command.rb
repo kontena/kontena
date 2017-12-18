@@ -24,9 +24,9 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      set_env_variables(stack_name, current_grid)
-
       install_dependencies unless skip_dependencies?
+
+      set_env_variables(stack_name, current_grid)
 
       stack # runs validations
 
@@ -56,7 +56,6 @@ module Kontena::Cli::Stacks
 
         cmd << dependency['stack']
         Kontena.run!(cmd)
-        set_env_variables(stack_name, current_grid)
       end
 
     end
