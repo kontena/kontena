@@ -14,6 +14,7 @@ module Kontena::Cli::Stacks
 
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
+    include Common::NoPromptOption
 
     option '--online', :flag, "Enable connections to current master", default: false
     option '--dependency-tree', :flag, "Show dependency tree"

@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
 
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
+    include Common::NoPromptOption
 
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
 
@@ -89,7 +90,8 @@ module Kontena::Cli::Stacks
           values: data[:variables],
           defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
           parent_name: data[:parent_name],
-          name: data[:name]
+          name: data[:name],
+          prompt: use_prompt?
         )
         hint_on_validation_notifications(reader.notifications, reader.loader.source)
         abort_on_validation_errors(reader.errors, reader.loader.source)
@@ -194,6 +196,7 @@ module Kontena::Cli::Stacks
         data[:variables].each do |k,v|
           cmd.concat ['-v', "#{k}=#{v}"]
         end
+        cmd << '--no-prompt' unless use_prompt?
         cmd << data[:loader].source
         caret "Installing new dependency #{cmd.last} as #{added_stack}"
         deployable_stacks << added_stack

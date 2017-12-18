@@ -22,6 +22,8 @@ module Kontena::Cli::Stacks
 
     parameter "[SERVICE] ...", "Services to build"
 
+    include Common::NoPromptOption
+
     requires_current_master # the stack may use a vault resolver
     requires_current_master_token
 

@@ -1,0 +1,17 @@
+stack: user/stackname
+version: 0.1.0
+variables:
+  greeting:
+    type: string
+    default: Hello
+    from:
+      prompt: Greeting
+  target:
+    type: string
+    from:
+      prompt: Target
+services:
+  greeter:
+    image: busybox
+    command: echo "${greeting}, ${target}"
+

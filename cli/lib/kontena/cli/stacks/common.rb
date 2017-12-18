@@ -33,13 +33,20 @@ module Kontena::Cli::Stacks
       @stack ||= reader.execute(
         name: stack_name,
         parent_name: self.respond_to?(:parent_name) ? self.parent_name : nil,
-        values: (self.respond_to?(:values_from_options) ? self.values_from_options : {})
+        values: (self.respond_to?(:values_from_options) ? self.values_from_options : {}),
+        prompt: self.respond_to?(:use_prompt?) ? self.use_prompt? : $stdin.tty?
       )
     end
 
     # @return [Class] an accessor to StackFileLoader constant, for testing purposes
     def loader_class
       ::Kontena::Cli::Stacks::YAML::StackFileLoader
+    end
+
+    module NoPromptOption
+      def self.included(where)
+        where.option '--[no-]prompt', :flag, "Prompt for variables, uses defaults when available", default: $stdin.tty?, attribute_name: :use_prompt
+      end
     end
 
     module RegistryNameParam
