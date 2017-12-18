@@ -15,7 +15,7 @@ module Kontena::Cli::Master::Token
       data = client.get("/oauth2/tokens/#{token_or_id}")
       output = token_data_to_hash(data)
       output.each do |key, value|
-        puts "%26.26s : %s" % [key, value]
+        puts "%s: %s" % [key, value]
       end
     end
   end
