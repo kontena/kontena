@@ -16,21 +16,34 @@ module GridCertificates
       end
     end
 
+    def validate_domain_authz(domain_authz)
+      if domain_authz
+        case domain_authz.authorization_type
+        when 'dns-01'
+          # Check that the expected DNS record is already in place
+          unless validate_dns_record(domain_authz.domain, domain_authz.challenge_opts['record_content'])
+            add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
+          end
+
+        when 'tls-sni-01'
+          challenge = domain_authz.acme_challenge(le_client)
+
+          if domain_authz.pending?
+            validate_tls_sni(domain_authz.domain, challenge.hostname)
+          elsif domain_authz.expired?
+            add_error(:domains, :tls_sni_challenge, "Domain authorization challenge for #{domain_authz.domain} expired at #{domain_authz.expires_at}")
+          end
+        end
+      else
+        add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
+      end
+    end
+
     def validate
       self.domains.each do |domain|
         domain_authz = get_authz_for_domain(self.grid, domain)
 
-        if domain_authz
-          if domain_authz.authorization_type == 'dns-01'
-            # Check that the expected DNS record is already in place
-            unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
-              add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
-            end
-          end
-        else
-          add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
-        end
-
+        validate_domain_authz(domain_authz)
       end
     end
 

@@ -66,6 +66,51 @@ module GridCertificates
       false
     end
 
+    # @param domain [String] externally resolveable address
+    # @param hostname [String] *.acme.invalid
+    def validate_tls_sni(domain, hostname)
+      info "validating tls-sni-01 challenge at #{domain}:443..."
+
+      ssl_context = OpenSSL::SSL::SSLContext.new
+      ssl_context.set_params(verify_mode: OpenSSL::SSL::VERIFY_NONE, verify_hostname: false)
+
+      tcp_socket = Socket.tcp(domain, 443)
+
+      ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket, ssl_context)
+      ssl_socket.hostname = hostname # tls-sni
+      ssl_socket.connect
+
+      ssl_cert = ssl_socket.peer_cert
+
+      debug "got tls peer cert for #{domain}:443: #{ssl_cert.subject}"
+
+      ssl_cert.extensions.each do |ext|
+        next if ext.oid != 'subjectAltName'
+
+        ext.value.split(',').each{|name|
+          name = name.strip
+          next unless name.start_with? 'DNS:'
+          next unless name[4..-1] == hostname
+
+          info "got tls-sni-01 challenge cert with subjectAltName: #{ext.value}"
+
+          return true
+        }
+      end
+
+      add_error(:domains, :tls_sni_challenge, "Server at #{domain}:443 did not return challenge cert for #{hostname}")
+      return false
+
+    rescue OpenSSL::OpenSSLError => exc
+      add_error(:domains, :tns_sni_challenge, "Failed to pre-validate tls-sni-01 challenge cert at #{domain}:443: #{exc.class}: #{exc.message}")
+      return false
+
+    rescue => exc
+      error exc
+      add_error(:domains, :tns_sni_challenge, "Failed to pre-validate tls-sni-01 challenge cert at #{domain}:443: #{exc.class}: #{exc.message}")
+      return false
+    end
+
     def upsert_certificate(certificate)
       if existing = Certificate.find_by(grid: grid, subject: certificate.subject)
         existing.alt_names = certificate.alt_names
