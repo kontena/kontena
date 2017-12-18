@@ -36,7 +36,7 @@ module GridCertificates
 
     def verify_domain(domain)
       domain_authorization = get_authz_for_domain(self.grid, domain)
-      challenge = le_client.challenge_from_hash(domain_authorization.challenge)
+      challenge = domain_authorization.acme_challenge(le_client)
       if domain_authorization.state == :created
         info "requesting verification for domain #{domain}"
         success = challenge.request_verification
