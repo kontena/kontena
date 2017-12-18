@@ -84,7 +84,7 @@ module Kontena::Cli::Helpers
       color = color_for_container(log['name'])
       prefix = "#{log['created_at']} #{log['name']}:"
 
-      puts "#{prefix.colorize(color)} #{log['data']}"
+      puts "#{pastel.send(color, prefix)} #{log['data']}"
     end
 
     # @param [String] container_id

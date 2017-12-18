@@ -32,7 +32,7 @@ module Kontena::Cli::Grids
 
       if gridlist.size == 0
         self.verbose? && puts
-        puts "Kontena Master #{config.current_master.name} doesn't have any grids yet. Create one now using 'kontena grid create' command".colorize(:yellow)
+        puts pastel.yellow("Kontena Master #{config.current_master.name} doesn't have any grids yet. Create one now using 'kontena grid create' command")
         self.verbose? && puts
       else
         vputs
