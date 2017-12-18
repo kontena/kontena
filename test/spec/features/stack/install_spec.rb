@@ -142,5 +142,14 @@ describe 'stack install' do
       k = run 'kontena stack ls -q'
       expect(k.out.split(/[\r\n]/)).to match array_including('twemproxy', 'twemproxy-redis_from_registry', 'twemproxy-redis_from_yml')
     end
+
+    it 'does not mutate the $STACK variable' do
+      with_fixture_dir("stack/depends") do
+        k = run 'kontena stack install'
+        expect(k.code).to eq (0)
+      end
+      k = run 'kontena service show twemproxy/twemproxy'
+      expect(k.out).to match(/STACKNAME=twemproxy$/m)
+    end
   end
 end
