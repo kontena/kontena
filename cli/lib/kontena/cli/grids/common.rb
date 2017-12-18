@@ -137,12 +137,8 @@ module Kontena::Cli::Grids
           raise Kontena::Errors::StandardError.new(1, "Need to specify --log-forwarder when using --log-opt")
         end
 
-        if no_log_forwarder?
-          if log_forwarder && log_forwarder != "none"
-            exit_with_error "Can't use --log-forwarder and --no-log-forwarder together"
-          else
-            self.log_forwarder = "none"
-          end
+        if no_log_forwarder? && !log_forwarder.nil? && log_forwarder != "none"
+          exit_with_error "Can't use --log-forwarder and --no-log-forwarder together"
         end
       end
 
@@ -170,9 +166,9 @@ module Kontena::Cli::Grids
           }
         end
 
-        if log_forwarder
+        if log_forwarder || no_log_forwarder?
           payload[:logs] = {
-            forwarder: log_forwarder,
+            forwarder: no_log_forwarder? ? 'none' : log_forwarder,
             opts: parse_log_opts
           }
         end
