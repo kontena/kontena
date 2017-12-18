@@ -40,7 +40,7 @@ module Kontena
         require(path)
         Kontena.logger.debug { "Loaded plugin #{spec.name}" } if plugin_debug?
 
-        report_tracking
+        report_tracking(spec)
         true
       rescue ScriptError, LoadError, StandardError => ex
         warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name} from #{spec.gem_dir}\n\tRerun the command with environment DEBUG=true set to get the full exception."
@@ -79,7 +79,7 @@ module Kontena
         @load_path_before = $LOAD_PATH.dup
       end
 
-      def report_tracking
+      def report_tracking(spec)
         return unless plugin_debug?
         added_features = ($LOADED_FEATURES - @loaded_features_before).map {|feat| "- #{feat}"}
         added_paths = ($LOAD_PATH - @load_path_before).map {|feat| "- #{feat}"}
