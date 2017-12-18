@@ -86,6 +86,12 @@ describe Docker::StreamingExecutor do
         subject.exec_resize(80, 24)
       end
 
+      it 'accepts zero size' do
+        expect(rpc_client).to receive(:notify).with('/containers/tty_resize', exec_id, {'width' => 0, 'height' => 0})
+
+        subject.exec_resize(0, 0)
+      end
+
       it 'fails on invalid width' do
         expect{
           subject.exec_resize(nil, 24)
