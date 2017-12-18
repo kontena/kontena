@@ -29,8 +29,6 @@ module Kontena::Cli::Stacks
 
     # @return [Kontena::Cli::Stacks::ChangeResolver]
     def execute
-      set_env_variables(stack_name, current_grid)
-
       old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
         gather_master_data(stack_name)
       end
@@ -198,7 +196,6 @@ module Kontena::Cli::Stacks
         caret "Installing new dependency #{cmd.last} as #{added_stack}"
         deployable_stacks << added_stack
         Kontena.run!(cmd)
-        set_env_variables(stack_name, current_grid)
       end
       deployable_stacks
     end
@@ -220,8 +217,8 @@ module Kontena::Cli::Stacks
     def run_deploys(deployable_stacks)
       deployable_stacks.each do |deployable_stack|
         Kontena.run!(['stack', 'deploy', deployable_stack])
-        set_env_variables(stack_name, current_grid)
       end
+      set_env_variables(stack_name, current_grid)
     end
 
     def update_stack(name, data)
