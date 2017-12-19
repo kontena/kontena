@@ -142,5 +142,26 @@ describe 'stack install' do
       k = run 'kontena stack ls -q'
       expect(k.out.split(/[\r\n]/)).to match array_including('twemproxy', 'twemproxy-redis_from_registry', 'twemproxy-redis_from_yml')
     end
+
+    it 'does not mutate the $STACK variable' do
+      with_fixture_dir("stack/depends") do
+        k = run 'kontena stack install'
+        expect(k.code).to eq (0)
+      end
+      k = run 'kontena service show twemproxy/twemproxy'
+      expect(k.out).to match(/STACKNAME=twemproxy[\r\n]/)
+    end
+  end
+
+  context 'For a stack using service_instances resolver' do
+    it 'interpolates the correct instance count' do
+      with_fixture_dir("stack/service_instances_resolver") do
+        run! 'kontena stack install'
+        run! 'kontena service scale simple/redis 2'
+        run! 'kontena stack upgrade simple'
+        k = run 'kontena service show simple/redis'
+        expect(k.out).to match(/INSTANCE_COUNT=2[\r\n]/)
+      end
+    end
   end
 end

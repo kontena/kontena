@@ -44,7 +44,7 @@ module Kontena::Actors
           'w' => size['width'], 'h' => size['height']
         })
         info "tty resized to #{size['width']}x#{size['height']}"
-      rescue Docker::Error::NotFoundError => exc
+      rescue Docker::Error::DockerError => exc
         # The Docker::Exec#resize races with the Docker::Exec#start, and the
         # resize (POST /exec/.../resize) will fail if the exec process is not
         # yet running:

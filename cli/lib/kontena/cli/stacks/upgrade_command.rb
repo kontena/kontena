@@ -29,8 +29,6 @@ module Kontena::Cli::Stacks
 
     # @return [Kontena::Cli::Stacks::ChangeResolver]
     def execute
-      set_env_variables(stack_name, current_grid)
-
       old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
         gather_master_data(stack_name)
       end

@@ -63,7 +63,7 @@ module Kontena::Cli::Stacks
       # Values that are set always when parsing stacks
       # @return [Hash] a hash of key value pairs
       def default_envs
-        @default_envs ||= {
+        {
           'GRID' => env['GRID'],
           'STACK' => env['STACK'],
           'PLATFORM' => env['PLATFORM'] || env['GRID']

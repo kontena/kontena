@@ -24,9 +24,9 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      set_env_variables(stack_name, current_grid)
-
       install_dependencies unless skip_dependencies?
+
+      set_env_variables(stack_name, current_grid)
 
       stack # runs validations
 
@@ -42,6 +42,7 @@ module Kontena::Cli::Stacks
     def install_dependencies
       dependencies = loader.dependencies
       return if dependencies.nil?
+
       dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency['name']}"
         caret "Installing dependency #{pastel.cyan(dependency['stack'])} as #{pastel.cyan(target_name)}"
@@ -56,6 +57,7 @@ module Kontena::Cli::Stacks
         cmd << dependency['stack']
         Kontena.run!(cmd)
       end
+
     end
 
     def create_stack
