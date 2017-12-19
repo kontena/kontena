@@ -35,16 +35,17 @@ describe Kontena::Cli::Master::Token::ShowCommand do
     it 'requests token data from master and displays it' do
       expect(client).to receive(:get).with("/oauth2/tokens/123").and_return(response)
       expect{subject.run(['123'])}.to output_yaml(
-        'id' => 123,
-        'token_type' => 'bearer',
-        'scopes' => 'user',
-        'user_id' => 'abc',
-        'user_email' => 'user@email',
-        'user_name' => 'username',
-        'server_name' => 'foo',
-        'access_token_last_four' => 'abcd',
-        'refresh_token_last_four' => 'efgh',
-        'expires_in' => 100
+        123 => {
+          'token_type' => 'bearer',
+          'scopes' => 'user',
+          'user_id' => 'abc',
+          'user_email' => 'user@email',
+          'user_name' => 'username',
+          'server_name' => 'foo',
+          'access_token_last_four' => 'abcd',
+          'refresh_token_last_four' => 'efgh',
+          'expires_in' => 100
+        }
       )
     end
   end
@@ -52,7 +53,7 @@ describe Kontena::Cli::Master::Token::ShowCommand do
   context 'for an authorization code' do
     let(:response) do
       {
-        "id" => "123",
+        "id" => 123,
         "grant_type" => "authorization_code",
         "code" => "abcd",
         "scopes" => "user",
@@ -70,14 +71,15 @@ describe Kontena::Cli::Master::Token::ShowCommand do
     it 'requests auth code data from master and displays it' do
       expect(client).to receive(:get).with("/oauth2/tokens/123").and_return(response)
       expect{subject.run(['123'])}.to output_yaml(
-        'id' => 123,
-        'code' => 'abcd',
-        'token_type' => 'authorization_code',
-        'scopes' => 'user',
-        'user_id' => 'abc',
-        'user_email' => 'user@email',
-        'user_name' => 'username',
-        'server_name' => 'foo'
+        123 => {
+          'code' => 'abcd',
+          'token_type' => 'authorization_code',
+          'scopes' => 'user',
+          'user_id' => 'abc',
+          'user_email' => 'user@email',
+          'user_name' => 'username',
+          'server_name' => 'foo'
+        }
       )
     end
   end

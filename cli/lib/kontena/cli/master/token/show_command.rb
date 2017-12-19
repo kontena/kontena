@@ -14,8 +14,10 @@ module Kontena::Cli::Master::Token
     def execute
       data = client.get("/oauth2/tokens/#{token_or_id}")
       output = token_data_to_hash(data)
+      id = output.delete(:id)
+      puts '%s:' % id
       output.each do |key, value|
-        puts "%s: %s" % [key, value]
+        puts "  %s: %s" % [key, value.nil? ? '-' : value]
       end
     end
   end
