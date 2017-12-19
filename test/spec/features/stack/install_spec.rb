@@ -147,14 +147,10 @@ describe 'stack install' do
   context 'For a stack using service_instances resolver' do
     it 'interpolates the correct instance count' do
       with_fixture_dir("stack/service_instances_resolver") do
-        k = run 'kontena stack install'
-        expect(k.code).to eq (0)
-        k = run 'kontena service scale simple/redis 2'
-        expect(k.code).to eq (0)
-        k = run 'kontena stack upgrade simple'
-        expect(k.code).to eq (0)
+        run! 'kontena stack install'
+        run! 'kontena service scale simple/redis 2'
+        run! 'kontena stack upgrade simple'
         k = run 'kontena service show simple/redis'
-        expect(k.code).to eq (0)
         expect(k.out).to match(/INSTANCE_COUNT=2[\r\n]/)
       end
     end
