@@ -3,9 +3,21 @@ describe 'stack validate' do
     context 'entrypoint' do
       it 'sets stack entrypoint' do
         with_fixture_dir("stack/keywords") do
-          k = run 'kontena stack validate entrypoint.yml'
-          expect(k.code).to be_zero
-          expect(k.out).to match(/entrypoint.+?foo.+?entrypoint.+?foo2/m)
+          k = run! 'kontena stack validate --format=api-json entrypoint.yml'
+          data = JSON.load(k.out)
+
+          expect(data).to match hash_including(
+            'services' => a_collection_containing_exactly(
+              hash_including(
+                'name' => 'redis',
+                'entrypoint' => 'foo',
+              ),
+              hash_including(
+                'name' => 'redis2',
+                'entrypoint' => 'foo',
+              )
+            ),
+          )
         end
       end
     end
