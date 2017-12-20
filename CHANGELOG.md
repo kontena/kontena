@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.3.rc1](https://github.com/kontena/kontena/releases/tag/v1.4.3.rc1) (2017-12-19)
+## [1.4.3](https://github.com/kontena/kontena/releases/tag/v1.4.3) (2017-12-20)
 
 The 1.4.3 release fixes regressions in the 1.4 releases, as well as some other issues.
 
@@ -15,6 +15,7 @@ The 1.4.3 release fixes regressions in the 1.4 releases, as well as some other i
 * Container exec with TTY fails with Celluloid::TaskTerminated on tty resize #3140
 * CLI plugin loading is broken with DEBUG=plugins #3149
 * CLI: cloud subcommand error message unclear without plugin #3097
+* CLI exec fails with ERROR undefined method 'raw' for #<IO:<STDIN>> (NoMethodError) #3160
 
 ### Changes
 
@@ -37,6 +38,7 @@ The 1.4.3 release fixes regressions in the 1.4 releases, as well as some other i
 * Remove --values-from and prompts from kontena stack registry push (#3158)
 * Fix negative number in kontena master token current --expires-in (#3154)
 * Suggest plugin install when using known cloud plugin subcommands (#3098)
+* Fix missing require for cli exec use of STDIN.raw (#3161)
 
 ## [1.4.2](https://github.com/kontena/kontena/releases/tag/v1.4.2) (2017-12-08)
 
