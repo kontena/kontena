@@ -36,7 +36,9 @@ describe 'stack remove' do
     end
 
     after do
-      run 'kontena stack ls -q|grep twemproxy|xargs -n1 kontena stack rm --force'
+      run 'kontena stack rm --force twemproxy'
+      run 'kontena stack rm --force twemproxy-redis_from_yml'
+      run 'kontena stack rm --force twemproxy-twemproxy-redis_from_registry'
     end
 
     it 'removes all the dependencies' do
