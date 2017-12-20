@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'plugin install' do
   after(:each) do
-    run('kontena plugin uninstall --force aws')
+    run('kontena plugin uninstall aws')
   end
 
   it 'installs a plugin' do
