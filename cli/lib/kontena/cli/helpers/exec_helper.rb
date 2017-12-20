@@ -1,3 +1,4 @@
+require 'io/console'
 require 'tty-screen'
 require 'kontena-websocket-client'
 
