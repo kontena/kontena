@@ -22,5 +22,6 @@ ADD cli/VERSION /kontena/cli/VERSION
 WORKDIR /kontena/test
 RUN bundle install
 
-# XXX: bundler does not install executables from path: ... gems?
 RUN ln -s /kontena/cli/bin/kontena /usr/local/bin/kontena
+ADD test/entrypoint.sh /
+ENTRYPOINT ["/entrypoint.sh"]
