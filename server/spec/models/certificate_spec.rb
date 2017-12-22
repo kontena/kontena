@@ -1,4 +1,10 @@
 describe Certificate do
+  include FixturesHelpers
+
+  let(:ca_pem) { fixture('certificates/test/ca.pem') }
+  let(:cert_pem) { fixture('certificates/test/cert.pem') }
+  let(:key_pem) { fixture('certificates/test/key.pem') }
+
   it { should be_timestamped_document }
   it { should belong_to(:grid) }
 
@@ -8,10 +14,10 @@ describe Certificate do
     Certificate.create!(grid: grid,
       subject: 'kontena.io',
       valid_until: Time.now + 90.days,
-      private_key: 'private_key',
-      certificate: 'certificate',
+      private_key: key_pem,
+      certificate: cert_pem,
       alt_names: ['www.kontena.io'],
-      chain: 'chain',
+      chain: ca_pem,
     )
   }
 

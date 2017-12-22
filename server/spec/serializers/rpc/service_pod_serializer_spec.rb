@@ -1,6 +1,6 @@
-require_relative '../../spec_helper'
-
 describe Rpc::ServicePodSerializer do
+  include FixturesHelpers
+
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:node) { grid.create_node!('node-1', node_id: 'a') }
   let(:lb) do
@@ -183,12 +183,16 @@ describe Rpc::ServicePodSerializer do
 
     describe '[:secrets]' do
       context 'with a service certificate' do
-        let!(:cerificate) { Certificate.create!(grid: grid,
+        let(:ca_pem) { fixture('certificates/test/ca.pem') }
+        let(:cert_pem) { fixture('certificates/test/cert.pem') }
+        let(:key_pem) { fixture('certificates/test/key.pem') }
+
+        let!(:certificate) { Certificate.create!(grid: grid,
           subject: 'kontena.io',
           valid_until: Time.now + 90.days,
-          private_key: 'private_key',
-          certificate: 'certificate',
-          chain: 'chain',
+          private_key: key_pem,
+          certificate: cert_pem,
+          chain: ca_pem,
         ) }
 
         let(:service_certificates) { [
@@ -197,7 +201,7 @@ describe Rpc::ServicePodSerializer do
 
         it 'includes service certificates as secrets' do
           expect(subject.to_hash[:secrets]).to eq [
-            { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' }
+            { name: 'SSL_CERTS', type: 'env', value: cert_pem + ca_pem + key_pem }
           ]
         end
 
@@ -215,7 +219,7 @@ describe Rpc::ServicePodSerializer do
 
           it 'includes the challenge cert as a secret after the normal certificate' do
             expect(subject.to_hash[:secrets]).to eq [
-              { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' },
+              { name: 'SSL_CERTS', type: 'env', value: cert_pem + ca_pem + key_pem },
               { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' },
             ]
           end

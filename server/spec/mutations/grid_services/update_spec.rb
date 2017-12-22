@@ -1,4 +1,6 @@
 describe GridServices::Update do
+  include FixturesHelpers
+
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:stack) {Stack.create!(name: 'foo', grid: grid)}
   let(:redis_service) { GridService.create(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')}
@@ -267,6 +269,11 @@ describe GridServices::Update do
     end
 
     context 'for a service with certificates' do
+      let(:ca_pem) { fixture('certificates/test/ca.pem') }
+      let(:cert_pem) { fixture('certificates/test/cert.pem') }
+      let(:cert2_pem) { fixture('certificates/test/cert2.pem') }
+      let(:key_pem) { fixture('certificates/test/key.pem') }
+
       let(:service) {
         GridService.create(grid: grid, stack: stack, name: 'redis',
           image_name: 'redis:2.8',
@@ -277,21 +284,25 @@ describe GridServices::Update do
         )
       }
 
-      let :certificate do
-        Certificate.create!(grid: grid,
-          subject: 'kontena.io',
-          valid_until: Time.now + 90.days,
-          private_key: 'private_key',
-          certificate: 'certificate')
-      end
+      let(:ca_pem) { fixture('certificates/test/ca.pem') }
+      let(:cert_pem) { fixture('certificates/test/cert.pem') }
+      let(:key_pem) { fixture('certificates/test/key.pem') }
 
-      let :certificate2 do
-        Certificate.create!(grid: grid,
-          subject: 'www.kontena.io',
-          valid_until: Time.now + 90.days,
-          private_key: 'private_key',
-          certificate: 'certificate')
-      end
+      let!(:certificate) { Certificate.create!(grid: grid,
+        subject: 'kontena.io',
+        valid_until: Time.now + 90.days,
+        private_key: key_pem,
+        certificate: cert_pem,
+        chain: ca_pem,
+      ) }
+
+      let!(:certificate2) { Certificate.create!(grid: grid,
+        subject: 'www.kontena.io',
+        valid_until: Time.now + 90.days,
+        private_key: key_pem,
+        certificate: cert2_pem,
+        chain: ca_pem,
+      ) }
 
       it 'does not change existing certs' do
         subject = described_class.new(
