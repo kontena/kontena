@@ -50,14 +50,18 @@ describe GridCertificates::Import do
   end
 
   context 'with a pre-existing certificate' do
-    let!(:certificate) { Certificate.create!(grid: grid, subject: 'test', valid_until: Time.now) }
+    let!(:certificate) { Certificate.create!(grid: grid, subject: 'test',
+      private_key: key_pem,
+      certificate: cert2_pem,
+      valid_until: Time.now,
+    ) }
 
     it 'updates certificate' do
       outcome = nil
 
       expect {
         outcome = subject.run
-      }.to change{certificate.reload.certificate}
+      }.to change{certificate.reload.certificate}.from(cert2_pem).to(cert_pem)
 
       expect(outcome).to be_success
     end
