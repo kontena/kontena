@@ -49,6 +49,27 @@ describe GridCertificates::Import do
     end
   end
 
+  context 'with invalid PEM syntax' do
+    let(:subject) { described_class.new(grid: grid,
+      subject: subject_param,
+      certificate: cert_pem.strip,
+      chain: [ca_pem.strip],
+      private_key: key_pem.strip,
+    ) }
+
+    it 'imports the certificate with valid syntax' do
+      cert = nil
+
+      expect {
+        cert = subject.execute
+      }.to change {grid.certificates.count}.by (1)
+
+      expect(cert.subject).to eq('test')
+      expect(cert.bundle).to eq(cert_pem + ca_pem + key_rsa_pem)
+      expect(cert.certificate).to end_with "-----END CERTIFICATE-----\n"
+    end
+  end
+
   context 'with a pre-existing certificate' do
     let!(:certificate) { Certificate.create!(grid: grid, subject: 'test',
       private_key: key_pem,
