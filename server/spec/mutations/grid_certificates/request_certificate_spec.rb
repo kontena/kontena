@@ -1,4 +1,3 @@
-
 describe GridCertificates::RequestCertificate do
 
   let(:subject) { described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com']) }

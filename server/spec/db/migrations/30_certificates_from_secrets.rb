@@ -1,5 +1,4 @@
 require_relative '../../../db/migrations/30_certificates_from_secrets'
-require_relative '../../helpers/fixtures_helpers'
 
 describe CertificatesFromSecrets do
   include FixturesHelpers

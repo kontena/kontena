@@ -35,6 +35,8 @@ require 'rack/test'
 require 'mongoid-rspec'
 
 require_relative '../app/services/mongodb/migrator'
+require_relative './helpers/fixtures_helpers'
+
 
 Celluloid.logger = nil
 Logging.initialize_logger((ENV['LOG_TARGET'] || '/dev/null'), (ENV['LOG_LEVEL'] || Logger::UNKNOWN).to_i)
