@@ -59,4 +59,10 @@ class GridDomainAuthorization
       self.state
     end
   end
+
+  # @param acme_client [Acme::Client]
+  # @return [Acme::Client::Resources::Challenges::Base]
+  def acme_challenge(acme_client)
+    acme_client.challenge_from_hash(self.challenge)
+  end
 end
