@@ -59,14 +59,14 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     it 'sends message if client is found' do
       allow(subject).to receive(:client_for_id).and_return(client)
       expect(subject).to receive(:send_message).with(client[:ws], 'hello')
-      MongoPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
+      MasterPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
       sleep 0.05
       EM.run_deferred_callbacks
     end
 
     it 'does not send message if client is not found' do
       expect(subject).not_to receive(:send_message).with(client[:ws], 'hello')
-      MongoPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
+      MasterPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
       sleep 0.05
     end
   end

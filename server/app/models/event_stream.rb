@@ -40,7 +40,7 @@ module EventStream
   end
 
   def publish_async(event)
-    MongoPubsub.publish_async(CHANNEL, event) if MongoPubsub.started?
+    MasterPubsub.publish_async(CHANNEL, event) if MasterPubsub.started?
   end
 
   def find_serializer_class

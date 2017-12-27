@@ -10,7 +10,7 @@ class GridServiceHealthMonitorJob
   end
 
   def subscribe_health_events
-    MongoPubsub.subscribe(PUBSUB_KEY) do |message|
+    MasterPubsub.subscribe(PUBSUB_KEY) do |message|
       self.handle_event(message)
     end
   end

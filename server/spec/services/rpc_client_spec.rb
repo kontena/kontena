@@ -5,15 +5,15 @@ describe RpcClient, celluloid: true do
   let(:channel) { RpcClient::RPC_CHANNEL }
 
   def publish_response(id, response)
-    MongoPubsub.publish_async("#{channel}:#{id}", {message: [1, id, nil, response]})
+    MasterPubsub.publish_async("#{channel}:#{id}", {message: [1, id, nil, response]})
   end
 
   def publish_error(id, error)
-    MongoPubsub.publish("#{channel}:#{id}", {message: [1, id, error, nil]})
+    MasterPubsub.publish("#{channel}:#{id}", {message: [1, id, error, nil]})
   end
 
   def fake_server(type = 'request')
-    MongoPubsub.subscribe(channel) do |resp|
+    MasterPubsub.subscribe(channel) do |resp|
       if resp['type'] == type
         yield(resp)
       end

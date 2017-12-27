@@ -52,6 +52,9 @@ RSpec.configure do |config|
   if ENV['CI']
     config.filter_run_excluding :performance => true
   end
+  unless ENV['REDIS_URL']
+    config.filter_run_excluding :redis => true
+  end
 
   # Run specs in random order to surface order dependencies. If you find an
   # order dependency and want to debug it, you can fix the order by providing
@@ -66,13 +69,17 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    MongoPubsub.start!(PubsubChannel)
+    if ENV['REDIS_URL']
+      MasterPubsub.start!(ENV['REDIS_URL'])
+    else
+      MasterPubsub.start!(PubsubChannel)
+    end
     sleep 0.1 until Mongoid.default_client.database.collection_names.include?(PubsubChannel.collection.name)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end
 
   config.before(:each) do
-    MongoPubsub.clear!
+    MasterPubsub.clear!
   end
 
   config.after(:each) do
