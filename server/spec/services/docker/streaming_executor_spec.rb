@@ -7,7 +7,7 @@ describe Docker::StreamingExecutor do
 
   let(:rpc_client) { instance_double(RpcClient) }
   let(:exec_id) { '70720f99-19aa-4d6b-bd1d-5cd9b430ae8b' }
-  let(:pubsub_subscription) { instance_double(MongoPubsub::Subscription) }
+  let(:pubsub_subscription) { instance_double(MasterPubsub::Subscription) }
   let(:websocket) { instance_double(Faye::WebSocket) }
 
   subject { described_class.new(container) }
@@ -28,7 +28,7 @@ describe Docker::StreamingExecutor do
 
     it 'subscribes to the exec pubsub channel' do
       expect(subject).to receive(:exec_create).and_return({'id' => '70720f99-19aa-4d6b-bd1d-5cd9b430ae8b'})
-      expect(MongoPubsub).to receive(:subscribe).with("container_exec:70720f99-19aa-4d6b-bd1d-5cd9b430ae8b").and_return(pubsub_subscription)
+      expect(MasterPubsub).to receive(:subscribe).with("container_exec:70720f99-19aa-4d6b-bd1d-5cd9b430ae8b").and_return(pubsub_subscription)
 
       subject.setup
     end
@@ -45,7 +45,7 @@ describe Docker::StreamingExecutor do
   context 'after setup' do
     before do
       expect(rpc_client).to receive(:request).with('/containers/create_exec', container_id).and_return({'id' => exec_id})
-      expect(MongoPubsub).to receive(:subscribe).with("container_exec:70720f99-19aa-4d6b-bd1d-5cd9b430ae8b") do |channel, &block|
+      expect(MasterPubsub).to receive(:subscribe).with("container_exec:70720f99-19aa-4d6b-bd1d-5cd9b430ae8b") do |channel, &block|
         @pubsub_block = block
         pubsub_subscription
       end

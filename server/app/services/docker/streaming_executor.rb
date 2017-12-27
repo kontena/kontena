@@ -112,7 +112,7 @@ module Docker
       @rpc_client.notify('/containers/terminate_exec', self.exec_id)
     end
 
-    # @return [MongoPubsub::Subscription]
+    # @return [MasterPubsub::Subscription]
     def subscribe_to_exec(id)
       MasterPubsub.subscribe("container_exec:#{id}") do |data|
         debug { "subscribe exec #{id}: #{data.inspect}" }
