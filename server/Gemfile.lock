@@ -94,6 +94,7 @@ GEM
     multipart-post (2.0.0)
     mutations (0.8.1)
       activesupport
+    nats-pure (0.2.4)
     origin (2.3.0)
     puma (3.9.1)
     rack (2.0.3)
@@ -110,7 +111,6 @@ GEM
       ffi (>= 1.0.6)
       msgpack (>= 0.4.3)
       trollop (>= 1.16.2)
-    redis (4.0.0)
     rerun (0.10.0)
       listen (~> 2.7, >= 2.7.3)
     roda (2.26.0)
@@ -179,13 +179,13 @@ DEPENDENCIES
   mongoid-rspec (~> 3.0.0)
   msgpack
   mutations
+  nats-pure
   puma
   rack (~> 2.0.0)
   rack-attack
   rack-test
   random_token
   rbtrace
-  redis
   rerun
   roda (~> 2.26.0)
   rollbar

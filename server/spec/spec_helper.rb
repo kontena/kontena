@@ -52,8 +52,11 @@ RSpec.configure do |config|
   if ENV['CI']
     config.filter_run_excluding :performance => true
   end
-  unless ENV['REDIS_URL']
-    config.filter_run_excluding :redis => true
+
+  if ENV['NATS_SERVERS']
+    config.filter_run_excluding :mongo_pubsub => true
+  else
+    config.filter_run_excluding :nats_pubsub => true
   end
 
   # Run specs in random order to surface order dependencies. If you find an
@@ -69,8 +72,8 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    if ENV['REDIS_URL']
-      MasterPubsub.start!(ENV['REDIS_URL'])
+    if nats_servers = ENV['NATS_SERVERS']
+      MasterPubsub.start!(nats_servers.split(','))
     else
       MasterPubsub.start!(PubsubChannel)
     end

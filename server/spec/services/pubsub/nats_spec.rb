@@ -1,8 +1,8 @@
 
-describe Pubsub::Redis, :celluloid => true, :redis => true do
+describe Pubsub::Nats, :celluloid => true, :nats_pubsub => true do
 
   before(:suite) do
-    Pubsub::Redis.start!(ENV['REDIS_URL'])
+    described_class.start!(ENV[''])
   end
 
   describe '.publish' do
@@ -34,7 +34,7 @@ describe Pubsub::Redis, :celluloid => true, :redis => true do
     it 'supports hash keys with mixed symbols and strings' do
       messages = []
 
-      sub =  described_class.subscribe('test') {|msg|
+      sub = described_class.subscribe('test') {|msg|
         messages << msg
       }
 
@@ -128,7 +128,7 @@ describe Pubsub::Redis, :celluloid => true, :redis => true do
         }
         described_class.publish_async("server:#{i}", {:request => i})
       end
-      sleep 0.1 until responses.size == rounds
+      sleep 0.01 until responses.size == rounds
       end_time = Time.now.to_f
       duration = end_time - start_time
       expect(responses.size).to eq(rounds)

@@ -1,3 +1,4 @@
+require_relative '../../models/pubsub_channel'
 require_relative 'base'
 
 module Pubsub

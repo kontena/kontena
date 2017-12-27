@@ -26,7 +26,7 @@ gem 'rack-attack'
 gem 'lru_redux', '~> 1.1.0'
 gem 'rollbar', require: false
 gem 'rbtrace', require: false
-gem 'redis', require: false
+gem 'nats-pure', require: false
 
 group :development, :test do
   gem 'dotenv'
