@@ -65,7 +65,7 @@ class RpcClient
   ##
   # @param [Integer] request_id
   # @param [Array] resp
-  # @return [MongoPubsub::Subscription]
+  # @return [MasterPubsub::Subscription]
   def subscribe_to_response(request_id, resp)
     MasterPubsub.subscribe("#{RPC_CHANNEL}:#{request_id}") do |msg|
       resp_message = msg['message']
@@ -78,7 +78,7 @@ class RpcClient
     end
   end
 
-  # @param [MongoPubsub::Subscription] subscription
+  # @param [MasterPubsub::Subscription] subscription
   # @param [Array] resp
   # @return [Array]
   def wait_for_response(subscription, resp)

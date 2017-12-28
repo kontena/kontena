@@ -382,7 +382,7 @@ class WebsocketBackend
   #
   # @param [Faye::Websocket] ws
   def send_master_info(ws)
-    # symbols in RPC parameters are implicitly converted into strings by MongoPubsub
+    # symbols in RPC parameters are implicitly converted into strings by MasterPubsub
     send_rpc_notify(ws, '/agent/master_info', {'version' => Server::VERSION})
   end
 
