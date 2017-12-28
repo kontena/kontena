@@ -14,7 +14,7 @@ describe 'stack validate' do
               ),
               hash_including(
                 'name' => 'redis2',
-                'entrypoint' => 'foo',
+                'entrypoint' => 'foo2',
               )
             ),
           )
