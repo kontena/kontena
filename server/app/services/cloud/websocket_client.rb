@@ -308,7 +308,7 @@ module Cloud
     def subscribe_events(channel = EventStream.channel)
       actor = Actor.current
 
-      @subscription = MongoPubsub.subscribe(channel) do |message|
+      @subscription = MasterPubsub.subscribe(channel) do |message|
         if leader?
           actor.send_notification_message(message)
         end
@@ -317,7 +317,7 @@ module Cloud
     end
 
     def unsubscribe_events
-      MongoPubsub.unsubscribe(@subscription) if @subscription
+      MasterPubsub.unsubscribe(@subscription) if @subscription
     end
   end
 end

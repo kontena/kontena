@@ -14,7 +14,7 @@ describe '/v1/ping', celluloid: true do
   it 'returns error if pubsub is down' do
     actor = double(:actor)
     expect(actor).to receive(:alive?).and_raise(Celluloid::DeadActorError)
-    expect(MongoPubsub).to receive(:actor).and_return(actor)
+    expect(MasterPubsub).to receive(:actor).and_return(actor)
     response = get '/v1/ping'
     expect(response.status).to eq(500)
   end

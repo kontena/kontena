@@ -1,4 +1,4 @@
-module Rpc 
+module Rpc
   class ContainerExecHandler
     include Logging
 
@@ -7,15 +7,15 @@ module Rpc
     end
 
     def output(uuid, stream, chunk)
-      MongoPubsub.publish("container_exec:#{uuid}", {stream: stream, chunk: chunk})
+      MasterPubsub.publish("container_exec:#{uuid}", {stream: stream, chunk: chunk})
     end
 
     def exit(uuid, exit_code)
-      MongoPubsub.publish("container_exec:#{uuid}", {exit: exit_code})
+      MasterPubsub.publish("container_exec:#{uuid}", {exit: exit_code})
     end
 
     def error(uuid, error)
-      MongoPubsub.publish("container_exec:#{uuid}", {error: error})
+      MasterPubsub.publish("container_exec:#{uuid}", {error: error})
     end
   end
 end

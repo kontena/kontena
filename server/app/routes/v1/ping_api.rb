@@ -10,7 +10,7 @@ module V1
         r.get do
           begin
             Grid.count # test db connection
-            MongoPubsub.actor.alive? # test pubsub
+            MasterPubsub.actor.alive? # test pubsub
             render('show')
           rescue => ex
             Logging.logger.error(ex)

@@ -52,8 +52,8 @@ GEM
     faye-websocket (0.10.7)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
-    ffi (1.9.6)
-    hitimes (1.2.4)
+    ffi (1.9.18)
+    hitimes (1.2.6)
     httpclient (2.8.2.3)
     i18n (0.8.4)
     jbuilder (2.2.5)
@@ -70,7 +70,7 @@ GEM
       multi_json
     kontena-websocket-client (0.1.1)
       websocket-driver (~> 0.6.5)
-    listen (2.8.3)
+    listen (2.9.0)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
@@ -94,6 +94,7 @@ GEM
     multipart-post (2.0.0)
     mutations (0.8.1)
       activesupport
+    nats-pure (0.2.4)
     origin (2.3.0)
     puma (3.9.1)
     rack (2.0.3)
@@ -103,9 +104,9 @@ GEM
       rack (>= 1.0)
     rake (10.4.2)
     random_token (1.1.0)
-    rb-fsevent (0.9.4)
-    rb-inotify (0.9.5)
-      ffi (>= 0.5.0)
+    rb-fsevent (0.10.2)
+    rb-inotify (0.9.10)
+      ffi (>= 0.5.0, < 2)
     rbtrace (0.4.8)
       ffi (>= 1.0.6)
       msgpack (>= 0.4.3)
@@ -178,6 +179,7 @@ DEPENDENCIES
   mongoid-rspec (~> 3.0.0)
   msgpack
   mutations
+  nats-pure
   puma
   rack (~> 2.0.0)
   rack-attack

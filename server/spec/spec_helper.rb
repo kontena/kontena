@@ -53,6 +53,12 @@ RSpec.configure do |config|
     config.filter_run_excluding :performance => true
   end
 
+  if ENV['NATS_SERVERS']
+    config.filter_run_excluding :mongo_pubsub => true
+  else
+    config.filter_run_excluding :nats_pubsub => true
+  end
+
   # Run specs in random order to surface order dependencies. If you find an
   # order dependency and want to debug it, you can fix the order by providing
   # the seed, which is printed after each run.
@@ -66,13 +72,17 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    MongoPubsub.start!(PubsubChannel)
+    if nats_servers = ENV['NATS_SERVERS']
+      MasterPubsub.start!(nats_servers.split(','))
+    else
+      MasterPubsub.start!(PubsubChannel)
+    end
     sleep 0.1 until Mongoid.default_client.database.collection_names.include?(PubsubChannel.collection.name)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end
 
   config.before(:each) do
-    MongoPubsub.clear!
+    MasterPubsub.clear!
   end
 
   config.after(:each) do

@@ -122,7 +122,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
         end
 
         it 'subscribes model event streams' do
-          expect(MongoPubsub).to receive(:subscribe).with(EventStream.channel)
+          expect(MasterPubsub).to receive(:subscribe).with(EventStream.channel)
 
           subject.on_open
 
@@ -163,7 +163,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
     end
 
     describe '#on_close' do
-      let(:subscription) { instance_double(MongoPubsub::Subscription) }
+      let(:subscription) { instance_double(MasterPubsub::Subscription) }
 
       before do
         subject.wrapped_object.instance_variable_set('@subscription', subscription)
@@ -178,7 +178,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
       end
 
       it 'cleans up subscription' do
-        expect(MongoPubsub).to receive(:unsubscribe).with(subscription)
+        expect(MasterPubsub).to receive(:unsubscribe).with(subscription)
 
         subject.on_close(1337, 'testing')
       end
@@ -298,7 +298,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
       context 'with an active subscription' do
         before do
-          expect(subject.subscribe_events).to be_a MongoPubsub::Subscription
+          expect(subject.subscribe_events).to be_a MasterPubsub::Subscription
         end
 
         after do
@@ -320,7 +320,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
               @ok = true
             end
 
-            MongoPubsub.publish(EventStream.channel, event)
+            MasterPubsub.publish(EventStream.channel, event)
 
             WaitHelper.wait_until!(timeout: 1.0, interval: 0.1) { @ok }
           end

@@ -287,7 +287,7 @@ class WebsocketBackend
   ##
   # @param [Array] data
   def handle_rpc_response(data)
-    MongoPubsub.publish_async("rpc_client:#{data[1]}", {message: data})
+    MasterPubsub.publish_async("rpc_client:#{data[1]}", {message: data})
   end
 
   # @param [Faye::WebSocket::Event] ws
@@ -382,7 +382,7 @@ class WebsocketBackend
   #
   # @param [Faye::Websocket] ws
   def send_master_info(ws)
-    # symbols in RPC parameters are implicitly converted into strings by MongoPubsub
+    # symbols in RPC parameters are implicitly converted into strings by MasterPubsub
     send_rpc_notify(ws, '/agent/master_info', {'version' => Server::VERSION})
   end
 
@@ -400,7 +400,7 @@ class WebsocketBackend
   end
 
   def subscribe_to_rpc_channel
-    MongoPubsub.subscribe('rpc_client') do |message|
+    MasterPubsub.subscribe('rpc_client') do |message|
       if message && message.is_a?(Hash) && RPC_MSG_TYPES.include?(message['type'].to_s)
         self.on_rpc_message(message)
       end

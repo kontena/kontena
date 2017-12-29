@@ -43,11 +43,11 @@ class LeaderElectorJob
   end
 
   def announce_election
-    MongoPubsub.publish(PUBSUB_KEY, {})
+    MasterPubsub.publish(PUBSUB_KEY, {})
   end
 
   def listen_events
-    MongoPubsub.subscribe(PUBSUB_KEY) do |event|
+    MasterPubsub.subscribe(PUBSUB_KEY) do |event|
       self.elect
     end
   end
