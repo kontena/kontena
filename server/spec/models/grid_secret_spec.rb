@@ -1,7 +1,7 @@
 
 describe GridSecret do
   it { should be_timestamped_document }
-  it { should have_fields(:name, :encrypted_value).of_type(String).with_options({ encrypted: { random_iv: true } }) }
+  it { should have_fields(:name, :encrypted_value).of_type(String) }
   it { should belong_to(:grid) }
   let(:grid) do
     Grid.create!(name: 'terminal-a')
