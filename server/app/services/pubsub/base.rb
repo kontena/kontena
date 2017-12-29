@@ -101,24 +101,28 @@ module Pubsub
     # @param [String] channel
     # @param [Hash] data
     def self.publish(channel, data)
-      @supervisor.actors.first.publish(channel, data)
+      actor.publish(channel, data)
     end
 
     # @param [String] channel
     # @param [Hash] data
     def self.publish_async(channel, data)
-      @supervisor.actors.first.async.publish(channel, data)
+      actor.async.publish(channel, data)
     end
 
     # @param [String] channel
     # @return [Subscription]
     def self.subscribe(channel, &block)
-      @supervisor.actors.first.subscribe(channel, block)
+      actor.subscribe(channel, block)
     end
 
     # @param [Subscription] subscription
     def self.unsubscribe(subscription)
-      @supervisor.actors.first.unsubscribe(subscription)
+      actor.unsubscribe(subscription)
+    end
+
+    def self.actor
+      @supervisor.actors.first
     end
 
     def self.started?
@@ -130,7 +134,7 @@ module Pubsub
     end
 
     def self.clear!
-      @supervisor.actors.first.clear!
+      actor.clear!
     end
   end
 end
