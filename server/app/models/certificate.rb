@@ -5,7 +5,7 @@ class Certificate
   field :subject, type: String
   field :valid_until, type: DateTime
   field :alt_names, type: Array
-  field :encrypted_private_key, type: String, encrypted: true # PEM encoded
+  field :encrypted_private_key, type: String, encrypted: { random_iv: true } # PEM encoded
   field :certificate, type: String # PEM encoded certificate, no need to encrypt
   field :chain, type: String # Trust chain
 

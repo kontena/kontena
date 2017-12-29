@@ -17,7 +17,7 @@ class GridDomainAuthorization
 
   belongs_to :grid_service_deploy
 
-  field :encrypted_tls_sni_certificate, type: String, encrypted: true
+  field :encrypted_tls_sni_certificate, type: String, encrypted: { random_iv: true }
 
   belongs_to :grid_service # Usually a LB service
 
