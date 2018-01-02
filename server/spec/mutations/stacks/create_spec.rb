@@ -23,6 +23,31 @@ describe Stacks::Create do
 
     it 'creates a new grid stack with parent' do
       grid
+      grid.stacks.create!(name: 'stack-parent')
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+          parent: {
+            id: "#{grid.name}/stack-parent"
+          }
+        ).run
+
+        expect(outcome).to be_success
+        expect(outcome.result.parent_name).to eq 'stack-parent'
+        expect(outcome.result.has_parent?).to be_truthy
+      }.to change{ Stack.count }.by(1)
+    end
+
+    it 'creates a new grid stack with deprecated parent_name' do
+      grid
+      grid.stacks.create!(name: 'stack-parent')
       expect {
         outcome = described_class.new(
           grid: grid,
@@ -40,6 +65,26 @@ describe Stacks::Create do
         expect(outcome.result.parent_name).to eq 'stack-parent'
         expect(outcome.result.has_parent?).to be_truthy
       }.to change{ Stack.count }.by(1)
+    end
+
+    it 'does not allow invalid parent' do
+      grid
+      outcome = described_class.new(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+        parent: {
+          id: "#{grid.name}/stack-parent"
+        }
+      ).run
+
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message.keys).to include('parent')
     end
 
     it 'creates stack revision' do

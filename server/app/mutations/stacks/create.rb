@@ -12,7 +12,12 @@ module Stacks
     end
 
     optional do
-      string :parent_name
+      hash :parent do
+        required do
+          string :id
+        end
+      end
+      string :parent_name # DEPRECATED
     end
 
     def validate
@@ -24,6 +29,7 @@ module Stacks
         add_error(:services, :empty, "stack does not specify any services")
         return
       end
+      validate_parent
       validate_expose
       validate_volumes
       validate_services
@@ -45,11 +51,28 @@ module Stacks
       add_error("services.#{error.service}.links", :recursive, error.message)
     end
 
+    def validate_parent
+      _, parent_name = if self.inputs.has_key?(:parent)
+        self.inputs.delete(:parent)[:id].split('/')
+      else
+        [self.grid.name, self.inputs.delete(:parent_name)]
+      end
+      return unless parent_name
+
+      parent_stack = self.grid.stacks.find_by(name: parent_name)
+      if parent_stack.nil?
+        add_error(:parent, :not_found, "parent stack #{parent_name} does not exist")
+      elsif parent_stack.grid_id != self.grid.id
+        add_error(:parent, :not_found, "parent stack #{parent_name} does not exist")
+      else
+        @parent = parent_name
+      end
+    end
+
     def execute
       attributes = self.inputs.clone
       grid = attributes.delete(:grid)
-      parent = attributes.delete(:parent_name)
-      stack = Stack.create(name: self.name, grid: grid, parent_name: parent)
+      stack = Stack.create(name: self.name, grid: grid, parent_name: @parent)
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)
