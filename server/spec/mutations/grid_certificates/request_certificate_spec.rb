@@ -106,6 +106,18 @@ describe GridCertificates::RequestCertificate do
       expect(authz.status).to eq :requested
     end
 
+    it 'adds error if acme server returns an error' do
+      expect(challenge).to receive(:request_verification).and_return(false)
+      expect(subject).to receive(:add_error)
+
+      expect{
+        subject.verify_domain('example.com')
+      }.to_not change{authz.reload.state}.from(:created)
+
+      expect(authz.expires_at).to match Time
+      expect(authz.status).to eq :created
+    end
+
     it 'adds error if acme client errors' do
       expect(challenge).to receive(:request_verification).and_raise(Acme::Client::Error)
       expect(subject).to receive(:add_error)
