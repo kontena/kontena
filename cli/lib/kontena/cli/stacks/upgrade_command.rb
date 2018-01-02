@@ -96,8 +96,8 @@ module Kontena::Cli::Stacks
 
       set_env_variables(stack_name, current_grid) # restore envs
 
-      old_set = Kontena::Stacks::DataSet.new(old_data)
-      new_set = Kontena::Stacks::DataSet.new(new_data)
+      old_set = Kontena::Stacks::StackDataSet.new(old_data)
+      new_set = Kontena::Stacks::StackDataSet.new(new_data)
       if skip_dependencies?
         [old_set, new_set].each(&:remove_dependencies)
       end
