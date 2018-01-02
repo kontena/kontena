@@ -64,9 +64,9 @@ module GridCertificates
       end
 
       domain_authorization.save
-    rescue Timeout::Error
-      warn 'timeout while waiting for DNS verfication status'
-      add_error(:challenge_verify, :timeout, 'Challenge verification timeout')
+    rescue Timeout::Error => exc
+      warn exc
+      add_error(:challenge_verify, :timeout, "Challenge verification timeout: #{exc}")
     rescue Acme::Client::Error => exc
       error exc
       add_error(:acme_client, :error, exc.message)

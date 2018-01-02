@@ -95,8 +95,8 @@ describe GridCertificates::RequestCertificate do
 
     it 'adds error if verification timeouts' do
       expect(challenge).to receive(:request_verification).and_return(true)
-      expect(challenge).to receive(:verify_status).and_raise(Timeout::Error)
-      expect(subject).to receive(:add_error)
+      expect(challenge).to receive(:verify_status).and_raise(Timeout::Error, "timeout after waiting ...")
+      expect(subject).to receive(:add_error).with(:challenge_verify, :timeout, "Challenge verification timeout: timeout after waiting ...")
 
       expect{
         subject.verify_domain('example.com')
