@@ -1,7 +1,7 @@
 require_relative 'stack_data'
 
 module Kontena::Stacks
-  class DataSet
+  class StackDataSet
 
     # @param data [Hash]
     def initialize(data)

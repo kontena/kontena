@@ -1,4 +1,4 @@
-require_relative 'data_set'
+require_relative 'stack_data_set'
 
 module Kontena::Stacks
   class ChangeResolver
@@ -11,8 +11,8 @@ module Kontena::Stacks
     # @param old_data [DataSet,Hash]
     # @param new_data [DataSet,Hash]
     def initialize(old_data, new_data)
-      @old_data = old_data.is_a?(DataSet) ? old_data : DataSet.new(old_data)
-      @new_data = new_data.is_a?(DataSet) ? new_data : DataSet.new(new_data)
+      @old_data = old_data.is_a?(StackDataSet) ? old_data : StackDataSet.new(old_data)
+      @new_data = new_data.is_a?(StackDataSet) ? new_data : StackDataSet.new(new_data)
       analyze
     end
 

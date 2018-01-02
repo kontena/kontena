@@ -1,6 +1,6 @@
-require 'kontena/stacks/data_set'
+require 'kontena/stacks/stack_data_set'
 
-describe Kontena::Stacks::DataSet do
+describe Kontena::Stacks::StackDataSet do
 
   let(:loader) { double(:loader) }
   let(:data) do
