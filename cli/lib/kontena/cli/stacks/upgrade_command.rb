@@ -1,7 +1,6 @@
-require_relative 'common'
-require_relative 'change_resolver'
-
 require 'json'
+require 'kontena/stacks/change_resolver'
+require_relative 'common'
 
 module Kontena::Cli::Stacks
   class UpgradeCommand < Kontena::Command
@@ -27,7 +26,7 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
-    # @return [Kontena::Cli::Stacks::ChangeResolver]
+    # @return [Kontena::Stacks::ChangeResolver]
     def execute
       old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
         gather_master_data(stack_name)
@@ -83,20 +82,30 @@ module Kontena::Cli::Stacks
       new_data.reverse_each do |stackname, data|
         reader = data[:loader].reader
         set_env_variables(stackname, current_grid) # set envs for execution time
-        data[:stack_data] = reader.execute(
-          values: data[:variables],
-          defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
+        values = data[:variables]
+        if old_stack = old_data[stackname]
+          values = values.merge(old_stack[:stack_data]['variables'])
+        end
+        parsed_stack = reader.execute(
+          values: values,
           parent_name: data[:parent_name],
           name: data[:name]
         )
+        parsed_stack["parent"] = { "name" => parsed_stack.delete("parent_name") }
+        data[:stack_data] = parsed_stack
         hint_on_validation_notifications(reader.notifications, reader.loader.source)
         abort_on_validation_errors(reader.errors, reader.loader.source)
       end
 
       set_env_variables(stack_name, current_grid) # restore envs
 
+      old_set = Kontena::Stacks::DataSet.new(old_data)
+      new_set = Kontena::Stacks::DataSet.new(new_data)
+      if skip_dependencies?
+        [old_set, new_set].each(&:remove_dependencies)
+      end
       spinner "Analyzing upgrade" do
-        Kontena::Cli::Stacks::ChangeResolver.new(old_data, new_data)
+        Kontena::Stacks::ChangeResolver.new(old_set, new_set)
       end
     end
 
@@ -107,18 +116,19 @@ module Kontena::Cli::Stacks
 
       will = dry_run? ? "would" : "will"
 
+      puts
       puts "SERVICES:"
       puts "-" * 40
 
       unless changes.removed_services.empty?
         puts pastel.yellow("These services #{will} be removed from master:")
-        changes.removed_services.each { |svc| puts pastel.yellow(" - #{svc}") }
+        changes.removed_services.each { |svc| puts pastel.yellow("- #{svc}") }
         puts
       end
 
       unless changes.added_services.empty?
         puts pastel.green("These new services #{will} be created to master:")
-        changes.added_services.each { |svc| puts pastel.green(" - #{svc}") }
+        changes.added_services.each { |svc| puts pastel.green("- #{svc}") }
         puts
       end
 
@@ -158,14 +168,12 @@ module Kontena::Cli::Stacks
         changes.upgraded_stacks.each { |stack| puts pastel.cyan("- #{stack}") }
         puts
       end
-
-      puts
     end
 
     # requires heavier confirmation when something very dangerous is going to happen
     def get_confirmation(changes)
       unless force?
-        unless changes.removed_services.empty? && changes.removed_stacks.empty? && changes.replaced_stacks.empty?
+        unless changes.safe?
           puts "#{pastel.red('Warning:')} This can not be undone, data will be lost."
           confirm
         end
@@ -188,11 +196,11 @@ module Kontena::Cli::Stacks
       changes.added_stacks.reverse_each do |added_stack|
         data = changes.new_data[added_stack]
         cmd = ['stack', 'install', '--name', added_stack, '--no-deploy']
-        cmd.concat ['--parent-name', data[:parent_name]] if data[:parent_name]
-        data[:variables].each do |k,v|
+        cmd.concat ['--parent-name', data.parent] unless data.root?
+        data.variables.each do |k,v|
           cmd.concat ['-v', "#{k}=#{v}"]
         end
-        cmd << data[:loader].source
+        cmd << data.loader.source
         caret "Installing new dependency #{cmd.last} as #{added_stack}"
         deployable_stacks << added_stack
         Kontena.run!(cmd)
@@ -205,9 +213,9 @@ module Kontena::Cli::Stacks
       deployable_stacks = []
       changes.upgraded_stacks.reverse_each do |upgraded_stack|
         data = changes.new_data[upgraded_stack]
-        spinner "Upgrading #{stack_name == upgraded_stack ? 'stack' : 'dependency'} #{pastel.cyan(upgraded_stack)}" do |spin|
+        spinner "Upgrading #{data.root? ? 'stack' : 'dependency'} #{pastel.cyan(upgraded_stack)}" do |spin|
           deployable_stacks << upgraded_stack
-          update_stack(upgraded_stack, data[:stack_data]) || spin.fail!
+          update_stack(upgraded_stack, data.data) || spin.fail!
         end
       end
       deployable_stacks
