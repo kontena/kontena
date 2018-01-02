@@ -82,12 +82,9 @@ module Kontena::Cli::Stacks
       new_data.reverse_each do |stackname, data|
         reader = data[:loader].reader
         set_env_variables(stackname, current_grid) # set envs for execution time
-        values = data[:variables]
-        if old_stack = old_data[stackname]
-          values = values.merge(old_stack[:stack_data]['variables'])
-        end
         parsed_stack = reader.execute(
-          values: values,
+          values: data[:variables],
+          defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
           parent_name: data[:parent_name],
           name: data[:name]
         )
