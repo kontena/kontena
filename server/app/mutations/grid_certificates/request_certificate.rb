@@ -45,6 +45,7 @@ module GridCertificates
           domain_authorization.save
         else
           add_error(:request_verification, :failed, "Requesting verification failed")
+          return
         end
       end
 
