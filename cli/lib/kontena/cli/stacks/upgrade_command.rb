@@ -103,12 +103,12 @@ module Kontena::Cli::Stacks
     def process_stack_data(stackname, data, old_data)
       prev_env = ENV.clone
       reader = data[:loader].reader
-      set_env_variables(stackname, current_grid) # set envs for execution time
       values = data[:variables]
       if reuse_values? && old_data[stackname]
         old_vars = old_data[stackname][:stack_data]['variables']
         values = old_vars.merge(values)
       end
+      set_env_variables(stackname, current_grid) # set envs for execution time
       parsed_stack = reader.execute(
         values: values,
         defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
