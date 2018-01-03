@@ -16,23 +16,15 @@ module Volumes
     end
 
     def validate
-
+      # No need for custom validations for now
     end
 
     def execute
-      # TODO
-      # - Should each node be installed in parallel?
-      # - Collect node results
+      self.grid.docker_plugins.create!(name: self.name, alias: self.alias_name, config: self.config, label: self.label)
+      # Notify all nodes matching label
       self.grid.host_nodes.connected.reject { |node| self.label && !node.labels.include?(self.label) }.each do |node|
-        begin
-          response = RpcClient.new(node.node_id).request('/plugins/install', self.name, self.config, self.alias_name)
-          if response.key?('error')
-            add_error(:install, :failed, "Plugin #{self.name} installation failed on node #{node.name}: #{response['error']}")
-          end
-        rescue => exc
-          add_error(:install, :failed, "Plugin #{self.name} installation failed on node #{node.name}: #{exc.message}")
-        end
-
+        plugger = Agent::NodePlugger.new(node)
+        plugger.send_node_info
       end
     end
 

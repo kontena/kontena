@@ -52,6 +52,7 @@ class HostNode
   has_many :container_stats
   has_many :host_node_stats
   has_many :volume_instances, dependent: :destroy
+  has_many :docker_plugin_statuses, dependent: :destroy
   has_and_belongs_to_many :images
 
   validates :grid, presence: true

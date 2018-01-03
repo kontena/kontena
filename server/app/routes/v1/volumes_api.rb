@@ -67,19 +67,19 @@ module V1
               data[:grid] = @grid
               outcome = Volumes::PluginInstall.run(data)
               if outcome.success?
-                #@volume = outcome.result
-                #audit_event(r, @volume.grid, @volume, 'create', @volume)
+                @plugin = outcome.result
+                audit_event(r, @plugin.grid, @plugin, 'install', @plugin)
                 response.status = 201
-                #render('volumes/show')
+                #render('docker_plugins/show')
                 {}
               else
                 response.status = 422
                 {error: outcome.errors.message}
               end
             end
-            
+
           end
-          
+
         end
         r.delete do
           r.is ':volume' do |volume|

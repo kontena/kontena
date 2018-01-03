@@ -36,6 +36,7 @@ class Grid
   has_many :networks, dependent: :delete
   has_many :volumes, dependent: :destroy
   has_many :certificates
+  has_many :docker_plugins, dependent: :destroy
   has_and_belongs_to_many :users
   embeds_one :grid_logs_opts, class_name: 'GridLogsOpts'
 

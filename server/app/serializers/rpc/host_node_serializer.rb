@@ -12,6 +12,7 @@ module Rpc
     attribute :node_number
     attribute :initial_member
     attribute :grid
+    attribute :plugins
 
     def id
       object.node_id
@@ -35,6 +36,16 @@ module Rpc
       else
         {}
       end
+    end
+
+    def plugins
+      object.grid.docker_plugins.reject { |p| p.label && object.labels && !object.labels.include?(p.label)}.map { |p|
+        {
+          name: p.name,
+          alias: p.alias,
+          config: p.config
+        }
+      }
     end
   end
 end

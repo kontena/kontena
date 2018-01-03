@@ -2,7 +2,7 @@ module Kontena::Plugins
   class PluginManager
     include Kontena::Logging
 
-    
+
     def install_plugin(name, config, alias_name = nil)
       info "starting to install plugin #{name}"
       privileges = get_privileges(name)
@@ -26,7 +26,7 @@ module Kontena::Plugins
       Docker.connection.post('/plugins/pull', query, :body => privileges)
       debug "pulled plugin #{name}"
     end
-    
+
     def set_config(name, config)
       Docker.connection.post("/plugins/#{name}/set", nil, :body => config.to_json)
     end
@@ -35,6 +35,10 @@ module Kontena::Plugins
       debug "enabling plugin #{name}"
       Docker.connection.post("/plugins/#{name}/enable", {'timeout' => 10})
       debug "enabled plugin #{name}"
+    end
+
+    def get_plugins
+      Docker.connection.get('/plugins')
     end
 
   end

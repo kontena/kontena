@@ -9,7 +9,8 @@ class Node
               :peer_ips,
               :node_number,
               :initial_member,
-              :grid
+              :grid,
+              :plugins
 
   # @param [Hash] data
   def initialize(data)
@@ -23,6 +24,7 @@ class Node
     @node_number = data['node_number']
     @initial_member = data['initial_member']
     @grid = data['grid']
+    @plugins = data['plugins']
   end
 
   def statsd_conf

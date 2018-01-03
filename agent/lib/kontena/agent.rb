@@ -268,6 +268,10 @@ module Kontena
         type: Kontena::Workers::Volumes::VolumeManager,
         as: :volume_manager
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::PluginWorker,
+        as: :plugin_worker
+      )
     end
 
     def supervise_lb
