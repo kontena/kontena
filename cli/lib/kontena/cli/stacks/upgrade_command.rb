@@ -21,6 +21,7 @@ module Kontena::Cli::Stacks
 
     option '--force', :flag, 'Force upgrade'
     option '--skip-dependencies', :flag, "Do not upgrade any stack dependencies", default: false
+    option '--reuse-values', :flag, "Reuse existing values"
     option '--dry-run', :flag, "Simulate upgrade"
 
     requires_current_master
@@ -103,8 +104,13 @@ module Kontena::Cli::Stacks
       prev_env = ENV.clone
       reader = data[:loader].reader
       set_env_variables(stackname, current_grid) # set envs for execution time
+      values = data[:variables]
+      if reuse_values? && old_data[stackname]
+        old_vars = old_data[stackname][:stack_data]['variables']
+        values = old_vars.merge(values)
+      end
       parsed_stack = reader.execute(
-        values: data[:variables],
+        values: values,
         defaults: old_data[stackname].nil? ? nil : old_data[stackname][:stack_data]['variables'],
         parent_name: data[:parent_name],
         name: data[:name]
