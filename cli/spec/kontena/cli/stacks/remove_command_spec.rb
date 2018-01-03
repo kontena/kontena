@@ -50,9 +50,11 @@ describe Kontena::Cli::Stacks::RemoveCommand do
           { 'children' => [ { 'name' => 'foofoo' }, { 'name' => 'foobar' } ] }
         end
 
-        it 'removes the children' do
+        before(:each) do
           allow(subject).to receive(:wait_stack_removal)
+        end
 
+        it 'removes the children' do
           expect(client).to receive(:get).with('stacks/test-grid/test-stack').and_return(
             stack_response_with_children
           )
@@ -61,7 +63,26 @@ describe Kontena::Cli::Stacks::RemoveCommand do
           expect(Kontena).to receive(:run!).with(['stack', 'remove', '--force', 'foobar'])
 
           expect(subject).to receive(:remove_stack).with('test-stack')
-          expect{subject.run(['--force', 'test-stack'])}.not_to exit_with_error
+          expect {
+            subject.run(['--force', 'test-stack'])
+          }.not_to exit_with_error
+        end
+
+        it 'does not remove the children if keep dependencies given' do
+          allow(subject).to receive(:confirm_command)
+          expect(client).to receive(:get).with('stacks/test-grid/test-stack').and_return(
+            stack_response_with_children
+          )
+
+          expect(Kontena).not_to receive(:run!).with(['stack', 'remove', '--force', 'foofoo'])
+          expect(Kontena).not_to receive(:run!).with(['stack', 'remove', '--force', 'foobar'])
+
+          expect(subject).to receive(:remove_stack).with('test-stack')
+          expect {
+            expect {
+              subject.run(['--keep-dependencies', 'test-stack'])
+            }.not_to output(/depends on/).to_stdout
+          }.not_to exit_with_error
         end
       end
     end

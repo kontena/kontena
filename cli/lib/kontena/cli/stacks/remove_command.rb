@@ -23,7 +23,7 @@ module Kontena::Cli::Stacks
       if stack['parent']
         puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack['parent']['name'])} depends on stack #{name}"
       end
-      if stack['children'] && !stack['children'].empty?
+      if !keep_dependencies? && stack['children'] && !stack['children'].empty?
         puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} has dependencies that will be removed:"
         stack['children'].each do |child|
           puts "- #{pastel.yellow(child['name'])}"
