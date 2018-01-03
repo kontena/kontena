@@ -41,6 +41,9 @@ describe GridService do
   let :stack do
     Stack.create(grid: grid, name: 'stack')
   end
+  let :stack2 do
+    Stack.create(grid: grid, name: 'stack2')
+  end
 
   let(:grid_service) do
     GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
@@ -49,18 +52,13 @@ describe GridService do
     GridService.create!(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')
   end
 
-  let(:stacked_service) do
-    stack = Stack.create!(name: 'stack')
-    GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
-  end
-
   describe '#qualified_name' do
-    it 'returns full path for stacked service' do
-      expect(stacked_service.qualified_name).to eq("#{stacked_service.stack.name}/#{stacked_service.name}")
+    it 'returns full path for stack_service service' do
+      expect(stack_service.qualified_name).to eq('stack/redis')
     end
 
     it 'returns path without stack for stackless service' do
-      expect(grid_service.qualified_name).to eq("#{grid_service.name}")
+      expect(grid_service.qualified_name).to eq('redis')
     end
   end
 
