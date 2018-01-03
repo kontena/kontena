@@ -14,7 +14,7 @@ module Scheduler
           key, comparator, flags, value = split_affinity(affinity)
 
           filtered_nodes = nodes.select { |node|
-            match_affinity?(key, comparator, value, node)
+            match_affinity?(key, comparator, value, node, service)
           }
 
           if filtered_nodes.size > 0
@@ -32,13 +32,14 @@ module Scheduler
       # @param comparator [String]
       # @param value [String]
       # @param node [HostNode]
+      # @param service [GridService]
       # @return [Boolean]
-      def match_affinity?(key, comparator, value, node)
+      def match_affinity?(key, comparator, value, node, service)
         match = case key
         when 'node'
           node_match?(node, value)
         when 'service'
-          service_match?(node, value)
+          service_match?(node, value, service)
         when 'container'
           container_match?(node, value)
         when 'label'
@@ -94,17 +95,14 @@ module Scheduler
 
       # @param node [HostNode]
       # @param value [String]
+      # @param service [GridService,NilClass]
       # @return [Boolean]
-      def service_match?(node, value)
-        is_regex = regex?(value)
-        match_with_stack = is_regex ? value[1...-1].include?('\/') : value.include?('/')
-        service_names = node.grid_service_instances.includes(:grid_service).map { ||
-          if match_with_stack
-            "#{i.grid_service.stack.name}/#{i.grid_service.name}"
-          else
-            i.grid_service.name
-          end
-        }.uniq
+      def service_match?(node, value, service)
+        match_with_stack = regex?(value) ? value[1...-1].include?('\/') : value.include?('/')
+        value = "#{service.stack.name}/#{value}" unless match_with_stack
+        service_names = node.grid_service_instances.includes(:grid_service).map { |i|
+          "#{i.grid_service.stack.name}/#{i.grid_service.name}"
+        }.compact.uniq
         service_names.any?{ |n| value_matches?(n, value) }
       end
 
@@ -119,7 +117,7 @@ module Scheduler
       # @param pattern [String]
       # @return [Boolean]
       def value_matches?(val, pattern)
-        if regexp?(val)
+        if regex?(pattern)
           Regexp.new(pattern[1...-1]).match(val)
         else
           val == pattern
