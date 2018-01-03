@@ -1,7 +1,7 @@
 module Kontena::Stacks
   class StackData
 
-    attr_reader :data, :loader
+    attr_reader :loader
 
     # @param data [Hash]
     # @param loader [StackFileLoader,NilClass]
@@ -18,6 +18,11 @@ module Kontena::Stacks
     # @return [String]
     def stack_name
       @data['stack']
+    end
+
+    # @return [String]
+    def version
+      @data['version']
     end
 
     # @return [Boolean]
@@ -43,6 +48,11 @@ module Kontena::Stacks
     # @return [Array<String>]
     def service_names
       @data['services'].map { |s| s['name']}
+    end
+
+    # @return [Hash]
+    def data
+      @data.dup
     end
   end
 end

@@ -67,7 +67,9 @@ module Kontena::Stacks
 
       removed_stacks.concat(old_names - new_names)
       added_stacks.concat(new_names - old_names)
-      upgraded_stacks.concat(new_names & old_names)
+      (new_names & old_names).each do |candidate|
+        upgraded_stacks << candidate if stack_upgraded?(candidate)
+      end
 
       removed_stacks.each do |removed_stack|
         removed_services.concat(
@@ -96,6 +98,21 @@ module Kontena::Stacks
         added_services.concat(new_services - old_services)
         upgraded_services.concat(new_services & old_services)
       end
+    end
+
+    # Stack is upgraded if version, stack name, variables change or stack is root
+    #
+    # @param name [String]
+    # @return [Boolean]
+    def stack_upgraded?(name)
+      old_stack = old_data.stack(name)
+      new_stack = new_data.stack(name)
+      return true if new_stack.root?
+      return true if old_stack.version != new_stack.version
+      return true if old_stack.stack_name != new_stack.stack_name
+      return true if old_stack.variables != new_stack.variables
+
+      false
     end
   end
 end
