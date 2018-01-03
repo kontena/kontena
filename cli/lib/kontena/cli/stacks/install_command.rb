@@ -36,7 +36,11 @@ module Kontena::Cli::Stacks
       dump_variables if values_to
 
       create_stack
-      deploy_stack if deploy?
+
+      if deploy?
+        deploy_dependencies
+        deploy_stack
+      end
     end
 
     def install_dependencies
@@ -46,18 +50,25 @@ module Kontena::Cli::Stacks
       dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency['name']}"
         caret "Installing dependency #{pastel.cyan(dependency['stack'])} as #{pastel.cyan(target_name)}"
-        cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
+        cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name, '--no-deploy']
 
         dependency['variables'].merge(dependency_values_from_options(dependency['name'])).each do |key, value|
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 
-        cmd << '--no-deploy' unless deploy?
-
         cmd << dependency['stack']
         Kontena.run!(cmd)
       end
+    end
 
+    def deploy_dependencies
+      dependencies = loader.dependencies
+      return if dependencies.nil?
+
+      dependencies.each do |dependency|
+        target_name = "#{stack_name}-#{dependency['name']}"
+        Kontena.run!(['stack', 'deploy', target_name])
+      end
     end
 
     def create_stack
