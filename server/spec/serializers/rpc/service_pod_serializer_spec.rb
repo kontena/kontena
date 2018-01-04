@@ -220,7 +220,7 @@ describe Rpc::ServicePodSerializer do
           it 'includes the challenge cert as a secret after the normal certificate' do
             expect(subject.to_hash[:secrets]).to eq [
               { name: 'SSL_CERTS', type: 'env', value: cert_pem + ca_pem + key_pem },
-              { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' },
+              { name: 'SSL_CERT_acme_challenge_www_kontena_io', type: 'env', value: 'TLS_AUTH' },
             ]
           end
         end
@@ -251,7 +251,7 @@ describe Rpc::ServicePodSerializer do
 
         it 'includes the challenge cert as a secret' do
           expect(subject.to_hash[:secrets]).to eq [
-            { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' }
+            { name: 'SSL_CERT_acme_challenge_www_kontena_io', type: 'env', value: 'TLS_AUTH' }
           ]
         end
       end
@@ -270,7 +270,7 @@ describe Rpc::ServicePodSerializer do
 
         it 'includes the challenge cert as a secret' do
           expect(subject.to_hash[:secrets]).to eq [
-            { name: 'SSL_CERTS', type: 'env', value: 'TLS_AUTH' }
+            { name: 'SSL_CERT_acme_challenge_www_kontena_io', type: 'env', value: 'TLS_AUTH' }
           ]
         end
       end

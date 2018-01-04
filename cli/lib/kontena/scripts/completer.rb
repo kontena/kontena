@@ -259,7 +259,7 @@ begin
       when 'stack'
         completion.clear
         sub_commands = %w(build install upgrade deploy start stop remove rm ls list
-                          logs monitor show registry)
+                          logs monitor show registry inspect)
         if words[1]
           if words[1] == 'registry'
             registry_sub_commands = %(push pull search show rm)
