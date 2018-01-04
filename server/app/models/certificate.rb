@@ -25,6 +25,27 @@ class Certificate
     "#{self.grid.name}/#{self.subject}"
   end
 
+  # @return [String] with trailing newline
+  def certificate
+    pem = super
+    pem += "\n" unless pem.end_with? "\n"
+    pem
+  end
+
+  # @return [String] with trailing newline
+  def key
+    pem = super
+    pem += "\n" unless pem.end_with? "\n"
+    pem
+  end
+
+  # @return [String] with trailing newline
+  def chain
+    pem = super
+    pem += "\n" unless pem.end_with? "\n"
+    pem
+  end
+
   # @return [String] Actual certificate and the trust chain bundled together
   def full_chain
     self.certificate + self.chain
