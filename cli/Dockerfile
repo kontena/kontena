@@ -1,14 +1,14 @@
 FROM alpine:3.6
 MAINTAINER Kontena, Inc. <info@kontena.io>
 
-ADD https://download.docker.com/linux/static/stable/x86_64/docker-17.06.2-ce.tgz /tmp
 ARG CLI_VERSION
 
 RUN apk update && \
   apk --update add ruby ruby-json ruby-bigdecimal ruby-io-console \
-  ca-certificates libssl1.0 openssl libstdc++ && \
+  curl ca-certificates libssl1.0 openssl libstdc++ && \
+  curl -sL https://download.docker.com/linux/static/stable/x86_64/docker-17.06.2-ce.tgz > /tmp/docker.tgz && \
   cd /tmp && \
-  tar zxf docker-17.06.2-ce.tgz && \
+  tar zxf docker.tgz && \
   mv docker/docker /usr/local/bin/ && \
   rm -rf /tmp/docker* && \
   chmod +x /usr/local/bin/docker
