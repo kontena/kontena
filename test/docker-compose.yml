@@ -47,5 +47,4 @@ services:
       - api
 
   mongodb:
-    image: mongo:3.0
-    command: mongod --smallfiles
+    image: mongo:3.4
