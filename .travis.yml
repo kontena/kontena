@@ -19,9 +19,8 @@ env:
     - DOCS_HS=2126125
 stages:
   - name: test
-    if: tag IS present
   - name: test e2e
-    if: type = pull_request
+    if: type = pull_request OR type = cron
   - name: deploy gem
     if: tag IS present
   - name: deploy omnibus
@@ -29,6 +28,8 @@ stages:
   - name: deploy images
     if: tag IS present
 jobs:
+  allow_failures:
+    - stage: test e2e
   include:
     - stage: test
       script: ./build/travis/test.sh
