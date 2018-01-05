@@ -19,6 +19,7 @@ env:
     - DOCS_HS=2126125
 stages:
   - name: test
+    if: tag IS present
   - name: test e2e
     if: type = pull_request
   - name: deploy gem
@@ -37,10 +38,12 @@ jobs:
       script: ./build/travis/test.sh
       rvm: 2.2
       env: TEST_DIR=cli
+      if: type = pull_request
     - stage: test
       script: ./build/travis/test.sh
       rvm: 2.3
       env: TEST_DIR=cli
+      if: type = pull_request
     - stage: test
       script: ./build/travis/test.sh
       rvm: 2.4
@@ -49,6 +52,7 @@ jobs:
       script: ./build/travis/test.sh
       rvm: 2.5
       env: TEST_DIR=cli
+      if: type = pull_request
     - stage: test
       script: ./build/travis/test.sh
       rvm: 2.4
