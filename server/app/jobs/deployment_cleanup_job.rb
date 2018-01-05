@@ -26,9 +26,7 @@ class DeploymentCleanupJob
       # Find the last 100th deployments id
       id = s.grid_service_deploys.finished.desc('_id').limit(100).to_a.last._id
       # Now delete all deployments older than the 100th one
-      s.grid_service_deploys.finished.where(:_id.lt => id).each do |d|
-        d.delete
-      end
+      s.grid_service_deploys.finished.where(:_id.lt => id).delete
     end
   end
 end
