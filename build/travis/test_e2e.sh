@@ -2,6 +2,6 @@
 set -ue
 
 cd test && \
-  sudo bundle install --system && \
+  bundle install --system && \
   rake compose:setup && \
   rake
