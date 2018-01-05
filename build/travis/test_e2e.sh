@@ -3,6 +3,7 @@ set -ue
 
 gem build cli/kontena-cli.gemspec && \
   gem install --no-ri --no-rdoc *.gem && \
+  gem env && \
   kontena -v
 
 cd test && \
