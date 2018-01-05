@@ -7,5 +7,6 @@ gem build cli/kontena-cli.gemspec && \
 cd test && \
   bundle install --system --without development && \
   rm Gemfile && \
+  kontena -v && \
   rake compose:setup && \
   rake
