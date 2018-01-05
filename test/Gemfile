@@ -1,8 +1,11 @@
 source 'https://rubygems.org'
 
-gem 'dotenv'
 gem 'rspec'
 gem 'kommando', '~> 0.1.2'
-gem 'kontena-cli', path: '../cli'
 gem 'rake'
+
+group :development do
+  gem 'dotenv'
+  gem 'kontena-cli', path: '../cli'
+end
 
