@@ -1,10 +1,11 @@
 #!/bin/bash
 set -ue
 
-gem build cli/kontena-cli.gemspec && \
+cd cli && \
+  gem build cli/kontena-cli.gemspec && \
   gem install --no-ri --no-rdoc *.gem && \
-  gem env && \
-  kontena -v
+  kontena -v && \
+  cd ..
 
 cd test && \
   bundle install --system --without development && \
