@@ -30,7 +30,8 @@ stages:
     if: tag IS present
 jobs:
   allow_failures:
-    - env: 'ALLOW_FAILURES=true'
+    - rvm: 2.3
+      env: 'ALLOW_FAILURES=true'
   include:
     - stage: test
       script: ./build/travis/test.sh
