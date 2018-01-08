@@ -176,25 +176,25 @@ begin
     case words[0]
       when 'plugin'
         completion.clear
-        sub_commands = %w(list ls search install uninstall)
+        sub_commands = %w(list search install uninstall)
         if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+          completion.push(sub_commands) unless (sub_commands + %w(ls)).include?(words[1])
         else
           completion.push sub_commands
         end
       when 'etcd'
         completion.clear
-        sub_commands = %w(get set mkdir mk list ls rm)
+        sub_commands = %w(get set mkdir list rm)
         if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+          completion.push(sub_commands) unless (sub_commands + %w(ls)).include?(words[1])
         else
           completion.push sub_commands
         end
       when 'registry'
         completion.clear
-        sub_commands = %w(create remove rm)
+        sub_commands = %w(create remove)
         if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+          completion.push(sub_commands) unless (sub_commands + %w(rm)).include?(words[1])
         else
           completion.push sub_commands
         end
@@ -203,7 +203,7 @@ begin
         sub_commands = %w(add-user audit-log create current list user remove show use)
         if words[1] && words[1] == 'use'
           completion.push helper.grids.reject { |g| g == helper.current_grid }
-        elsif words[1] && %w(update show rm remove env cloud-config health).include?(words[1])
+        elsif words[1] && %w(update show remove env cloud-config health).include?(words[1])
           completion.push helper.grids
         else
           completion.push sub_commands
@@ -218,7 +218,7 @@ begin
         end
       when 'master'
         completion.clear
-        sub_commands = %w(list use user current remove rm config cfg login logout token join audit-log init-cloud)
+        sub_commands = %w(list use user current remove config login logout token join audit-log init-cloud)
         if words[1] && words[1] == 'use'
           completion.push helper.master_names.reject { |n| n == helper.current_master_name }
         elsif words[1] && %w(remove rm).include?(words[1])
@@ -226,8 +226,8 @@ begin
         elsif words[1] && words[1] == 'user'
           users_sub_commands = %w(invite list role)
           if words[2] == 'role'
-            role_subcommands = %w(add remove rm)
-            if !words[3] || !role_subcommands.include?(words[3])
+            role_subcommands = %w(add remove)
+            if !words[3] || !(role_subcommands + %w(rm)).include?(words[3])
               completion.push role_subcommands
             end
           else
@@ -237,10 +237,10 @@ begin
           config_sub_commands = %(set get dump load import export unset)
           completion.push config_sub_commands
         elsif words[1] && words[1] == 'token'
-          token_sub_commands = %(list ls rm remove show current create)
+          token_sub_commands = %(list remove show current create)
           completion.push token_sub_commands
         elsif words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+          completion.push(sub_commands) unless (sub_commands + %w(ls rm)).include?(words[1])
         else
           completion.push sub_commands
         end
@@ -248,10 +248,10 @@ begin
         completion.clear
         sub_commands = %w(login logout master)
         if words[1] && words[1] == 'master'
-          cloud_master_sub_commands = %(list ls remove rm add show update)
+          cloud_master_sub_commands = %(list remove add show update)
           completion.push cloud_master_sub_commands
         elsif words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+          completion.push(sub_commands) unless (sub_commands + %w(ls rm)).include?(words[1])
         else
           completion.push sub_commands
         end
@@ -279,15 +279,6 @@ begin
       when 'external-registry'
         completion.clear
         completion.push %w(add list delete)
-      when 'app'
-        completion.clear
-        sub_commands = %w(init build config deploy start stop remove rm ps list
-                          logs monitor show)
-        if words[1] && sub_commands.include?(words[1])
-          completion.push helper.yml_services
-        else
-          completion.push sub_commands
-        end
       when 'stack'
         completion.clear
         sub_commands = %w(build install upgrade deploy start stop remove restart list
@@ -308,12 +299,16 @@ begin
             end
           elsif %w(install validate build).include?(words[1])
               completion.push helper.yml_files
-          elsif words[1] == 'upgrade' && words[3]
-            completion.push helper.yml_files
+          elsif words[1] == 'upgrade'
+            if words[3]
+              completion.push helper.yml_files
+            else
+              completion.push.helper.stacks
+            end
           elsif %w(deploy start stop remove rm restart logs monitor show inspect).include?(words[1])
             completion.push helper.stacks
           else
-            completion.push(sub_commands)
+            completion.push(sub_commands) unless (sub_commands + %w(rm ls)).include?(words[1])
           end
         else
           completion.push sub_commands
