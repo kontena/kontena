@@ -31,7 +31,9 @@ stages:
 jobs:
   fast_finish: true
   allow_failures:
-    - env: ALLOW_FAILURES=true
+    - env:
+      - TEST_DIR=cli
+      - ALLOW_FAILURES=true
   include:
     - stage: test
       script: ./build/travis/test.sh
