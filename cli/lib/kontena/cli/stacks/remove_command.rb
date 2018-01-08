@@ -8,14 +8,14 @@ module Kontena::Cli::Stacks
 
     banner "Removes a stack in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    parameter "NAME ...", "Stack name", attribute_name: :names
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
     option "--keep-dependencies", :flag, "Do not remove dependencies"
 
     requires_current_master
     requires_current_master_token
 
-    def fetch_stack
+    def fetch_stack(name)
       client.get("stacks/#{current_grid}/#{name}")
     end
 
@@ -33,18 +33,20 @@ module Kontena::Cli::Stacks
     end
 
     def execute
-      stack = fetch_stack
-      confirm_remove(stack) unless forced?
-      unless keep_dependencies?
-        stack.fetch('children', Hash.new).each do |child_stack|
-          caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
-          Kontena.run!(['stack', 'remove', '--force', child_stack['name']])
+      names.each do |name|
+        stack = fetch_stack(name)
+        confirm_remove(stack) unless forced?
+        unless keep_dependencies?
+          stack.fetch('children', Hash.new).each do |child_stack|
+            caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
+            Kontena.run!(['stack', 'remove', '--force', child_stack['name']])
+          end
         end
-      end
 
-      spinner "Removing stack #{pastel.cyan(name)} " do
-        remove_stack(name)
-        wait_stack_removal(name)
+        spinner "Removing stack #{pastel.cyan(name)} " do
+          remove_stack(name)
+          wait_stack_removal(name)
+        end
       end
     end
 

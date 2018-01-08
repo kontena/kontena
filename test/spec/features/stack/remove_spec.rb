@@ -14,6 +14,16 @@ describe 'stack remove' do
     expect(k.code).not_to eq(0)
   end
 
+  it "removes multiple stacks" do
+    with_fixture_dir("stack/simple") do
+      run! 'kontena stack install --no-deploy'
+      run! 'kontena stack install --no-deploy --name simple2'
+    end
+    k = run! "kontena stack rm --force simple simple2"
+    k = run "kontena stack show simple2"
+    expect(k.code).not_to eq(0)
+  end
+
   it "prompts without --force" do
     with_fixture_dir("stack/simple") do
       run 'kontena stack install --no-deploy'

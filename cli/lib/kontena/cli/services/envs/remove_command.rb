@@ -7,13 +7,15 @@ module Kontena::Cli::Services::Envs
     include Kontena::Cli::Services::ServicesHelper
 
     parameter "NAME", "Service name"
-    parameter "ENV", "Environment variable name"
+    parameter "ENV ...", "Environment variable name", attribute_name: :envs
 
     def execute
       require_api_url
       token = require_token
-      spinner "Removing env variable #{pastel.cyan(env)} from #{pastel.cyan(name)} service " do
-        client(token).delete("services/#{parse_service_id(name)}/envs/#{env}")
+      envs.each do |env|
+        spinner "Removing env variable #{pastel.cyan(env)} from #{pastel.cyan(name)} service " do
+          client(token).delete("services/#{parse_service_id(name)}/envs/#{env}")
+        end
       end
     end
   end

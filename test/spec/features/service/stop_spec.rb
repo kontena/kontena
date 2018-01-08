@@ -30,11 +30,21 @@ describe 'service stop' do
     expect(k.out.scan('desired_state: stopped').size).to eq(1)
   end
 
+  it 'stops multiple services' do
+    k = run "kontena service stop test-1 test-2"
+    expect(k.code).to eq(0)
+    sleep 1
+    k = run("kontena service show test-1")
+    expect(k.out.scan('desired_state: stopped').size).to eq(1)
+    k = run("kontena service show test-2")
+    expect(k.out.scan('desired_state: stopped').size).to eq(1)
+  end
+
   context 'stop_signal set' do
     after(:each) do
       run "kontena stack rm --force simple"
     end
-  
+
     it 'sets StopSignal for container' do
       with_fixture_dir("stack/stop_signal") do
         k = run 'kontena stack install --deploy'
