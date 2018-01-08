@@ -7,6 +7,12 @@ describe 'stack install' do
   end
 
   context 'from registry' do
+    before do
+      # the two specs use the same stack name
+      wait_until_container_gone 'hello-ascii.lb-1'
+      wait_until_container_gone 'hello-ascii.web-1'
+    end
+
     after do
       run "kontena stack rm --force hello-ascii"
     end
