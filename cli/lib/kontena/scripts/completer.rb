@@ -1,4 +1,5 @@
 require 'kontena/cli/common'
+require 'kontena/stacks_client'
 
 class Helper
   include Kontena::Cli::Common
@@ -52,6 +53,37 @@ class Helper
     results.push stacks.map{|s| s['name']}
     results.delete('null')
     results
+  rescue => ex
+    logger.debug ex
+    []
+  end
+
+  def stack_registry_usable?
+    return false if current_account.nil? || current_account.stacks_url.nil?
+    return false if current_account.stacks_read_authentication && current_account.token.nil? || current_account.token.access_token.nil?
+    true
+  end
+
+  def stacks_client
+    Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)
+  end
+
+  def registry_stacks(query = '')
+    return [] unless stack_registry_usable?
+    results = stacks_client.search(query).map { |s| s['stack'] }
+    if results.empty? && !query.empty? # this is here because old stack registry does not return anything for "org/"
+      results = stacks_client.search('').map { |s| s['stack'] }.select { |s| s.start_with?(query) }
+    end
+    results
+  rescue => ex
+    logger.debug ex
+    []
+  end
+
+  def registry_stack_versions(stackname)
+    return [] unless stack_registry_usable?
+    logger.debug stackname.inspect
+    stacks_client.versions(stackname).map { |v| [stackname, v['version']].join(':') }
   rescue => ex
     logger.debug ex
     []
@@ -258,17 +290,27 @@ begin
         end
       when 'stack'
         completion.clear
-        sub_commands = %w(build install upgrade deploy start stop remove rm ls list
+        sub_commands = %w(build install upgrade deploy start stop remove restart list
                           logs monitor show registry inspect)
         if words[1]
-          if words[1] == 'registry'
-            registry_sub_commands = %(push pull search show rm)
-            completion.push registry_sub_commands
-          elsif %w(install).include?(words[1])
+          if words[1] == 'registry' || words[1] == 'reg'
+            registry_sub_commands = %(push pull search show remove)
+            if words[2]
+              if words[2] == 'push'
+                completion.push helper.yml_files
+              elsif %w(pull search show remove rm).include?(words[2]) && words[4].nil?
+                completion.push helper.registry_stacks(words[3].to_s)
+              else
+                completion.push registry_sub_commands
+              end
+            else
+              completion.push registry_sub_commands
+            end
+          elsif %w(install validate build).include?(words[1])
               completion.push helper.yml_files
           elsif words[1] == 'upgrade' && words[3]
             completion.push helper.yml_files
-          elsif words[1] && sub_commands.include?(words[1])
+          elsif %w(deploy start stop remove rm restart logs monitor show inspect).include?(words[1])
             completion.push helper.stacks
           else
             completion.push(sub_commands)
