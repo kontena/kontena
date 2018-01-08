@@ -139,7 +139,7 @@ helper.logger.debug { "Completing #{words.inspect}" }
 
 begin
   completion = []
-  completion.push %w(cloud grid app service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
+  completion.push %w(cloud grid service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
   if words.size > 0
     case words[0]
       when 'plugin'
@@ -247,15 +247,6 @@ begin
       when 'external-registry'
         completion.clear
         completion.push %w(add list delete)
-      when 'app'
-        completion.clear
-        sub_commands = %w(init build config deploy start stop remove rm ps list
-                          logs monitor show)
-        if words[1] && sub_commands.include?(words[1])
-          completion.push helper.yml_services
-        else
-          completion.push sub_commands
-        end
       when 'stack'
         completion.clear
         sub_commands = %w(build install upgrade deploy start stop remove rm ls list
