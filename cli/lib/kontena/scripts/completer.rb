@@ -298,10 +298,14 @@ begin
               completion.push registry_sub_commands
             end
           elsif %w(install validate build).include?(words[1])
-              completion.push helper.yml_files
+            completion.push helper.yml_files
+            if words[1] == 'install'
+              completion.push helper.registry_stacks(words[2].to_s)
+            end
           elsif words[1] == 'upgrade'
             if words[3]
               completion.push helper.yml_files
+              completion.push helper.registry_stacks(words[4].to_s)
             else
               completion.push.helper.stacks
             end
