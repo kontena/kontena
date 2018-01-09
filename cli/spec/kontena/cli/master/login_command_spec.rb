@@ -1,6 +1,6 @@
 require 'kontena/cli/master/login_command'
 require 'kontena/cli/localhost_web_server'
-require 'launchy'
+require 'kontena/cli/browser_launcher'
 require 'ostruct'
 
 describe Kontena::Cli::Master::LoginCommand do
@@ -147,7 +147,7 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(File).to receive(:exist?).and_return(true)
       allow(File).to receive(:readable?).and_return(true)
       allow(Kontena::Client).to receive(:new).and_return(client)
-      allow(Launchy).to receive(:open).and_return(true)
+      allow(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
       allow(Kontena::LocalhostWebServer).to receive(:port).and_return(12345)
       allow(Kontena::LocalhostWebServer).to receive(:serve_one).and_return(
         { 'code' => 'abcd1234' }
@@ -254,7 +254,7 @@ describe Kontena::Cli::Master::LoginCommand do
         expect(opts[:path]).to eq "/authenticate?redirect_uri=http%3A%2F%2Flocalhost%3A12345%2Fcb&expires_in=7200"
         expect(opts[:http_method]).to eq :get
       end.and_return({})
-      expect(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
+      expect(Kontena::Cli::BrowserLauncher).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
       expect(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
       subject.run(%w(--no-remote --skip-grid-auto-select http://foobar.example.com))
       expect(subject.config.servers.size).to eq 1
@@ -328,7 +328,7 @@ describe Kontena::Cli::Master::LoginCommand do
     it 'changes current master to created master' do
       allow(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 302, headers: { 'Location' => 'http://authprovider.example.com/authplz' }))
       allow(client).to receive(:request).and_return({})
-      allow(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
+      allow(Kontena::Cli::BrowserLauncher).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
       allow(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
       subject.config.current_master = 'fooserver'
       subject.config.current_master

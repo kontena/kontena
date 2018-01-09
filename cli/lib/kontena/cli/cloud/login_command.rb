@@ -105,7 +105,7 @@ module Kontena::Cli::Cloud
       end
 
       require_relative '../localhost_web_server'
-      require 'launchy'
+      require 'kontena/cli/browser_launcher'
 
       uri = URI.parse(kontena_account.authorization_endpoint)
       uri.host ||= kontena_account.url
@@ -137,7 +137,7 @@ module Kontena::Cli::Cloud
       puts
 
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
-      browser_thread = Thread.new { Launchy.open(uri.to_s) }
+      browser_thread = Thread.new { Kontena::Cli::BrowserLauncher.open(uri.to_s) }
 
       spinner "Waiting for browser authorization response" do
         server_thread.join
