@@ -18,7 +18,7 @@ module Kontena
       end
 
       def command
-        if Kontena.on_windows?
+        cmd = if Kontena.on_windows?
           ['start', url]
         elsif RUBY_PLATFORM =~ /darwin/
           ["open", url]
@@ -27,14 +27,21 @@ module Kontena
         else
           [detect_unixlike_command, url]
         end
+
+        Kontena.logger.debug { "Using %p to launch browser" % cmd }
+
+        cmd
       end
 
       def detect_unixlike_command
+        Kontena.logger.debug { "Assuming unix-like environment, looking for browser" }
+
         cmd = %w(
           xdg-open
           sensible-browser
           x-www-browser
         ).find { |c| !which(c).nil? }
+
         if cmd.nil?
           if ENV['BROWSER']
             cmd = which(ENV['BROWSER'])
@@ -42,6 +49,7 @@ module Kontena
           end
           raise RuntimeError, "Unable to launch a local browser. Try installing xdg-utils or sensible-utils package, setting BROWSER environment variable or using the --remote option"
         end
+
         cmd
       end
 

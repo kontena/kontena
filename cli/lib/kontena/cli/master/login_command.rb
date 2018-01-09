@@ -202,12 +202,11 @@ module Kontena::Cli::Master
       puts
 
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
-      browser_thread = Thread.new { Kontena::Cli::BrowserLauncher.open(uri.to_s) }
+      Kontena::Cli::BrowserLauncher.open(uri.to_s)
 
       spinner "Waiting for browser authorization response" do
         server_thread.join
       end
-      browser_thread.join
 
       update_server(server, Thread.main['response'])
       update_server_to_config(server)
