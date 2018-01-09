@@ -29,7 +29,7 @@ module Kontena::Cli::Master::Token
 
       if self.expires_in?
         if current_master.token.expires_at.to_i > 0
-          puts Time.now.utc.to_i - current_master.token.expires_at
+          puts current_master.token.expires_at - Time.now.utc.to_i
         end
         return
       end

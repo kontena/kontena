@@ -54,4 +54,5 @@ require_relative 'kontena/actors/container_coroner'
 require_relative 'kontena/load_balancers/configurer'
 require_relative 'kontena/load_balancers/registrator'
 
+require_relative 'kontena/watchdog'
 require_relative 'kontena/agent'

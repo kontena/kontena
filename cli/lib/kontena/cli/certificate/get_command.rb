@@ -4,7 +4,7 @@ module Kontena::Cli::Certificate
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    BANNER = "This command is now deprecated in favor of 'kontena certificate request' command".colorize(:red)
+    BANNER = Kontena.pastel.yellow("[DEPRECATED] This command is now deprecated in favor of 'kontena certificate request' command")
 
     banner BANNER
 
@@ -14,7 +14,7 @@ module Kontena::Cli::Certificate
 
 
     def execute
-      puts BANNER
+      warn BANNER
 
       require_api_url
       token = require_token
@@ -24,7 +24,7 @@ module Kontena::Cli::Certificate
       response = client(token).post("certificates/#{current_grid}/certificate", data)
       puts "Certificate successfully received and stored into vault with keys:"
       response.each do |secret|
-        puts secret.colorize(:green)
+        puts pastel.green(secret)
       end
       puts "Use the #{secret}_BUNDLE with Kontena loadbalancer!"
 

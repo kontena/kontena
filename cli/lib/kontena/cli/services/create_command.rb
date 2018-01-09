@@ -58,7 +58,7 @@ module Kontena::Cli::Services
         stateful: stateful?
       }
       data.merge!(parse_service_data_from_options)
-      spinner "Creating #{name.colorize(:cyan)} service " do
+      spinner "Creating #{pastel.cyan(name)} service " do
         create_service(token, current_grid, data)
       end
     end

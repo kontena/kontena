@@ -73,10 +73,14 @@ describe Kontena::Cli::Stacks::InstallCommand do
     end
 
     context 'with a stack including dependencies' do
-
       it 'installs all the dependencies' do
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep_1.dep_var=1', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')])
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "-v", "dep_var=1", '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')])
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", "--no-deploy",
+          '-v', 'dep_1.dep_var=1', fixture_path('stack-with-dependencies-dep-1.yml')
+        ])
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", '--no-deploy',
+          "-v", "dep_var=1", fixture_path('stack-with-dependencies-dep-2.yml')])
         expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including('stack' => 'user/depstack1', 'name' => 'deptest'))
         subject.run(['-n', 'deptest', '--no-deploy', '-v', 'dep_1.dep_1.dep_var=1', fixture_path('stack-with-dependencies.yml')])
       end
@@ -143,8 +147,14 @@ describe Kontena::Cli::Stacks::InstallCommand do
           'children' => [ ]
         )
 
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep1var=test', '-v', 'dep_1.dep1dep1var=test11', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')]).and_return(true)
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", '-v', 'dep_var=1', '-v', 'dep2var=test2', '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')]).and_return(true)
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", "--no-deploy",
+          '-v', 'dep1var=test', '-v', 'dep_1.dep1dep1var=test11', fixture_path('stack-with-dependencies-dep-1.yml')
+        ]).and_return(true)
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "--no-deploy",
+          '-v', 'dep_var=1', '-v', 'dep2var=test2', fixture_path('stack-with-dependencies-dep-2.yml')
+        ]).and_return(true)
 
         allow(client).to receive(:post).and_return({})
 

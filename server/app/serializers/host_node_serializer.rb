@@ -70,21 +70,6 @@ class HostNodeSerializer < KontenaJsonSerializer
     object.docker_root_dir
   end
 
-  def peer_ips
-    if object.grid
-      object.grid.host_nodes.ne(id: object.id).map{|n|
-        if n.region == object.region
-          n.private_ip
-        else
-          n.public_ip
-        end
-      }.compact
-    else
-      []
-    end
-  end
-
-
   def initial_member
     object.grid && object.initial_member?
   end

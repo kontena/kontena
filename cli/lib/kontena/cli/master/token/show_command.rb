@@ -22,8 +22,10 @@ module Kontena::Cli::Master::Token
         return
       end
 
+      id = output.delete(:id)
+      puts '%s:' % id
       output.each do |key, value|
-        puts "%26.26s : %s" % [key, value]
+        puts "  %s: %s" % [key, value.nil? ? '-' : value]
       end
     end
   end

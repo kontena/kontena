@@ -29,7 +29,7 @@ module Kontena::Cli::Grids
         prefix = "#{log['created_at']} #{log['name']}:"
       end
 
-      puts "#{prefix.colorize(color)} #{log['data']}"
+      puts "#{pastel.send(color, prefix)} #{log['data']}"
     end
   end
 end

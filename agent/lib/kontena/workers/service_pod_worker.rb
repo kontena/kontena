@@ -17,8 +17,6 @@ module Kontena::Workers
     include Kontena::Helpers::WaitHelper
     include Kontena::Helpers::PortHelper
 
-    CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.0) # seconds
-
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed, :hook_manager
 
@@ -287,21 +285,14 @@ module Kontena::Workers
     end
 
     # @param service_container [Docker::Container]
-    # @raise [ArgumentError] invalid date
-    # @raise [RuntimeError] service updated_at timestamp is in the future
     # @return [Boolean]
     def container_outdated?(service_container)
-      updated_at = DateTime.parse(service_pod.updated_at)
-      created = DateTime.parse(service_container.info['Created'])
-
-      if updated_at > Time.now + CLOCK_SKEW
-        fail "service updated_at #{updated_at} is in the future"
-      elsif created < updated_at
-        info "service updated at #{updated_at} after service container created at #{created}"
-        true
-      else
-        false
+      if service_pod.service_revision > service_container.service_revision
+        info "container service revision=#{service_container.service_revision} is older than service revision=#{service_pod.service_revision}"
+        return true
       end
+
+      return false
     end
 
     # @param service_container [Docker::Container]

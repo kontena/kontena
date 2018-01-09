@@ -6,13 +6,15 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "NAME ...", "Service name", attribute_name: :names
 
     def execute
       require_api_url
       token = require_token
-      spinner "Sending start signal to #{name.colorize(:cyan)} service " do
-        start_service(token, name)
+      names.each do |name|
+        spinner "Sending start signal to #{pastel.cyan(name)} service " do
+          start_service(token, name)
+        end
       end
     end
   end

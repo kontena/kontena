@@ -37,9 +37,9 @@ module Kontena::Cli::Grids
 
       time = log['created_at']
       if log['severity'] == 2
-        time = time.colorize(:yellow)
+        time = pastel.yellow(time)
       elsif log['severity'] >= 3
-        time = time.colorize(:red)
+        time = pastel.red(time)
       end
 
       puts '%-25s %-25s %-40s %s' % [

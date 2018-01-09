@@ -32,7 +32,7 @@ module Kontena::Cli::Volumes
     end
 
     def parse_driver_opts
-      driver_opt_list.map{|opt| opt.split '='}.to_h
+      driver_opt_list.map{ |opt| opt.split('=', 2) }.to_h
     end
 
     def create_volume(volume)

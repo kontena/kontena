@@ -11,9 +11,9 @@ module Kontena::Cli::Registry
       name = 'registry'
 
       registry = client(token).get("stacks/#{current_grid}/#{name}") rescue nil
-      exit_with_error("Stack #{name.colorize(:cyan)} does not exist") if registry.nil?
+      exit_with_error("Stack #{pastel.cyan(name)} does not exist") if registry.nil?
 
-      spinner "Removing #{name.colorize(:cyan)} stack " do
+      spinner "Removing #{pastel.cyan(name)} stack " do
         client(token).delete("stacks/#{current_grid}/#{name}")
       end
     end

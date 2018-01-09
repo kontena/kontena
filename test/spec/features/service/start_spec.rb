@@ -29,4 +29,14 @@ describe 'service start' do
     k = run("kontena service show test-2")
     expect(k.out.scan('desired_state: running').size).to eq(1)
   end
+
+  it 'starts multiple services' do
+    k = kommando("kontena service start test-1 test-2")
+    expect(k.run).to be_truthy
+    sleep 1
+    k = run("kontena service show test-1")
+    expect(k.out.scan('desired_state: running').size).to eq(1)
+    k = run("kontena service show test-2")
+    expect(k.out.scan('desired_state: running').size).to eq(1)
+  end
 end
