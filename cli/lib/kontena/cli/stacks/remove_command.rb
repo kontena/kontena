@@ -15,27 +15,10 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
-    def fetch_stack(name)
-      client.get("stacks/#{current_grid}/#{name}")
-    end
-
-    def confirm_remove(stack)
-      if stack['parent']
-        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack['parent']['name'])} depends on stack #{name}"
-      end
-      if !keep_dependencies? && stack['children'] && !stack['children'].empty?
-        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} has dependencies that will be removed:"
-        stack['children'].each do |child|
-          puts "- #{pastel.yellow(child['name'])}"
-        end
-      end
-      confirm_command(name)
-    end
-
     def execute
       names.each do |name|
         stack = fetch_stack(name)
-        confirm_remove(stack) unless forced?
+        confirm_remove(stack, name) unless forced?
         unless keep_dependencies?
           stack.fetch('children', Hash.new).each do |child_stack|
             caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
@@ -50,10 +33,34 @@ module Kontena::Cli::Stacks
       end
     end
 
+    # @param stack [Hash]
+    # @param name [String]
+    def confirm_remove(stack, name)
+      if stack['parent']
+        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack['parent']['name'])} depends on stack #{name}"
+      end
+      if !keep_dependencies? && stack['children'] && !stack['children'].empty?
+        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} has dependencies that will be removed:"
+        stack['children'].each do |child|
+          puts "- #{pastel.yellow(child['name'])}"
+        end
+      end
+      confirm_command(name)
+    end
+
+    # @param name [String]
+    # @return [Hash]
+    def fetch_stack(name)
+      client.get("stacks/#{current_grid}/#{name}")
+    end
+
+    # @param name [String]
+    # @return [Hash]
     def remove_stack(name)
       client.delete("stacks/#{current_grid}/#{name}")
     end
 
+    # @param name [String]
     def wait_stack_removal(name)
       removed = false
       until removed == true
