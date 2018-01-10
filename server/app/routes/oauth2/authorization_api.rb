@@ -37,7 +37,7 @@ module OAuth2Api
     NOT_ADMIN          = 'User not admin, denying access'.freeze
     NOT_FOUND          = 'not_found'.freeze
     NOT_CONFIGURED     = 'Authentication provider not configured'.freeze
-    DESCRIPTION        = 'Description'.freeze
+    DESCRIPTION        = 'description'.freeze
 
     route do |r|
       r.post do
