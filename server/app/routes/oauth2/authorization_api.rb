@@ -37,6 +37,7 @@ module OAuth2Api
     NOT_ADMIN          = 'User not admin, denying access'.freeze
     NOT_FOUND          = 'not_found'.freeze
     NOT_CONFIGURED     = 'Authentication provider not configured'.freeze
+    DESCRIPTION        = 'Description'.freeze
 
     route do |r|
       r.post do
@@ -73,7 +74,8 @@ module OAuth2Api
             scope: params[SCOPE],
             refreshable: params[EXPIRES_IN].to_i > 0,
             expires_in: params[EXPIRES_IN],
-            with_code: params[RESPONSE_TYPE] == CODE
+            with_code: params[RESPONSE_TYPE] == CODE,
+            description: params[DESCRIPTION]
           )
           if task.success?
             debug { "Created a #{params[RESPONSE_TYPE]} for user #{user.email}" }
