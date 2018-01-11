@@ -28,21 +28,21 @@ class Certificate
   # @return [String] with trailing newline
   def certificate
     pem = super
-    pem += "\n" unless pem.end_with? "\n"
+    pem += "\n" unless pem.end_with? "\n" if pem
     pem
   end
 
   # @return [String] with trailing newline
   def key
     pem = super
-    pem += "\n" unless pem.end_with? "\n"
+    pem += "\n" unless pem.end_with? "\n" if pem
     pem
   end
 
   # @return [String] with trailing newline
   def chain
     pem = super
-    pem += "\n" unless pem.end_with? "\n"
+    pem += "\n" unless pem.end_with? "\n" if pem
     pem
   end
 
