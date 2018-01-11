@@ -47,10 +47,11 @@ module GridDomainAuthorizations
       unless grid.grid_secrets.find_by(name: LE_PRIVATE_KEY)
         add_error(:le_registration, :missing, "Let's Encrypt registration missing")
       end
-      if requires_linked_service? && self.linked_service.nil?
-        add_error(:linked_service, :missing, "Service link needs to be given for #{authorization_type} authorization type")
-      end
-      if linked_service
+      if !requires_linked_service? && self.linked_service
+        add_error(:linked_service, :invalid, "Service link cannot be given for the #{authorization_type} authorization type")
+      elsif requires_linked_service? && !self.linked_service
+        add_error(:linked_service, :missing, "Service link needs to be given for the #{authorization_type} authorization type")
+      elsif linked_service
         @lb_service = resolve_service(self.grid, linked_service)
         if @lb_service.nil?
           add_error(:linked_service, :not_found, "Linked service not found: #{linked_service}")

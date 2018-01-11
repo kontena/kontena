@@ -17,6 +17,18 @@ describe GridDomainAuthorizations::Authorize do
       end
     end
 
+    describe 'authorization_type=dns-01' do
+      it 'fails with a linked service' do
+        outcome = described_class.validate(grid: grid, domain: 'example.com',
+          authorization_type: 'dns-01',
+          linked_service: 'test/test',
+        )
+
+        expect(outcome).not_to be_success
+        expect(outcome.errors.message).to eq 'linked_service' => "Service link cannot be given for the dns-01 authorization type"
+      end
+    end
+
     describe 'authorization_type=tls-sni-01' do
       it 'fails without a linked service' do
         outcome = described_class.validate(grid: grid, domain: 'example.com',
@@ -24,7 +36,7 @@ describe GridDomainAuthorizations::Authorize do
         )
 
         expect(outcome).not_to be_success
-        expect(outcome.errors.message).to eq 'linked_service' => "Service link needs to be given for tls-sni-01 authorization type"
+        expect(outcome.errors.message).to eq 'linked_service' => "Service link needs to be given for the tls-sni-01 authorization type"
       end
 
       it 'fails with a non-existing linked service' do
@@ -89,7 +101,7 @@ describe GridDomainAuthorizations::Authorize do
         )
 
         expect(outcome).not_to be_success
-        expect(outcome.errors.message).to eq 'linked_service' => "Service link needs to be given for http-01 authorization type"
+        expect(outcome.errors.message).to eq 'linked_service' => "Service link needs to be given for the http-01 authorization type"
       end
 
       context 'for a linked service without exposed ports' do
