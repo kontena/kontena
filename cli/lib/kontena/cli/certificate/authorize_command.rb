@@ -76,11 +76,12 @@ module Kontena::Cli::Certificate
 
     def wait_for_domain_auth_deployed(domain_auth)
       Timeout.timeout(300) {
-        sleep 1
+        while domain_auth['status'] == 'deploying' do
+          sleep 1
 
-        domain_auth = client.get("domain_authorizations/#{domain_auth['id']}")
-
-        return domain_auth if domain_auth['status'] != 'deploying'
+          domain_auth = client.get("domain_authorizations/#{domain_auth['id']}")
+        end
+        return domain_auth
       }
     end
 
