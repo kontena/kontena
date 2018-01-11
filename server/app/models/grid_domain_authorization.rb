@@ -44,7 +44,7 @@ class GridDomainAuthorization
 
   # Domain authorization challenge is deployable to the linked grid service
   def deployable?
-    self.authorization_type == 'tls-sni-01' && self.pending? && !expired?
+    self.grid_service_id && self.pending? && !expired?
   end
 
   def status

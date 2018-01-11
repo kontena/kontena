@@ -222,6 +222,30 @@ describe Rpc::ServicePodSerializer do
         end
       end
 
+      context 'with a http-01 domain authorization' do
+        let(:challenge_token) { 'LoqXcYV8q5ONbJQxbmR7SCTNo3tiAXDfowyjxAjEuX0' }
+        let(:challenge_content) { 'LoqXcYV8q5ONbJQxbmR7SCTNo3tiAXDfowyjxAjEuX0.9jg46WB3rR_AHD-EBXdN7cBkH1WOu0tA3M9fm21mqTI' }
+        let!(:domain_auth) {
+          GridDomainAuthorization.create!(grid: grid,
+            state: :created,
+            domain: 'www.kontena.io',
+            authorization_type: 'http-01',
+            expires_at: Time.now + 300,
+            grid_service: service,
+            challenge_opts: {
+              'token' => challenge_token,
+              'content' => challenge_content,
+            },
+          )
+        }
+
+        it 'includes the challenge as an ACME_CHALLENGE env' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: "ACME_CHALLENGE_#{challenge_token}", type: 'env', value: challenge_content },
+          ]
+        end
+      end
+
       context 'with a DNS-01 domain authorization' do
         let! :domain_auth_dns do
           GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
