@@ -148,7 +148,7 @@ describe GridDomainAuthorizations::Authorize do
     status: 'pending',
     expires: Time.now + 300,
     dns01: double(
-      record_name: '_acme_challenge',
+      record_name: '_acme-challenge',
       record_type: 'TXT',
       record_content: '123456789',
       to_h: {}
@@ -172,7 +172,7 @@ describe GridDomainAuthorizations::Authorize do
       expect(authz.domain).to eq 'example.com'
       expect(authz.authorization_type).to eq 'dns-01'
       expect(authz.challenge_opts).to eq(
-        'record_name' => '_acme_challenge',
+        'record_name' => '_acme-challenge',
         'record_type' => 'TXT',
         'record_content' => '123456789',
       )
