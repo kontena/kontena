@@ -59,4 +59,19 @@ class GridDomainAuthorization
       self.state
     end
   end
+
+  # Can this domain be re-authorized by the Kontena server?
+  # @return [Boolean]
+  def auto_renewable?
+    return false unless grid_service
+
+    case authorization_type
+    when 'dns-01'
+      false
+    when 'http-01'
+      true
+    when 'tls-sni-01'
+      true
+    end
+  end
 end
