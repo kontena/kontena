@@ -222,102 +222,36 @@ describe Rpc::ServicePodSerializer do
         end
       end
 
+      context 'with a http-01 domain authorization' do
+        let(:challenge_token) { 'LoqXcYV8q5ONbJQxbmR7SCTNo3tiAXDfowyjxAjEuX0' }
+        let(:challenge_content) { 'LoqXcYV8q5ONbJQxbmR7SCTNo3tiAXDfowyjxAjEuX0.9jg46WB3rR_AHD-EBXdN7cBkH1WOu0tA3M9fm21mqTI' }
+        let!(:domain_auth) {
+          GridDomainAuthorization.create!(grid: grid,
+            state: :created,
+            domain: 'www.kontena.io',
+            authorization_type: 'http-01',
+            expires_at: Time.now + 300,
+            grid_service: service,
+            challenge_opts: {
+              'token' => challenge_token,
+              'content' => challenge_content,
+            },
+          )
+        }
+
+        it 'includes the challenge as an ACME_CHALLENGE env' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: "ACME_CHALLENGE_#{challenge_token}", type: 'env', value: challenge_content },
+          ]
+        end
+      end
+
       context 'with a DNS-01 domain authorization' do
         let! :domain_auth_dns do
           GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
         end
 
         it 'does not include any challenge secrets' do
-          expect(subject.to_hash[:secrets]).to eq []
-        end
-
-      end
-
-      context 'with a created TLS-SNI-01 domain authorization' do
-        let! :domain_auth_tls do
-          GridDomainAuthorization.create!(grid: grid,
-            state: :created,
-            authorization_type: 'tls-sni-01',
-            expires_at: Time.now + 300,
-            grid_service: service,
-            domain: 'www.kontena.io',
-            tls_sni_certificate: 'TLS_AUTH',
-          )
-        end
-
-        it 'includes the challenge cert as a secret' do
-          expect(subject.to_hash[:secrets]).to eq [
-            { name: 'SSL_CERT_acme_challenge_www_kontena_io', type: 'env', value: 'TLS_AUTH' }
-          ]
-        end
-      end
-
-      context 'with a requested TLS-SNI-01 domain authorization' do
-        let! :domain_auth_tls do
-          GridDomainAuthorization.create!(grid: grid,
-            state: :requested,
-            authorization_type: 'tls-sni-01',
-            expires_at: Time.now + 30,
-            grid_service: service,
-            domain: 'www.kontena.io',
-            tls_sni_certificate: 'TLS_AUTH',
-          )
-        end
-
-        it 'includes the challenge cert as a secret' do
-          expect(subject.to_hash[:secrets]).to eq [
-            { name: 'SSL_CERT_acme_challenge_www_kontena_io', type: 'env', value: 'TLS_AUTH' }
-          ]
-        end
-      end
-
-      context 'with a failed TLS-SNI-01 domain authorization' do
-        let! :domain_auth_tls do
-          GridDomainAuthorization.create!(grid: grid,
-            state: :error,
-            authorization_type: 'tls-sni-01',
-            expires_at: nil,
-            grid_service: service,
-            domain: 'www.kontena.io',
-            tls_sni_certificate: 'TLS_AUTH',
-          )
-        end
-
-        it 'does not include the challenge cert as a secret' do
-          expect(subject.to_hash[:secrets]).to eq []
-        end
-      end
-
-      context 'with an already-validated TLS-SNI-01 domain authorization' do
-        let! :domain_auth_tls do
-          GridDomainAuthorization.create!(grid: grid,
-            state: :validated,
-            authorization_type: 'tls-sni-01',
-            expires_at: nil,
-            grid_service: service,
-            domain: 'www.kontena.io',
-            tls_sni_certificate: 'TLS_AUTH',
-          )
-        end
-
-        it 'does not include the challenge cert as a secret' do
-          expect(subject.to_hash[:secrets]).to eq []
-        end
-      end
-
-      context 'with an expired TLS-SNI-01 domain authorization' do
-        let! :domain_auth_tls do
-          GridDomainAuthorization.create!(grid: grid,
-            state: :requested,
-            authorization_type: 'tls-sni-01',
-            expires_at: Time.now - 30,
-            grid_service: service,
-            domain: 'www.kontena.io',
-            tls_sni_certificate: 'TLS_AUTH',
-          )
-        end
-
-        it 'does not include the challenge cert as a secret' do
           expect(subject.to_hash[:secrets]).to eq []
         end
       end
