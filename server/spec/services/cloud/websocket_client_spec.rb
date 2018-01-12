@@ -329,7 +329,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
     end
 
     describe '#resolve_users' do
-      let(:grid) do
+      let!(:grid) do
         grid = Grid.create!(name: 'test')
         grid.users << john
         grid
@@ -339,25 +339,19 @@ describe Cloud::WebsocketClient, :celluloid => true do
         Role.create!(name: 'master_admin', description: 'Master admin')
       end
 
-      let(:john) do
+      let!(:john) do
         john = User.create(email: 'john.doe@example.org', external_id: '12345')
         john.roles << master_admin_role
         john
       end
 
-      let(:jane) do
+      let!(:jane) do
         jane = User.create(email: 'jane.doe@example.org', external_id: '67890')
         grid.users << jane
         jane
       end
 
       context 'when passing grid_id' do
-        before(:each) do
-          grid
-          john
-          jane
-        end
-
         context 'when grid is found' do
           it 'returns master admins and grid users' do
             users = subject.resolve_users(grid.name)
@@ -366,8 +360,11 @@ describe Cloud::WebsocketClient, :celluloid => true do
         end
 
         context 'when grid is not found' do
-          it 'returns master admins' do
+          before(:each) do
             grid.destroy
+          end
+
+          it 'returns master admins' do
             users = subject.resolve_users(grid.name)
             expect(users).to eq([john.external_id])
           end
@@ -375,15 +372,7 @@ describe Cloud::WebsocketClient, :celluloid => true do
       end
 
       context 'when grid_id nil' do
-        before(:each) do
-          grid
-          john
-          jane
-        end
-
-
         it 'returns master admins' do
-          grid.destroy
           users = subject.resolve_users(nil)
           expect(users).to eq([john.external_id])
         end
