@@ -35,7 +35,7 @@ describe Stacks::Create do
           variables: {foo: 'bar'},
           services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
           parent: {
-            id: "#{grid.name}/stack-parent"
+            name: "stack-parent"
           }
         ).run
 
