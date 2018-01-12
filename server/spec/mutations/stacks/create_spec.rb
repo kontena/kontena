@@ -67,7 +67,7 @@ describe Stacks::Create do
       }.to change{ Stack.count }.by(1)
     end
 
-    it 'does not allow invalid parent' do
+    it 'does allow invalid parent' do
       grid
       outcome = described_class.new(
         grid: grid,
@@ -79,12 +79,13 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
         parent: {
-          name: "#{grid.name}/stack-parent"
+          name: "stack-parent"
         }
       ).run
 
-      expect(outcome).to_not be_success
-      expect(outcome.errors.message.keys).to include('parent')
+      expect(outcome).to be_success
+      expect(outcome.result.parent_name).to eq 'stack-parent'
+      expect(outcome.result.has_parent?).to be_truthy
     end
 
     it 'creates stack revision' do

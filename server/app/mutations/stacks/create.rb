@@ -29,7 +29,6 @@ module Stacks
         add_error(:services, :empty, "stack does not specify any services")
         return
       end
-      validate_parent
       validate_expose
       validate_volumes
       validate_services
@@ -49,20 +48,6 @@ module Stacks
       add_error("services.#{error.service}.links", :missing, error.message)
     rescue RecursiveLinkError => error
       add_error("services.#{error.service}.links", :recursive, error.message)
-    end
-
-    def validate_parent
-      parent_name = resolve_parent_name
-      return unless parent_name
-
-      parent_stack = self.grid.stacks.find_by(name: parent_name)
-      if parent_stack.nil?
-        add_error(:parent, :not_found, "parent stack #{parent_name} does not exist")
-      elsif parent_stack.grid_id != self.grid.id
-        add_error(:parent, :not_found, "parent stack #{parent_name} does not exist")
-      else
-        @parent = parent_name
-      end
     end
 
     def execute
