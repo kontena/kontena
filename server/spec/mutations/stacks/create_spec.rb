@@ -23,7 +23,6 @@ describe Stacks::Create do
 
     it 'creates a new grid stack with parent' do
       grid
-      grid.stacks.create!(name: 'stack-parent')
       expect {
         outcome = described_class.new(
           grid: grid,
@@ -47,7 +46,6 @@ describe Stacks::Create do
 
     it 'creates a new grid stack with deprecated parent_name' do
       grid
-      grid.stacks.create!(name: 'stack-parent')
       expect {
         outcome = described_class.new(
           grid: grid,
