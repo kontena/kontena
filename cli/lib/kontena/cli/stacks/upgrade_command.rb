@@ -115,7 +115,6 @@ module Kontena::Cli::Stacks
         parent_name: data[:parent_name],
         name: data[:name]
       )
-      parsed_stack["parent"] = { "name" => parsed_stack.delete("parent_name") }
       data[:stack_data] = parsed_stack
     ensure
       prev_env.each { |k, v| ENV[k] = v }
