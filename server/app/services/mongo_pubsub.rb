@@ -51,11 +51,15 @@ class MongoPubsub
 
   attr_accessor :collection
 
+  # @return [Array<Subscription>]
+  def subscriptions
+    @@subscriptions ||= []
+  end
+
   # @param [Mongoid::Document] model
   def initialize(model)
     # The collection session is local to this Actor's thread
     @collection = model.collection
-    @subscriptions = []
     async.tail!
   end
 
@@ -65,14 +69,14 @@ class MongoPubsub
       subscription.process
     }
   ensure
-    @subscriptions.delete(subscription)
+    subscriptions.delete(subscription)
   end
 
   # @param [String] channel
   # @return [Subscription]
   def subscribe(channel, block)
     subscription = Subscription.new(channel, block)
-    @subscriptions << subscription
+    subscriptions << subscription
 
     async.process_subscription(subscription)
 
@@ -97,17 +101,17 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def queue_message(channel, data)
-    @subscriptions.each do |subscription|
+    subscriptions.each do |subscription|
       subscription.queue_message(data.dup) if subscription.channel == channel
     end
   end
 
   # Stop all subscribers
   def clear!
-    @subscriptions.each do |subscription|
+    subscriptions.each do |subscription|
       subscription.stop
     end
-    @subscriptions = []
+    subscriptions.clear
   end
 
   # @param [String] channel
