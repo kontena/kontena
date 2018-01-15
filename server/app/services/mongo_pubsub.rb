@@ -21,6 +21,19 @@ class MongoPubsub
       stop
     end
 
+    # @return [Celluloid::Future]
+    def start
+      @future ||= Celluloid::Future.new do
+        # process in a separate thread
+        process
+      end
+    end
+
+    # Suspend the calling celluloid task until the subscription is stopped
+    def wait
+      start.value
+    end
+
     def stop
       @queue.close
     end
@@ -60,16 +73,28 @@ class MongoPubsub
   def initialize(model)
     # The collection session is local to this Actor's thread
     @collection = model.collection
+
+    info "initialized"
+
+    start
+  end
+
+  def start
     async.tail!
+
+    # restore any active subscriptions from before crash
+    subscriptions.each do |subscription|
+      async.process_subscription(subscription)
+    end
   end
 
   # @param [Subscription] subscription
   def process_subscription(subscription)
-    defer {
-      subscription.process
-    }
+    subscription.wait
+  rescue Celluloid::TaskTerminated # actor crashed
+    subscription = nil
   ensure
-    subscriptions.delete(subscription)
+    subscriptions.delete(subscription) if subscription
   end
 
   # @param [String] channel
