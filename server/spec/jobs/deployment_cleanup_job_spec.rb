@@ -7,6 +7,10 @@ describe DeploymentCleanupJob, celluloid: true do
     GridService.create!(name: 'test', image_name: 'test:latest', grid: grid)
   end
 
+  let(:another_service) do
+    GridService.create!(name: 'another', image_name: 'test:latest', grid: grid)
+  end
+
   let(:subject) { described_class.new(false) }
 
   describe '#destroy_old_deployments' do
@@ -50,6 +54,19 @@ describe DeploymentCleanupJob, celluloid: true do
       }.not_to change{ GridServiceDeploy.count }
     end
 
+    it 'destroys old deployments correctly for many services' do
+      99.times do |i|
+        # Use the reason field to track the sequence
+        service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
+      end
+      200.times do |i|
+        # Use the reason field to track the sequence
+        another_service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
+      end
+      expect {
+        subject.destroy_old_deployments
+      }.to change{ GridServiceDeploy.count }.by(-100)
+    end
 
   end
 end

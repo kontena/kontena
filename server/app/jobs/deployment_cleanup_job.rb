@@ -21,7 +21,7 @@ class DeploymentCleanupJob
 
   def destroy_old_deployments
     GridService.each do |s|
-      return if s.grid_service_deploys.finished.count <= 100
+      next if s.grid_service_deploys.finished.count <= 100
       info "cleaning old deployments for service #{s.to_path}"
       # Find the last 100th deployments id
       id = s.grid_service_deploys.finished.desc('_id').limit(100).to_a.last._id
