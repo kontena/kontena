@@ -289,9 +289,9 @@ module Cloud
     end
 
     def resolve_users(grid_id)
-      if grid_id
+      grid = Grid.find_by(name: grid_id) if grid_id
+      if grid
         return users[grid_id] if users[grid_id] # Found from cache
-        grid = Grid.find_by(name: grid_id)
         grid_users = (User.master_admins + grid.users).uniq
         users[grid_id] = grid_users.map{|u| u.external_id}.compact
       else
