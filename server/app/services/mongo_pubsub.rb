@@ -41,7 +41,9 @@ class MongoPubsub
     def queue_message(data)
       @queue << data
     rescue ClosedQueueError
-      nil
+      debug "dropped #{@channel}: closed"
+    else
+      debug "queued #{@channel}..."
     end
 
     # returns once stopped, and queued messages have been processed
@@ -64,6 +66,8 @@ class MongoPubsub
 
   attr_accessor :collection
 
+  finalizer :finalize
+
   # @return [Array<Subscription>]
   def subscriptions
     @@subscriptions ||= []
@@ -84,6 +88,8 @@ class MongoPubsub
 
     # restore any active subscriptions from before crash
     subscriptions.each do |subscription|
+      debug "restoring #{subscription.channel}..."
+
       async.process_subscription(subscription)
     end
   end
@@ -92,6 +98,7 @@ class MongoPubsub
   def process_subscription(subscription)
     subscription.wait
   rescue Celluloid::TaskTerminated # actor crashed
+    debug "freezing #{subscription.channel}"
     subscription = nil
   ensure
     subscriptions.delete(subscription) if subscription
@@ -100,6 +107,8 @@ class MongoPubsub
   # @param [String] channel
   # @return [Subscription]
   def subscribe(channel, block)
+    debug "subscribe #{channel}"
+
     subscription = Subscription.new(channel, block)
     subscriptions << subscription
 
@@ -110,12 +119,16 @@ class MongoPubsub
 
   # @param [Subscription] subscription
   def unsubscribe(subscription)
+    debug "unsubscribe #{subscription.channel}"
+
     subscription.stop
   end
 
   # @param [String] channel
   # @param [Hash] data
   def publish(channel, data)
+    debug "publish #{channel}"
+
     self.collection.insert_one(
       channel: channel,
       data: BSON::Binary.new(MessagePack.pack(data)),
@@ -137,6 +150,10 @@ class MongoPubsub
       subscription.stop
     end
     subscriptions.clear
+  end
+
+  def finalize
+    info "terminated"
   end
 
   # @param [String] channel
