@@ -98,10 +98,13 @@ class MongoPubsub
   def process_subscription(subscription)
     subscription.wait
   rescue Celluloid::TaskTerminated # actor crashed
-    debug "freezing #{subscription.channel}"
+    debug "preserving #{subscription.channel} on crash"
     subscription = nil
   ensure
-    subscriptions.delete(subscription) if subscription
+    if subscription
+      debug "stopped #{subscription.channel}"
+      subscriptions.delete(subscription)
+    end
   end
 
   # @param [String] channel
@@ -119,8 +122,6 @@ class MongoPubsub
 
   # @param [Subscription] subscription
   def unsubscribe(subscription)
-    debug "unsubscribe #{subscription.channel}"
-
     subscription.stop
   end
 
