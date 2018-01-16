@@ -14,7 +14,7 @@ describe 'plugin upgrade' do
   end
 
   it 'upgrades all plugins' do
-    k = run('kontena plugin upgrade')
+    k = run!('kontena plugin upgrade')
     expect(k.code).to be_zero
     expect(k.out).to match(/aws/)
     expect(k.out).to match(/digitalocean/)
@@ -31,10 +31,8 @@ describe 'plugin upgrade' do
   end
 
   it 'does nothing if no updates' do
-    k = run('kontena plugin upgrade')
-    expect(k.code).to be_zero
-    k = run('kontena plugin upgrade')
-    expect(k.code).to be_zero
+    run!('kontena plugin upgrade')
+    k = run!('kontena plugin upgrade')
     expect(k.out).to match /Nothing upgraded/
   end
 end
