@@ -5,5 +5,7 @@ module Kontena::Cli::Stacks
     subcommand ["search"], "Search for stacks in the stacks registry", load_subcommand('stacks/registry/search_command')
     subcommand "show", "Show info about a stack in the stacks registry", load_subcommand('stacks/registry/show_command')
     subcommand ["remove", "rm"], "Remove a stack (or version) from the stacks registry", load_subcommand('stacks/registry/remove_command')
+    subcommand "update", "Update stack settings", load_subcommand('stacks/registry/update_command')
+    subcommand "create", "Create a stack in the registry", load_subcommand('stacks/registry/create_command')
   end
 end
