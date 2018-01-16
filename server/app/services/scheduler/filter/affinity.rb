@@ -86,7 +86,6 @@ module Scheduler
       # @param value [String]
       # @return [Boolean]
       def container_match?(node, value)
-        node.containers.where(name: value).exists?
         container_names = node.containers.map { |c|
           c.name
         }
