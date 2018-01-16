@@ -13,7 +13,7 @@ describe DeploymentCleanupJob, celluloid: true do
 
   let(:subject) { described_class.new(false) }
 
-  describe '#destroy_old_deployments' do
+  describe '#cleanup_old_deployments' do
     it 'destroys deployments older than 100th one' do
       200.times do |i|
         # Use the reason field to track the sequence
@@ -22,8 +22,31 @@ describe DeploymentCleanupJob, celluloid: true do
       expect {
         subject.destroy_old_deployments
       }.to change{ GridServiceDeploy.count }.by(-100)
+      deploys = service.reload.grid_service_deploys.finished.desc('_id').to_a
+      expect(deploys.first.reason).to eq(200.to_s)
+      expect(deploys.last.reason).to eq(101.to_s)
+    end
 
-      expect(service.reload.grid_service_deploys.finished.desc('_id').to_a.first.reason).to eq(200.to_s)
+    it 'destroys nothing if less than 100 deployments' do
+      # #destroy_old_deployments should not be even called with less than 100 deployments, but just to make sure...
+      99.times do |i|
+        # Use the reason field to track the sequence
+        service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
+      end
+      expect {
+        subject.destroy_old_deployments
+      }.not_to change{ GridServiceDeploy.count }
+    end
+  end
+
+  describe '#destroy_old_deployments' do
+    it 'cleans deployments if more than 100 finished ones' do
+      200.times do |i|
+        # Use the reason field to track the sequence
+        service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
+      end
+      expect(subject.wrapped_object).to receive(:cleanup_old_deployments).with(service)
+      subject.destroy_old_deployments
     end
 
     it 'destroys nothing if less than 100 deployments' do
@@ -31,41 +54,14 @@ describe DeploymentCleanupJob, celluloid: true do
         # Use the reason field to track the sequence
         service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
       end
-      expect {
-        subject.destroy_old_deployments
-      }.not_to change{ GridServiceDeploy.count }
+      expect(subject.wrapped_object).not_to receive(:cleanup_old_deployments)
+      subject.destroy_old_deployments
     end
 
     it 'destroys nothing if no deployments' do
       service
-      expect {
-        subject.destroy_old_deployments
-      }.not_to change{ GridServiceDeploy.count }
-    end
-
-
-    it 'destroys nothing if no finished deployments' do
-      200.times do |i|
-        # Use the reason field to track the sequence
-        service.grid_service_deploys.create!(reason: (i + 1).to_s)
-      end
-      expect {
-        subject.destroy_old_deployments
-      }.not_to change{ GridServiceDeploy.count }
-    end
-
-    it 'destroys old deployments correctly for many services' do
-      99.times do |i|
-        # Use the reason field to track the sequence
-        service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
-      end
-      200.times do |i|
-        # Use the reason field to track the sequence
-        another_service.grid_service_deploys.create!(finished_at: Time.now.utc, reason: (i + 1).to_s)
-      end
-      expect {
-        subject.destroy_old_deployments
-      }.to change{ GridServiceDeploy.count }.by(-100)
+      expect(subject.wrapped_object).not_to receive(:cleanup_old_deployments)
+      subject.destroy_old_deployments
     end
 
   end
