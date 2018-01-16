@@ -13,19 +13,19 @@ module Kontena::Cli::Stacks::Registry
     requires_current_account_token
 
     def execute
-      require 'semantic'
       unless versions?
-        stack = ::YAML.safe_load(stacks_client.show(stack_name.stack_name, stack_name.version), [], [], true)
-        puts "#{stack['stack']}:"
-        puts "  #{"latest_" unless stack_name.version}version: #{stack['version']}"
-        puts "  expose: #{stack['expose'] || '-'}"
-        puts "  description: #{stack['description'] || '-'}"
-
+        data = stacks_client.show(stack_name).dig('data', 'attributes')
+        puts "#{data['name']}:"
+        puts "  description: #{data.dig('latest-version', 'description')}"
+        puts "  latest_version: #{data.dig('latest-version', 'version') || '-'}"
+        puts "  created_at: #{data.dig('created-at')}"
+        puts "  pulls: #{data.dig('pulls')}"
+        puts "  private: #{data.dig('is-private')}"
         puts "  available_versions:"
       end
 
-      stacks_client.versions(stack_name.stack_name).reject {|s| s['version'].nil? || s['version'].empty?}.map { |s| Semantic::Version.new(s['version'])}.sort.reverse_each do |version|
-        puts versions? ? version : "    - #{version}"
+      stacks_client.versions(stack_name).each do |version|
+        puts versions? ? version['attributes']['version'] : "    - #{version['attributes']['version']} (#{version['attributes']['created-at']})"
       end
     end
   end

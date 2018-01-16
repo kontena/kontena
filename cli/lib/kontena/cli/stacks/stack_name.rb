@@ -4,7 +4,7 @@ module Kontena::Cli::Stacks
   class StackName
     # A class for parsing stack name strings, such as kontena/foo:1.0.0
 
-    attr_reader :user, :stack, :version
+    attr_accessor :user, :stack, :version
 
     # @param definition [String] such as kontena/foo:1.0.0
     # @param version [String] set version separately

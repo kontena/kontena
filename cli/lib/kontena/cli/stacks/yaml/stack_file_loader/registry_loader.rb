@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
       end
 
       def read_content
-        Kontena::StacksCache.pull(source)
+        Kontena::StacksCache.pull(Kontena::Cli::Stacks::StackName.new(source))
       end
 
       def origin

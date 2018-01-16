@@ -4,25 +4,36 @@ module Kontena::Cli::Stacks::Registry
   class SearchCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
+    include Kontena::Cli::TableGenerator::Helper
 
     banner "Search for stacks on the stack registry"
 
     parameter "[QUERY]", "Query string"
 
+    option ['--[no-]pre'], :flag, "Include pre-release versions", default: true
+    option ['--[no-]private'], :flag, "Include private stacks", default: true, attribute_name: :priv
+
     option ['-q', '--quiet'], :flag, "Output the identifying column only"
 
+    def fields
+      quiet? ? ['name'] : %w(name version pulls description)
+    end
+
     def execute
-      results = stacks_client.search(query.to_s)
-      if quiet?
-        puts results.map { |s| s['stack'] }.join("\n")
-        exit 0
-      end
+      results = stacks_client.search(query.to_s, include_prerelease: pre?, include_private: priv?)
       exit_with_error 'Nothing found' if results.empty?
-      titles = ['NAME', 'VERSION', 'DESCRIPTION']
-      columns = "%-40s %-10s %-40s"
-      puts columns % titles
-      results.each do |stack|
-        puts columns % [stack['stack'], stack['version'] || '?', stack['description'] || '-'] if stack
+      print_table(results.map { |r| r['attributes'] }) do |row|
+        next if quiet?
+
+        row['name'] = pastel.yellow(row['name']) if row['is-private']
+        if row['latest-version'] && row['latest-version']['version']
+          row['version'] = row['latest-version']['version']
+          row['description'] = row['latest-version']['description']
+        else
+          row['version'] = '?'
+        end
+
+        row['description'] = '-' if row['description'].to_s.empty?
       end
     end
   end

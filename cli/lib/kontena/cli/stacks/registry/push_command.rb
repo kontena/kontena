@@ -30,8 +30,7 @@ module Kontena::Cli::Stacks::Registry
       spinner("Pushing #{pastel.cyan(source)} to stack registry as #{loader.stack_name}") do
         unless dry_run?
           stacks_client.push(
-            loader.stack_name.stack_name,
-            loader.stack_name.version,
+            loader.stack_name,
             loader.content
           )
         end
