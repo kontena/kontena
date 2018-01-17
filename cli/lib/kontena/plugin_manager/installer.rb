@@ -7,7 +7,8 @@ module Kontena
     class Installer
       include Common
 
-      attr_reader :plugin_name, :pre, :version
+      attr_reader :plugin_name, :pre
+      attr_accessor :version
 
       # Create a new instance of plugin installer
       # @param plugin_name [String]
@@ -17,6 +18,10 @@ module Kontena
         @plugin_name = plugin_name
         @pre = pre
         @version = version
+      end
+
+      def pre?
+        !!@pre
       end
 
       def command
@@ -35,18 +40,23 @@ module Kontena
         command.installed_gems
       end
 
+      def available_upgrade
+        installed = installed(plugin_name)
+        return false unless installed
+
+        pre = installed.version.prerelease?
+        latest = rubygems_client.latest_version(prefix(plugin_name), pre: pre? || pre)
+        if latest > installed.version
+          latest.to_s
+        end
+      end
+
       # Upgrade an installed plugin
-      # @param plugin_name [String]
-      # @param pre [Boolean] upgrade to a prerelease version if available. Will happen always when the installed version is a prerelease version.
       def upgrade
         return install if version
-        installed = installed(plugin_name)
-        pre = installed.version.prerelease?
-
-        raise "Plugin #{plugin_name} not installed" unless installed
-        latest = rubygems_client.latest_version(prefix(plugin_name), pre: pre)
-        if latest > installed.version
-          Installer.new(plugin_name, version: latest.to_s).install
+        upgrade_to = available_upgrade
+        if upgrade_to
+          Installer.new(plugin_name, version: upgrade_to).install
         end
       end
     end
