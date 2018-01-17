@@ -15,7 +15,6 @@ describe 'plugin upgrade' do
 
   it 'upgrades all plugins' do
     k = run!('kontena plugin upgrade')
-    expect(k.code).to be_zero
     expect(k.out).to match(/aws/)
     expect(k.out).to match(/digitalocean/)
     k = run('kontena plugin list')
