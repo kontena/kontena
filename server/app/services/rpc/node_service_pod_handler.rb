@@ -31,7 +31,6 @@ module Rpc
     # @param [String] id
     # @return [Array<Hash>]
     def list(id)
-      start = Time.now.to_f
       node = @grid.host_nodes.find_by(node_id: id)
       raise 'Node not found' unless node
       raise 'Migration not done' unless migration_done?
@@ -39,8 +38,6 @@ module Rpc
       service_pods = node.grid_service_instances.includes(:grid_service).map { |i|
         cached_pod(i)
       }.compact
-      end_time = Time.now.to_f
-      debug "pod list rpc took: #{((end_time-start) * 1000).to_i}ms"
       { service_pods: service_pods }
     end
 
