@@ -8,6 +8,7 @@ services:
   - docker
 before_install:
   - ./build/travis/before_install.sh
+bundler_args: --without development
 env:
   global:
     - secure: "UyygtUDLvV2+14mEG6Pddo/deLazXc2Hit63KlbZ26Pi8cxbr1FeDUBi4WFVWlFh01smKe5mO+kk/4k06aSdolcTC59QUsltRrsINmsxj/BS66L7JbWP8/yPQP1drE6CH5oh6t1JAchuK19bLUOK9Tycn0J2VufW69ckw3D+rqU=" # DOCKER_HUB_PASSWORD
@@ -90,4 +91,3 @@ jobs:
       repo: kontena/kontena
       rvm: 2.4
       env: TEST_DIR=server
-

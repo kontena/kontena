@@ -2,11 +2,15 @@ source 'https://rubygems.org'
 
 # Specify your gem's dependencies in kontena-cli.gemspec
 gemspec
+
 group :development, :test do
   gem "rspec"
   gem 'simplecov', :require => false, :group => :test
+  gem 'webmock', '~> 3.0', require: false
+end
+
+group :development do
   gem "kontena-plugin-hello", path: "./examples/kontena-plugin-hello"
   gem 'pry', require: false
   gem 'pry-byebug', require: false
-  gem 'webmock', '~> 3.0', require: false
 end
