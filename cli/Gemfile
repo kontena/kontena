@@ -5,12 +5,12 @@ gemspec
 
 group :test do
   gem "rspec"
+  gem "kontena-plugin-hello", path: "./examples/kontena-plugin-hello"
   gem 'simplecov', :require => false, :group => :test
   gem 'webmock', '~> 3.0', require: false
 end
 
 group :development do
-  gem "kontena-plugin-hello", path: "./examples/kontena-plugin-hello"
   gem 'pry', require: false
   gem 'pry-byebug', require: false
 end
