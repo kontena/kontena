@@ -52,6 +52,13 @@ describe Scheduler::Filter::Affinity do
         expect(filtered).to eq([nodes[0]])
       end
 
+      it 'returns node-1 if affinity: node!=/node-(2|3)/' do
+        service = double(:service, affinity: ['node!=/^node-(2|3)$/'])
+        filtered = subject.for_service(service, 1, nodes)
+        expect(filtered.size).to eq(1)
+        expect(filtered).to eq([nodes[0]])
+      end
+
       it 'does not return node-3 if affinity: node!=node-3' do
         service = double(:service, affinity: ['node!=node-3'])
         filtered = subject.for_service(service, 1, nodes)
@@ -230,6 +237,17 @@ describe Scheduler::Filter::Affinity do
     it "raises on invalid affinity filter" do
       service = double(:service, affinity: ['foo=bar'])
       expect{subject.for_service(service, 1, nodes)}.to raise_error(StandardError, /Invalid affinity filter: foo=bar/)
+    end
+  end
+
+  describe '#value_matches?' do
+    it 'matches plain strings' do
+      expect(subject.value_matches?('foo', 'foo')).to be_truthy
+      expect(subject.value_matches?('foo', 'bar')).to be_falsey
+    end
+
+    it 'support regex match' do
+      expect(subject.value_matches?('foo-1', '/foo-.+/')).to be_truthy
     end
   end
 end
