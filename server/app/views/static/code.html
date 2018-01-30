@@ -7,7 +7,7 @@
       Authorization code:
     </p>
     <div style='background: black; color: white; font-family: "Lucida Console", Monaco, monospace; padding: 10px 10px 10px 10px; font-size: 24pt'>
-      <script>document.write(window.location.hash.split('code=')[1].split('&')[0]);</script>
+      <script>document.write(window.location.hash.split('code=')[1].split('&')[0].replace(/[^a-zA-Z0-9\-\_]/g, ''));</script>
     </div>
   </body>
 </html>
