@@ -10,6 +10,15 @@ module Kontena::Stacks
       @loader = loader
     end
 
+    # Compares StackData with another instance of StackData
+    # @return [Boolean]
+    def ==(another)
+      return false unless another.class == self.class
+      %i(stack_name version parent variables service_names).all? do |field|
+        send(field) == another.send(field)
+      end
+    end
+
     # @return [String]
     def name
       @data['name']

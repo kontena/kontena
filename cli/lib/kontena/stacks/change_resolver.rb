@@ -1,118 +1,140 @@
 require_relative 'stack_data_set'
 
 module Kontena::Stacks
+  # Creates a change analysis from two sets of stack data.
   class ChangeResolver
 
-    attr_reader :old_data, :new_data
+    class ResultSet
 
-    # Creates a change analysis from two sets of stack data.
-    # The format is a flat hash of all related stacks.
-    #
+      attr_reader :stacks, :services, :old_data, :new_data
+
+      def initialize(old_data, new_data)
+        @old_data = old_data
+        @new_data = new_data
+        @stacks = Stacks.new
+        @services = Hash.new { Services.new }
+      end
+
+      # @return [Boolean]
+      def safe?
+        stacks.removed.empty? && stacks.replaced.empty? && services.values.all? { |s| s.removed.empty? }
+      end
+
+      class Stacks
+        def initialize
+          @added = []
+          @upgraded = []
+          @replaced = {}
+          @removed = []
+        end
+
+        # @return [Array<String>] an array of stack installation names that should be removed
+        def added
+          @added
+        end
+
+        # @return [Array<String>] an array of stack installation names that should be upgraded
+        def upgraded
+          @upgraded
+        end
+
+        # @return [Hash] a hash of "installed-stack-name" => { :from => 'stackname', :to => 'new-stackname' }
+        def replaced
+          @replaced
+        end
+
+        # @return [Array<String>] an array of installed stack names that should exist after upgrade
+        def remaining
+          added + upgraded
+        end
+
+        # @return [Array<String>] an array of stack installation names that should be removed
+        def removed
+          @removed
+        end
+      end
+
+      class Services
+        def initialize
+          @added = []
+          @removed = []
+          @upgraded = []
+        end
+
+        # @return [Array<String>] list of service names that should be added
+        def added
+          @added
+        end
+
+        # @return [Array<String>] list of service names that should be removed
+        def removed
+          @removed
+        end
+
+        # @return [Array<String>] list of service names that should be upgraded
+        def upgraded
+          @upgraded
+        end
+      end
+    end
+
+    attr_reader :old_data
+
     # @param old_data [DataSet,Hash]
-    # @param new_data [DataSet,Hash]
-    def initialize(old_data, new_data)
+    def initialize(old_data)
       @old_data = old_data.is_a?(StackDataSet) ? old_data : StackDataSet.new(old_data)
-      @new_data = new_data.is_a?(StackDataSet) ? new_data : StackDataSet.new(new_data)
-      analyze
     end
 
-    # @return [Array<String>] an array of services that should be added
-    def added_services
-      @added_services ||= []
-    end
+    # @param new_data [DataSet,Hash]
+    # @return [ResultSet]
+    def compare(new_data)
+      new_data = StackDataSet.new(new_data) unless new_data.is_a?(StackDataSet)
+      result = ResultSet.new(old_data, new_data)
 
-    # @return [Array<String>] an array of services that should be removed
-    def removed_services
-      @removed_services ||= []
-    end
-
-    # @return [Array<String>] an array of services that should be upgraded
-    def upgraded_services
-      @upgraded_services ||= []
-    end
-
-    # @return [Array<String>] an array of stack installation names that should be removed
-    def removed_stacks
-      @removed_stacks ||= []
-    end
-
-    # @return [Array<String>] an array of stack installation names that should be removed
-    def added_stacks
-      @added_stacks ||= []
-    end
-
-    # @return [Array<String>] an array of stack installation names that should be upgraded
-    def upgraded_stacks
-      @upgraded_stacks ||= []
-    end
-
-    # @return [Hash] a hash of "installed-stack-name" => { :from => 'stackname', :to => 'new-stackname' }
-    def replaced_stacks
-      @replaced_stacks ||= {}
-    end
-
-    # @return [Array<String>] an array of installed stack names that should exist after upgrade
-    def remaining_stacks
-      @remaining_stacks ||= added_stacks + upgraded_stacks
-    end
-
-    # @return [Boolean]
-    def safe?
-      removed_stacks.empty? && replaced_stacks.empty? && removed_services.empty?
-    end
-
-    def analyze
       old_names = old_data.stack_names
       new_names = new_data.stack_names
 
-      removed_stacks.concat(old_names - new_names)
-      added_stacks.concat(new_names - old_names)
+      result.stacks.removed.concat(old_names - new_names)
+      result.stacks.added.concat(new_names - old_names)
+
       (new_names & old_names).each do |candidate|
-        upgraded_stacks << candidate if stack_upgraded?(candidate)
+        result.stacks.upgraded << candidate if stack_upgraded?(new_data.stack(candidate))
       end
 
-      removed_stacks.each do |removed_stack|
-        removed_services.concat(
-          old_data.stack(removed_stack).service_names.map { |name| "#{removed_stack}/#{name}"}
-        )
+      result.stacks.removed.each do |removed_stack|
+        result.services[removed_stack].removed.concat(old_data.stack(removed_stack).service_names)
       end
 
-      added_stacks.each do |added_stack|
-        added_services.concat(
-          new_data.stack(added_stack).service_names.map { |name| "#{added_stack}/#{name}"}
-        )
+      result.stacks.added.each do |added_stack|
+        result.services[added_stack].added.concat(new_data.stack(added_stack).service_names)
       end
 
-      upgraded_stacks.each do |upgraded_stack|
+      result.stacks.upgraded.each do |upgraded_stack|
         old_stack = old_data.stack(upgraded_stack).stack_name
         new_stack = new_data.stack(upgraded_stack).stack_name
 
         unless old_stack == new_stack
-          replaced_stacks[upgraded_stack] = { from: old_stack, to: new_stack }
+          result.stacks.replaced[upgraded_stack] = { from: old_stack, to: new_stack }
         end
 
-        old_services = old_data.stack(upgraded_stack).service_names.map { |name| "#{upgraded_stack}/#{name}" }
-        new_services = new_data.stack(upgraded_stack).service_names.map { |name| "#{upgraded_stack}/#{name}" }
+        old_services = old_data.stack(upgraded_stack).service_names
+        new_services = new_data.stack(upgraded_stack).service_names
 
-        removed_services.concat(old_services - new_services)
-        added_services.concat(new_services - old_services)
-        upgraded_services.concat(new_services & old_services)
+        result.services[upgraded_stack].removed.concat(old_services - new_services)
+        result.services[upgraded_stack].added.concat(new_services - old_services)
+        result.services[upgraded_stack].upgraded.concat(new_services & old_services)
       end
+
+      result
     end
 
     # Stack is upgraded if version, stack name, variables change or stack is root
     #
-    # @param name [String]
+    # @param new_stack [StackData]
     # @return [Boolean]
-    def stack_upgraded?(name)
-      old_stack = old_data.stack(name)
-      new_stack = new_data.stack(name)
+    def stack_upgraded?(new_stack)
       return true if new_stack.root?
-      return true if old_stack.version != new_stack.version
-      return true if old_stack.stack_name != new_stack.stack_name
-      return true if old_stack.variables != new_stack.variables
-
-      false
+      new_stack != old_data.stack(new_stack.name)
     end
   end
 end

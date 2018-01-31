@@ -23,7 +23,7 @@ describe Kontena::Stacks::ChangeResolver do
     }
   end
 
-  let(:subject) { described_class.new(old_data, new_data) }
+  let(:subject) { described_class.new(old_data).compare(new_data) }
 
   describe '#safe?' , :output do
     it 'returns true if no changes' do
