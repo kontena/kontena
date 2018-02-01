@@ -139,7 +139,7 @@ class Helper
     else
       glob = File.join('.', '%s*.{yml,yaml}' % word)
     end
-    directories(word) + Dir[glob].map { |file| file.sub('./', '') }
+    Dir[glob].map { |file| file.sub('./', '') } + directories(word)
   rescue => ex
     logger.debug ex
     []
