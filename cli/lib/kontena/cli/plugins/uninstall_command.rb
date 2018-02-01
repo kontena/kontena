@@ -4,22 +4,27 @@ module Kontena::Cli::Plugins
   class UninstallCommand < Kontena::Command
     include Kontena::Util
     include Kontena::Cli::Common
-    include Kontena::PluginManager::Common
 
-    parameter 'NAME ...', 'Plugin name', attribute_name: :plugins_to_uninstall
+    parameter 'NAME ...', 'Plugin name', attribute_name: :plugins
 
     def execute
-      plugins_to_uninstall.each do |name|
-        exit_with_error "Plugin #{name} has not been installed" unless installed?(name)
+      plugins.each do |name|
+        exit_with_error "Plugin #{name} has not been installed" unless plugin_installed?(name)
         spinner "Uninstalling plugin #{pastel.cyan(name)}" do
-          uninstaller(name).uninstall
+          plugin_uninstaller(name).uninstall
         end
       end
     end
 
     # @param name [String]
+    # @return [Boolean]
+    def plugin_installed?(name)
+      Kontena::PluginManager::Common.installed?(name)
+    end
+
+    # @param name [String]
     # @return [Kontena::PluginManager::Uninstaller]
-    def uninstaller(name)
+    def plugin_uninstaller(name)
       Kontena::PluginManager::Uninstaller.new(name)
     end
   end
