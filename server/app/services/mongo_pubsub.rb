@@ -15,23 +15,18 @@ class MongoPubsub
       @channel = channel
       @block = block
       @queue = Queue.new
+      @future = Celluloid::Future.new do
+        process
+      end
     end
 
     def terminate
       stop
     end
 
-    # @return [Celluloid::Future]
-    def start
-      @future ||= Celluloid::Future.new do
-        # process in a separate thread
-        process
-      end
-    end
-
-    # Suspend the calling celluloid task until the subscription is stopped
+    # Suspend the calling celluloid task until the subscription is stopped and finishes processing
     def wait
-      start.value
+      @future.value
     end
 
     def stop
@@ -46,14 +41,15 @@ class MongoPubsub
       debug "queued #{@channel}..."
     end
 
+    private
+
+    # runs the @future thread
     # returns once stopped, and queued messages have been processed
     def process
       while data = @queue.shift
         send_message(data)
       end
     end
-
-    private
 
     # @param [Hash] data
     def send_message(data)
