@@ -6,10 +6,10 @@ module Kontena::Cli::Plugins
     include Kontena::Cli::Common
     include Kontena::PluginManager::Common
 
-    parameter 'NAME ...', 'Plugin name', attribute_name: :plugins
+    parameter 'NAME ...', 'Plugin name', attribute_name: :plugins_to_uninstall
 
     def execute
-      plugins.each do |name|
+      plugins_to_uninstall.each do |name|
         exit_with_error "Plugin #{name} has not been installed" unless installed?(name)
         spinner "Uninstalling plugin #{pastel.cyan(name)}" do
           uninstaller(name).uninstall
