@@ -1,7 +1,4 @@
 require 'kontena/cli/master/join_command'
-require 'kontena/cli/localhost_web_server'
-require 'launchy'
-require 'ostruct'
 
 describe Kontena::Cli::Master::JoinCommand do
 

@@ -1,6 +1,6 @@
 require 'kontena/cli/cloud/login_command'
 require 'kontena/cli/localhost_web_server'
-require 'launchy'
+require 'kontena/cli/browser_launcher'
 
 describe Kontena::Cli::Cloud::LoginCommand do
 
@@ -145,7 +145,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
         expect(webserver).to receive(:serve_one).and_return({
           'access_token' => 'abcd'
         })
-        expect(Launchy).to receive(:open).and_return(true)
+        expect(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
         expect(subject).to receive(:finish).and_return(true)
         subject.run([])
         expect(account.token.access_token).to eq 'abcd'
@@ -159,7 +159,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
         expect(webserver).to receive(:serve_one).and_return({
           'code' => 'abcd'
         })
-        expect(Launchy).to receive(:open).and_return(true)
+        expect(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
         expect(client).to receive(:exchange_code).with('abcd').and_return({
           'access_token' => 'abcdefg'
         })
@@ -176,7 +176,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
         expect(webserver).to receive(:serve_one).and_return({
           'error' => 'foo'
         })
-        expect(Launchy).to receive(:open).and_return(true)
+        expect(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
         expect{subject.run([])}.to exit_with_error.and output(/Authentication failed: foo/).to_stderr
       end
     end

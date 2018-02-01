@@ -1,19 +1,19 @@
 describe 'vault remove' do
   after(:each) do
-    run 'kontena vault rm --force $(kontena vault ls -q)'
+    run 'kontena vault rm --force foo'
+    run 'kontena vault rm --force foo0'
+    run 'kontena vault rm --force foo1'
   end
 
   it 'removes a vault key' do
-    run 'kontena vault write foo bar'
-    k = run 'kontena vault rm --force foo'
-    expect(k.code).to eq(0)
+    run! 'kontena vault write foo bar'
+    run! 'kontena vault rm --force foo'
   end
 
   it 'removes multiple vault keys' do
     2.times do |i|
-      run "kontena vault write foo#{i} bar"
+      run! "kontena vault write foo#{i} bar"
     end
-    k = run 'kontena vault rm --force foo0 foo1'
-    expect(k.code).to eq(0)
+    run! 'kontena vault rm --force foo0 foo1'
   end
 end
