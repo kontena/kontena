@@ -12,7 +12,7 @@ module Kontena::Cli::Master::Token
 
     def fields
       return ['id'] if quiet?
-      { id: 'id', token_type: 'token_type', token_last4: 'access_token_last_four', expires_in: 'expires_in', scopes: 'scopes' }
+      { id: 'id', token_type: 'token_type', token_last4: 'access_token_last_four', expires_in: 'expires_in', scopes: 'scopes', description: 'description' }
     end
 
     def execute

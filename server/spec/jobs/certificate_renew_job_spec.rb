@@ -53,8 +53,11 @@ describe CertificateRenewJob, celluloid: true do
     end
   end
 
-  context 'with an auto-renewable domain authz' do
-    let!(:domain_auth) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io', authorization_type: 'tls-sni-01', grid_service: linked_service) }
+  context 'with an auto-renewable tls-sni-01 domain authz' do
+    let!(:domain_auth) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io',
+      authorization_type: 'tls-sni-01',
+      grid_service: linked_service,
+    ) }
 
     describe '#renew_certificate' do
       before do
@@ -72,8 +75,14 @@ describe CertificateRenewJob, celluloid: true do
 
     describe '#authorize_domains' do
       it 'authorises domain succesfully' do
-        expect(GridDomainAuthorizations::Authorize).to receive(:run).and_return(double(:success? => true, :result => domain_auth))
-        expect(subject.wrapped_object).to receive(:wait_until!)
+        expect(GridDomainAuthorizations::Authorize).to receive(:run).with(
+          grid: grid,
+          domain: 'kontena.io',
+          authorization_type: 'tls-sni-01',
+          linked_service: 'null/lb',
+        ).and_return(double(:success? => true, :result => domain_auth))
+        allow(subject.wrapped_object).to receive(:wait_until!)
+
         subject.authorize_domains(certificate)
       end
 
@@ -106,6 +115,40 @@ describe CertificateRenewJob, celluloid: true do
 
           subject.renew_certificate(certificate)
         end
+      end
+    end
+  end
+
+  context 'with an auto-renewable http-01 domain authz' do
+    let!(:domain_auth) { GridDomainAuthorization.create!(grid: grid, domain: 'kontena.io',
+      authorization_type: 'http-01',
+      grid_service: linked_service,
+    ) }
+
+    describe '#renew_certificate' do
+      before do
+        expect(certificate).to be_auto_renewable
+      end
+
+      it 're-authorizes and renews the cert' do
+        expect(subject.wrapped_object).to receive(:authorize_domains).with(certificate)
+        expect(subject.wrapped_object).to receive(:request_new_cert).with(certificate)
+
+        subject.renew_certificate(certificate)
+      end
+
+    end
+
+    describe '#authorize_domains' do
+      it 'authorises domain succesfully' do
+        expect(GridDomainAuthorizations::Authorize).to receive(:run).with(
+          grid: grid,
+          domain: 'kontena.io',
+          authorization_type: 'http-01',
+          linked_service: 'null/lb',
+        ).and_return(double(:success? => true, :result => domain_auth))
+
+        subject.authorize_domains(certificate)
       end
     end
   end

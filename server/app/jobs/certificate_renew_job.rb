@@ -52,7 +52,7 @@ class CertificateRenewJob
       outcome = GridDomainAuthorizations::Authorize.run(
         grid: certificate.grid,
         domain: domain,
-        authorization_type: 'tls-sni-01',
+        authorization_type: domain_auth.authorization_type,
         linked_service: "#{domain_auth.grid_service.stack.name}/#{domain_auth.grid_service.name}"
       )
       if outcome.success?
