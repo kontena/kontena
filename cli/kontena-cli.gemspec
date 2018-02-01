@@ -26,7 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "tty-prompt", "0.14.0"
   spec.add_runtime_dependency "clamp", "~> 1.1.0"
   spec.add_runtime_dependency "ruby_dig", "~> 0.0.2"
-  spec.add_runtime_dependency "launchy", "~> 2.4.3"
   spec.add_runtime_dependency "hash_validator", "~> 0.7.1"
   spec.add_runtime_dependency "retriable", "~> 2.1.0"
   spec.add_runtime_dependency "opto", "1.8.7"
