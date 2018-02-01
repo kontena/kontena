@@ -26,7 +26,7 @@ describe 'stack remove' do
 
   it "prompts without --force" do
     with_fixture_dir("stack/simple") do
-      run 'kontena stack install --no-deploy'
+      run! 'kontena stack install --no-deploy'
     end
     k = kommando 'kontena stack rm simple', timeout: 5
     k.out.on "To proceed, type" do
