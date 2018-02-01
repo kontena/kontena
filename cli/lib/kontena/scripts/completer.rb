@@ -125,8 +125,21 @@ class Helper
     []
   end
 
-  def yml_files
-    Dir["./*.yml"].map{|file| file.sub('./', '')}
+  def directories(word)
+    if word && File.directory?(word) && !word.end_with?('/')
+      ['%s/' % word]
+    else
+      Dir[File.join('.', '%s*' % word)].select { |file| File.directory?(file) }.map { |file| '%s/' % file.sub('./', '') }
+    end
+  end
+
+  def yml_files(word)
+    if word && File.directory?(word) && word.end_with?('/')
+      glob = File.join(word, '*.{yml,yaml}')
+    else
+      glob = File.join('.', '%s*.{yml,yaml}' % word)
+    end
+    directories(word) + Dir[glob].map { |file| file.sub('./', '') }
   rescue => ex
     logger.debug ex
     []
@@ -165,7 +178,7 @@ helper.logger.debug { "Completing #{words.inspect}" }
 
 begin
   completion = []
-  completion.push %w(cloud grid app service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
+  completion.push %w(cloud grid service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
   if words.size > 0
     case words[0]
       when 'plugin'
@@ -282,7 +295,7 @@ begin
             registry_sub_commands = %(push pull search show remove)
             if words[2]
               if words[2] == 'push'
-                completion.push helper.yml_files
+                completion.push helper.yml_files(words[3])
               elsif %w(pull search show remove rm).include?(words[2]) && words[4].nil?
                 completion.push helper.registry_stacks(words[3].to_s)
               else
@@ -292,13 +305,13 @@ begin
               completion.push registry_sub_commands
             end
           elsif %w(install validate build).include?(words[1])
-            completion.push helper.yml_files
+            completion.push helper.yml_files(words[2])
             if words[1] == 'install'
               completion.push helper.registry_stacks(words[2].to_s)
             end
           elsif words[1] == 'upgrade'
             if words[3]
-              completion.push helper.yml_files
+              completion.push helper.yml_files(words[4])
               completion.push helper.registry_stacks(words[4].to_s)
             else
               completion.push helper.stacks
