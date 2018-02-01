@@ -3,8 +3,8 @@ require 'spec_helper'
 describe 'plugin upgrade' do
   context "with older versions of the aws, digitalocean plugins installed" do
     before(:each) do
-      run! 'kontena plugin uninstall aws'
-      run! 'kontena plugin uninstall digitalocean'
+      run 'kontena plugin uninstall aws'
+      run 'kontena plugin uninstall digitalocean'
       run! 'kontena plugin install --version 0.2.7 aws'
       run! 'kontena plugin install --version 0.2.5 digitalocean'
     end
