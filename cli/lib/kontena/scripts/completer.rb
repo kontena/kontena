@@ -28,12 +28,6 @@ class Helper
     client_config['current_server']
   end
 
-  def client
-    $VERSION_WARNING_ADDED=true
-    token = require_token
-    super(token)
-  end
-
   def grids
     client.get("grids")['grids'].map{|grid| grid['id']}
   rescue => ex

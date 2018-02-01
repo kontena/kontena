@@ -10,6 +10,7 @@ STDOUT.sync = true
 
 if ARGV[0] == 'complete'
   ARGV.delete_at(0)
+  $VERSION_WARNING_ADDED=true
   require 'kontena/scripts/completer'
 else
   ENV['DEBUG'] = "true" if ARGV.any? { |arg| arg == '-D' || arg == '--debug'}
