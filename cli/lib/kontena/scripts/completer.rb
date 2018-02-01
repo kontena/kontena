@@ -301,7 +301,7 @@ begin
               completion.push helper.yml_files
               completion.push helper.registry_stacks(words[4].to_s)
             else
-              completion.push.helper.stacks
+              completion.push helper.stacks
             end
           elsif %w(deploy start stop remove rm restart logs monitor show inspect).include?(words[1])
             completion.push helper.stacks
