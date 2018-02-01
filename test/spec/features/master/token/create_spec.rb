@@ -8,5 +8,6 @@ describe 'token create' do
     expect(k.out).to match /tokendescriptiontest/
     k = run('kontena master token show %s' % token_id)
     expect(k.out).to match /description: tokendescriptiontest/
+    run!('kontena master token remove %s' % token_id)
   end
 end
