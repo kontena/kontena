@@ -19,7 +19,7 @@ module Kontena
 
       def command
         cmd = if Kontena.on_windows?
-          ['start', url]
+          ['cmd', '/c', 'start', '/b', url.gsub(/&/, '^&')]
         elsif RUBY_PLATFORM =~ /darwin/
           ["open", url]
         elsif Kontena.browserless?
