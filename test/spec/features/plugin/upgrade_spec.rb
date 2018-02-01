@@ -10,8 +10,8 @@ describe 'plugin upgrade' do
     end
 
     after(:each) do
-      run! 'kontena plugin uninstall aws'
-      run! 'kontena plugin uninstall digitalocean'
+      run 'kontena plugin uninstall aws'
+      run 'kontena plugin uninstall digitalocean'
     end
 
     it 'upgrades all plugins' do
