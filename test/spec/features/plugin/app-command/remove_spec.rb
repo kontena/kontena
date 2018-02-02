@@ -3,8 +3,15 @@ require 'spec_helper'
 describe 'app subcommand' do
   context 'with the app-command plugin', subcommand: :app do
     describe 'app remove', subcommand: :app do
+      before do
+        with_fixture_dir('app/simple') do
+          run('kontena app rm --force')
+        end
+      end
+
       it 'removes a deployed app' do
         with_fixture_dir('app/simple') do
+          run('kontena app rm --force')
           run!('kontena app deploy')
           run!('kontena app rm --force')
           sleep 1
