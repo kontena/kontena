@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe 'volume list' do
   before(:each) do
-    run! "kontena volume rm --force testVol"
-    run! "kontena volume rm --force testVol2"
+    run "kontena volume rm --force testVol"
+    run "kontena volume rm --force testVol2"
     run! "kontena volume create --driver local --scope instance testVol"
     run! "kontena volume create --driver local --scope instance testVol2"
   end
