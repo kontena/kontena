@@ -46,12 +46,11 @@ describe 'service stop' do
 
     it 'sets StopSignal for container' do
       with_fixture_dir("stack/stop_signal") do
-        k = run 'kontena stack install --deploy'
-        k.wait
+        run! 'kontena stack install --deploy'
       end
 
       id = container_id('simple.app-1')
-      k = run "kontena container inspect #{id}"
+      k = run! "kontena container inspect #{id}"
       expect(JSON.parse(k.out).dig('Config', 'StopSignal')).to eq('SIGINT')
     end
   end
