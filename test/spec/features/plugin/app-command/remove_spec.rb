@@ -5,13 +5,13 @@ describe 'app subcommand' do
     describe 'app remove', subcommand: :app do
       before do
         with_fixture_dir('app/simple') do
-          run('kontena app rm --force')
+          k = run('kontena app rm --force')
+          sleep 1 if k.code.zero?
         end
       end
 
       it 'removes a deployed app' do
         with_fixture_dir('app/simple') do
-          run('kontena app rm --force')
           run!('kontena app deploy')
           run!('kontena app rm --force')
           sleep 1
