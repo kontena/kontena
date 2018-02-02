@@ -1,8 +1,7 @@
 describe 'service link' do
   after(:each) do
-    %w(test-1 test-2).each do |s|
-      run "kontena service rm --force #{s}"
-    end
+    run "kontena service rm --force test-1"
+    run "kontena service rm --force test-2"
     run "kontena stack rm --force simple"
   end
 
@@ -30,7 +29,7 @@ describe 'service link' do
     end
     run! "kontena service create test-1 redis:3.0"
     run! "kontena service link simple/bar test-1"
-    k = run "kontena service show simple/bar"
+    k = run! "kontena service show simple/bar"
     expect(k.out.match(/^\s+\- test-1\s*$/)).to be_truthy
   end
 
