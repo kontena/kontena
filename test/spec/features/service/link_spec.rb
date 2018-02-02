@@ -1,8 +1,8 @@
 describe 'service link' do
   after(:each) do
-    run "kontena service rm --force test-1"
-    run "kontena service rm --force test-2"
-    run "kontena stack rm --force simple"
+    sleep(1) unless %w(test-1 test-2 simple).map do |s|
+      run("kontena service rm --force %s" % s).code
+    end.all?(&:zero?)
   end
 
   it 'links service to target' do
