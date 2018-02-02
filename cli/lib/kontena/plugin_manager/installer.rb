@@ -54,11 +54,7 @@ module Kontena
         file.unlink
       end
 
-      # Upgrade an installed plugin
-      # @param plugin_name [String]
-      # @param pre [Boolean] upgrade to a prerelease version if available. Will happen always when the installed version is a prerelease version.
-      def upgrade
-        return install if version
+      def available_upgrade
         installed = installed(plugin_name)
         return false unless installed
 
@@ -66,6 +62,15 @@ module Kontena
         latest = rubygems_client.latest_version(prefix(plugin_name), pre: pre? || pre)
         if latest > installed.version
           latest.to_s
+        end
+      end
+
+      # Upgrade an installed plugin
+      def upgrade
+        return install if version
+        upgrade_to = available_upgrade
+        if upgrade_to
+          Installer.new(plugin_name, version: upgrade_to).install
         end
       end
     end
