@@ -1,5 +1,8 @@
 describe 'service link' do
   after(:each) do
+    run "kontena service unlink simple/bar test-1"
+    run "kontena service unlink test-1 simple/redis"
+    run "kontena service unlink test-1 test2"
     sleep(1) unless %w(test-1 test-2 simple).map do |s|
       run("kontena service rm --force %s" % s).code
     end.all?(&:zero?)
