@@ -8,12 +8,11 @@ describe 'app subcommand' do
           k = run('kontena app deploy')
           k.wait
           expect(k.code).to eq(0)
-          k = run('kontena service ls')
-          expect(k.code).to eq(0)
+          k = run!('kontena service ls')
           %w(lb nginx redis).each do |service|
             expect(k.out).to match(/simple-#{service}/)
           end
-          run('kontena app rm --force')
+          run!('kontena app rm --force')
         end
       end
     end

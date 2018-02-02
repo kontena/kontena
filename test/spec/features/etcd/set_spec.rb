@@ -6,17 +6,15 @@ describe 'etcd get' do
   end
 
   it 'sets a value to a new key' do
-    k = run 'kontena etcd set /e2e/test yes'
-    expect(k.code).to eq(0)
-    k = run 'kontena etcd get /e2e/test'
+    run! 'kontena etcd set /e2e/test yes'
+    k = run! 'kontena etcd get /e2e/test'
     expect(k.out.strip).to eq('yes')
   end
 
   it 'sets a value to an existing key' do
-    run 'kontena etcd set /e2e/test foo'
-    k = run 'kontena etcd set /e2e/test yes'
-    expect(k.code).to eq(0)
-    k = run 'kontena etcd get /e2e/test'
+    run! 'kontena etcd set /e2e/test foo'
+    run! 'kontena etcd set /e2e/test yes'
+    k = run! 'kontena etcd get /e2e/test'
     expect(k.out.strip).to eq('yes')
   end
 end

@@ -3,9 +3,9 @@ require 'json'
 
 describe 'service stop' do
   before(:each) do
-    run("kontena service create test-1 redis:3.0")
-    run("kontena service create test-2 redis:3.0")
-    run("kontena service deploy test-1")
+    run!("kontena service create test-1 redis:3.0")
+    run!("kontena service create test-2 redis:3.0")
+    run!("kontena service deploy test-1")
   end
 
   after(:each) do
@@ -31,8 +31,7 @@ describe 'service stop' do
   end
 
   it 'stops multiple services' do
-    k = run "kontena service stop test-1 test-2"
-    expect(k.code).to eq(0)
+    run! "kontena service stop test-1 test-2"
     sleep 1
     k = run("kontena service show test-1")
     expect(k.out.scan('desired_state: stopped').size).to eq(1)
