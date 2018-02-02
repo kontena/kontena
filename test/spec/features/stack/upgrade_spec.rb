@@ -42,11 +42,10 @@ describe 'stack upgrade' do
 
   context "for a stack that is linked to externally" do
     before(:each) do
-      run! 'kontena service rm --force external-linking-service'
-      run! 'kontena stack rm --force links-external-linked'
+      run 'kontena service rm --force external-linking-service'
+      run 'kontena stack rm --force links-external-linked'
       with_fixture_dir("stack/links") do
         run! 'kontena stack install external-linked_1.yml'
-        expect(k.code).to eq(0), k.out
       end
     end
 
