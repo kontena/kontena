@@ -6,5 +6,6 @@ describe 'plugin search' do
     expect(k.out).to match(/aws/)
     expect(k.out).to match(/azure/)
     expect(k.out).to match(/packet/)
+    expect(k.out).to match(/cloud/)
   end
 end
