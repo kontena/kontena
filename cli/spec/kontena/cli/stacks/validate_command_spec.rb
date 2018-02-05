@@ -47,7 +47,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
         'volumes' => [ ],
         'dependencies' => nil,
         'source' => a_string_matching(/.+/),
-        'parent_name' => nil,
+        'parent' => nil,
         'variables' => {
           'grid_name' => '{{ GRID }} stackname',
           'copies' => 2,

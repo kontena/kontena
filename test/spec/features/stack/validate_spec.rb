@@ -29,7 +29,7 @@ describe 'stack validate' do
 
     it "allows to select matching service" do
       with_fixture_dir("stack/simple") do
-        run 'kontena stack install --no-deploy'
+        run! 'kontena stack install --no-deploy'
       end
       with_fixture_dir("stack/service_link") do
         k = kommando 'kontena stack validate --online', timeout: 5
