@@ -137,7 +137,7 @@ GEM
       multi_json (~> 1.0)
       simplecov-html (~> 0.9.0)
     simplecov-html (0.9.0)
-    symmetric-encryption (3.8.2)
+    symmetric-encryption (3.9.1)
       coercible (~> 1.0)
     thread_safe (0.3.6)
     tilt (1.4.1)
@@ -191,7 +191,7 @@ DEPENDENCIES
   rollbar
   rspec (~> 3.3.0)
   simplecov
-  symmetric-encryption
+  symmetric-encryption (~> 3.9.1)
   tilt-jbuilder
   webmock
   websocket-driver (~> 0.6.2)
