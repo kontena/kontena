@@ -19,7 +19,7 @@ if vault_key = ENV['VAULT_KEY']
   if vault_iv = ENV['VAULT_IV']
     # legacy cipher used for backwards-compatibility with ciphertexts encrpyted using the truncated key
     legacy_cipher = SymmetricEncryption::Cipher.new(
-      version:     0,
+      version:     0, # default, as used for encrypting existing secrets with headers
       cipher_name: 'aes-256-cbc',
       key:         vault_key[0...32],
       iv:          vault_iv[0...16],
