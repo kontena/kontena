@@ -213,7 +213,11 @@ module Kontena::Cli::Stacks
           result['dependencies']  = dependencies
           result['source']        = raw_content
           result['variables']     = variable_values(without_defaults: true, without_vault: true)
-          result['parent_name']   = parent_name
+        end
+        if parent_name
+          result['parent'] = { 'name' => parent_name }
+        else
+          result['parent'] = nil
         end
         if service_name.nil?
           result['services'].each do |service|

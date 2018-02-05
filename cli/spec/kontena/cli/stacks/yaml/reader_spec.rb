@@ -73,7 +73,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         dependencies
         source
         variables
-        parent_name
+        parent
       ).each do |k|
         expect(result.key?(k)).to be_truthy
       end
