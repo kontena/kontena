@@ -7,7 +7,7 @@ describe 'plugin install' do
 
   it 'installs a plugin' do
     run!('kontena plugin install aws')
-    k = run('kontena plugin ls')
+    k = run!('kontena plugin ls')
     expect(k.out).to match(/aws/)
   end
 

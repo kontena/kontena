@@ -3,8 +3,8 @@ require 'spec_helper'
 describe 'service exec' do
 
   before(:all) do
-    run("kontena service create test-1 redis:3.0")
-    run("kontena service deploy test-1")
+    run!("kontena service create test-1 redis:3.0")
+    run!("kontena service deploy test-1")
   end
 
   after(:all) do
