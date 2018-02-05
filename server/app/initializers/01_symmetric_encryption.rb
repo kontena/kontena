@@ -7,7 +7,8 @@ if vault_key = ENV['VAULT_KEY']
   hkdf = HKDF.new(vault_key)
 
   # primary cipher used for encryption
-  # not configured using any IV, always encrypt with a random IV
+  # not configured using any fixed IV, assuming that we always encrypt with a random IV
+  # default IV implies an IV of all zeroes, in case something does encrypt without random_iv: true
   SymmetricEncryption.cipher = SymmetricEncryption::Cipher.new(
     version:            1,
     always_add_header:  true,
