@@ -479,7 +479,7 @@ module Kontena
       check_version_and_warn(response.headers[X_KONTENA_VERSION])
 
       if response.headers[CONTENT_TYPE] =~ JSON_REGEX
-        parse_json(response.body)
+        parse_json(response)
       else
         response.body
       end
@@ -503,13 +503,12 @@ module Kontena
 
     # Parse json
     #
-    # @param [String] json
+    # @param response [Excon::Response]
     # @return [Hash,Object,NilClass]
-    def parse_json(json)
-      JSON.parse(json)
+    def parse_json(response)
+      JSON.parse(response.body)
     rescue => ex
-      debug { "JSON parse exception: #{ex.class.name} : #{ex.message}" }
-      nil
+      raise Kontena::Errors::StandardError.new(400, "Invalid response JSON from server for #{response.path}: #{ex.class.name}: #{ex.message}")
     end
 
     # Dump json
