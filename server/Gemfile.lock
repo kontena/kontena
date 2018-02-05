@@ -54,6 +54,7 @@ GEM
       websocket-driver (>= 0.5.1)
     ffi (1.9.6)
     hitimes (1.2.4)
+    hkdf (0.3.0)
     httpclient (2.8.2.3)
     i18n (0.8.4)
     jbuilder (2.2.5)
@@ -167,6 +168,7 @@ DEPENDENCIES
   celluloid (~> 0.17.3)
   dotenv
   faye-websocket (~> 0.10.7)
+  hkdf (~> 0.3.0)
   httpclient (~> 2.3)
   json-jwt (= 1.5.2)
   json-serializer
