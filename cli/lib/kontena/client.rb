@@ -508,7 +508,7 @@ module Kontena
     def parse_json(response)
       JSON.parse(response.body)
     rescue => ex
-      raise Kontena::Errors::StandardError.new(400, "Invalid response JSON from server for #{response.path}: #{ex.class.name}: #{ex.message}")
+      raise Kontena::Errors::StandardError.new(520, "Invalid response JSON from server for #{response.path}: #{ex.class.name}: #{ex.message}")
     end
 
     # Dump json
