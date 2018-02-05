@@ -20,7 +20,7 @@ describe 'stack upgrade' do
       expect(k.out).to match /image: redis:3.0.7-alpine/
 
       with_fixture_dir("stack/upgrade") do
-        run! 'kontena stack upgrade redis version2.yml'
+        run! 'kontena stack upgrade --force --reuse-values redis version2.yml'
       end
 
       k = run! 'kontena service show redis/redis'
