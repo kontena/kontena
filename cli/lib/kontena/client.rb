@@ -251,7 +251,7 @@ module Kontena
     # @param [Hash,NilClass] params
     # @param [Hash] headers
     def get_stream(path, response_block, params = nil, headers = {}, auth = true)
-      request(path: path, query: params, headers: headers, response_block: response_block, auth: auth)
+      request(path: path, query: params, headers: headers, response_block: response_block, auth: auth, gzip: false)
     end
 
     def token_expired?
