@@ -292,11 +292,11 @@ begin
                           logs monitor show registry inspect)
         if words[1]
           if words[1] == 'registry' || words[1] == 'reg'
-            registry_sub_commands = %(push pull search show remove)
+            registry_sub_commands = %(push pull search show remove make-public make-private create)
             if words[2]
               if words[2] == 'push'
                 completion.push helper.yml_files(words[3])
-              elsif %w(pull search show remove rm).include?(words[2]) && words[4].nil?
+              elsif %w(pull search show remove rm make-public make-private).include?(words[2]) && words[4].nil?
                 completion.push helper.registry_stacks(words[3].to_s)
               else
                 completion.push registry_sub_commands
