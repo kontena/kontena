@@ -15,6 +15,7 @@ Logger.class_eval { alias :write :'<<' }
 class Server < Roda
   VERSION = File.read('./VERSION').strip
 
+  use Rack::Deflater, include: %w(application/json application/vnd.api+json application/yaml)
   use Rack::CommonLogger, Logging.logger
   use Rack::Attack
   use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
