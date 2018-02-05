@@ -55,7 +55,8 @@ module Kontena
         connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 10,
         read_timeout:    ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_i    : 30,
         write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 10,
-        ssl_verify_peer: ignore_ssl_errors? ? false : true
+        ssl_verify_peer: ignore_ssl_errors? ? false : true,
+        middlewares:     Excon.defaults[:middlewares] + [Excon::Middleware::Decompress]
       }
       if Kontena.debug?
         require 'kontena/debug_instrumentor'
