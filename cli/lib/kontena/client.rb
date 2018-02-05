@@ -72,7 +72,6 @@ module Kontena
       @default_headers = {
         ACCEPT => CONTENT_JSON,
         CONTENT_TYPE => CONTENT_JSON,
-        ACCEPT_ENCODING => GZIP,
         'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
       }.merge(options[:default_headers])
 
@@ -252,7 +251,7 @@ module Kontena
     # @param [Hash,NilClass] params
     # @param [Hash] headers
     def get_stream(path, response_block, params = nil, headers = {}, auth = true)
-      request(path: path, query: params, headers: headers, response_block: response_block, auth: auth)
+      request(path: path, query: params, headers: headers, response_block: response_block, auth: auth, gzip: false)
     end
 
     def token_expired?
@@ -283,7 +282,7 @@ module Kontena
     # @param expects [Array] raises unless response status code matches this list.
     # @param auth [Boolean] use token authentication default = true
     # @return [Hash, String] response parsed response object
-    def request(http_method: :get, path:'/', body: nil, query: {}, headers: {}, response_block: nil, expects: [200, 201, 204], host: nil, port: nil, auth: true)
+    def request(http_method: :get, path:'/', body: nil, query: {}, headers: {}, response_block: nil, expects: [200, 201, 204], host: nil, port: nil, auth: true, gzip: true)
 
       retried ||= false
 
@@ -291,7 +290,7 @@ module Kontena
         raise Excon::Error::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master" : "cloud"} login"
       end
 
-      request_headers = request_headers(headers, auth)
+      request_headers = request_headers(headers, auth: auth, gzip: gzip)
 
       if body.nil?
         body_content = ''
@@ -455,9 +454,10 @@ module Kontena
     #
     # @param [Hash] headers
     # @return [Hash]
-    def request_headers(headers = {}, auth = true)
+    def request_headers(headers = {}, auth: true, gzip: true)
       headers = default_headers.merge(headers)
       headers.merge!(bearer_authorization_header) if auth
+      headers[ACCEPT_ENCODING] = GZIP if gzip
       headers.reject{|_,v| v.nil? || (v.respond_to?(:empty?) && v.empty?)}
     end
 
