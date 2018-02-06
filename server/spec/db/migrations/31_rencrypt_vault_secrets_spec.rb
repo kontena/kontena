@@ -6,13 +6,16 @@ describe ReencryptVaultSecrets do
   let(:legacy_cipher) { SymmetricEncryption.cipher(0) }
   let(:primary_cipher) { SymmetricEncryption.cipher }
 
+  let(:legacy_key) { legacy_cipher.send :key }
+  let(:primary_key) { primary_cipher.send :key }
+
   describe 'SymmetricEncryption legacy cipher' do
     it 'has an IV configured' do
       expect(legacy_cipher.iv).to be_a String
     end
 
     it 'uses the raw VAULT_KEY' do
-      expect(legacy_cipher.send :key).to eq ENV['VAULT_KEY'][0...32]
+      expect(legacy_key).to eq ENV['VAULT_KEY'][0...32]
     end
 
     context 'for an old encrpyted value' do
@@ -34,8 +37,17 @@ describe ReencryptVaultSecrets do
       expect(primary_cipher.iv).to be_nil
     end
 
-    it 'has a different key than the legacy cipher' do
-      # XXX: exepct(primary_cipher.key).to not_eq legacy_cipher.key
+    # @return [Integer]
+    def bytesum(string)
+      sum = 0
+      string.each_byte {|c| sum += c }
+      sum
+    end
+
+    it 'has a "stronger" key than the legacy cipher' do
+      # specs run with ENV['VAULT_KEY'] = SecureRandom.base64(64)
+      # this is not 100% guaranteed to be true...
+      expect(bytesum(primary_key)).to be > bytesum(legacy_key)
     end
 
     context 'for a newly encrypted value with a random IV' do
