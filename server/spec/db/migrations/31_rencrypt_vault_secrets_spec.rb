@@ -18,7 +18,7 @@ describe ReencryptVaultSecrets do
       expect(legacy_key).to eq ENV['VAULT_KEY'][0...32]
     end
 
-    context 'for an old encrpyted value' do
+    context 'for an old encrpyted value without random_iv' do
       let(:encrypted_value) { legacy_cipher.encrypt('foobar', false) }
       let(:decoded_value) { SymmetricEncryption.cipher.decode(encrypted_value) }
 
@@ -41,7 +41,7 @@ describe ReencryptVaultSecrets do
       expect(primary_key).to_not eq legacy_key
     end
 
-    context 'for a newly encrypted value with a random IV' do
+    context 'for a newly encrypted value with random_iv' do
       let(:encrypted_value) { SymmetricEncryption.encrypt('foobar', true) }
       let(:decoded_value) { SymmetricEncryption.cipher.decode(encrypted_value) }
       let(:cipher_header) { SymmetricEncryption::Cipher.parse_header!(decoded_value) }
