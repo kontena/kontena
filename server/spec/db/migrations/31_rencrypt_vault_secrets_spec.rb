@@ -37,17 +37,8 @@ describe ReencryptVaultSecrets do
       expect(primary_cipher.iv).to be_nil
     end
 
-    # @return [Integer]
-    def bytesum(string)
-      sum = 0
-      string.each_byte {|c| sum += c }
-      sum
-    end
-
-    it 'has a "stronger" key than the legacy cipher' do
-      # specs run with ENV['VAULT_KEY'] = SecureRandom.base64(64)
-      # this is not 100% guaranteed to be true...
-      expect(bytesum(primary_key)).to be > bytesum(legacy_key)
+    it 'has a different key than the legacy cipher' do
+      expect(primary_key).to_not eq legacy_key
     end
 
     context 'for a newly encrypted value with a random IV' do
