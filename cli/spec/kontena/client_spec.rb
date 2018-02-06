@@ -233,6 +233,24 @@ describe Kontena::Client do
       end
     end
 
+    context "with empty response JSON" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:delete, 'http://localhost/v1/test').to_return(
+          status: 200,
+          headers: {
+            'Content-Type' => 'application/json',
+          },
+          body: '',
+        )
+      end
+
+      it "returns nil" do
+        expect(subject.delete('test')).to be_nil
+      end
+    end
+
     context "with invalid response JSON" do
       before :each do
         allow(subject).to receive(:http_client).and_call_original
