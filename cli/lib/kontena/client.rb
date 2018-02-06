@@ -514,11 +514,9 @@ module Kontena
     # @param response [Excon::Response]
     # @return [Hash,Object,NilClass]
     def parse_json(response)
-      if response.body.empty?
-        return nil
-      else
-        return JSON.parse(response.body)
-      end
+      return nil if response.body.empty?
+      
+      JSON.parse(response.body)
     rescue => ex
       raise Kontena::Errors::StandardError.new(520, "Invalid response JSON from server for #{response.path}: #{ex.class.name}: #{ex.message}")
     end
