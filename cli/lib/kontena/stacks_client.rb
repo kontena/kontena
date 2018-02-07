@@ -104,7 +104,19 @@ module Kontena
 
     def destroy(stack_name)
       raise_unless_token
-      delete('/v2/stacks/%s' % stack_id(stack_name), nil, {}, ACCEPT_JSONAPI)
+      if stack_name.version
+        id = stack_version_id(stack_name)
+        if id.nil?
+          raise Kontena::Errors::StandardError.new(404, 'Not found')
+        end
+        delete('/v2/stack-versions/%s' % id, nil, {}, ACCEPT_JSONAPI)
+      else
+        id = stack_id(stack_name)
+        if id.nil?
+          raise Kontena::Errors::StandardError.new(404, 'Not found')
+        end
+        delete('/v2/stacks/%s' % id, nil, {}, ACCEPT_JSONAPI)
+      end
     end
 
     def make_private(stack_name)
@@ -128,6 +140,15 @@ module Kontena
 
     def stack_id(stack_name)
       show(stack_name).dig('data', 'id')
+    end
+
+    def stack_version_id(stack_name)
+      version = versions(stack_name, include_prerelease: true).find { |v| v.dig('attributes', 'version') == stack_name.version }
+      if version
+        version['id']
+      else
+        nil
+      end
     end
 
     def change_visibility(stack_name, is_private: true)
