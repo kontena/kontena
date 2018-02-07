@@ -13,7 +13,13 @@ module Kontena::Cli::Stacks::Registry
     requires_current_account_token
 
     def execute
-      unless versions?
+      versions = stacks_client.versions(stack_name)
+
+      if versions?
+        stacks_client.versions(stack_name).each do |version|
+          puts version['attributes']['version']
+        end
+      else
         data = stacks_client.show(stack_name).dig('data', 'attributes')
         puts "#{data['organization-id']}/#{data['name']}:"
         puts "  description: #{data.dig('latest-version', 'description') || '-'}"
@@ -21,10 +27,9 @@ module Kontena::Cli::Stacks::Registry
         puts "  created_at: #{data.dig('created-at')}"
         puts "  pulls: #{data.dig('pulls')}"
         puts "  private: #{data.dig('is-private')}"
-        print "  meta:"
         meta = data.dig('latest-version', 'meta')
         if meta
-          puts
+          puts "  meta:"
           readme = meta.delete('readme')
           meta_lines = YAML.dump(meta).split(/[\r\n]/)
           meta_lines.shift
@@ -43,14 +48,17 @@ module Kontena::Cli::Stacks::Registry
             end
           end
         else
-          puts "-"
+          puts "  meta: -"
         end
 
-        puts "  versions:"
-      end
-
-      stacks_client.versions(stack_name).each do |version|
-        puts versions? ? version['attributes']['version'] : "    - #{version['attributes']['version']} (#{version['attributes']['created-at']})"
+        if versions.empty?
+          puts "  versions: -"
+        else
+          puts "  versions:"
+          versions.each do |version|
+            puts "    - #{version['attributes']['version']} (#{version['attributes']['created-at']})"
+          end
+        end
       end
     end
   end
