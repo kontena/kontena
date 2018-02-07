@@ -68,14 +68,19 @@ module Kontena
       raise ex, ex.message
     end
 
-    def search(query, include_prerelease: true, include_private: true)
+    def search(query, tags: [], include_prerelease: true, include_private: true)
       raise_unless_read_token
-      result = get('/v2/stacks', { 'query' => query, 'include' => 'latest-version', 'include-prerelease' => include_prerelease, 'include-private' => include_private }, ACCEPT_JSONAPI)
+      if tags.empty?
+        result = get('/v2/stacks', { 'query' => query, 'include' => 'latest-version', 'include-prerelease' => include_prerelease, 'include-private' => include_private }, ACCEPT_JSONAPI)
+      else
+        result = get('/v2/tags/%s/stacks' % tags.join(','), { 'query' => query, 'include' => 'latest-version', 'include-prerelease' => include_prerelease, 'include-private' => include_private }, ACCEPT_JSONAPI)
+      end
+
       data = result.dig('data')
       included = result.dig('included')
       if included
         data.each do |row|
-          name = row.fetch('attributes', {}).fetch('name')
+          name = '%s/%s' % [row.fetch('attributes', {}).fetch('organization-id'), row.fetch('attributes', {}).fetch('name')]
           next if name.nil?
           included_version = included.find { |i| i.fetch('attributes', {}).fetch('name') == name }
           if included_version
