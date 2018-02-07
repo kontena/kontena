@@ -13,6 +13,8 @@ module Kontena::Cli::Stacks::Registry
     option ['--[no-]pre'], :flag, "Include pre-release versions", default: true
     option ['--[no-]private'], :flag, "Include private stacks", default: true, attribute_name: :priv
 
+    option ['--tag', '-t'], '[TAG]', "Search by tags", multivalued: true
+
     option ['-q', '--quiet'], :flag, "Output the identifying column only"
 
     def fields
@@ -20,11 +22,11 @@ module Kontena::Cli::Stacks::Registry
     end
 
     def execute
-      results = stacks_client.search(query.to_s, include_prerelease: pre?, include_private: priv?)
+      results = stacks_client.search(query.to_s, tags: tag_list, include_prerelease: pre?, include_private: priv?)
       exit_with_error 'Nothing found' if results.empty?
       print_table(results.map { |r| r['attributes'] }) do |row|
         next if quiet?
-
+        row['name'] = '%s/%s' % [row['organization-id'], row['name']]
         row['name'] = pastel.yellow(row['name']) if row['is-private']
         if row['latest-version'] && row['latest-version']['version']
           row['version'] = row['latest-version']['version']
