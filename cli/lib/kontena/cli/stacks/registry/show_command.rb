@@ -15,7 +15,7 @@ module Kontena::Cli::Stacks::Registry
     def execute
       unless versions?
         data = stacks_client.show(stack_name).dig('data', 'attributes')
-        puts "#{data['name']}:"
+        puts "#{data['organization-id']}/#{data['name']}:"
         puts "  description: #{data.dig('latest-version', 'description')}"
         puts "  latest_version: #{data.dig('latest-version', 'version') || '-'}"
         puts "  created_at: #{data.dig('created-at')}"
