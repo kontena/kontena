@@ -52,7 +52,16 @@ module Kontena
 
     def show(stack_name, include_prerelease: true)
       raise_unless_read_token
-      get("#{path_to_stack(stack_name)}", nil, ACCEPT_JSONAPI)
+      result = get("#{path_to_stack(stack_name)}", { 'include' => 'latest-version', 'include-prerelease' => include_prerelease }, ACCEPT_JSONAPI)
+      if result['included']
+        latest = result['included'].find { |i| i['type'] == 'stack-versions' }
+        return result unless latest
+        result['data']['attributes']['latest-version'] = {}
+        result['data']['attributes']['latest-version']['version'] = latest['attributes']['version']
+        result['data']['attributes']['latest-version']['description'] = latest['attributes']['description']
+        result['data']['attributes']['latest-version']['meta'] = latest['meta']
+      end
+      result
     end
 
     def versions(stack_name, include_prerelease: true, include_deleted: false)
@@ -68,10 +77,10 @@ module Kontena
       raise ex, ex.message
     end
 
-    def search(query, tags: [], include_prerelease: true, include_private: true)
+    def search(query, tags: [], include_prerelease: true, include_private: true, include_versionless: true)
       raise_unless_read_token
       if tags.empty?
-        result = get('/v2/stacks', { 'query' => query, 'include' => 'latest-version', 'include-prerelease' => include_prerelease, 'include-private' => include_private }, ACCEPT_JSONAPI)
+        result = get('/v2/stacks', { 'query' => query, 'include' => 'latest-version', 'include-prerelease' => include_prerelease, 'include-private' => include_private, 'include-versionless' => include_versionless }, ACCEPT_JSONAPI)
       else
         result = get('/v2/tags/%s/stacks' % tags.join(','), { 'query' => query, 'include' => 'latest-version', 'include-prerelease' => include_prerelease, 'include-private' => include_private }, ACCEPT_JSONAPI)
       end
