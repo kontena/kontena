@@ -99,6 +99,11 @@ module Kontena
         @stop_grace_period = attrs['stop_grace_period']
       end
 
+      # @return [String]
+      def to_s
+        self.name_for_humans
+      end
+
       # @return [Boolean]
       def can_expose_ports?
         self.net == 'bridge'
