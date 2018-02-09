@@ -171,6 +171,38 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           )
         end
       end
+
+      context 'from a registry stack' do
+        let(:subject) do
+          described_class.new(fixture_path('kontena_v3_with_registry_extends.yml'))
+        end
+
+        it 'extends services from a registry stack' do
+          expect(Kontena::StacksCache).to receive(:pull).at_least(:once).with('registrystack/compose:1.0.0').and_return(File.read(fixture_path('docker-compose_v2.yml')))
+          expect(subject.execute['services']).to match array_including(
+            hash_including(
+              "instances"=>2,
+              "image"=>"wordpress:4.1",
+              "env"=>["WORDPRESS_DB_PASSWORD=test_secret"],
+              "links"=>[{"name"=>"mysql", "alias"=>"mysql"}],
+              "ports"=>[{"ip"=>"0.0.0.0", "container_port"=>80, "node_port"=>80, "protocol"=>"tcp"}],
+              "stateful"=>true,
+              "strategy"=>"ha",
+              "name"=>"wordpress"
+            ),
+            hash_including(
+              "instances"=>nil,
+              "image"=>"mysql:5.6",
+              "env"=>["MYSQL_ROOT_PASSWORD=test_secret"],
+              "links"=>[],
+              "ports"=>[],
+              "stateful"=>true,
+              "name"=>"mysql",
+              "entrypoint" => "test"
+            )
+          )
+        end
+      end
     end
 
     context 'variable interpolation' do

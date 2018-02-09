@@ -353,8 +353,8 @@ module Kontena::Cli::Stacks
         @services ||= fully_interpolated_yaml.fetch('services', {})
       end
 
-      def from_external_file(filename, service_name)
-        external_reader = FileLoader.new(filename, loader).reader
+      def from_external_stack(name, service_name, klass)
+        external_reader = klass.new(name, loader).reader
         variables.to_a(with_value: true).each do |var|
           external_reader.variables.build_option(var)
         end
@@ -448,8 +448,17 @@ module Kontena::Cli::Stacks
           raise ("Service '#{extends}' not found in #{file}") unless services.key?(extends)
           parent_config = process_config(services[extends])
         when Hash
-          target = extends['file'] || extends['stack']
-          parent_config = from_external_file(target, extends['service'])
+          if extends['file']
+            target = extends['file']
+            klass = FileLoader
+          elsif extends['stack']
+            target = extends['stack']
+            klass = RegistryLoader
+          else
+            raise ("Service '#{extends}' does not define file: or stack: source")
+          end
+
+          parent_config = from_external_stack(target, extends['service'], klass)
         else
           raise TypeError, "Extends must be a hash or string"
         end
