@@ -29,7 +29,7 @@ module Kontena::Workers
       @prev_state = nil # last state sent to master; do not go backwards in time
       @deploy_rev_changed = false
       @restarts = 0
-      @apply_started = @apply_finished_at = nil
+      @apply_started_at = @apply_finished_at = nil
       subscribe('container:event', :on_container_event)
     end
 
@@ -44,6 +44,23 @@ module Kontena::Workers
       end
     end
 
+    def apply_started!
+      @apply_started_at = Time.now
+    end
+    def apply_finished!
+      @apply_finished_at = Time.now
+    end
+
+    # @return [Boolean]
+    def apply_started?
+      @apply_started_at && (!@apply_finished_at || @apply_finished_at < @apply_started_at)
+    end
+
+    # @return [Boolean]
+    def apply_finished?
+      !!@apply_finished_at && @apply_finished_at > @apply_started_at
+    end
+
     # @param service_pod [Kontena::Models::ServicePod]
     # @return [Boolean]
     def needs_apply?(service_pod)
@@ -51,8 +68,8 @@ module Kontena::Workers
                      @service_pod.deploy_rev != service_pod.deploy_rev
       return false if restarting?
 
-      # retry apply if it not yet started, or failed
-      return true if !@apply_started_at || (!@apply_finished_at || @apply_finished_at < @apply_started_at)
+      # retry apply if it did not complete succesfully
+      return true if !apply_finished?
 
       return false
     end
@@ -131,7 +148,7 @@ module Kontena::Workers
       container = nil
 
       exclusive {
-        @apply_started_at = Time.now
+        apply_started!
 
         # make sure we sync the correct service_pod rev back to the master, if it changes later during the apply
         service_pod = @service_pod
@@ -146,8 +163,7 @@ module Kontena::Workers
           @restarts = 0
         }
 
-        # does not get updated if ensure_desired_state failed, so needs_apply? => true
-        @apply_finished_at = Time.now
+        apply_finished! # skipped on errors, so we retry because needs_apply? => true
       }
 
       if service_pod.running? && service_pod.wait_for_port

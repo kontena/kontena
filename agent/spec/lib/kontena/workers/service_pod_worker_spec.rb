@@ -287,10 +287,15 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       expect(subject.needs_apply?(update)).to be_truthy
     end
 
-    context 'after a previous succesfull apply' do
+    context 'after a previous successful apply' do
       before do
-        subject.instance_variable_set('@apply_started_at', Time.now - 2.0)
-        subject.instance_variable_set('@apply_finished_at', Time.now - 1.0)
+        subject.apply_started!
+        sleep 0.001
+        subject.apply_finished!
+      end
+
+      it 'subject is not apply_finished?' do
+        expect(subject.apply_finished?).to be_truthy
       end
 
       it 'returns false if pod has not changed' do
@@ -310,10 +315,15 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       end
     end
 
-    context 'after a previous unsuccesfull apply' do
+    context 'after a previous unsuccessful apply' do
       before do
-        subject.instance_variable_set('@apply_started_at', Time.now - 1.0)
-        subject.instance_variable_set('@apply_finished_at', Time.now - 20.0)
+        subject.apply_finished!
+        sleep 0.001
+        subject.apply_started!
+      end
+
+      it 'subject is not apply_finished?' do
+        expect(subject.apply_finished?).to be_falsey
       end
 
       it 'returns true if pod has not changed' do
