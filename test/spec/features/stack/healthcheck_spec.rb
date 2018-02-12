@@ -8,10 +8,12 @@ describe 'kontena service health_check' do
     end
   
     let(:stack_name) { 'healthcheck-test' }
+    let(:health_status) { 200 }
+    let(:health_location) { '' }
 
     before(:each) do
       with_fixture_dir('stack/healthcheck') do
-        run! "kontena stack install -n #{stack_name} -v health_status=#{health_status}"
+        run! "kontena stack install -n #{stack_name} -v health_status=#{health_status} -v health_location=#{health_location}"
       end
     end
 
@@ -34,6 +36,26 @@ describe 'kontena service health_check' do
     context "returning HTTP status 200 for healthchecks" do
       let(:stack_name) { 'healthcheck-test-200' }
       let(:health_status) { 200 }
+
+      it "has a healthy status" do
+        expect(check_service_health()).to eq 'healthy'
+      end
+    end
+
+    context "returning HTTP 302 => 200 redirect for healthchecks" do
+      let(:stack_name) { 'healthcheck-test-302-200' }
+      let(:health_status) { 302 }
+      let(:health_location) { '/health?status=200' }
+
+      it "has a healthy status" do
+        expect(check_service_health()).to eq 'healthy'
+      end
+    end
+
+    context "returning HTTP 302 => 500 redirect for healthchecks" do
+      let(:stack_name) { 'healthcheck-test-302-500' }
+      let(:health_status) { 302 }
+      let(:health_location) { '/health?status=500' }
 
       it "has a healthy status" do
         expect(check_service_health()).to eq 'healthy'

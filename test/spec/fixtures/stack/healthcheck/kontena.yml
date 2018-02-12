@@ -13,7 +13,7 @@ services:
     health_check:
       protocol: http
       port: 8000
-      # {% if health_location %}
+      # {% if health_location and health_location.size > 0 %}
       uri: "/health?status=${health_status}&location=${health_location}"
       # {% else %}
       uri: "/health?status=${health_status}"
