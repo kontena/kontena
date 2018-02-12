@@ -52,11 +52,6 @@ module Kontena::Workers
     end
 
     # @return [Boolean]
-    def apply_started?
-      @apply_started_at && (!@apply_finished_at || @apply_finished_at < @apply_started_at)
-    end
-
-    # @return [Boolean]
     def apply_finished?
       !!@apply_finished_at && @apply_finished_at > @apply_started_at
     end
