@@ -31,8 +31,13 @@ if vault_key = ENV['VAULT_KEY']
       legacy_cipher,
     ]
 
-    # used to lookup cipher for vault values not having any header
-    SymmetricEncryption.select_cipher do
+    # existing stored secrets in the mongo models will not have any @EnC header
+    # by default SymmetricEncryption.decrypt uses the primary cipher to decrypt values that do not have any header
+    # override that using select_cipher in order to decrypt legacy ciphertexts using the backwards-compatible legacy cipher:
+    #
+    #   > When no header is present in the encrypted data, this custom Block/Proc is
+    #   > used to determine which cipher to use to decrypt the data.
+    SymmetricEncryption.select_cipher do |encoded_str, decoded_str|
       legacy_cipher
     end
   end
