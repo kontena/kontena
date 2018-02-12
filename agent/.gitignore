@@ -8,3 +8,5 @@ log/*.log
 /build/
 /release/
 /vendor/
+.ruby-version
+.ruby-gemset
