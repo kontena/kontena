@@ -65,8 +65,8 @@ class MongoPubsub
   finalizer :finalize
 
   # @return [Array<Subscription>]
-  def subscriptions
-    @@subscriptions ||= []
+  def self.subscriptions
+    @subscriptions ||= []
   end
 
   # @param [Mongoid::Document] model
@@ -77,6 +77,11 @@ class MongoPubsub
     info "initialized"
 
     start
+  end
+
+  # @return [Array<Subscription>]
+  def subscriptions
+    self.class.subscriptions
   end
 
   def start
