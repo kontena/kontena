@@ -20,5 +20,3 @@
 /vendor/
 /.bundle/
 .rspec-local
-.ruby-version
-.ruby-gemset
