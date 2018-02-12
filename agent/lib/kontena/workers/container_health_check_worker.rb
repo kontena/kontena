@@ -9,8 +9,6 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
-    HEALTHY_STATUSES = (200 .. 299).to_a.freeze
-
     finalizer :log_exit
 
     # @param [Docker::Container] container
@@ -81,7 +79,7 @@ module Kontena::Workers
           }
         )
         debug "got status: #{response.status}"
-        data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
+        data['status'] = (response.status >= 200 && response.status < 400) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status
       rescue
         data['status'] = 'unhealthy'

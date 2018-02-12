@@ -103,7 +103,25 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
       expect(health_status['status_code']).to eq(299)
     end
 
-    it 'returns unhealthy status when response status not 200' do
+    it 'returns healthy status when http status is 302' do
+      response = double
+      allow(response).to receive(:status).and_return(302)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status['status']).to eq('healthy')
+      expect(health_status['status_code']).to eq(302)
+    end
+
+    it 'returns unhealthy status when response status is 4xx' do
+      response = double
+      allow(response).to receive(:status).and_return(400)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status['status']).to eq('unhealthy')
+      expect(health_status['status_code']).to eq(400)
+    end
+
+    it 'returns unhealthy status when response status is 5xx' do
       response = double
       allow(response).to receive(:status).and_return(500)
       expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
