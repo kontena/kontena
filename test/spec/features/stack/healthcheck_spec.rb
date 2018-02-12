@@ -1,3 +1,4 @@
+require 'net/http'
 
 describe 'kontena service health_check' do
   context 'for a http test service' do
@@ -32,13 +33,22 @@ describe 'kontena service health_check' do
       
       match[1]
     end
+    
+    def check_lb_response_code(url="http://localhost/health")
+      response = Net::HTTP.get_response(URI(url))
+      response.code.to_i
+    end
 
-    context "returning HTTP status 200 for healthchecks" do
+    context "returning HTTP 200 for healthchecks" do
       let(:stack_name) { 'healthcheck-test-200' }
       let(:health_status) { 200 }
 
       it "has a healthy status" do
         expect(check_service_health()).to eq 'healthy'
+      end
+
+      it "returns HTTP 200 via the LB" do
+        expect(check_lb_response_code).to eq 200
       end
     end
 
@@ -50,6 +60,10 @@ describe 'kontena service health_check' do
       it "has a healthy status" do
         expect(check_service_health()).to eq 'healthy'
       end
+      
+      it "returns HTTP 200 via the LB" do
+        expect(check_lb_response_code).to eq 200
+      end
     end
 
     context "returning HTTP 302 => 500 redirect for healthchecks" do
@@ -60,9 +74,13 @@ describe 'kontena service health_check' do
       it "has a healthy status" do
         expect(check_service_health()).to eq 'healthy'
       end
+      
+      it "returns HTTP 200 via the LB" do
+        expect(check_lb_response_code).to eq 200
+      end
     end
 
-    context "returning HTTP status 500 for healthchecks" do
+    context "returning HTTP 500 for healthchecks" do
       let(:stack_name) { 'healthcheck-test-500' }
       let(:health_status) { 500 }
 
@@ -71,5 +89,9 @@ describe 'kontena service health_check' do
       end
     end
 
+      it "returns HTTP 503 via the LB" do
+        expect(check_lb_response_code).to eq 503
+      end
+    end
   end
 end

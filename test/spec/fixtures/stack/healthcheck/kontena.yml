@@ -7,6 +7,13 @@ variables:
     type: string
     required: false
 services:
+  lb:
+    image: kontena/lb
+    network_mode: host
+    environment:
+      - ETCD_NODE=127.0.0.1
+      - KONTENA_LB_HEALTH_URI=/.lb/health
+    stop_grace_period: 0s
   server:
     build: .
     image: healthcheck-test
@@ -19,6 +26,9 @@ services:
       uri: "/health?status=${health_status}"
       # {% endif %}
       initial_delay: 2
+    links:
+      - lb
     environment:
       - KONTENA_LB_INTERNAL_PORT=8000
       - KONTENA_LB_VIRTUAL_PATH=/health
+
