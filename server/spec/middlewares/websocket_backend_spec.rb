@@ -542,6 +542,16 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
     end
 
+    describe '#handle_rpc_notification' do
+      it "calls RpcServer" do
+        rpc_notification = [2, '/test/test', ['test']]
+
+        expect(RpcServer).to receive(:handle_rpc_notification).with(grid.id, rpc_notification)
+
+        subject.handle_rpc_notification(client_ws, rpc_notification)
+      end
+    end
+
     describe '#on_close' do
       it "logs a warning if the client is not found" do
         subject.instance_variable_get('@clients').clear
