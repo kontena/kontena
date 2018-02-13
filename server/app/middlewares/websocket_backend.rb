@@ -293,7 +293,7 @@ class WebsocketBackend
     if client = client_for_ws(ws)
       RpcServer.handle_rpc_request(client[:grid_id].to_s, data) do |message|
         EM.next_tick { # important to push sending back to EM reactor thread
-          send_message(message)
+          send_message(ws, message)
         }
       end
     end

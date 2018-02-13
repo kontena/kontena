@@ -525,6 +525,23 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
     end
 
+    describe '#handle_rpc_request' do
+      it "calls RpcServer and sends response" do
+        rpc_request = [0, 100, '/test/test', ['test']]
+        rpc_response = [1, 100, nil, 'ack']
+
+        expect(RpcServer).to receive(:handle_rpc_request).with(grid.id, rpc_request).and_yield(rpc_response)
+        expect(client_ws).to receive(:send) do |bytes|
+          data = MessagePack.unpack(bytes.pack('c*'))
+
+          expect(data).to eq rpc_response
+        end
+
+        subject.handle_rpc_request(client_ws, rpc_request)
+        EM.run_deferred_callbacks
+      end
+    end
+
     describe '#on_close' do
       it "logs a warning if the client is not found" do
         subject.instance_variable_get('@clients').clear
