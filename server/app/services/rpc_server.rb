@@ -15,6 +15,8 @@ class RpcServer
     @queue ||= SizedQueue.new(QUEUE_SIZE)
   end
 
+  # This can block if the queue is full.
+  #
   # @param grid_id [String]
   # @param rpc_request [Array{0, Integer, String, Array}] MsgPack-RPC request
   # @yield [rpc_response]
@@ -26,15 +28,21 @@ class RpcServer
   # @param rpc_notification [Array{2, String, Array}] MsgPack-RPC notification
   def self.handle_rpc_notification(grid_id, rpc_notification)
     if self.queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT # too busy to handle notifications
-      @msg_dropped += 1
+      msg_dropped!
       return
     end
 
     self.queue << [grid_id, rpc_notification, nil]
   end
 
-  def self.msg_dropped
-    @msg_dropped
+  def self.msg_dropped!
+    @msg_dropped += 1
+  end
+  def self.read_and_clear_msg_dropped
+    (@msg_dropped ||= 0).tap do
+      # this is not atomic, but who cares
+      @msg_dropped = 0
+    end
   end
 
   HANDLERS = {
@@ -60,42 +68,58 @@ class RpcServer
 
   # @param [SizedQueue] queue
   def initialize(autostart: true)
-    @queue = self.class.queue
     @handlers = {}
-    @counter = 0
+    @msg_counter = 0
 
     info "initialized"
 
-    async.process! if autostart
+    async.process if autostart
+    async.watch_queue if autostart
   end
 
-  # XXX: fixup
-  def watch_queue
-    EM::PeriodicTimer.new(QUEUE_WATCH_PERIOD) do
-      if (queue_size = self.rpc_queue.size) > QUEUE_DROP_NOTIFICATIONS_LIMIT
-        logger.warn "#{queue_size} messages in queue"
-      end
-      logger.warn "#{@msg_dropped} dropped notifications" if @msg_dropped > 0
-      logger.info "#{@msg_counter / QUEUE_WATCH_PERIOD} messages per second"
+  def queue
+    self.class.queue
+  end
+
+  def read_and_clear_msg_counter
+    @msg_counter.tap do
+      # this is not atomic, but who cares
       @msg_counter = 0
-      @msg_dropped = 0
     end
   end
 
-  def process!
-    while data = @queue.pop
-      @counter += 1
+  def watch_queue
+    every(QUEUE_WATCH_PERIOD) do
+      queue_size = self.queue.size
+      msg_dropped = self.class.read_and_clear_msg_dropped
+      msg_counter = self.read_and_clear_msg_counter
 
-      grid_id, rpc, block = data
-
-      if block
-        block.call(handle_request(grid_id, rpc).as_json)
-      else
-        handle_notification(grid_id, rpc)
-      end
-
-      Thread.pass
+      warn "#{queue_size} messages in queue" if queue_size  > QUEUE_DROP_NOTIFICATIONS_LIMIT
+      warn "#{msg_dropped} dropped notifications" if msg_dropped > 0
+      info "#{msg_counter / QUEUE_WATCH_PERIOD} messages per second"
     end
+  end
+
+  def process
+    @processing = true
+
+    # separate thread for blocking queue.pop
+    # XXX: all of the handle_* methods run in the defer thread, not the actor thread...
+    defer {
+      while @processing && data = self.queue.pop
+        @msg_counter += 1
+
+        grid_id, rpc, block = data
+
+        if block
+          block.call(handle_request(grid_id, rpc).as_json)
+        else
+          handle_notification(grid_id, rpc)
+        end
+
+        Thread.pass
+      end
+    }
   end
 
   # @param grid_id [String]
@@ -167,6 +191,8 @@ class RpcServer
   end
 
   def finalize
+    @processing = false # stop this actor's defer { ... } thread, so the restarted actor can process the queue
+
     info "terminated"
   end
 end
