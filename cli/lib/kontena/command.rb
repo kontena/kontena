@@ -7,6 +7,8 @@ require 'excon/error'
 
 class Kontena::Command < Clamp::Command
 
+  Clamp.allow_options_after_parameters = true
+
   option ['-D', '--[no-]debug'], :flag, "Enable debug", environment_variable: 'DEBUG', attribute_name: :debug_option do |debug|
     unless debug.kind_of?(String)
       ENV['DEBUG'] = debug.to_s
