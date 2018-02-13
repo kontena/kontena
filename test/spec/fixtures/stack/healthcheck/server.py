@@ -1,8 +1,10 @@
 import urllib.parse
 import http.server
 import os.path
+import os
 
 PORT = 8000
+STATUS = int(os.environ['HTTP_RESPONSE_STATUS']) if 'HTTP_RESPONSE_STATUS' in os.environ else 200
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -12,8 +14,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if 'status' in query:
             status = int(query.get('status')[0])
         else:
-            status = 200
-
+            status = STATUS
 
         headers = {}
         

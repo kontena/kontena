@@ -20,9 +20,19 @@ describe 'kontena service health_check' do
       match[1]
     end
     
-    def check_lb_response_code(url="http://localhost/health")
-      response = Net::HTTP.get_response(URI(url))
-      response.code.to_i
+    def check_lb_response_code(url="http://localhost/#{stack_name}")
+      loop do
+        response = Net::HTTP.get_response(URI(url))
+        status = response.code.to_i
+
+        puts "GET #{url} => #{status}"
+
+        if status != 404
+          return status 
+        else
+          sleep 1
+        end
+      end 
     end
 
     context "returning HTTP 200 for healthchecks" do
@@ -32,7 +42,6 @@ describe 'kontena service health_check' do
         with_fixture_dir('stack/healthcheck') do
           run! "kontena stack install -n healthcheck-test-200 -v health_status=200"
         end
-        sleep 1 # wait for lb?
       end
       after(:all) do
         run! 'kontena stack rm --force healthcheck-test-200'
@@ -54,7 +63,6 @@ describe 'kontena service health_check' do
         with_fixture_dir('stack/healthcheck') do
           run! "kontena stack install -n healthcheck-test-302-200 -v health_status=302 -v health_location=/health?status=200"
         end
-        sleep 1 # wait for lb?
       end
       after(:all) do
         run! 'kontena stack rm --force healthcheck-test-302-200'
@@ -76,7 +84,6 @@ describe 'kontena service health_check' do
         with_fixture_dir('stack/healthcheck') do
           run! "kontena stack install -n healthcheck-test-302-500 -v health_status=302 -v health_location=/health?status=500"
         end
-        sleep 1 # wait for lb?
       end
       after(:all) do
         run! 'kontena stack rm --force healthcheck-test-302-500'
@@ -97,7 +104,6 @@ describe 'kontena service health_check' do
         with_fixture_dir('stack/healthcheck') do
           run! "kontena stack install -n healthcheck-test-500 -v health_status=500"
         end
-        sleep 1 # wait for lb?
       end
       after(:all) do
         run! 'kontena stack rm --force healthcheck-test-500'
