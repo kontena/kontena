@@ -88,7 +88,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     it 'returns healthy status when http status is 200' do
       response = double
       allow(response).to receive(:status).and_return(200)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('healthy')
       expect(health_status['status_code']).to eq(200)
@@ -97,7 +97,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     it 'returns healthy status when http status is 299' do
       response = double
       allow(response).to receive(:status).and_return(299)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('healthy')
       expect(health_status['status_code']).to eq(299)
@@ -106,7 +106,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     it 'returns healthy status when http status is 302' do
       response = double
       allow(response).to receive(:status).and_return(302)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('healthy')
       expect(health_status['status_code']).to eq(302)
@@ -115,7 +115,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     it 'returns unhealthy status when response status is 4xx' do
       response = double
       allow(response).to receive(:status).and_return(400)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('unhealthy')
       expect(health_status['status_code']).to eq(400)
@@ -124,20 +124,20 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     it 'returns unhealthy status when response status is 5xx' do
       response = double
       allow(response).to receive(:status).and_return(500)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('unhealthy')
       expect(health_status['status_code']).to eq(500)
     end
 
     it 'returns unhealthy status when connection timeouts' do
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_raise(Excon::Errors::Timeout)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_raise(Excon::Errors::Timeout)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('unhealthy')
     end
 
     it 'returns unhealthy status when connection fails with weird error' do
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_raise(Excon::Errors::Error)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_raise(Excon::Errors::Error)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status['status']).to eq('unhealthy')
     end
