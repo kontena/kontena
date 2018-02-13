@@ -9,9 +9,10 @@ dependency "libxml2"
 dependency "libxslt"
 whitelist_file "./wrappers/sh/kontena"
 build do
-  gem "install rb-readline -v 0.5.4 --no-ri --no-doc"
-  gem "install nokogiri -v 1.6.8 --no-ri --no-doc"
-  gem "install kontena-cli -v #{default_version} --no-ri --no-doc"
-  gem "install kontena-plugin-cloud --no-ri --no-doc"
+  env = with_standard_compiler_flags(with_embedded_path)
+  gem "install rb-readline -v 0.5.4 -N", env: env
+  gem "install nokogiri -v 1.8.2 -N", env: env
+  gem "install -g Gemfile --no-ri -N", env: env, cwd: File.expand_path('..', Omnibus::Config.project_root)
+  gem "install kontena-plugin-cloud -N", env: env
   copy "sh/kontena", "#{install_dir}/bin/kontena"
 end
