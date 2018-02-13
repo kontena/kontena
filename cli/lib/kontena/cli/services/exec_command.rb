@@ -10,6 +10,8 @@ module Kontena::Cli::Services
     include Kontena::Cli::Helpers::ExecHelper
     include ServicesHelper
 
+    Clamp.allow_options_after_parameters = false
+
     class ExecExit < StandardError
       attr_reader :exit_status
 

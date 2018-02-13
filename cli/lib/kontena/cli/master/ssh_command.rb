@@ -5,6 +5,8 @@ module Kontena::Cli::Master
 
     include Kontena::Cli::Common
 
+    Clamp.allow_options_after_parameters = false
+
     parameter "[COMMANDS] ...", "Run command on host"
 
     option ["-i", "--identity-file"], "IDENTITY_FILE", "Path to ssh private key"

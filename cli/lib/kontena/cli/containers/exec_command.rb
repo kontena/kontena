@@ -6,6 +6,8 @@ module Kontena::Cli::Containers
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::ExecHelper
 
+    Clamp.allow_options_after_parameters = false
+
     parameter "CONTAINER_ID", "Container id"
     parameter "CMD ...", "Command"
 

@@ -5,6 +5,8 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
+    Clamp.allow_options_after_parameters = false
+
     parameter "[NODE]", "SSH to Grid node. Use --any to connect to the first available node"
     parameter "[COMMANDS] ...", "Run command on host"
     option ["-a", "--any"], :flag, "Connect to first available node"
@@ -49,6 +51,7 @@ module Kontena::Cli::Nodes
         end
         cmd << "#{user}@#{ip}"
         cmd += commands_list
+        logger.debug { "Running ssh command: #{cmd.inspect}" }
         exec(*cmd)
       end
     end
