@@ -77,13 +77,7 @@ module Kontena::Workers
           headers: {
             "User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"
           },
-          middlewares: [
-            Excon::Middleware::ResponseParser,
-            Excon::Middleware::Expects,
-            Excon::Middleware::Idempotent,
-            Excon::Middleware::Instrumentor,
-            Excon::Middleware::Mock,
-          ]
+          middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower],
         )
         debug "got status: #{response.status}"
         data['status'] = (response.status >= 200 && response.status < 400) ? 'healthy' : 'unhealthy'
