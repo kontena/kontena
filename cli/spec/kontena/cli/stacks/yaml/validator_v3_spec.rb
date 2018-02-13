@@ -374,6 +374,27 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
   end
 
   describe '#validate' do
+    context 'stack' do
+      context 'stack name' do
+        let(:stack) do
+          {
+            'stack' => 'user/a_stack',
+            'services' => {
+              'app' => {
+                'image' => 'redis:latest'
+              }
+            }
+          }
+        end
+
+        it 'should warn about invalid stack names' do
+          result = subject.validate(stack)
+          expect(result[:notifications]).to match array_including(
+            hash_including('stack' => /stack name should/)
+          )
+        end
+      end
+    end
 
     context 'services' do
       context 'service name' do
