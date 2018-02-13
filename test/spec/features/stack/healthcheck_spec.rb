@@ -20,17 +20,19 @@ describe 'kontena service health_check' do
       match[1]
     end
     
-    def check_lb_response_code(url="http://localhost/#{stack_name}")
+    def check_lb_response_code(host: "#{stack_name}.test", path: '/')
       loop do
-        response = Net::HTTP.get_response(URI(url))
-        status = response.code.to_i
+        Net::HTTP.start('localhost', 80) do |http|
+          response = http.request_get(path, { 'Host': host })
+          status = response.code.to_i
 
-        puts "GET #{url} => #{status}"
+          puts "GET http://#{host}#{path} => #{status}"
 
-        if status != 404
-          return status 
-        else
-          sleep 1
+          if status != 404
+            return status 
+          else
+            sleep 1
+          end
         end
       end 
     end
@@ -114,7 +116,7 @@ describe 'kontena service health_check' do
       end
 
       it "returns HTTP 503 via the LB" do
-        expect(check_lb_response_code).to eq 503
+        expect(check_lb_response_code(path: '/?status=404')).to eq 503
       end
     end
   end

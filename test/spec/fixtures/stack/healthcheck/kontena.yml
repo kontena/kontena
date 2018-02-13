@@ -39,5 +39,5 @@ services:
       - lb
     environment:
       - KONTENA_LB_INTERNAL_PORT=8000
-      - KONTENA_LB_VIRTUAL_PATH=/${STACK}
+      - KONTENA_LB_VIRTUAL_HOSTS=${STACK}.test
 
