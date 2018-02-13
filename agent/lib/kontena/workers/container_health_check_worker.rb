@@ -9,6 +9,8 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
+    HEALTHY_STATUSES = (200 .. 399)
+
     finalizer :log_exit
 
     # @param [Docker::Container] container
@@ -80,7 +82,7 @@ module Kontena::Workers
           middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower],
         )
         debug "got status: #{response.status}"
-        data['status'] = (response.status >= 200 && response.status < 400) ? 'healthy' : 'unhealthy'
+        data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status
       rescue
         data['status'] = 'unhealthy'
