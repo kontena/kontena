@@ -12,7 +12,8 @@ build do
   env = with_standard_compiler_flags(with_embedded_path)
   gem "install rb-readline -v 0.5.4 -N", env: env
   gem "install nokogiri -v 1.8.2 -N", env: env
-  gem "install -g Gemfile --no-ri -N", env: env, cwd: File.expand_path('..', Omnibus::Config.project_root)
+  gem "build kontena-cli.gemspec", env: env, cwd: File.expand_path('..', Omnibus::Config.project_root)
+  gem "install -N #{Dir[File.expand_path('../kontena-cli-%s.gem' % default_version, Omnibus::Config.project_root)].first}", env: env
   gem "install kontena-plugin-cloud -N", env: env
   copy "sh/kontena", "#{install_dir}/bin/kontena"
 end
