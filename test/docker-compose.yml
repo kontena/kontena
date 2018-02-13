@@ -27,6 +27,7 @@ services:
       - VAULT_IV=kljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljh
       - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
       - INITIAL_ADMIN_CODE=initialadmincode
+      - "KONTENA_SERVER_GZIP=true"
     depends_on:
       - mongodb
 
