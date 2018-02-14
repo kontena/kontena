@@ -20,6 +20,12 @@ describe GridServices::Scale, celluloid: true do
       }.to change{ redis_service.grid_service_deploys.count }.by(1)
     end
 
+    it 'does not change service revision' do
+      expect{
+        subject.run!
+      }.to_not change{redis_service.reload.revision}
+    end
+
     it 'updates container_count' do
       redis_service # create
       expect {
