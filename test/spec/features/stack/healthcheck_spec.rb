@@ -23,6 +23,7 @@ describe 'kontena service health_check' do
     def check_lb_response_code(url = 'http://localhost/', retry_503: 5)
       uri = URI(url)
       count = 0
+      last_status = 0
 
       loop do
         response = Net::HTTP.get_response(uri)
@@ -33,9 +34,14 @@ describe 'kontena service health_check' do
         if status == 503 && ((count += 1) < retry_503)
           # LB can return 503 temporarily during configuration, retry to make sure it's stable before returning it
           sleep 1
+        elsif status != last_status
+          # retry until stable to confirm
+          sleep 1
         else
           return status
         end
+
+        last_status = status
       end 
     end
 
@@ -118,7 +124,7 @@ describe 'kontena service health_check' do
       end
 
       it "returns HTTP 503 via the LB" do
-        expect(check_lb_response_code(retry_503: 3)).to eq 503
+        expect(check_lb_response_code()).to eq 503
       end
     end
   end
