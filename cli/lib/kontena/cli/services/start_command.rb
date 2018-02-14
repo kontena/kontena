@@ -15,7 +15,12 @@ module Kontena::Cli::Services
       names.each do |name|
         spinner "Starting service #{pastel.cyan(name)}" do
           deployment = start_service(token, name)
-          wait_for_deploy_to_finish(deployment) if wait?
+          wait_for_deploy_to_finish(deployment, vocabulary: {
+              :action => "Start",
+              :ing => "Starting",
+              :ed  => "Started",
+              :preposition => "on",
+          }) if wait?
         end
       end
     end
