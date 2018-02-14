@@ -113,7 +113,7 @@ describe 'kontena service health_check' do
         run! 'kontena stack rm --force healthcheck-test-500'
       end
  
-      it "has a healthy status" do
+      it "has an unhealthy status" do
         expect(check_service_health('healthcheck-test-500/server')).to eq 'unhealthy'
       end
 
