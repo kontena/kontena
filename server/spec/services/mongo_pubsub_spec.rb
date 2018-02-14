@@ -157,13 +157,11 @@ describe MongoPubsub, :celluloid => true do
       before do
         described_class.actor.async.crash!
         WaitHelper.wait_until!("restarted", timeout: 1.0) { (actor = described_class.actor) && actor.alive? && (actor.ping rescue nil)}
-        sleep 1 # XXX: the async.tail! => defer { self.collection.find(...) do ... } loop won't be running yet...
       end
 
-      it 'is able to restart and process publishes' do
-        described_class.publish('test1', {'test' => 1})
-        described_class.actor.ping
-        
+      it 'is able to restart and process messages' do
+        described_class.actor.queue_message('test1', BSON::Binary.new(MessagePack.pack({'test' => 1})))
+
         test1_subscriber.terminate
         test1_subscriber.wait
 
