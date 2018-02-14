@@ -19,6 +19,7 @@ module Kontena::Workers
 
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :hook_manager
+    finalizer :finalize
 
     # @param node [Node]
     # @param service_pod [ServicePod]
@@ -135,7 +136,11 @@ module Kontena::Workers
 
     def destroy
       @service_pod.mark_as_terminated
-      apply
+      if apply
+        # Only terminate this actor after we have succesfully ensure_terminated the Docker container and sync'd back to master
+        # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
+        self.terminate
+      end
     end
 
     def apply
@@ -163,20 +168,17 @@ module Kontena::Workers
 
       if service_pod.running? && service_pod.wait_for_port
         wait_for_port(service_pod, container)
-
-      elsif service_pod.terminated?
-        # Only terminate this actor after we have succesfully ensure_terminated the Docker container
-        # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
-        self.terminate
-        return # skip sync_state_to_master
       end
+
+      sync_state_to_master(service_pod, container)
 
     rescue => error
       warn "failed to apply #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
       warn error
       sync_state_to_master(service_pod, container, error) # XXX: unknown container?
+      return false
     else
-      sync_state_to_master(service_pod, container)
+      return true
     end
 
     # Check that the given container is still running for the given service pod revision.
@@ -232,9 +234,9 @@ module Kontena::Workers
       elsif service_pod.stopped? && (service_container && service_container.running?)
         info "stopping #{service_pod.name}"
         ensure_stopped
-      elsif service_pod.terminated?
+      elsif service_pod.terminated? && service_container
         info "terminating #{service_pod.name}"
-        ensure_terminated if service_container
+        ensure_terminated
       elsif service_pod.desired_state_unknown?
         info "desired state is unknown for #{service_pod.name}, not doing anything"
       elsif state_in_sync?(service_pod, service_container)
@@ -365,10 +367,12 @@ module Kontena::Workers
 
     # @param service_container [Docker::Container]
     # @return [String]
-    def current_state(service_container)
-      return 'missing' unless service_container
-
-      if service_container.running?
+    def current_state(service_pod, service_container)
+      if service_pod.terminated? && !service_container
+        'terminated'
+      elsif !service_container
+        'missing'
+      elsif service_container.running?
         'running'
       elsif restarting?
         'restarting'
@@ -385,7 +389,7 @@ module Kontena::Workers
         service_id: service_pod.service_id,
         instance_number: service_pod.instance_number,
         rev: service_pod.deploy_rev,
-        state: self.current_state(service_container),
+        state: self.current_state(service_pod, service_container),
         error: error ? "#{error.class}: #{error}" : nil,
       }
 
@@ -396,7 +400,7 @@ module Kontena::Workers
           debug "skip #{service_pod} state sync at #{service_pod.deploy_rev}: unchanged"
         else
           debug "sync #{service_pod} state at #{service_pod.deploy_rev}: #{state}"
-          rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
+          rpc_client.request('/node_service_pods/set_state', [node.id, state])
           @prev_state = state
         end
       }
@@ -413,6 +417,10 @@ module Kontena::Workers
     # @return [Docker::Container]
     def migrate_container(container)
       Kontena::ServicePods::Migrator.new(container).migrate
+    end
+
+    def finalize
+      debug "destroyed #{service_pod}"
     end
   end
 end
