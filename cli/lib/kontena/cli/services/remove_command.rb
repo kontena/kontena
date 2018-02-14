@@ -29,7 +29,12 @@ module Kontena::Cli::Services
 
       spinner "Terminating service #{pastel.cyan(name)}" do
         deployment = terminate_service(name)
-        wait_for_deploy_to_finish(deployment)
+        wait_for_deploy_to_finish(deployment, vocabulary: {
+            :verb => "Terminate",
+            :verb_ing => "Terminating",
+            :verb_ed  => "Terminated",
+            :preposition => "on",
+        })
       end
 
       spinner "Removing service #{pastel.cyan(name)}" do

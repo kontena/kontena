@@ -43,6 +43,7 @@ module Kontena::Cli::Services
       when 'running' then :green
       when 'initialized' then :cyan
       when 'stopped' then :red
+      when 'terminated' then :dim
       else :blue
       end
     end
