@@ -9,6 +9,23 @@ class Kontena::Command < Clamp::Command
 
   Clamp.allow_options_after_parameters = true
 
+  def self.disallow_options_after_parameters!
+    self.class.prepend Kontena::Command::OptionsAfterParametersDisabler
+  end
+
+  module OptionsAfterParametersDisabler
+    def initialize(*args)
+      Clamp.allow_options_after_parameters = false
+      super
+    end
+
+    def parse(arguments)
+      super
+    ensure
+      Clamp.allow_options_after_parameters = true
+    end
+  end
+
   option ['-D', '--[no-]debug'], :flag, "Enable debug", environment_variable: 'DEBUG', attribute_name: :debug_option do |debug|
     unless debug.kind_of?(String)
       ENV['DEBUG'] = debug.to_s

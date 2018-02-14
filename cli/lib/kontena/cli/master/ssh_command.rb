@@ -5,7 +5,7 @@ module Kontena::Cli::Master
 
     include Kontena::Cli::Common
 
-    Clamp.allow_options_after_parameters = false
+    disallow_options_after_parameters!
 
     parameter "[COMMANDS] ...", "Run command on host"
 
