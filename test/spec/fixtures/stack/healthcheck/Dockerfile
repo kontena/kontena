@@ -1,5 +1,7 @@
-FROM python:latest
+FROM alpine
 
-ADD server.py .
+RUN apk update && apk --update add ruby 
 
-CMD ["python3", "server.py"]
+ADD server.rb .
+
+CMD ["ruby", "server.rb"]
