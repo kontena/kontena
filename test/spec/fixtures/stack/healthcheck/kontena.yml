@@ -14,15 +14,6 @@ services:
       - ETCD_NODE=127.0.0.1
       - KONTENA_LB_HEALTH_URI=/.lb/health
     stop_grace_period: 0s
-  default:
-    build: .
-    image: healthcheck-test
-    links:
-      - lb
-    environment:
-      - KONTENA_LB_INTERNAL_PORT=8000
-      - KONTENA_LB_VIRTUAL_PATH=/
-      - HTTP_RESPONSE_STATUS=404
   server:
     build: .
     image: healthcheck-test
@@ -39,5 +30,5 @@ services:
       - lb
     environment:
       - KONTENA_LB_INTERNAL_PORT=8000
-      - KONTENA_LB_VIRTUAL_HOSTS=${STACK}.test
+      - KONTENA_LB_VIRTUAL_PATH=/
 
