@@ -2,22 +2,18 @@ require 'spec_helper'
 
 describe 'service deploy' do
   it 'deploys a service' do
-    run("kontena service create test-1 redis:3.0")
-    k = kommando("kontena service deploy test-1")
-    expect(k.run).to be_truthy
-
-    run("kontena service rm --force test-1")
+    run!("kontena service create test-1 redis:3.0")
+    run!("kontena service deploy test-1")
+    run!("kontena service rm --force test-1")
   end
 
   context "For a service that fails to deploy" do
     before do
-      k = run("kontena service create -v /dev/null/wtf:/dev/wtf test-fail redis")
-      expect(k.code).to eq(0), k.out
+      run!("kontena service create -v /dev/null/wtf:/dev/wtf test-fail redis")
     end
 
     after do
-      k = run("kontena service rm --force test-fail")
-      fail k.out unless k.code == 0
+      run!("kontena service rm --force test-fail")
     end
 
     it "fails to deploy with an error" do

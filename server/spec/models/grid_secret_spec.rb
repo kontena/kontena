@@ -31,4 +31,20 @@ describe GridSecret do
       expect(secret.services).to eq([service])
     end
   end
+
+  describe '#encrypted_value' do
+    it 'uses random iv' do
+      s1 = described_class.create!(
+        grid: grid,
+        name: 'test1',
+        value: '123456'
+      )
+      s2 = described_class.create!(
+        grid: grid,
+        name: 'test2',
+        value: '123456'
+      )
+      expect(s1.encrypted_value).not_to eq(s2.encrypted_value)
+    end
+  end
 end

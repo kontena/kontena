@@ -696,7 +696,9 @@ Accept: application/json
     "version": "0.1.0",
     "registry": "file://",
     "services": [],
-    "parent_name": "parent-stack-name"
+    "parent": {
+        "id": "parent-stack-id"
+    }
 }
 ```
 

@@ -9,7 +9,7 @@ describe 'stack remove' do
     with_fixture_dir("stack/simple") do
       run! 'kontena stack install --no-deploy'
     end
-    k = run! "kontena stack rm --force simple"
+    run! "kontena stack rm --force simple"
     k = run "kontena stack show simple"
     expect(k.code).not_to eq(0)
   end
@@ -19,14 +19,14 @@ describe 'stack remove' do
       run! 'kontena stack install --no-deploy'
       run! 'kontena stack install --no-deploy --name simple2'
     end
-    k = run! "kontena stack rm --force simple simple2"
+    run! "kontena stack rm --force simple simple2"
     k = run "kontena stack show simple2"
     expect(k.code).not_to eq(0)
   end
 
   it "prompts without --force" do
     with_fixture_dir("stack/simple") do
-      run 'kontena stack install --no-deploy'
+      run! 'kontena stack install --no-deploy'
     end
     k = kommando 'kontena stack rm simple', timeout: 5
     k.out.on "To proceed, type" do
@@ -58,7 +58,7 @@ describe 'stack remove' do
         'twemproxy'
       )
 
-      k = run! 'kontena stack rm --force twemproxy'
+      run! 'kontena stack rm --force twemproxy'
 
       k = run! 'kontena stack ls -q'
       expect(k.out).not_to match /twemproxy-redis_from_registry/

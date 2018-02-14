@@ -18,6 +18,7 @@ module AccessTokens
       model :current_access_token
       string :token
       string :refresh_token
+      string :description, nils: true, empty_is_nil: true
     end
 
     def validate
@@ -56,7 +57,8 @@ module AccessTokens
         user: self.user,
         scopes: self.scopes,
         expires_at: expires_at,
-        with_code: self.with_code
+        with_code: self.with_code,
+        description: self.description
       }
 
       if self.token
