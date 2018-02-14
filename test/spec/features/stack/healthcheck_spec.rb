@@ -21,6 +21,8 @@ describe 'kontena service health_check' do
     end
     
     def check_lb_response_code(host: "#{stack_name}.test", path: '/')
+      count = 0
+
       loop do
         Net::HTTP.start('localhost', 80) do |http|
           response = http.request_get(path, { 'Host': host })
@@ -28,10 +30,14 @@ describe 'kontena service health_check' do
 
           puts "GET http://#{host}#{path} => #{status}"
 
-          if status != 404
-            return status 
-          else
+          if status == 404
+            # the server backend is not get configured, request got routed to the default backend with 404
             sleep 1
+          elsif status == 503 && ((count += 1) < 3)
+            # LB can return 503 temporarily during configuration, retry to make sure it's stable before returning it
+            sleep 1
+          else
+            return status 
           end
         end
       end 
