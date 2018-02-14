@@ -5,13 +5,13 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
-    parameter "NAME ...", "Grid name", attribute_name: :grids
+    parameter "NAME ...", "Grid name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
       require_api_url
       token = require_token
-      grids.each do |name|
+      name_list.each do |name|
         confirm_command(name) unless forced?
         grid = find_grid_by_name(name)
 
