@@ -5,8 +5,6 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    disallow_options_after_parameters!
-
     parameter "[NODE]", "SSH to Grid node. Use --any to connect to the first available node"
     parameter "[COMMANDS] ...", "Run command on host"
     option ["-a", "--any"], :flag, "Connect to first available node"

@@ -2,10 +2,7 @@ require 'kontena/plugin_manager'
 
 module Kontena::Cli::Master
   class SshCommand < Kontena::Command
-
     include Kontena::Cli::Common
-
-    disallow_options_after_parameters!
 
     parameter "[COMMANDS] ...", "Run command on host"
 

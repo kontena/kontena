@@ -10,8 +10,6 @@ module Kontena::Cli::Services
     include Kontena::Cli::Helpers::ExecHelper
     include ServicesHelper
 
-    disallow_options_after_parameters!
-
     class ExecExit < StandardError
       attr_reader :exit_status
 

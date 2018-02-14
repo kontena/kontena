@@ -6,8 +6,6 @@ module Kontena::Cli::Containers
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::ExecHelper
 
-    disallow_options_after_parameters!
-
     parameter "CONTAINER_ID", "Container id"
     parameter "CMD ...", "Command"
 
