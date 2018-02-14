@@ -29,16 +29,10 @@ class GridServiceSchedulerWorker
       if service_deploy.grid_service.deploy_running?
         info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
         return nil
-
-      elsif service_deploy.grid_service.running? || service_deploy.grid_service.initialized?
+      else
         info "starting #{service_deploy.grid_service.to_path} deploy"
         service_deploy.set(started_at: Time.now.utc)
         return service_deploy
-
-      else
-        info "aborting #{service_deploy.grid_service.to_path} deploy of non-running service"
-        service_deploy.abort! "service is not running"
-        return nil
       end
     end
   rescue => exc

@@ -19,18 +19,19 @@ class GridServiceInstanceDeployer
   end
 
   # @param deploy_rev [String]
+  # @param state [String]
   # @return [GridServiceInstanceDeploy] in error or success state
-  def deploy(deploy_rev)
-    info "Deploying service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}..."
+  def deploy(deploy_rev, state)
+    info "Deploying #{state} service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}..."
 
     @grid_service_instance_deploy.set(:_deploy_state => :ongoing)
 
     ensure_volume_instance
-    ensure_service_instance(deploy_rev)
+    ensure_service_instance(deploy_rev, state)
 
   rescue => error
-    warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
-    log_service_event("Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}", EventLog::ERROR)
+    warn "Failed to deploy #{state} service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
+    log_service_event("Failed to deploy #{state} service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}", EventLog::ERROR)
     return @grid_service_instance_deploy.set(:_deploy_state => :error, :error => "#{error.class}: #{error}")
   else
     return @grid_service_instance_deploy.set(:_deploy_state => :success)
@@ -39,9 +40,10 @@ class GridServiceInstanceDeployer
   # Ensure the ServiceInstance matches the desired GridServiceInstanceDeploy configuration.
   #
   # @param deploy_rev [String]
+  # @param state [string]
   # @raise
   # @return [ServiceInstance]
-  def ensure_service_instance(deploy_rev)
+  def ensure_service_instance(deploy_rev, state)
     service_instance = get_service_instance
 
     if service_instance.nil?
@@ -55,7 +57,7 @@ class GridServiceInstanceDeployer
       stop_service_instance(service_instance, deploy_rev)
     end
 
-    deploy_service_instance(service_instance, @host_node, deploy_rev, 'running')
+    deploy_service_instance(service_instance, @host_node, deploy_rev, state)
   end
 
   # Stop an existing instance on the previous host node.

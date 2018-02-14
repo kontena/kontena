@@ -284,12 +284,13 @@ describe GridServiceSchedulerWorker, celluloid: true do
     end
 
     describe '#check_deploy_queue' do
-      it 'aborts deploy if service is stopped' do
-        expect(subject.check_deploy_queue).to be_nil
+      it "starts and returns the deploy" do
+        expect{
+          expect(subject.check_deploy_queue).to eq service_deploy
+        }.to change{service_deploy.reload.started_at}.from(nil).to(a_value >= 1.second.ago)
 
-        expect(service_deploy.reload).to be_aborted
-        expect(service_deploy.reload).to be_finished
-        expect(service_deploy.reload).to be_error
+        expect(service).to_not be_deploy_pending
+        expect(service).to be_deploy_running
       end
     end
   end

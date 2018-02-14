@@ -20,12 +20,12 @@ describe GridServiceInstanceDeployer do
   describe '#deploy' do
     it "updates the instance deploy state to ongoing and then success" do
       expect(subject).to receive(:ensure_volume_instance)
-      expect(subject).to receive(:ensure_service_instance).with(deploy_rev) do
+      expect(subject).to receive(:ensure_service_instance).with(deploy_rev, 'running') do
         expect(instance_deploy).to be_ongoing
       end
 
       expect{
-        result = subject.deploy(deploy_rev)
+        result = subject.deploy(deploy_rev, 'running')
 
         expect(result).to be_a GridServiceInstanceDeploy
         expect(result).to_not be_error
@@ -34,10 +34,10 @@ describe GridServiceInstanceDeployer do
 
     it "updates the instance deploy state to error on failure" do
       expect(subject).to receive(:ensure_volume_instance)
-      expect(subject).to receive(:ensure_service_instance).with(deploy_rev).and_raise(GridServiceInstanceDeployer::ServiceError, "Docker::Error::NotFoundError: No such image: redis:nonexist")
+      expect(subject).to receive(:ensure_service_instance).with(deploy_rev, 'running').and_raise(GridServiceInstanceDeployer::ServiceError, "Docker::Error::NotFoundError: No such image: redis:nonexist")
 
       expect{
-        result = subject.deploy(deploy_rev)
+        result = subject.deploy(deploy_rev, 'running')
 
         expect(result).to be_a GridServiceInstanceDeploy
         expect(result).to be_error
@@ -64,7 +64,7 @@ describe GridServiceInstanceDeployer do
         end
 
         expect{
-          subject.ensure_service_instance(deploy_rev)
+          subject.ensure_service_instance(deploy_rev, 'running')
         }.to change{grid_service.grid_service_instances.count}.from(0).to(1)
 
         service_instance = grid_service.grid_service_instances.first
@@ -119,7 +119,7 @@ describe GridServiceInstanceDeployer do
         end
 
         expect{
-          subject.ensure_service_instance(deploy_rev)
+          subject.ensure_service_instance(deploy_rev, 'running')
         }.to change{service_instance.reload.deploy_rev}.from(old_rev).to(deploy_rev)
 
         service_instance = grid_service.grid_service_instances.first
@@ -128,6 +128,27 @@ describe GridServiceInstanceDeployer do
         expect(service_instance.host_node).to eq node
         expect(service_instance.deploy_rev).to eq deploy_rev
         expect(service_instance.desired_state).to eq 'running'
+      end
+
+      describe "with state stopped" do
+        it "stops the instance" do
+          expect(subject).to receive(:deploy_service_instance).once.with(GridServiceInstance, node, deploy_rev, 'stopped').and_call_original
+          expect(subject).to receive(:notify_node).with(node)
+          expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is stopped on node test-grid/node at #{deploy_rev}", timeout: 300) do
+            grid_service.grid_service_instances.first.set(rev: deploy_rev, state: 'stopped')
+          end
+
+          expect{
+            subject.ensure_service_instance(deploy_rev, 'stopped')
+          }.to change{service_instance.reload.deploy_rev}.from(old_rev).to(deploy_rev)
+
+          service_instance = grid_service.grid_service_instances.first
+
+          expect(service_instance.instance_number).to eq instance_number
+          expect(service_instance.host_node).to eq node
+          expect(service_instance.deploy_rev).to eq deploy_rev
+          expect(service_instance.desired_state).to eq 'stopped'
+        end
       end
     end
   end
@@ -176,7 +197,7 @@ describe GridServiceInstanceDeployer do
         end
 
         expect{
-          subject.ensure_service_instance(deploy_rev)
+          subject.ensure_service_instance(deploy_rev, 'running')
         }.to change{service_instance.reload.host_node}.from(old_node).to(node)
 
         service_instance = grid_service.grid_service_instances.first
