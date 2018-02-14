@@ -306,16 +306,15 @@ module Kontena
           }
         end
 
-        # @param [String] token
         # @param [Hash] deployment
         # @param [Fixnum] timeout
         # @param [Boo lean] verbose
         # @raise [Kontena::Errors::StandardError]
-        def wait_for_deploy_to_finish(token, deployment, timeout: 600)
+        def wait_for_deploy_to_finish(deployment, timeout: 600)
           Timeout::timeout(timeout) do
             until deployment['finished_at']
               sleep 1
-              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
+              deployment = client.get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
             end
 
             if deployment['state'] == 'error'
