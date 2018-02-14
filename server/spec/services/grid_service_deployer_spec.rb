@@ -1,7 +1,7 @@
 
 describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
+  let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid, deploy_requested_at: Time.now - 5.0) }
   let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
   let(:node1) { grid.create_node!('node-1', node_id: SecureRandom.uuid, node_number: 1, mem_total: 1.gigabytes) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
@@ -109,12 +109,28 @@ describe GridServiceDeployer do
         end
 
         expect{
-          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, 'running')
         }.to raise_error(GridServiceDeployer::DeployError, 'halting deploy of test-grid/null/redis, one or more instances failed')
       end
     end
 
     describe '#deploy' do
+      context "for a service that was re-deployed" do
+        before do
+          grid_service_deploy
+          sleep 0.01
+          GridServices::Deploy.run!(grid_service: grid_service)
+        end
+
+        it "aborts the service deploy", :celluloid => true do
+          subject.deploy
+
+          grid_service_deploy.reload
+
+          expect(grid_service_deploy).to be_error
+          expect(grid_service_deploy.reason).to eq "halting deploy of test-grid/null/redis, service was redeployed"
+        end
+      end
 
       context "for multiple concurrent instance deploys" do
         let(:grid_service) {
@@ -125,6 +141,7 @@ describe GridServiceDeployer do
               min_health: 0.0,
             },
             container_count: 2,
+            deploy_requested_at: Time.now - 5.0,
           )
         }
         let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
