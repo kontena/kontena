@@ -293,15 +293,15 @@ module Kontena
 
             case instance_deploy['state']
             when 'created'
-              "#{pastel.dark('⊝')} #{vocabulary[:action]} #{description}"
+              "#{pastel.dark('⊝')} #{vocabulary[:verb]} #{description}"
             when 'ongoing'
-              "#{pastel.cyan('⊙')} #{vocabulary[:ing]} #{description}..."
+              "#{pastel.cyan('⊙')} #{vocabulary[:verb_ing]} #{description}..."
             when 'success'
-              "#{pastel.green('⊛')} #{vocabulary[:ed]} #{description}"
+              "#{pastel.green('⊛')} #{vocabulary[:verb_ed]} #{description}"
             when 'error'
-              "#{pastel.red('⊗')} Failed to #{vocabulary[:action]} #{description}: #{instance_deploy['error']}"
+              "#{pastel.red('⊗')} Failed to #{vocabulary[:verb]} #{description}: #{instance_deploy['error']}"
             else
-              "#{pastel.dark('⊗')} #{vocabulary[:action]} #{description}?"
+              "#{pastel.dark('⊗')} #{vocabulary[:verb]} #{description}?"
             end
           }
         end
@@ -311,9 +311,9 @@ module Kontena
         # @param [Boo lean] verbose
         # @raise [Kontena::Errors::StandardError]
         def wait_for_deploy_to_finish(deployment, timeout: 600, vocabulary: {
-              :action => "Deploy",
-              :ing => "Deploying",
-              :ed  => "Deployed",
+              :verb => "Deploy",
+              :verb_ing => "Deploying",
+              :verb_ed  => "Deployed",
               :preposition => "to",
         })
           Timeout::timeout(timeout) do
