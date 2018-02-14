@@ -1,6 +1,8 @@
+require_relative 'helpers'
+
 module GridServices
   class Scale < Mutations::Command
-    include Workers
+    include Helpers
 
     required do
       model :grid_service
@@ -8,8 +10,10 @@ module GridServices
     end
 
     def execute
-      self.grid_service.set(:container_count => self.instances)
-      GridServiceDeploy.create(grid_service: self.grid_service)
+      grid_service.container_count = self.instances
+
+      # without bumping the revision
+      deploy_grid_service(grid_service, 'running')
     end
   end
 end
