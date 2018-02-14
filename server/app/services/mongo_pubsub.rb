@@ -33,6 +33,7 @@ class MongoPubsub
       @queue.close
     end
 
+    # @param data [BSON::Binary] MessagePack'd data
     def queue_message(data)
       @queue << data
     rescue ClosedQueueError
@@ -51,7 +52,7 @@ class MongoPubsub
       end
     end
 
-    # @param [Hash] data
+    # @param data [BSON::Binary] MessagePack'd data
     def send_message(data)
       payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
       @block.call(payload)
@@ -138,8 +139,8 @@ class MongoPubsub
     )
   end
 
-  # @param [String] channel
-  # @param [Hash] data
+  # @param channel [String]
+  # @param data [BSON::Binary] MessagePack'd data
   def queue_message(channel, data)
     subscriptions.each do |subscription|
       subscription.queue_message(data.dup) if subscription.channel == channel
