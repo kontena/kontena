@@ -19,6 +19,7 @@ module Kontena
       end
 
       def write(content)
+        puts "WHATHAT??? #{stack_name.inspect} #{stack_name.version} #{stack_name.stack_name}"
         raise ArgumentError, "Stack name and version required" unless stack_name.stack_name && stack_name.version
         unless File.directory?(File.dirname(path))
           require 'fileutils'
@@ -73,15 +74,18 @@ module Kontena
           dputs "Retrieving #{stack.stack_name} from registry"
           content = client.pull(stack_name)
           yaml    = ::YAML.safe_load(content, [], [], true, stack.stack_name.to_s)
+          require 'byebug'; byebug
           new_stack_name = Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
+          puts new_stack_name.inspect
           new_stack = CachedStack.new(new_stack_name)
           if new_stack.cached?
             dputs "Already cached"
             stack = new_stack
           else
             dputs "Writing #{stack.path}"
-            stack.write(content)
-            dputs "#{stack.stack_name} cached to #{stack.path}"
+            new_stack.write(content)
+            dputs "#{new_stack.stack_name} cached to #{new_stack.path}"
+            stack = new_stack
           end
         end
         stack
