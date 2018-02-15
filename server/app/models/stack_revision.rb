@@ -12,6 +12,7 @@ class StackRevision
   field :expose, type: String
   field :services, type: Array
   field :volumes, type: Array
+  field :metadata, type: Hash
 
   belongs_to :stack
 
