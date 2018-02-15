@@ -73,8 +73,7 @@ module Kontena
           dputs "Retrieving #{stack.stack_name} from registry"
           content = client.pull(stack_name)
           yaml    = ::YAML.safe_load(content, [], [], true, stack.stack_name.to_s)
-          new_stack_name = Kontena::Cli::Stacks::StackName.new(yaml['stack'])
-          new_stack_name.version = yaml['version']
+          new_stack_name = Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
           new_stack = CachedStack.new(new_stack_name)
           if new_stack.cached?
             dputs "Already cached"
