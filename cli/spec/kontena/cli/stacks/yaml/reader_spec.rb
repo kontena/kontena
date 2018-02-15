@@ -178,7 +178,9 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         end
 
         it 'extends services from a registry stack' do
-          expect(Kontena::StacksCache).to receive(:pull).at_least(:once).with('registrystack/compose:1.0.0').and_return(File.read(fixture_path('docker-compose_v2.yml')))
+          expect(Kontena::StacksCache).to receive(:pull).at_least(:once) do |stackname|
+            expect(stackname.to_s).to eq 'registrystack/compose:1.0.0'
+          end.and_return(File.read(fixture_path('docker-compose_v2.yml')))
           expect(subject.execute['services']).to match array_including(
             hash_including(
               "instances"=>2,
