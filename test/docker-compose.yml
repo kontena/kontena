@@ -1,6 +1,15 @@
 version: '2'
 
 services:
+  dev:
+    image: ruby:2.4.3
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ..:/kontena
+      - $HOME/.kontena_client.json:/root/.kontena_client.json
+    command: /bin/bash
+
   test:
     build:
       context: ..
