@@ -8,4 +8,20 @@ describe 'cli' do
       expect(k.out).to match(/Options:/)
     end
   end
+
+  context 'option parsing' do
+    it 'allows options after parameters' do
+      run! 'kontena vault write testsecret --silent testvalue'
+      k.run! 'kontena vault read testsecret --value'
+      expect(k.out.strip).to eq 'testvalue'
+      k.run! 'kontena vault rm --force testsecret'
+    end
+
+    it 'breaks option parsing at double dash' do
+      run! 'kontena vault write testsecret -- --silent'
+      k.run! 'kontena vault read testsecret --value'
+      expect(k.out.strip).to eq '--silent'
+      k.run! 'kontena vault rm --force testsecret'
+    end
+  end
 end
