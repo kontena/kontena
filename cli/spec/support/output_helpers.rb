@@ -55,7 +55,7 @@ module OutputHelpers
         @real.zip(@expected) do |real, expected|
           line += 1
           fields = real.split(/\s{2,}/)
-          unless values_match?(fields, expected)
+          unless values_match?(expected, fields)
             @errors << [
               "on line #{line}:",
               " expected: #{expected}",
@@ -93,7 +93,45 @@ module OutputHelpers
       @expected = lines.flatten
       @actual = CaptureStdoutLines.capture(block)
 
-      values_match?(@actual, @expected)
+      values_match?(@expected, @actual)
+    end
+  end
+
+  matcher :output_yaml do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      actual = ::YAML.safe_load(output)
+
+      values_match?(expected, actual)
+    end
+  end
+
+  matcher :output_json do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      @actual = JSON.parse(output)
+
+      values_match?(expected,   @actual)
+    end
+
+    failure_message do |block|
+      return "expected block to return #{expected}, but returned #{@actual}"
+    end
+  end
+
+  module CaptureStdout
+    def self.capture(block)
+      capture = StringIO.new
+      original = $stdout
+      $stdout = capture
+      block.call
+      capture.string
+    ensure
+      $stdout = original
     end
   end
 

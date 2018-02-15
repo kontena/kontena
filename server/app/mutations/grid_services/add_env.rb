@@ -1,5 +1,9 @@
+require_relative 'helpers'
+
 module GridServices
   class AddEnv < Mutations::Command
+    include Helpers
+
     required do
       model :grid_service
       string :env
@@ -7,8 +11,8 @@ module GridServices
 
     def execute
       self.grid_service.env << env
-      grid_service.revision += 1
-      self.grid_service.save
+
+      update_grid_service(grid_service)
     end
   end
 end

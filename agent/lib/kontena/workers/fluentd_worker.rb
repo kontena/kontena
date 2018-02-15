@@ -5,7 +5,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
 
     attr_reader :fluentd
 
@@ -20,7 +20,7 @@ module Kontena::Workers
     end
 
     def start
-      observe(Actor[:node_info_worker]) do |node|
+      observe(Actor[:node_info_worker].observable) do |node|
         configure(node)
       end
     end

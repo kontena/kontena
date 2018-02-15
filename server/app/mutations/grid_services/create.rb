@@ -1,9 +1,11 @@
 require_relative 'common'
+require_relative 'helpers'
 
 module GridServices
   class Create < Mutations::Command
     include Common
     include Duration
+    include Helpers
 
     common_validations
 
@@ -21,6 +23,7 @@ module GridServices
     def validate
       self.stack = self.grid.stacks.find_by(name: Stack::NULL_STACK) unless self.stack
 
+      validate_name
       if self.stateful && self.volumes_from && self.volumes_from.size > 0
         add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
       end
@@ -32,6 +35,7 @@ module GridServices
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
       validate_secrets
+      validate_certificates
       validate_volumes
     end
 
@@ -55,6 +59,12 @@ module GridServices
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets([])
       end
+
+      attributes.delete(:certificates)
+      if self.certificates
+        attributes[:certificates] = self.build_grid_service_certificates([])
+      end
+
       # Attach to default network
       if self.net == 'bridge' || self.net.nil?
         default_net = self.grid.networks.find_by(name: 'kontena')
@@ -67,12 +77,8 @@ module GridServices
       end
 
       grid_service = GridService.new(attributes)
-      unless grid_service.save
-        grid_service.errors.each do |key, message|
-          add_error(key, :invalid, message)
-        end
-      end
-      grid_service
+
+      save_grid_service(grid_service)
     end
 
     def strategies

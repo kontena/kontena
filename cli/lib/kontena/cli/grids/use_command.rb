@@ -14,7 +14,7 @@ module Kontena::Cli::Grids
     def execute
       grid = find_grid_by_name(name)
       unless grid
-        exit_with_error "Could not resolve grid by name [#{name}]. For a list of existing grids please run: kontena grid list".colorize(:red)
+        exit_with_error pastel.red("Could not resolve grid by name [#{name}]. For a list of existing grids please run: kontena grid list")
       end
       config.current_master.grid = grid['name']
       config.write

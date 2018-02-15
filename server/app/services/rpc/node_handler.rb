@@ -30,6 +30,7 @@ module Rpc
     def update(node_id, data)
       node = get_node(node_id)
       node.attributes_from_docker(data)
+      node.updated = true # connection handshake complete after NodePlugger#plugin!
       node.save!
     end
 
@@ -51,6 +52,15 @@ module Rpc
         created_at: time
       }
       @db_session[:host_node_stats].insert_one(stat)
+      node.set(
+        latest_stats: {
+          memory: data['memory'],
+          load: data['load'],
+          filesystem: data['filesystem'],
+          cpu: data['cpu'],
+          usage: data['usage']
+        }
+      )
     end
   end
 end

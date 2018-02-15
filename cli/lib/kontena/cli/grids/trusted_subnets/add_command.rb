@@ -10,7 +10,7 @@ module Kontena::Cli::Grids::TrustedSubnets
     def execute
       grid = client.get("grids/#{current_grid}")
       data = {trusted_subnets: grid['trusted_subnets'] + [self.subnet]}
-      spinner "Adding #{subnet.colorize(:cyan)} as a trusted subnet in #{current_grid.colorize(:cyan)} grid " do
+      spinner "Adding #{pastel.cyan(subnet)} as a trusted subnet in #{pastel.cyan(current_grid)} grid " do
         client.put("grids/#{current_grid}", data)
       end
     end

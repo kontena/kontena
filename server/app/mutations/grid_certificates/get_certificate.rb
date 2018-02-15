@@ -3,6 +3,11 @@ require 'timeout'
 require_relative 'common'
 require_relative '../../services/logging'
 
+# DEPRECATED
+#
+# This mutation deals with the "legacy" mode of operation and stores certs as secrets.
+# As the old API will still be around for some time so will this mutation.
+#
 module GridCertificates
   class GetCertificate < Mutations::Command
     include Common
@@ -63,11 +68,13 @@ module GridCertificates
           challenge.verify_status != 'pending'
         }
 
+        domain_authz.expires_at = nil # XXX: old version of acme-client does not update authorization expiration
+
         case challenge.verify_status
         when 'valid'
           domain_authz.state = :validated
         when 'invalid'
-          domain_authz.state = :invalid
+          domain_authz.state = :error
           add_error(:challenge, :invalid, challenge.error['detail'])
         end
 
@@ -116,16 +123,6 @@ module GridCertificates
         return
       end
       outcome.result
-    end
-
-    def validate_dns_record(domain, expected_record)
-      resolv = Resolv::DNS.new()
-      info "validating domain:_acme-challenge.#{domain}"
-      resource = resolv.getresource("_acme-challenge.#{domain}", Resolv::DNS::Resource::IN::TXT)
-      info "got record: #{resource.strings}, expected: #{expected_record}"
-      expected_record == resource.strings[0]
-    rescue
-      false
     end
   end
 end

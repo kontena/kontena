@@ -2,10 +2,10 @@ describe GridService do
   it { should be_timestamped_document }
   it { should be_kind_of(EventStream) }
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
-                          :net, :log_driver, :pid).of_type(String) }
+                          :net, :log_driver, :pid, :stop_signal).of_type(String) }
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares,
-                          :revision, :stack_revision).of_type(Integer) }
+                          :revision, :stack_revision, :shm_size).of_type(Integer) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes_from,
                           :cap_add, :cap_drop).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
@@ -41,6 +41,9 @@ describe GridService do
   let :stack do
     Stack.create(grid: grid, name: 'stack')
   end
+  let :stack2 do
+    Stack.create(grid: grid, name: 'stack2')
+  end
 
   let(:grid_service) do
     GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
@@ -49,18 +52,13 @@ describe GridService do
     GridService.create!(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')
   end
 
-  let(:stacked_service) do
-    stack = Stack.create!(name: 'stack')
-    GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
-  end
-
   describe '#qualified_name' do
-    it 'returns full path for stacked service' do
-      expect(stacked_service.qualified_name).to eq("#{stacked_service.stack.name}/#{stacked_service.name}")
+    it 'returns full path for stack_service service' do
+      expect(stack_service.qualified_name).to eq('stack/redis')
     end
 
     it 'returns path without stack for stackless service' do
-      expect(grid_service.qualified_name).to eq("#{grid_service.name}")
+      expect(grid_service.qualified_name).to eq('redis')
     end
   end
 
@@ -154,42 +152,6 @@ describe GridService do
     end
   end
 
-  describe '#dependant_services' do
-    let(:subject) { grid_service }
-
-    it 'returns dependant by volumes_from' do
-      backupper = GridService.create!(
-        grid: grid, name: 'backupper',
-        image_name: 'backupper:latest', volumes_from: ["#{subject.name}-%s"]
-      )
-      follower = GridService.create!(
-        grid: grid, name: 'follower',
-        image_name: 'follower:latest', volumes_from: ["#{subject.name}-1"]
-      )
-      dependant_services = subject.dependant_services
-      expect(dependant_services.size).to eq(2)
-      expect(dependant_services).to include(backupper)
-      expect(dependant_services).to include(follower)
-    end
-
-    it 'returns dependant services by service affinity' do
-      avoider = GridService.create!(
-        grid: grid, name: 'avoider',
-        image_name: 'avoider:latest',
-        affinity: ["service!=#{subject.name}"]
-      )
-      follower = GridService.create!(
-        grid: grid, name: 'follower',
-        image_name: 'follower:latest',
-        affinity: ["service==#{subject.name}"]
-      )
-      dependant_services = subject.dependant_services
-      expect(dependant_services.size).to eq(2)
-      expect(dependant_services).to include(avoider)
-      expect(dependant_services).to include(follower)
-    end
-  end
-
   describe '#linked_from_services' do
     it 'returns Mongoid::Criteria' do
       expect(grid_service.linked_from_services).to be_instance_of(Mongoid::Criteria)
@@ -276,24 +238,6 @@ describe GridService do
 
     it 'returns false if service is not exposed via stack' do
       expect(grid_service.stack_exposed?).to be_falsey
-    end
-  end
-
-  describe '#depending_on_other_services?' do
-    it 'returns false by default' do
-      expect(subject.depending_on_other_services?).to be_falsey
-    end
-
-    it 'returns true if service affinity' do
-      subject.affinity = ['service==foobar']
-      expect(subject.depending_on_other_services?).to be_truthy
-      subject.affinity = ['service!=foobar']
-      expect(subject.depending_on_other_services?).to be_truthy
-    end
-
-    it 'returns true if volumes_from' do
-      subject.volumes_from = ['foobar-%i']
-      expect(subject.depending_on_other_services?).to be_truthy
     end
   end
 

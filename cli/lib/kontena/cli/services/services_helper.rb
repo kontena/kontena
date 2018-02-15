@@ -53,6 +53,9 @@ module Kontena
           puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
           puts "  read_only: #{service['read_only'] == true ? 'yes' : 'no'}"
+          unless service['stop_signal'].to_s.empty?
+            puts "  stop_signal: #{service['stop_signal']}"
+          end
           puts "  stop_grace_period: #{service['stop_grace_period']}s"
           puts "  deploy_opts:"
           if service['deploy_opts']['min_health']
@@ -97,6 +100,15 @@ module Kontena
               puts "    - secret: #{s['secret']}"
               puts "      name: #{s['name']}"
               puts "      type: #{s['type']}"
+            end
+          end
+
+          if service['certificates'].to_a.size > 0
+            puts "  certificates: "
+            service['certificates'].to_a.each do |c|
+              puts "    - subject: #{c['subject']}"
+              puts "      name: #{c['name']}"
+              puts "      type: #{c['type']}"
             end
           end
 
@@ -177,6 +189,10 @@ module Kontena
             puts "  memory_swap: #{int_to_filesize(service['memory_swap'])}"
           end
 
+          unless service['shm_size'].to_s.empty?
+            puts "  shm_size: #{int_to_filesize(service['shm_size'])}"
+          end
+
           unless service['pid'].to_s.empty?
             puts "  pid: #{service['pid']}"
           end
@@ -248,7 +264,7 @@ module Kontena
               puts "      health: #{container.dig('health_status', 'status')} (#{health_time.to_i}s ago)"
             end
             if container['status'] == 'unknown'
-              puts "      status: #{container['status'].colorize(:yellow)}"
+              puts "      status: #{pastel.yellow(container['status'])}"
             else
               puts "      status: #{container['status']}"
             end
@@ -369,13 +385,19 @@ module Kontena
         def parse_ports(port_options)
           port_regex = Regexp.new(/\A(?<ip>\d+\.\d+\.\d+\.\d+)?:?(?<node_port>\d+)\:(?<container_port>\d+)\/?(?<protocol>\w+)?\z/)
           port_options.map do |p|
-            match_data = port_regex.match(p.to_s)
-            raise ArgumentError, "Invalid port value #{p}" unless match_data
+            if p.kind_of?(Hash)
+              raise ArgumentError, "Missing or invalid node port" unless p['node_port'].to_i > 0
+              raise ArgumentError, "Missing or invalid container port" unless p['container_port'].to_i > 0
+              { ip: p['ip'] || '0.0.0.0', protocol: p['protocol'] || 'tcp', node_port: p['node_port'].to_i, container_port: p['container_port'].to_i }
+            else
+              match_data = port_regex.match(p.to_s)
+              raise ArgumentError, "Invalid port value #{p}" unless match_data
 
-            {
-              ip: '0.0.0.0',
-              protocol: 'tcp'
-            }.merge(match_data.names.map { |name| [name.to_sym, match_data[name]] }.to_h.reject { |_,v| v.nil? })
+              {
+                ip: '0.0.0.0',
+                protocol: 'tcp'
+              }.merge(match_data.names.map { |name| [name.to_sym, match_data[name]] }.to_h.reject { |_,v| v.nil? })
+            end
           end
         end
 
@@ -414,7 +436,8 @@ module Kontena
 
         # @param [String] image
         # @return [String]
-        def parse_image(image)
+        def parse_image(image = nil)
+          return if image.nil?
           unless image.include?(":")
             image = "#{image}:latest"
           end
@@ -524,18 +547,12 @@ module Kontena
         # @param [Symbol] health
         # @return [String]
         def health_status_icon(health)
-          if health == :unhealthy
-            icon = '⊗'.freeze
-            icon.colorize(:red)
-          elsif health == :partial
-            icon = '⊙'.freeze
-            icon.colorize(:yellow)
-          elsif health == :healthy
-            icon = '⊛'.freeze
-            icon.colorize(:green)
+          case health
+          when :unhealthy then pastel.red('⊗')
+          when :partial   then pastel.yellow('⊙')
+          when :healthy   then pastel.green('⊛')
           else
-            icon = '⊝'.freeze
-            icon.colorize(:dim)
+            pastel.dim('⊝')
           end
         end
 

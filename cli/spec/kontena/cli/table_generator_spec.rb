@@ -51,6 +51,10 @@ describe Kontena::Cli::TableGenerator do
           ]).without_header
         end
 
+        it 'outputs nothing when table with no data and only one field' do
+          expect{subject.print_table({}, ['a'])}.to output(/\A\z/).to_stdout
+        end
+
         it 'tries to read the fields from #fields method when none given' do
           expect(subject).to receive(:fields).and_return(['a', 'b'])
           expect{subject.print_table(data)}.to output_table([

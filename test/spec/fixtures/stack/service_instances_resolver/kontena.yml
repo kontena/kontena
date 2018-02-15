@@ -1,0 +1,14 @@
+stack: test/simple
+version: 0.1.0
+variables:
+  svc_instances:
+    type: integer
+    default: 1
+    from:
+      service_instances: redis
+
+services:
+  redis:
+    image: redis:3-alpine
+    environment:
+      - "INSTANCE_COUNT=${svc_instances}"

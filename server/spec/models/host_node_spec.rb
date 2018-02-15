@@ -10,6 +10,7 @@ describe HostNode do
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
   it { should have_fields(:last_seen_at).of_type(Time) }
+  it { should have_fields(:latest_stats).of_type(Hash) }
 
   it { should embed_many(:volume_drivers) }
   it { should embed_many(:network_drivers) }
@@ -26,8 +27,9 @@ describe HostNode do
   it { should have_index_for(node_id: 1) }
   it { should have_index_for(token: 1).with_options(sparse: true, unique: true) }
 
+  let(:attributes) { { }}
   let(:grid) { Grid.create!(name: 'test', initial_size: 1) }
-  subject { HostNode.new(grid: grid, node_number: 1, name: 'node-1') }
+  subject { HostNode.new(grid: grid, node_number: 1, name: 'node-1', **attributes) }
   let(:node2) { HostNode.create!(grid: grid, name: 'node-2', node_number: 2)}
 
   describe '#to_s' do
@@ -39,6 +41,24 @@ describe HostNode do
   describe '#to_path' do
     it 'uses the node name' do
       expect(subject.to_path).to eq 'test/node-1'
+    end
+  end
+
+  context 'for a newly created node' do
+    it 'is not connected' do
+      expect(subject.connected?).to eq(false)
+    end
+    it 'is not updated' do
+      expect(subject.updated?).to eq(false)
+    end
+    it 'is status=created' do
+      expect(subject.status).to eq :created
+    end
+
+    describe '#websocket_error' do
+      it 'is not connected' do
+        expect(subject.websocket_error).to match 'Websocket is not connected'
+      end
     end
   end
 
@@ -56,14 +76,77 @@ describe HostNode do
     end
   end
 
-  describe '#connected?' do
-    it 'returns true when connected' do
-      subject.connected = true
-      expect(subject.connected?).to eq(true)
+  context 'for an initializing node that has just connected, but is not yet connected or updated' do
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: false, updated: false} }
+
+    it 'is status=offline' do
+      expect(subject.status).to eq :offline
+    end
+  end
+
+  context 'for an connecting node that has not yet updated' do
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: true, updated: false} }
+
+    it 'is connected' do
+      expect(subject.connected?).to eq true
     end
 
-    it 'returns false when not connected' do
-      expect(subject.connected?).to eq(false)
+    it 'is status=connecting' do
+      expect(subject.status).to eq :connecting
+    end
+
+    describe '#websocket_error' do
+      it 'is nil' do
+        expect(subject.websocket_error).to be nil
+      end
+    end
+  end
+
+  context 'for an connected node that has updated' do
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: true, updated: true} }
+
+    it 'is connected' do
+      expect(subject.connected?).to eq true
+    end
+
+    it 'is status=connected' do
+      expect(subject.status).to eq :online
+    end
+  end
+
+  context 'for a disconnected node' do
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: false, updated: true, websocket_connection: { opened: true, close_code: 1337, close_reason: "testing" }} }
+
+    it 'is not connected' do
+      expect(subject.connected?).to eq false
+    end
+
+    it 'is status=offline' do
+      expect(subject.status).to eq :offline
+    end
+
+    describe '#websocket_error' do
+      it 'was disconnected' do
+        expect(subject.websocket_error).to match /Websocket disconnected at .* with code 1337: testing/
+      end
+    end
+  end
+
+  context 'for a rejected node' do
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: false, updated: false, websocket_connection: { opened: false, close_code: 1337, close_reason: "testing" }} }
+
+    it 'is not connected' do
+      expect(subject.connected?).to eq false
+    end
+
+    it 'is status=offline' do
+      expect(subject.status).to eq :offline
+    end
+
+    describe '#websocket_error' do
+      it 'was rejected' do
+        expect(subject.websocket_error).to match /Websocket connection rejected at .* with code 1337: testing/
+      end
     end
   end
 
@@ -317,6 +400,34 @@ describe HostNode do
           expect{HostNode.create!(grid: grid2, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
         end
       end
+    end
+  end
+
+  describe '#peer_ips' do
+    it 'returns empty array by default' do
+      expect(subject.peer_ips).to eq([])
+    end
+
+    it 'returns peer ips' do
+      peer = grid.create_node!('peer-node',
+        node_id: 'abcd',
+        private_ip: '192.168.66.103'
+      )
+      expect(subject.peer_ips).to eq([peer.private_ip])
+    end
+
+    it 'does not return duplicate peer ips' do
+      2.times do |i|
+        grid.create_node!("peer-node-#{i}",
+          node_id: "abcd-#{i}",
+          private_ip: '192.168.66.103'
+        )
+      end
+      peer = grid.create_node!('peer-node',
+        node_id: 'abcd',
+        private_ip: '192.168.66.104'
+      )
+      expect(subject.peer_ips).to eq(['192.168.66.103', peer.private_ip])
     end
   end
 end

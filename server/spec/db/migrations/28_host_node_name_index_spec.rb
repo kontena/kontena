@@ -1,6 +1,6 @@
-require_relative '../../../db/migrations/28_host_node_name_index'
+require_relative '../../../db/migrations/28_host_node_indexes'
 
-describe HostNodeNameIndex do
+describe HostNodeIndexes do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:node1) {
     HostNode.create!(grid: grid, node_id: SecureRandom.uuid,

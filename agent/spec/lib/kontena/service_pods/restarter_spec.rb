@@ -1,8 +1,11 @@
 
 describe Kontena::ServicePods::Restarter do
 
-  let(:service_id) { 'service-id' }
-  let(:subject) { described_class.new(service_id, 1) }
+  let(:service_pod) { double(:service_pod,
+    service_id: 'service_id',
+    instance_number: 1,
+  ) }
+  let(:subject) { described_class.new(service_pod) }
 
   describe '#perform' do
 
@@ -14,7 +17,7 @@ describe Kontena::ServicePods::Restarter do
       allow(subject).to receive(:get_container).and_return(container)
     end
 
-    it 'does notthing if container if not running' do
+    it 'does nothing if container if not running' do
       allow(container).to receive(:running?).and_return(false)
       expect(container).not_to receive(:restart!)
       subject.perform

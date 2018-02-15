@@ -11,6 +11,8 @@ module Kontena
     X_KONTENA_VERSION  = 'X-Kontena-Version'.freeze
     ACCEPT             = 'Accept'.freeze
     AUTHORIZATION      = 'Authorization'.freeze
+    ACCEPT_ENCODING    = 'Accept-Encoding'.freeze
+    GZIP               = 'gzip'.freeze
 
     attr_accessor :default_headers
     attr_accessor :path_prefix
@@ -53,9 +55,10 @@ module Kontena
         connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 10,
         read_timeout:    ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_i    : 30,
         write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 10,
-        ssl_verify_peer: ignore_ssl_errors? ? false : true
+        ssl_verify_peer: ignore_ssl_errors? ? false : true,
+        middlewares:     Excon.defaults[:middlewares] + [Excon::Middleware::Decompress]
       }
-      if ENV["DEBUG"]
+      if Kontena.debug?
         require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end
@@ -248,7 +251,7 @@ module Kontena
     # @param [Hash,NilClass] params
     # @param [Hash] headers
     def get_stream(path, response_block, params = nil, headers = {}, auth = true)
-      request(path: path, query: params, headers: headers, response_block: response_block, auth: auth)
+      request(path: path, query: params, headers: headers, response_block: response_block, auth: auth, gzip: false)
     end
 
     def token_expired?
@@ -279,15 +282,15 @@ module Kontena
     # @param expects [Array] raises unless response status code matches this list.
     # @param auth [Boolean] use token authentication default = true
     # @return [Hash, String] response parsed response object
-    def request(http_method: :get, path:'/', body: nil, query: {}, headers: {}, response_block: nil, expects: [200, 201, 204], host: nil, port: nil, auth: true)
+    def request(http_method: :get, path:'/', body: nil, query: {}, headers: {}, response_block: nil, expects: [200, 201, 204], host: nil, port: nil, auth: true, gzip: true)
 
       retried ||= false
 
       if auth && token_expired?
-        raise Excon::Errors::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master" : "cloud"} login"
+        raise Excon::Error::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master" : "cloud"} login"
       end
 
-      request_headers = request_headers(headers, auth)
+      request_headers = request_headers(headers, auth: auth, gzip: gzip)
 
       if body.nil?
         body_content = ''
@@ -325,7 +328,7 @@ module Kontena
       @last_response = http_client.request(request_options)
 
       parse_response(@last_response)
-    rescue Excon::Errors::Unauthorized
+    rescue Excon::Error::Unauthorized
       if token
         debug { 'Server reports access token expired' }
 
@@ -337,7 +340,11 @@ module Kontena
         retry if refresh_token
       end
       raise Kontena::Errors::StandardError.new(401, 'Unauthorized')
-    rescue Excon::Errors::HTTPStatusError => error
+    rescue Excon::Error::HTTPStatus => error
+      if error.response.headers['Content-Encoding'] == 'gzip'
+        error.response.body = Zlib::GzipReader.new(StringIO.new(error.response.body)).read
+      end
+
       debug { "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}" }
 
       handle_error_response(error.response)
@@ -447,9 +454,10 @@ module Kontena
     #
     # @param [Hash] headers
     # @return [Hash]
-    def request_headers(headers = {}, auth = true)
+    def request_headers(headers = {}, auth: true, gzip: true)
       headers = default_headers.merge(headers)
       headers.merge!(bearer_authorization_header) if auth
+      headers[ACCEPT_ENCODING] = GZIP if gzip
       headers.reject{|_,v| v.nil? || (v.respond_to?(:empty?) && v.empty?)}
     end
 
@@ -479,7 +487,7 @@ module Kontena
       check_version_and_warn(response.headers[X_KONTENA_VERSION])
 
       if response.headers[CONTENT_TYPE] =~ JSON_REGEX
-        parse_json(response.body)
+        parse_json(response)
       else
         response.body
       end
@@ -503,13 +511,14 @@ module Kontena
 
     # Parse json
     #
-    # @param [String] json
+    # @param response [Excon::Response]
     # @return [Hash,Object,NilClass]
-    def parse_json(json)
-      JSON.parse(json)
+    def parse_json(response)
+      return nil if response.body.empty?
+      
+      JSON.parse(response.body)
     rescue => ex
-      debug { "JSON parse exception: #{ex.class.name} : #{ex.message}" }
-      nil
+      raise Kontena::Errors::StandardError.new(520, "Invalid response JSON from server for #{response.path}: #{ex.class.name}: #{ex.message}")
     end
 
     # Dump json

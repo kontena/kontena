@@ -6,9 +6,14 @@ describe 'external-registry add' do
   end
 
   it 'adds a new external-registry' do
-    k = run 'kontena external-registry add -u foo -e foo@no.email -p secret https://registry.domain.com/'
-    expect(k.code).to eq(0)
-    k = run 'kontena external-registry ls'
+    run! 'kontena external-registry add -u foo -e foo@no.email -p secret https://registry.domain.com/'
+    k = run! 'kontena external-registry ls'
+    expect(k.out.include?('registry.domain.com'))
+  end
+
+  it 'adds a new external-registry without protocol' do
+    run! 'kontena external-registry add -u foo -e foo@no.email -p secret registry.domain.com'
+    k = run! 'kontena external-registry ls'
     expect(k.out.include?('registry.domain.com'))
   end
 

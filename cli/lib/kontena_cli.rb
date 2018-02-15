@@ -1,4 +1,5 @@
 require 'kontena/autoload_core'
+require 'set'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
@@ -21,6 +22,7 @@ module Kontena
   autoload :PluginManager, 'kontena/plugin_manager'
   autoload :MainCommand, 'kontena/main_command'
   autoload :Errors, 'kontena/errors'
+  autoload :Util, 'kontena/util'
 
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
@@ -66,7 +68,7 @@ module Kontena
 
     @log_target = ENV['LOG_TARGET']
 
-    if ENV["DEBUG"]
+    if debug?
       @log_target ||= $stderr
     elsif @log_target.nil?
       @log_target = File.join(home, 'kontena.log')
@@ -157,11 +159,14 @@ module Kontena
       require 'kontena/cli/log_formatters/strip_color'
       logger.formatter = Kontena::Cli::LogFormatter::StripColor.new
     end
-    logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    logger.level = debug? ? Logger::DEBUG : Logger::INFO
     logger.progname = 'CLI'
     @logger = logger
   end
 
+  def self.debug?
+    !['', 'false'].include?(ENV['DEBUG'].to_s)
+  end
 end
 
 # Monkeypatching string to mimick 'colorize' gem
@@ -170,6 +175,7 @@ class String
     ::Kontena.pastel.send(color_sym, self)
   end
 end
+
 
 require 'retriable'
 Retriable.configure do |c|

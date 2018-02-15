@@ -26,7 +26,7 @@ module Kontena::Cli::Services
       color = color_for_container(log['name'])
       instance_number = log['name'].match(/^.+-(\d+)$/)[1]
       name = instance_number.nil? ? log['name'] : instance_number
-      prefix = "#{log['created_at']} [#{name}]:".colorize(color)
+      prefix = pastel.send(color, "#{log['created_at']} [#{name}]:")
       puts "#{prefix} #{log['data']}"
     end
   end

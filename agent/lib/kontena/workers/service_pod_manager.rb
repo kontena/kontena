@@ -6,9 +6,8 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::RpcHelper
-    include Kontena::Helpers::WaitHelper
 
     attr_reader :workers, :node
 
@@ -24,14 +23,12 @@ module Kontena::Workers
     end
 
     def start
-      observe(Actor[:node_info_worker]) do |node|
-        @node = node
-      end
+      @node = observe(Actor[:node_info_worker].observable, timeout: 300.0)
 
-      wait_until!("have node info", interval: 0.1, threshold: 10.0) { self.node }
       populate_workers_from_docker
 
       subscribe('service_pod:update', :on_update_notify)
+      subscribe('service_pod:restart', :on_restart_notify)
       subscribe('service_pod:event', :on_pod_event)
       loop do
         populate_workers_from_master
@@ -41,6 +38,15 @@ module Kontena::Workers
 
     def on_update_notify(_, _)
       populate_workers_from_master
+    end
+
+    # @param topic [String] service_pod:restart
+    # @param event [Hash{service_id: String, instance_number: Integer}]
+    def on_restart_notify(topic, event)
+      notify_worker_restart("#{event[:service_id]}/#{event[:instance_number]}",
+        container_id: event[:container_id],
+        started_at: event[:started_at],
+      )
     end
 
     def on_pod_event(_, event)
@@ -97,6 +103,15 @@ module Kontena::Workers
         ]
       })
       Docker::Container.all(all: true, filters: filters)
+    end
+
+    # @param id [String]
+    def notify_worker_restart(id, **opts)
+      if worker = workers[id]
+        worker.async.restart(**opts)
+      else
+        warn "ignore restart for unknown service pod: #{id}"
+      end
     end
 
     # @param [Array<String>] current_ids

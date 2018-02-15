@@ -52,4 +52,14 @@ class Volume
     end
   end
 
+  # @param [Hash] opts
+  def driver_opts=(opts)
+    opts = opts.transform_keys { |k| k.gsub('.', '|') } if opts
+    super(opts)
+  end
+
+  # @return [Hash]
+  def driver_opts
+    super.transform_keys { |k| k.gsub('|', '.') }
+  end
 end

@@ -57,10 +57,11 @@ module V1
 
       # /v1/certificates/:grid/
       r.on ':grid' do |grid|
-
         load_grid(grid)
 
+        # Have the post endpoints first, otherwise Roda is too greedy with "r.on ':subject'" route
         r.post do
+
           # DEPRECATED
           r.on 'authorize' do
             data = parse_json_body
@@ -77,6 +78,58 @@ module V1
             register(data)
           end
         end
+
+        r.on ':subject' do |subject|
+
+          @certificate = @grid.certificates.find_by(subject: subject)
+
+          r.get do
+            halt_request(404, {error: 'Not found'}) unless @certificate
+
+            r.is do
+              response.status = 200
+              render('certificates/show')
+            end
+
+            r.is 'export' do
+              audit_event(r, @grid, @certificate, 'export')
+              response.status = 200
+              render('certificates/export')
+            end
+          end
+
+          r.put do
+            r.is do
+              outcome = GridCertificates::Import.run(parse_json_body.merge(grid: @grid, subject: subject))
+
+              if outcome.success?
+                response.status = 201
+                @certificate = outcome.result
+                audit_event(r, @grid, @certificate, 'create', @certificate)
+                render('certificates/show')
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+          end
+
+          r.delete do
+            halt_request(404, {error: 'Not found'}) unless @certificate
+
+            r.is do
+              outcome = GridCertificates::RemoveCertificate.run(certificate: @certificate)
+              if outcome.success?
+                response.status = 200
+                {}
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+          end
+        end
+
       end
 
     end

@@ -9,7 +9,8 @@ module Kontena::Cli::Master::Token
         user_id: data["user"]["id"],
         user_email: data["user"]["email"],
         user_name: data["user"]["name"],
-        server_name: data["server"]["name"]
+        server_name: data["server"]["name"],
+        description: data['description']
       }
       if data["token_type"] == "bearer"
         output[:access_token_last_four] = data["access_token_last_four"]

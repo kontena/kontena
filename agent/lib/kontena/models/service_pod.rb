@@ -1,6 +1,12 @@
 module Kontena
   module Models
     class ServicePod
+      # Additionally, the limit per string is 32 pages (the kernel constant MAX_ARG_STRLEN)
+      ENV_MAX_STRLEN = 32 * 4096
+
+      class ConfigError < StandardError
+
+      end
 
       attr_reader :id,
                   :desired_state,
@@ -15,10 +21,9 @@ module Kontena
                   :image_name,
                   :image_credentials,
                   :user,
-                  :cmd,
-                  :entrypoint,
                   :memory,
                   :memory_swap,
+                  :shm_size,
                   :cpus,
                   :cpu_shares,
                   :privileged,
@@ -44,7 +49,9 @@ module Kontena
                   :wait_for_port,
                   :volume_specs,
                   :read_only,
+                  :stop_signal,
                   :stop_grace_period
+      attr_accessor :entrypoint, :cmd
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -65,6 +72,7 @@ module Kontena
         @entrypoint = attrs['entrypoint']
         @memory = attrs['memory']
         @memory_swap = attrs['memory_swap']
+        @shm_size = attrs['shm_size']
         @cpus = attrs['cpus']
         @cpu_shares = attrs['cpu_shares']
         @privileged = attrs['privileged'] || false
@@ -87,7 +95,13 @@ module Kontena
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
         @read_only = attrs['read_only']
+        @stop_signal = attrs['stop_signal']
         @stop_grace_period = attrs['stop_grace_period']
+      end
+
+      # @return [String]
+      def to_s
+        self.name_for_humans
       end
 
       # @return [Boolean]
@@ -157,6 +171,7 @@ module Kontena
         self.stack_name.nil? || self.stack_name.to_s == 'null'.freeze
       end
 
+      # @raise [ConfigError]
       # @return [Hash]
       def service_config
         docker_opts = {
@@ -171,6 +186,7 @@ module Kontena
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
         docker_opts['Entrypoint'] = self.entrypoint if self.entrypoint
+        docker_opts['StopSignal'] = self.stop_signal if self.stop_signal
 
         if self.can_expose_ports? && self.ports
           docker_opts['ExposedPorts'] = self.build_exposed_ports
@@ -217,6 +233,7 @@ module Kontena
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
+        host_config['ShmSize'] = self.shm_size if self.shm_size
         host_config['Privileged'] = self.privileged if self.privileged
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0
@@ -343,6 +360,10 @@ module Kontena
         end
         secrets_hash.each do |name, value|
           env << "#{name}=#{value}"
+        end
+        env.each do |envstr|
+          name, value = envstr.split('=', 2)
+          raise ConfigError, "Env #{name} is too large at #{envstr.bytesize} bytes" if envstr.bytesize > ENV_MAX_STRLEN
         end
         env
       end

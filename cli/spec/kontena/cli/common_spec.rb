@@ -137,8 +137,15 @@ describe Kontena::Cli::Common do
       it 'returns true if input matches' do
         allow(subject).to receive(:ask).and_return('name-to-confirm')
 
-        expect(subject.confirm_command('name-to-confirm')).to be_truthy
         expect{subject.confirm_command('name-to-confirm')}.to_not raise_error
+        expect(subject.confirm_command('name-to-confirm')).to be_truthy
+      end
+
+      it 'returns true if input matches and param is not a string' do
+        allow(subject).to receive(:ask).and_return('123')
+
+        expect{subject.confirm_command(123)}.to_not raise_error
+        expect(subject.confirm_command(123)).to be_truthy
       end
 
       it 'raises error unless input matches' do

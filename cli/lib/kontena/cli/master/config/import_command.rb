@@ -40,7 +40,7 @@ module Kontena::Cli::Master::Config
         require 'json'
         JSON.parse(data)
       when 'yaml', 'yml'
-        YAML.safe_load(data)
+        ::YAML.safe_load(data, [], [], true)
       else
         exit_with_error "Unknown input format '#{self.format}'"
       end

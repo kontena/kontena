@@ -13,21 +13,6 @@ class GridScheduler
     @grid = grid
   end
 
-  def reschedule
-    self.reschedule_services
-  end
-
-  def reschedule_services
-    grid.grid_services.each do |service|
-      if should_reschedule_service?(service)
-        reschedule_service(service)
-      end
-    end
-  rescue => exc
-    error exc.message
-    debug exc.backtrace.join("\n") if exc.backtrace
-  end
-
   def check_service(service)
     if should_reschedule_service?(service)
       reschedule_service(service)
@@ -47,6 +32,7 @@ class GridScheduler
       log_service_event(service, "service #{service.to_path} has wrong number of instances (or they are not distributed correctly)")
       return true
     end
+
     if lagging_behind?(service)
       info "service #{service.to_path} does have older versions running"
       log_service_event(service, "service #{service.to_path} does have older version running")
@@ -72,6 +58,7 @@ class GridScheduler
   # @param [GridService] service
   # @return [Boolean]
   def lagging_behind?(service)
+    # TODO: check service.revision vs service_instance.service_revision instead?
     return true if service.deployed_at && service.updated_at > service.deployed_at
 
     false
@@ -91,7 +78,9 @@ class GridScheduler
 
   # @param [GridService] service
   def force_service_update(service)
-    service.set(updated_at: Time.now)
+    GridServices::Update.run!(grid_service: service,
+      force: true,
+    )
   end
 
   # @param [GridService] service
@@ -101,7 +90,8 @@ class GridScheduler
     return true if available_nodes.size == 0
 
     strategy = self.strategy(service.strategy)
-    current_nodes = service.grid_service_instances.map{ |c| c.host_node }.compact.uniq.sort
+    service_instances = service.grid_service_instances.includes(:host_node).to_a
+    current_nodes = service_instances.map{ |c| c.host_node }.compact.uniq.sort
     offline_within_grace_period = current_nodes.select { |n|
       !n.connected? && n.last_seen_at && n.last_seen_at > strategy.host_grace_period.ago
     }
@@ -111,7 +101,7 @@ class GridScheduler
     service_deployer = GridServiceDeployer.new(
       strategy, service_deploy, available_nodes
     )
-    return false if service_deployer.instance_count != service.grid_service_instances.has_node.count
+    return false if service_deployer.instance_count != service_instances.map{ |c| c.host_node }.compact.size
 
     selected_nodes = service_deployer.selected_nodes.uniq.sort
     selected_nodes == current_nodes
@@ -120,7 +110,7 @@ class GridScheduler
   # @param [GridService] service
   def reschedule_service(service)
     info "rescheduling service #{service.to_path}"
-    GridServiceDeploy.create(grid_service: service)
+    GridServices::Deploy.run!(grid_service: service)
   end
 
   # @param [String] name

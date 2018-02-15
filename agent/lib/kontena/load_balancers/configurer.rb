@@ -31,6 +31,7 @@ module Kontena::LoadBalancers
       name = container.labels['io.kontena.load_balancer.name']
       service_name = container.service_name_for_lb
       check_uri = container.labels['io.kontena.health_check.uri']
+      check_port = container.labels['io.kontena.health_check.port']
       etcd_path = "#{ETCD_PREFIX}/#{name}"
       env_hash = container.env_hash
 
@@ -49,6 +50,7 @@ module Kontena::LoadBalancers
         basic_auth_secrets = env_hash['KONTENA_LB_BASIC_AUTH_SECRETS'].to_s
         set("#{etcd_path}/services/#{service_name}/balance", balance)
         set("#{etcd_path}/services/#{service_name}/health_check_uri", check_uri)
+        set("#{etcd_path}/services/#{service_name}/health_check_port", check_port)
         set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
         set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
         set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)

@@ -76,6 +76,11 @@ module Docker
       false
     end
 
+    # @return [DateTime]
+    def started_at
+      DateTime.parse(cached_json['State']['StartedAt'])
+    end
+
     # @return [Boolean]
     def finished?
       DateTime.parse(self.state['FinishedAt']).year > 1
@@ -104,6 +109,11 @@ module Docker
       false
     end
 
+    # @return [Boolean]
+    def autostart?
+      ['always'.freeze, 'unless-stopped'.freeze].include?(self.host_config.dig('RestartPolicy', 'Name'))
+    end
+
     # @return [String]
     def service_id
       self.labels['io.kontena.service.id'].to_s
@@ -116,6 +126,11 @@ module Docker
 
     def service_name
       (self.labels['io.kontena.service.name'] || self.name).to_s
+    end
+
+    # @return [Integer]
+    def service_revision
+      self.labels['io.kontena.container.service_revision'].to_i
     end
 
     def stack_name
@@ -212,6 +227,16 @@ module Docker
     # @return [Integer]
     def stop_grace_period
       (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
+    # @return [Boolean]
+    def health_check?
+      !!self.labels['io.kontena.health_check.protocol']
+    end
+
+    def reload
+      @cached_json = nil
+      cached_json
     end
 
     private

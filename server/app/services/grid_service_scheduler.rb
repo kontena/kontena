@@ -57,7 +57,7 @@ class GridServiceScheduler
     end
 
     node = nodes.find{ |n| n == selected_node }
-    node.schedule_counter += 1
+    node.scheduled_instance! instance_number
 
     selected_node
   end

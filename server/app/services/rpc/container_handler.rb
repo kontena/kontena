@@ -58,7 +58,7 @@ module Rpc
       return nil unless container
 
       if data['time']
-        created_at = Time.parse(data['time'])
+        created_at = Time.xmlschema(data['time'])
       else
         created_at = Time.now.utc
       end
@@ -82,9 +82,6 @@ module Rpc
       )
       if container
         container.set_health_status(data['status'])
-        if container.grid_service
-          MongoPubsub.publish(GridServiceHealthMonitorJob::PUBSUB_KEY, id: container.grid_service.id.to_s)
-        end
       else
         warn "health status update failed, could not find container for id: #{data['id']}"
       end
