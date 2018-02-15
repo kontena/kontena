@@ -3,7 +3,7 @@ require 'kontena/cli/subcommand_loader'
 require 'kontena/util'
 require 'kontena/cli/bytes_helper'
 require 'kontena/cli/grid_options'
-require 'excon/errors'
+require 'excon/error'
 
 class Kontena::Command < Clamp::Command
 
@@ -221,7 +221,7 @@ class Kontena::Command < Clamp::Command
     run_callbacks :after unless help_requested?
     exit(@exit_code) if @exit_code.to_i > 0
     @result
-  rescue Excon::Errors::SocketError => ex
+  rescue Excon::Error::Socket => ex
     if ex.message.include?('Unable to verify certificate')
       $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
       $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"

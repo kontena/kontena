@@ -20,7 +20,7 @@ module Kontena::Cli::Cloud::Master
       end
 
       unless response && response.kind_of?(Hash) && response['data'].kind_of?(Array)
-        abort "Listing masters failed".colorize(:red)
+        abort pastel.red("Listing masters failed")
       end
 
       return Array(response['data']) if self.return?

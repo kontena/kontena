@@ -3,8 +3,8 @@ describe Kontena::Workers::HealthCheckWorker do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
-  let(:container) { spy(:container, id: 'foo', labels: {'io.kontena.health_check.uri' => '/'}) }
-  let(:container_not_to_check) { spy(:container, id: 'foo', labels: {}) }
+  let(:container) { spy(:container, id: 'foo', health_check?: true) }
+  let(:container_not_to_check) { spy(:container, id: 'foo', health_check?: false) }
 
 
   before(:each) do

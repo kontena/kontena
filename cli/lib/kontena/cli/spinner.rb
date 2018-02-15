@@ -47,7 +47,7 @@ module Kontena
 
       def self.spin_no_tty(msg, &block)
         unless block_given?
-          Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}"
+          Kernel.puts "\r [" + Kontena.pastel.green("done") + "] #{msg}"
           return
         end
 
@@ -80,7 +80,7 @@ module Kontena
         return spin_no_tty(msg, &block) unless $stdout.tty?
 
         unless block_given?
-          Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}"
+          Kernel.puts "\r [" + Kontena.pastel.green("done") + "] #{msg}"
           return
         end
 
@@ -89,7 +89,7 @@ module Kontena
           Thread.main['spinners'].each do |thread|
             thread['pause'] = true
           end
-          Kernel.puts "\r [#{'....'.colorize(:yellow)}] #{Thread.main['spinners'].last['msg']}"
+          Kernel.puts "\r [#{Kontena.pastel.yellow('....')}] #{Thread.main['spinners'].last['msg']}"
         end
 
         Thread.main['spinner_msgs'] = []
@@ -139,27 +139,27 @@ module Kontena
           spin_thread.kill
           case spin_status.result
           when :warn
-            Kernel.puts "\r [" + "warn".colorize(:yellow) + "] #{msg}     "
+            Kernel.puts "\r [" + Kontena.pastel.yellow("warn") + "] #{msg}     "
           when :fail
-            Kernel.puts "\r [" + "fail".colorize(:red) + "] #{msg}     "
+            Kernel.puts "\r [" + Kontena.pastel.red("fail") + "] #{msg}     "
           else
-            Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}     "
+            Kernel.puts "\r [" + Kontena.pastel.green("done") + "] #{msg}     "
           end
         rescue SystemExit => ex
           spin_thread.kill
           if ex.status == 0
-            Kernel.puts "\r [" + "done".colorize(:green)   + "] #{msg}     "
+            Kernel.puts "\r [" + Kontena.pastel.green("done")   + "] #{msg}     "
           else
-            Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
+            Kernel.puts "\r [" + Kontena.pastel.red("fail")   + "] #{msg}     "
           end
           status = ex.status
         rescue SpinAbort
           spin_thread.kill
-          Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
+          Kernel.puts "\r [" + Kontena.pastel.red("fail")   + "] #{msg}     "
           Kontena.logger.debug { "Spin aborted through fail!" }
         rescue Exception => ex
           spin_thread.kill
-          Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
+          Kernel.puts "\r [" + Kontena.pastel.red("fail")   + "] #{msg}     "
           Kontena.logger.error(ex)
           raise ex
         ensure

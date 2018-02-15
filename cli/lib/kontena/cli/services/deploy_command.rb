@@ -16,7 +16,7 @@ module Kontena::Cli::Services
       service_id = name
       data = {}
       data[:force] = true if force?
-      spinner "Deploying service #{name.colorize(:cyan)} " do
+      spinner "Deploying service #{pastel.cyan(name)} " do
         deployment = deploy_service(token, name, data)
         wait_for_deploy_to_finish(token, deployment) if wait?
       end

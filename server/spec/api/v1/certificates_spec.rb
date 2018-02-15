@@ -68,6 +68,27 @@ U3GffGoMbo0kTw==
       )
   end
 
+  describe 'POST /v1/certificates/register' do
+    it 'makes LE registration' do
+      expect(GridCertificates::Register).to receive(:run).and_return(double({:success? => true}))
+      data = {email: 'foo@bar.com'}
+      post "/v1/certificates/#{grid.name}/register", data.to_json, request_headers
+      expect(response.status).to eq(201)
+    end
+
+    it 'fails to make LE registration' do
+      outcome = double(
+        :success? => false,
+        :errors => double(:message => 'kaboom')
+      )
+      expect(GridCertificates::Register).to receive(:run).and_return(outcome)
+      data = {email: 'foo@bar.com'}
+      post "/v1/certificates/#{grid.name}/register", data.to_json, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response['error']).to eq('kaboom')
+    end
+  end
+
   describe 'POST /v1/grids/<grid>/certificates' do
     it 'requests new certificate' do
       outcome = double(

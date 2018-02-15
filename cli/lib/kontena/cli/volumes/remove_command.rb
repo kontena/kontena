@@ -6,17 +6,19 @@ module Kontena::Cli::Volumes
 
 
     banner "Removes a volume"
-    parameter 'VOLUME', 'Volume'
+    parameter 'VOLUME ...', 'Volume name', attribute_name: :volumes
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     requires_current_master
     requires_current_master_token
 
     def execute
-      confirm_command(volume) unless forced?
+      volumes.each do |volume|
+        confirm_command(volume) unless forced?
 
-      spinner "Removing volume #{pastel.cyan(volume)} " do
-        remove_volume(volume)
+        spinner "Removing volume #{pastel.cyan(volume)} " do
+          remove_volume(volume)
+        end
       end
     end
 

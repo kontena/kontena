@@ -1,0 +1,20 @@
+stack: user/stackname
+version: 0.1.1
+services:
+  wordpress:
+    extends:
+      stack: registrystack/compose:1.0.0
+      service: wordpress
+    stateful: true
+    environment:
+      WORDPRESS_DB_PASSWORD: ${STACK}_secret
+    instances: 2
+    deploy:
+      strategy: ha
+  mysql:
+    extends:
+      stack: registrystack/compose:1.0.0
+      service: mysql
+    stateful: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=${STACK}_secret

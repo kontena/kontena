@@ -93,6 +93,7 @@ module Kontena
       end
 
       self.supervise
+      @watchdog = self.watchdog
 
       while line = @read_pipe.gets
         handle_signal line.strip
@@ -128,6 +129,7 @@ module Kontena
       close_websocket_client reason: "Agent shutting down..."
 
       @supervisor.shutdown # shutdown all actors
+      @watchdog.stop
       @write_pipe.close # let run! break and return
     end
 
@@ -147,6 +149,16 @@ module Kontena
       end
 
       info "Dump cellulooid actor and thread stacks: done"
+    end
+
+    # Setup a Kontena::Watchdog to kill the process, allowing it to be restarted if:
+    # * the main celluloid supervisor crashes
+    #
+    # @return [Kontena::Watchdog]
+    def watchdog
+      Kontena::Watchdog.watch do
+        fail "Celluloid::Supervision::Container died" unless @supervisor.alive?
+      end
     end
 
     def supervise

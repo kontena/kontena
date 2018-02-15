@@ -14,7 +14,7 @@ module Kontena::Cli::Vpn
       vpn = client(token).get("stacks/#{current_grid}/#{name}") rescue nil
       exit_with_error("VPN stack does not exist") if vpn.nil?
 
-      spinner "Removing #{name.colorize(:cyan)} service " do
+      spinner "Removing #{pastel.cyan(name)} service " do
         client(token).delete("stacks/#{current_grid}/#{name}")
       end
     end

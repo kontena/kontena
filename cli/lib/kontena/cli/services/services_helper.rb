@@ -264,7 +264,7 @@ module Kontena
               puts "      health: #{container.dig('health_status', 'status')} (#{health_time.to_i}s ago)"
             end
             if container['status'] == 'unknown'
-              puts "      status: #{container['status'].colorize(:yellow)}"
+              puts "      status: #{pastel.yellow(container['status'])}"
             else
               puts "      status: #{container['status']}"
             end
@@ -547,18 +547,12 @@ module Kontena
         # @param [Symbol] health
         # @return [String]
         def health_status_icon(health)
-          if health == :unhealthy
-            icon = '⊗'.freeze
-            icon.colorize(:red)
-          elsif health == :partial
-            icon = '⊙'.freeze
-            icon.colorize(:yellow)
-          elsif health == :healthy
-            icon = '⊛'.freeze
-            icon.colorize(:green)
+          case health
+          when :unhealthy then pastel.red('⊗')
+          when :partial   then pastel.yellow('⊙')
+          when :healthy   then pastel.green('⊛')
           else
-            icon = '⊝'.freeze
-            icon.colorize(:dim)
+            pastel.dim('⊝')
           end
         end
 

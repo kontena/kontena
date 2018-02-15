@@ -5,8 +5,7 @@ describe 'secret env size limits' do
     before(:each) do
       run 'kontena stack rm --force secrets-envsize'
       with_fixture_dir("secrets") do
-        k = run 'kontena stack install -v secret_count=64 envsize.yaml'
-        expect(k.code).to eq 0
+        run! 'kontena stack install -v secret_count=64 envsize.yaml'
       end
     end
 

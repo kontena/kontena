@@ -17,7 +17,7 @@ class GridDomainAuthorization
 
   belongs_to :grid_service_deploy
 
-  field :encrypted_tls_sni_certificate, type: String, encrypted: true
+  field :encrypted_tls_sni_certificate, type: String, encrypted: { random_iv: true }
 
   belongs_to :grid_service # Usually a LB service
 
@@ -44,7 +44,7 @@ class GridDomainAuthorization
 
   # Domain authorization challenge is deployable to the linked grid service
   def deployable?
-    self.authorization_type == 'tls-sni-01' && self.pending? && !expired?
+    self.grid_service_id && self.pending? && !expired?
   end
 
   def status
@@ -57,6 +57,21 @@ class GridDomainAuthorization
       :expired
     else
       self.state
+    end
+  end
+
+  # Can this domain be re-authorized by the Kontena server?
+  # @return [Boolean]
+  def auto_renewable?
+    return false unless grid_service
+
+    case authorization_type
+    when 'dns-01'
+      false
+    when 'http-01'
+      true
+    when 'tls-sni-01'
+      true
     end
   end
 end

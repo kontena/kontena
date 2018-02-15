@@ -12,8 +12,7 @@ describe 'complete' do
   end
 
   it 'outputs subcommand tree with --subcommand-tree' do
-    k = run 'kontena complete --subcommand-tree'
-    expect(k.code).to eq(0)
+    k = run!('kontena complete --subcommand-tree')
     rows = k.out.split(/[\r\n]+/)
     expect(rows).to include "kontena grid show"
     expect(rows).to include "kontena stack install"

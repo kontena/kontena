@@ -94,37 +94,6 @@ describe Container do
     end
   end
 
-  describe '#up_to_date?' do
-    context 'when image id differs from grid service image id' do
-      it 'returns false ' do
-        subject.grid_service = grid_service
-
-        grid_service.image.image_id = '12345'
-        subject.image_version = '1234567'
-        expect(subject.up_to_date?).to be_falsey
-      end
-    end
-
-    context 'when grid service is updated after container is created' do
-      it 'returns false' do
-        subject.grid_service = grid_service
-        grid_service.timeless.updated_at = Time.now.utc + 3
-        subject.created_at = Time.now.utc
-        expect(subject.up_to_date?).to be_falsey
-      end
-    end
-
-    context 'when image is not updated and container is created after last update of grid service' do
-      it 'return false' do
-        subject.grid_service = grid_service
-        subject.image_version = '12345'
-        grid_service.timeless.updated_at = Time.now.utc - 3
-        subject.created_at = Time.now.utc
-        expect(subject.up_to_date?).to be_truthy
-      end
-    end
-  end
-
   describe '#instance_name' do
     it 'does not throw error by default' do
       expect(subject.instance_name).to be_instance_of(String)
