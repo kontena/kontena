@@ -16,7 +16,7 @@ describe GridServices::Restart do
     context 'without a host node' do
       let(:node) { nil }
 
-      it 'does not hcnage service instance state' do
+      it 'does not change service instance state' do
         expect{
           subject.run!
         }.to_not change{service_instance.reload.desired_state}
