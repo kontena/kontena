@@ -11,7 +11,7 @@ describe 'cli' do
 
   context 'option parsing' do
     after do
-      k.run 'kontena vault rm --force testsecret'
+      run 'kontena vault rm --force testsecret'
     end
 
     it 'allows options after parameters' do
