@@ -20,7 +20,7 @@ module Kontena::Cli::Nodes
       data[:labels] = [] if self.clear_labels?
 
       data[:availability] = availability if availability
-      spinner "Updating #{self.node.colorize(:cyan)} node " do
+      spinner "Updating #{pastel.cyan(self.node)} node " do
         client.put("nodes/#{current_grid}/#{self.node}", data)
       end
     end

@@ -340,18 +340,18 @@ describe '/v1/services' do
       }.to change{ redis_service.reload.deploy_pending? }.from(false).to(true)
     end
 
-    it 'does not change updated_at by default' do
+    it 'does not change revision by default' do
       expect {
         post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
-      }.not_to change{ redis_service.reload.updated_at }
+      }.not_to change{ redis_service.reload.revision }
     end
 
-    it 'changes updated_at when force=true' do
+    it 'changes revision when force=true' do
       expect {
         post "/v1/services/#{redis_service.to_path}/deploy", {force: true}.to_json, request_headers
         expect(response.status).to eq(200)
-      }.to change{ redis_service.reload.updated_at }
+      }.to change{ redis_service.reload.revision }
     end
   end
 

@@ -3,7 +3,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NODE", "Node name"
+    parameter "NODE ...", "Node name", attribute_name: :nodes
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
@@ -11,18 +11,20 @@ module Kontena::Cli::Nodes
       require_current_grid
       token = require_token
 
-      node = client(token).get("nodes/#{current_grid}/#{self.node}")
+      nodes.each do |node_name|
+        node = client(token).get("nodes/#{current_grid}/#{node_name}")
 
-      if node['has_token'] && node['connected']
-        warning "Node #{node['name']} is still connected using a node token, but will be force-disconnected"
-      elsif node['connected']
-        exit_with_error "Node #{node['name']} is still connected using a grid token. You must terminate the node before removing it."
-      end
+        if node['has_token'] && node['connected']
+          warning "Node #{node['name']} is still connected using a node token, but will be force-disconnected"
+        elsif node['connected']
+          exit_with_error "Node #{node['name']} is still connected using a grid token. You must terminate the node before removing it."
+        end
 
-      confirm_command(self.node) unless forced?
+        confirm_command(node_name) unless forced?
 
-      spinner "Removing #{self.node.colorize(:cyan)} node from #{current_grid.colorize(:cyan)} grid " do
-        client(token).delete("nodes/#{node['id']}")
+        spinner "Removing #{pastel.cyan(node_name)} node from #{pastel.cyan(current_grid)} grid " do
+          client(token).delete("nodes/#{node['id']}")
+        end
       end
     end
   end

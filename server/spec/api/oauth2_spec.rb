@@ -71,6 +71,22 @@ describe 'OAuth2 API' do
         expect(result['grant_type']).to eq 'authorization_code'
         expect(result['code']).to match /^[a-z0-9]{4,}/
       end
+
+      it 'can add a description' do
+        post(
+          '/oauth2/authorize',
+          {
+            response_type: 'code',
+            scope: 'user',
+            description: 'description test'
+          }.to_json,
+          json_header.merge('HTTP_AUTHORIZATION' => "Bearer #{token.token_plain}")
+        )
+        expect(response.status).to eq(201)
+        result = JSON.parse(response.body)
+        expect(result['grant_type']).to eq 'authorization_code'
+        expect(result['description']).to eq 'description test'
+      end
     end
 
     context 'response_type = token' do
@@ -89,6 +105,24 @@ describe 'OAuth2 API' do
         expect(result['access_token']).to match /^[a-z0-9]{20,}$/
         expect(result['token_type']).to eq "bearer"
       end
+
+      it 'can add a description' do
+        post(
+          '/oauth2/authorize',
+          {
+            response_type: 'token',
+            scope: 'user',
+            description: 'description test'
+          }.to_json,
+          json_header.merge('HTTP_AUTHORIZATION' => "Bearer #{token.token_plain}")
+        )
+
+        expect(response.status).to eq(201)
+        result = JSON.parse(response.body)
+        expect(result['access_token']).to match /^[a-z0-9]{20,}$/
+        expect(result['description']).to eq "description test"
+      end
+
     end
 
     context 'response_type = invite' do
@@ -158,6 +192,29 @@ describe 'OAuth2 API' do
         expect(result['access_token']).to match /^[a-z0-9]{6,}$/
       end
 
+      it 'transfers description from code to token' do
+        coded_token = AccessToken.create(
+          user: david,
+          with_code: true,
+          scopes: ['user'],
+          description: 'description test'
+        )
+
+        post(
+          '/oauth2/token',
+          {
+            grant_type: 'authorization_code',
+            code: coded_token.code
+          }.to_json,
+          json_header
+        )
+
+        expect(response.status).to eq(201)
+        result = JSON.parse(response.body)
+        expect(result['access_token']).to match /^[a-z0-9]{6,}$/
+        expect(result['description']).to eq 'description test'
+      end
+
       it 'returns a token in exchange when given a valid code using POST form parameters' do
         coded_token = AccessToken.create(user: david, with_code: true, scopes: ['user'])
 
@@ -220,6 +277,29 @@ describe 'OAuth2 API' do
         expect(result['access_token']).to match /^[a-z0-9]{6,}$/
       end
 
+      it 'transfers the description to new token when using refresh token' do
+        token = AccessToken.create(
+          user: david,
+          expires_at: Time.now + 7200,
+          scopes: ['user'],
+          description: 'description test'
+        )
+
+        post(
+          '/oauth2/token',
+          {
+            grant_type: 'refresh_token',
+            refresh_token: token.refresh_token_plain
+          }.to_json,
+          json_header
+        )
+
+        expect(response.status).to eq(201)
+        result = JSON.parse(response.body)
+        expect(result['access_token']).to match /^[a-z0-9]{6,}$/
+        expect(result['description']).to eq 'description test'
+      end
+
       it 'returns error if refresh token has been used' do
         token = AccessToken.create(user: david, expires_at: Time.now + 7200, scopes: ['user'])
 
@@ -246,7 +326,7 @@ describe 'OAuth2 API' do
         expect(response.status).to eq(404)
       end
 
-      it 'does not returns an error if token has expired when refreshing' do
+      it 'does not return an error if token has expired when refreshing' do
         token = AccessToken.create(user: david, expires_at: Time.now - 7200, scopes: ['user'])
 
         post(

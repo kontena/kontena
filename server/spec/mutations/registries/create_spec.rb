@@ -39,14 +39,15 @@ describe Registries::Create do
       expect(outcome.errors[:password]).not_to be_nil
     end
 
-    it 'requires email' do
-      outcome = described_class.new(
-        grid: grid,
-        username: 'john',
-        password: 'password',
-        url: 'https://registry.example.org'
-      ).run
-      expect(outcome.errors[:email]).not_to be_nil
+    it 'does not require email' do
+      expect {
+        described_class.new(
+          grid: grid,
+          username: 'john',
+          password: 'password',
+          url: 'https://registry.example.org'
+        ).run
+      }.to change { Registry.count }.by(1)
     end
 
     it 'requires url' do

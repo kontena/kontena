@@ -6,18 +6,19 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
-    banner "Stops all services of a stack that has been installed in a grid on Kontena Master"
+    banner "Stops all services of a stack"
 
-    parameter "NAME", "Stack name"
+    parameter "NAME ...", "Stack name", attribute_name: :names
 
     requires_current_master
     requires_current_master_token
 
     def execute
-      spinner "Sending stop signal for stack services" do
-        client.post("stacks/#{current_grid}/#{name}/stop", {})
+      names.each do |name|
+        spinner "Sending stop signal for stack #{name} services" do
+          client.post("stacks/#{current_grid}/#{name}/stop", {})
+        end
       end
     end
-
   end
 end

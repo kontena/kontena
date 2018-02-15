@@ -2,12 +2,14 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   include RpcClientMocks
 
   let(:node) { Node.new('id' => 'aa') }
+  let(:service_revision) { 1 }
   let(:service_pod) do
     Kontena::Models::ServicePod.new(
       'id' => 'foo/2',
       'instance_number' => 2,
       'updated_at' => Time.now.to_s,
       'deploy_rev' => Time.now.to_s,
+      'service_revision' => service_revision,
     )
   end
   let(:subject) { described_class.new(node, service_pod) }
@@ -69,7 +71,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
           # XXX: in this case both the failing initial wait_for_port, and the restart will report state...
           expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, restarted_container)
 
-          subject.on_container_event('container:event', double(id: container_id, status: 'die'))
+          subject.on_container_event('container:event', double(id: container_id, status: 'die', time_nano: (Time.now.to_f * 1e9).to_s))
 
           false
         end
@@ -122,18 +124,21 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       expect(subject.ensure_desired_state).to eq container
     end
 
-    it 'calls ensure_running if updated_at is newer than container' do
-      container = double(:container,
+    context 'with an updated service pod' do
+      let(:service_revision) { 2 }
+      let(:container) { double(:container,
         :running? => true, :restarting? => false,
-        :info => { 'Created' => (Time.now - 30).to_s },
         :name => 'foo-2',
-      )
-      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
-      allow(service_pod).to receive(:running?).and_return(true)
-      allow(service_pod).to receive(:service_rev).and_return(1)
-      expect(subject.wrapped_object).to receive(:ensure_running)
-      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
-      expect(subject.ensure_desired_state).to eq container
+        :service_revision => 1,
+      ) }
+
+      it 'calls ensure_running if service revision is newer than container' do
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+        allow(service_pod).to receive(:running?).and_return(true)
+        expect(subject.wrapped_object).to receive(:ensure_running)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+        expect(subject.ensure_desired_state).to eq container
+      end
     end
 
     it 'calls ensure_stopped if container is running and service_pod desired_state is stopped' do
@@ -266,7 +271,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   end
 
   describe '#needs_apply' do
-    it 'returns true if container_state_changed is true' do
+    it 'returns true when initialized' do
       expect(subject.needs_apply?(service_pod)).to be_truthy
     end
 
@@ -277,29 +282,53 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
 
     it 'returns true if restarting and deploy_rev has changed' do
       allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
-      subject.container_state_changed = false
       update = service_pod.dup
       allow(update).to receive(:deploy_rev).and_return('new')
       expect(subject.needs_apply?(update)).to be_truthy
     end
 
-    it 'returns false if container_state_changed is false and pod has not changed' do
-      subject.container_state_changed = false
-      expect(subject.needs_apply?(service_pod)).to be_falsey
+    context 'after a previous successful apply' do
+      before do
+        subject.apply_started!
+        sleep 0.001
+        subject.apply_finished!
+      end
+
+      it 'subject is not apply_finished?' do
+        expect(subject.apply_finished?).to be_truthy
+      end
+
+      it 'returns false if pod has not changed' do
+        expect(subject.needs_apply?(service_pod)).to be_falsey
+      end
+
+      it 'returns true if deploy_rev has changed' do
+        update = service_pod.dup
+        allow(update).to receive(:deploy_rev).and_return('new')
+        expect(subject.needs_apply?(update)).to be_truthy
+      end
+
+      it 'returns true if desired_state has changed' do
+        update = service_pod.dup
+        allow(update).to receive(:desired_state).and_return('stopped')
+        expect(subject.needs_apply?(update)).to be_truthy
+      end
     end
 
-    it 'returns true if container_state_changed is false and deploy_rev has changed' do
-      subject.container_state_changed = false
-      update = service_pod.dup
-      allow(update).to receive(:deploy_rev).and_return('new')
-      expect(subject.needs_apply?(update)).to be_truthy
-    end
+    context 'after a previous unsuccessful apply' do
+      before do
+        subject.apply_finished!
+        sleep 0.001
+        subject.apply_started!
+      end
 
-    it 'returns true if container_state_changed is false and desired_state has changed' do
-      subject.container_state_changed = false
-      update = service_pod.dup
-      allow(update).to receive(:desired_state).and_return('stopped')
-      expect(subject.needs_apply?(update)).to be_truthy
+      it 'subject is not apply_finished?' do
+        expect(subject.apply_finished?).to be_falsey
+      end
+
+      it 'returns true if pod has not changed' do
+        expect(subject.needs_apply?(service_pod)).to be_truthy
+      end
     end
   end
 
@@ -330,46 +359,67 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   end
 
   describe '#on_container_event' do
-    before do
-      subject.container_state_changed = false
-    end
-
     context 'without any active container' do
       it 'ignores any events' do
-        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'start')
+        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'die')
 
-        expect {
-          subject.on_container_event('container:event', event)
-        }.not_to change { subject.container_state_changed }
+        expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+
+        subject.on_container_event('container:event', event)
       end
     end
 
     context 'with an active container' do
-      let(:container) { double(:container, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025') }
+      let(:started_at) { Time.now - 60.0 }
+      let(:container) { double(:container,
+        id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025',
+        started_at: started_at,
+      ) }
+
+      let(:event_id) { '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025' }
+      let(:event_at) { Time.now - 59.0 }
+      let(:event_status) { 'die' }
+      let(:event) { double(:event,
+        id: event_id,
+        status: event_status,
+        time_nano: (event_at.to_f * 1e9).to_s,
+      ) }
 
       before do
         subject.instance_variable_set('@container', container)
       end
 
-      it 'ignores a mismatching event' do
-        event = double(:event, id: 'f02a583a0dd44a685a14c445b9826b5f8a8c46555fabf003de3009180ff7a24c', status: 'start')
+      context 'for an event with the wrong container ID' do
+        let(:event_id) { 'f02a583a0dd44a685a14c445b9826b5f8a8c46555fabf003de3009180ff7a24c' }
 
-        expect {
+        it 'ignores the event' do
+          expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+
           subject.on_container_event('container:event', event)
-        }.not_to change { subject.container_state_changed }
+        end
       end
 
-      it 'marks container state as changed' do
-        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'start')
+      context 'for an event from before the container start' do
+        let(:event_at) { Time.now - 61.0 }
 
-        expect {
+        it 'ignores the event' do
+          expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+
           subject.on_container_event('container:event', event)
-        }.to change { subject.container_state_changed }.from(false).to(true)
+        end
+      end
+
+      context 'for a start event' do
+        let(:event_status) { 'start' }
+
+        it 'ignores the event' do
+          expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+
+          subject.on_container_event('container:event', event)
+        end
       end
 
       it 'triggers restart logic on container die events' do
-        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'die')
-
         expect(subject.wrapped_object).to receive(:handle_restart_on_die)
 
         subject.on_container_event('container:event', event)
@@ -437,36 +487,40 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   end
 
   describe '#container_outdated?' do
-    it 'returns true if container created_at is older than service_pod updated_at' do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 120).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc - 60).to_s)
-      expect(subject.container_outdated?(service_container)).to be_truthy
+    context 'with an up-to-date container revision' do
+      let(:service_revision) { 1 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 1,
+      ) }
+
+      it 'returns false' do
+        expect(subject.container_outdated?(service_container)).to be_falsey
+      end
     end
 
-    it 'returns false if container created_at is newer than service_pod updated_at' do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 20).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc - 60).to_s)
-      expect(subject.container_outdated?(service_container)).to be_falsey
+    context 'with an out-of-date container revision' do
+      let(:service_revision) { 2 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 1,
+      ) }
+
+      it 'returns true' do
+        expect(subject.container_outdated?(service_container)).to be_truthy
+      end
     end
 
-    it 'fails if service_pod updated_at is too far in the future', log_celluloid_actor_crashes: false do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 20).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 60.0).to_s)
-      expect{subject.container_outdated?(service_container)}.to raise_error(/service updated_at .* is in the future/)
-    end
+    context 'with an invalid container revision' do
+      let(:service_revision) { 1 }
 
-    it 'returns true if service_pod updated_at is slightly in the future' do
-      service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 0.5).to_s }
-      )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 0.5).to_s)
-      expect(subject.container_outdated?(service_container)).to be_truthy
+      let(:service_container) { double(:service_container,
+        service_revision: 2,
+      ) }
+
+      it 'returns false' do
+        expect(subject.container_outdated?(service_container)).to be_falsey
+      end
     end
   end
 

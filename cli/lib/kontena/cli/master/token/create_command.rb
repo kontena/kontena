@@ -15,6 +15,7 @@ module Kontena::Cli::Master::Token
     option ['-u', '--user'], '[EMAIL]', 'Generate a token for another user'
     option ['--id'], :flag, "Only output the token ID"
     option ['--token'], :flag, "Only output the access_token (or authorization code)"
+    option ['-d', '--description'], '[DESCRIPTION]', 'Token description'
 
     option ['--return'], :flag, "Return the response hash", hidden: true
 
@@ -22,8 +23,9 @@ module Kontena::Cli::Master::Token
       params = {
         response_type: self.code? ? 'code' : 'token',
         scope: self.scopes,
-        expires_in: self.expires_in
+        expires_in: self.expires_in,
       }
+      params[:description] = self.description if self.description
       params[:user] = self.user if self.user
       data = token_data_to_hash(client.post("/oauth2/authorize", params))
 
@@ -39,8 +41,9 @@ module Kontena::Cli::Master::Token
         exit 0
       end
 
+      puts '%s:' % data.delete(:id)
       data.each do |key, value|
-        puts "%26.26s : %s" % [key, value]
+        puts "  %s: %s" % [key, value]
       end
     end
   end

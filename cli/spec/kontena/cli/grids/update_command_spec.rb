@@ -51,6 +51,19 @@ describe Kontena::Cli::Grids::UpdateCommand do
         subject.run(['--no-statsd-server', 'test'])
       end
 
+      it 'should send "none" as log forwarder when --no-log-forwarder given' do
+        expect(client).to receive(:put).with(
+          'grids/test', hash_including(
+            logs: hash_including(forwarder: 'none')
+          )
+        )
+        subject.run(['--no-log-forwarder', 'test'])
+      end
+
+      it 'should exit with error if --log-forwarder and --no-log-forwarder given' do
+        expect{subject.run(['--log-forwarder', 'fluentd', '--no-log-forwarder', 'test'])}.to exit_with_error.and output(/together/).to_stderr
+      end
+
       it 'should send empty default_affinity when --no-default-affinity given' do
         expect(client).to receive(:put).with(
           'grids/test', hash_including({
