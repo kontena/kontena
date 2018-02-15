@@ -73,7 +73,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         source
         variables
         parent
-        metadata
       )
       expect(result).to match hash_including(*top_level_fields)
     end
