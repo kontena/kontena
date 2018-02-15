@@ -224,22 +224,6 @@ describe Rpc::ServicePodSerializer do
             ]
           end
         end
-
-        context 'with trailing newlines missing' do
-          before do
-            certificate.set(
-              certificate: cert_pem.rstrip,
-              chain: ca_pem.rstrip,
-              private_key: key_pem.rstrip,
-            )
-          end
-
-          it 'formats the cert bundle correctly' do
-            expect(subject.to_hash[:secrets]).to eq [
-              { name: 'SSL_CERTS', type: 'env', value: cert_pem + ca_pem + key_pem }
-            ]
-          end
-        end
       end
 
       context 'with a http-01 domain authorization' do
