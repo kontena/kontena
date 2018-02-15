@@ -61,8 +61,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'returns result hash' do
       result = subject.execute
-      expect(result).to be_kind_of(Hash)
-      %w(
+      top_level_fields = %w(
         stack
         version
         name
@@ -74,9 +73,9 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         source
         variables
         parent
-      ).each do |k|
-        expect(result.key?(k)).to be_truthy
-      end
+        metadata
+      )
+      expect(result).to match hash_including(*top_level_fields)
     end
 
     context 'when extending services' do
@@ -334,8 +333,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
         it 'discards empty lines' do
           result = env_file
-          result << '
-    '
+          result << "  \n    \n"
           allow(File).to receive(:readlines).with('.env').and_return(result)
           variables = subject.send(:read_env_file, '.env')
           expect(variables).to eq([
