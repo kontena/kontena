@@ -37,7 +37,11 @@ module Kontena::Cli::Nodes
         unless Kontena::PluginManager::Common.installed?('vagrant')
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
-        cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list
+        cmd = ['vagrant', 'node', 'ssh', node['name']]
+        unless commands_list.empty?
+          cmd << '--'
+          cmd.concat(commands_list)
+        end
         Kontena.run!(cmd)
       else
         cmd = ['ssh']
