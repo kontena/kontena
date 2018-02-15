@@ -113,7 +113,12 @@ module Kontena::Workers
     end
 
     def restart_container
-      Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
+      Celluloid::Notifications.publish('service_pod:restart', {
+        service_id: @container.service_id,
+        instance_number: @container.instance_number,
+        container_id: @container.id,
+        started_at: @container.started_at,
+      })
     end
 
     # @param [String] type

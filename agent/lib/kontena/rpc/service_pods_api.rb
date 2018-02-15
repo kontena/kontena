@@ -1,5 +1,3 @@
-require_relative '../service_pods/restarter'
-
 module Kontena
   module Rpc
     class ServicePodsApi
@@ -8,7 +6,7 @@ module Kontena
       # @param instance_number [Integer]
       # @return [Hash]
       def restart(service_id, instance_number)
-        Kontena::ServicePods::Restarter.new(service_id, instance_number).perform
+        Celluloid::Notifications.publish('service_pod:restart', {service_id: service_id, instance_number: instance_number})
         {}
       end
 
