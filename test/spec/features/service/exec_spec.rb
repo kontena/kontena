@@ -19,7 +19,7 @@ describe 'service exec' do
   end
 
   it 'exits with error if command fails' do
-    k = kommando("kontena service exec test-1 ls -l /nonexist")
+    k = kommando("kontena service exec test-1 -- ls -l /nonexist")
     k.run
     expect(k.code).to_not eq 0
     expect(k.out).to include("/nonexist: No such file or directory")
@@ -115,7 +115,7 @@ describe 'service exec' do
     end
 
     it 'runs a command with piped non-ascii stdin' do
-      k = kommando("$ echo f\u00e5\u00e5 | kontena service exec -i test-1 sh -c 'LANG=C.UTF-8 rev'")
+      k = kommando("$ echo f\u00e5\u00e5 | kontena service exec -i test-1 -- sh -c 'LANG=C.UTF-8 rev'")
       expect(k.run).to be_truthy
       expect(k.code).to be_zero, k.out
       expect(k.out).to eq("\u00e5\u00e5f")
@@ -132,7 +132,7 @@ describe 'service exec' do
     end
 
     it 'runs a command inside a service on a given instances' do
-      k = kommando("kontena service exec --instance 2 test-1 hostname -s")
+      k = kommando("kontena service exec --instance 2 test-1 -- hostname -s")
       expect(k.run).to be_truthy
       expect(k.code).to be_zero, k.out
       expect(k.out).to eq("test-1-2\r\n")
@@ -140,21 +140,21 @@ describe 'service exec' do
 
 
     it 'runs a command on every instance with --all' do
-      k = kommando("kontena service exec --all --silent test-1 hostname -s")
+      k = kommando("kontena service exec --all --silent test-1 -- hostname -s")
       expect(k.run).to be_truthy
       expect(k.code).to be_zero, k.out
       expect(k.out).to eq("test-1-1\r\ntest-1-2\r\n")
     end
 
     it 'fails early if running a command on every instances with --all fails' do
-      k = kommando("kontena service exec --all --silent --shell test-1 hostname -s && false")
+      k = kommando("kontena service exec --all --silent --shell test-1 -- hostname -s && false")
       expect(k.run).to be_truthy
       expect(k.code).to_not be_zero, k.out
       expect(k.out).to eq("test-1-1\r\n")
     end
 
     it 'keeps going if running a command on every instances with --all --skip' do
-      k = kommando("kontena service exec --all --skip --silent --shell test-1 hostname -s && false")
+      k = kommando("kontena service exec --all --skip --silent --shell test-1 -- hostname -s && false")
       expect(k.run).to be_truthy
       expect(k.code).to_not be_zero, k.out
       expect(k.out).to eq("test-1-1\r\ntest-1-2\r\n")
