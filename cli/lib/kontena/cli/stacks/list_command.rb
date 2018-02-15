@@ -37,6 +37,7 @@ module Kontena::Cli::Stacks
       client.get("grids/#{current_grid}/stacks")['stacks'].tap { |stacks| stacks.map { |stack| stack['depth'] = 0 } }
     end
 
+    # Defines a set of columns for the command.
     def fields
       return ['name'] if quiet?
       {
@@ -44,20 +45,22 @@ module Kontena::Cli::Stacks
         stack: 'stack',
         services: 'services_count',
         state: 'state',
-        'exposed ports' => 'ports'
+        'exposed ports' => 'ports',
+        labels: 'labels'
       }
     end
 
     def execute
-    stacks = build_depths(get_stacks)
+      stacks = build_depths(get_stacks)
 
-    print_table(stacks) do |row|
+      print_table(stacks) do |row|
         next if quiet?
         row['name'] = health_icon(stack_health(row)) + " " + tree_icon(row) + " " + row['name']
         row['stack'] = "#{row['stack']}:#{row['version']}"
         row['services_count'] = row['services'].size
         row['ports'] = stack_ports(row).join(',')
         row['state'] = pastel.send(state_color(row['state']), row['state'])
+        row['labels'] = stack_labels(row)
       end
     end
 
@@ -89,6 +92,15 @@ module Kontena::Cli::Stacks
       end
       left_pad = ' ' * (2 * (row['depth'] - 1))
       left_pad + char
+    end
+
+    # Converts an array of stack labels into a comma-separated string
+    # or '-' when labels field is not defined.
+    #
+    # @param [Hash] stack
+    # @return [<String>]
+    def stack_labels(stack)
+      (stack['labels'] || ['-']).join(',')
     end
 
     # @param [Hash] stack
