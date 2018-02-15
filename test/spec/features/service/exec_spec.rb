@@ -12,7 +12,7 @@ describe 'service exec' do
   end
 
   it 'runs a command inside a service' do
-    k = kommando("kontena service exec test-1 hostname -s")
+    k = kommando("kontena service exec test-1 -- hostname -s")
     expect(k.run).to be_truthy
     expect(k.code).to be_zero, k.out
     expect(k.out).to eq("test-1-1\r\n")
