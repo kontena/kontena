@@ -99,11 +99,9 @@ describe Kontena::Command do
       )
     end
 
-    context 'with allow_options_after_parameters disabled' do
+    context 'with double dash' do
       subject do
         Class.new(Kontena::Command) do
-          callback_matcher 'foofoo', 'ssh'
-
           parameter 'TESTPARAM ...', 'Test parameter'
           option '--opt', 'OPT', 'Option'
 
@@ -113,15 +111,9 @@ describe Kontena::Command do
         end
       end
 
-      it 'does not parse trailing options' do
-        expect(subject.new('kontena').run(%w(--opt hello foo --bar hello))).to match hash_including(
+      it 'does not parse options after -- double dash' do
+        expect(subject.new('kontena').run(%w(--opt hello foo -- --bar hello))).to match hash_including(
           param_list: %w(foo --bar hello), opt: 'hello'
-        )
-      end
-
-      it 'parses leading options' do
-        expect(subject.new('kontena').run(%w(--opt hello foo --bar))).to match hash_including(
-          param_list: %w(foo --bar), opt: 'hello'
         )
       end
     end
