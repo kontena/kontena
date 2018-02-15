@@ -18,6 +18,7 @@ else
 end
 
 json.set! :scopes, access_token.scopes.join(",")
+json.set! :description, access_token.description
 
 json.user do
   json.id access_token.user.id.to_s

@@ -1,7 +1,7 @@
 
 describe AccessToken do
   it { should be_timestamped_document }
-  it { should have_fields(:token, :refresh_token, :expires_at, :scopes)}
+  it { should have_fields(:token, :refresh_token, :expires_at, :scopes, :description)}
 
   it { should belong_to(:user) }
 

@@ -28,7 +28,8 @@ describe Kontena::Cli::Master::Token::ShowCommand do
         },
         "server" => {
           "name" => "foo"
-        }
+        },
+        "description" => "description test"
       }
     end
 
@@ -44,7 +45,8 @@ describe Kontena::Cli::Master::Token::ShowCommand do
           'server_name' => 'foo',
           'access_token_last_four' => 'abcd',
           'refresh_token_last_four' => 'efgh',
-          'expires_in' => 100
+          'expires_in' => 100,
+          'description' => 'description test'
         }
       )
     end
@@ -64,7 +66,8 @@ describe Kontena::Cli::Master::Token::ShowCommand do
         },
         "server" => {
           "name" => "foo"
-        }
+        },
+        "description" => 'description test'
       }
     end
 
@@ -78,7 +81,8 @@ describe Kontena::Cli::Master::Token::ShowCommand do
           'user_id' => 'abc',
           'user_email' => 'user@email',
           'user_name' => 'username',
-          'server_name' => 'foo'
+          'server_name' => 'foo',
+          'description' => 'description test'
         }
       )
     end

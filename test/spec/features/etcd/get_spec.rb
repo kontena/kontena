@@ -7,8 +7,7 @@ describe 'etcd get' do
 
   it 'fetches value of a key' do
     run 'kontena etcd set /e2e/test yes'
-    k = run 'kontena etcd get /e2e/test'
-    expect(k.code).to eq(0)
+    k = run! 'kontena etcd get /e2e/test'
     expect(k.out.strip).to eq('yes')
   end
 

@@ -2,25 +2,9 @@ module Scheduler
   module Filter
     class Affinity
 
-      # @param service [GridService] relative to service
-      # @param value [String] service, stack/service, /service
-      # @return [GridService, nil]
-      def resolve_service(service, value)
-        if value.include? '/'
-          stack_name, service_name = value.split('/', 2)
-          stack = service.grid.stacks.find_by(name: stack_name)
-        else
-          stack = service.stack
-          service_name = value
-        end
-
-        stack && stack.grid_services.find_by(name: service_name)
-      end
-
-      ##
-      # @param [GridService] service
-      # @param [Integer] instance_number
-      # @param [Array<HostNode>] nodes
+      # @param service [GridService]
+      # @param instance_number [Integer]
+      # @param nodes [Array<HostNode>]
       # @raise [Scheduler::Error]
       def for_service(service, instance_number, nodes)
         return nodes if service.affinity.nil? || service.affinity.size == 0
@@ -29,13 +13,8 @@ module Scheduler
           affinity = affinity % [instance_number.to_s]
           key, comparator, flags, value = split_affinity(affinity)
 
-          if key == 'service'
-            # value resolves to nil if not found; accept for use with service!=...
-            value = resolve_service(service, value)
-          end
-
           filtered_nodes = nodes.select { |node|
-            match_affinity?(key, comparator, value, node)
+            match_affinity?(key, comparator, value, node, service)
           }
 
           if filtered_nodes.size > 0
@@ -49,17 +28,18 @@ module Scheduler
         nodes
       end
 
-      # @param [String] key
-      # @param [String] comparator
-      # @param [String] value
-      # @param [HostNode] node
+      # @param key [String]
+      # @param comparator [String]
+      # @param value [String]
+      # @param node [HostNode]
+      # @param service [GridService]
       # @return [Boolean]
-      def match_affinity?(key, comparator, value, node)
+      def match_affinity?(key, comparator, value, node, service)
         match = case key
         when 'node'
           node_match?(node, value)
         when 'service'
-          service_match?(node, value)
+          service_match?(node, value, service)
         when 'container'
           container_match?(node, value)
         when 'label'
@@ -78,7 +58,7 @@ module Scheduler
         end
       end
 
-      # @param [String] affinity
+      # @param affinity [String]
       # @raise [Scheduler::Error] invalid filter
       # @return [Array<(String, String, String|nil, String)>, NilClass]
       def split_affinity(affinity)
@@ -89,34 +69,64 @@ module Scheduler
         end
       end
 
-      # @param [String] comparator
+      # @param flags [String]
       # @return [Boolean]
       def soft?(flags)
         flags && flags.include?('~')
       end
 
-      # @param [HostNode] node
-      # @param [String] value
+      # @param node [HostNode]
+      # @param value [String]
+      # @return [Boolean]
       def node_match?(node, value)
-        node.name == value
+        value_matches?(node.name, value)
       end
 
-      # @param [HostNode] node
-      # @param [String] value
+      # @param node [HostNode]
+      # @param value [String]
+      # @return [Boolean]
       def container_match?(node, value)
-        node.containers.where(name: value).exists?
+        container_names = node.containers.map { |c|
+          c.name
+        }
+        container_names.any?{ |n| value_matches?(n, value) }
       end
 
-      # @param [HostNode] node
-      # @param [GridService, nil] value
-      def service_match?(node, value)
-        value && node.grid_service_instances.where(grid_service: value).exists?
+      # @param node [HostNode]
+      # @param value [String]
+      # @param service [GridService,NilClass]
+      # @return [Boolean]
+      def service_match?(node, value, service)
+        match_with_stack = regex?(value) ? value[1...-1].include?('\/') : value.include?('/')
+        value = "#{service.stack.name}/#{value}" unless match_with_stack
+        service_names = node.grid_service_instances.includes(:grid_service).map { |i|
+          "#{i.grid_service.stack.name}/#{i.grid_service.name}"
+        }.compact.uniq
+        service_names.any?{ |n| value_matches?(n, value) }
       end
 
-      # @param [HostNode] node
-      # @param [String] value
+      # @param node [HostNode]
+      # @param value [String]
+      # @return [Boolean]
       def label_match?(node, value)
-        node.labels && node.labels.include?(value)
+        node.labels && node.labels.any? { |l| value_matches?(l, value) }
+      end
+
+      # @param val [String]
+      # @param pattern [String]
+      # @return [Boolean]
+      def value_matches?(val, pattern)
+        if regex?(pattern)
+          Regexp.new(pattern[1...-1]).match(val)
+        else
+          val == pattern
+        end
+      end
+
+      # @param val [String]
+      # @return [Boolean]
+      def regex?(val)
+        val.start_with?('/') && val.end_with?('/')
       end
     end
   end

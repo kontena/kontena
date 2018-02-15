@@ -41,6 +41,7 @@ module EventStream
 
   def publish_async(event)
     MongoPubsub.publish_async(CHANNEL, event) if MongoPubsub.started?
+    return nil # do not leak Celluloid::Proxy::Async<MongoPubsub>!
   end
 
   def find_serializer_class

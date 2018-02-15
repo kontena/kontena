@@ -41,7 +41,7 @@ class GridService
   field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
   field :stop_signal, type: String
-  field :stop_grace_period, type: Fixnum, default: 10
+  field :stop_grace_period, type: Integer, default: 10
 
   belongs_to :grid
   belongs_to :image
@@ -51,7 +51,7 @@ class GridService
   has_many :container_logs
   has_many :container_stats
   has_many :audit_logs
-  has_many :grid_service_deploys, dependent: :destroy
+  has_many :grid_service_deploys, dependent: :delete
   has_many :event_logs
   has_many :grid_domain_authorizations
   has_and_belongs_to_many :networks

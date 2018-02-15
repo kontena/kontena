@@ -99,8 +99,8 @@ describe GridCertificates::RequestCertificate do
 
     it 'adds error if verification timeouts' do
       expect(challenge).to receive(:request_verification).and_return(true)
-      expect(challenge).to receive(:verify_status).and_raise(Timeout::Error)
-      expect(subject).to receive(:add_error)
+      expect(challenge).to receive(:verify_status).and_raise(Timeout::Error, "timeout after waiting ...")
+      expect(subject).to receive(:add_error).with(:challenge_verify, :timeout, "Challenge verification timeout: timeout after waiting ...")
 
       expect{
         subject.verify_domain('example.com')
@@ -108,6 +108,18 @@ describe GridCertificates::RequestCertificate do
 
       expect(authz.expires_at).to match Time
       expect(authz.status).to eq :requested
+    end
+
+    it 'adds error if acme server returns an error' do
+      expect(challenge).to receive(:request_verification).and_return(false)
+      expect(subject).to receive(:add_error)
+
+      expect{
+        subject.verify_domain('example.com')
+      }.to_not change{authz.reload.state}.from(:created)
+
+      expect(authz.expires_at).to match Time
+      expect(authz.status).to eq :created
     end
 
     it 'adds error if acme client errors' do

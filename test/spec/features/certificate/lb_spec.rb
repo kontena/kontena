@@ -39,8 +39,7 @@ describe 'kontena/lb certificates' do
     File.write(cert_path, ssl_cert.to_pem)
     File.write(key_path, ssl_key.to_pem)
 
-    k = run("kontena certificate import --private-key=#{key_path} #{cert_path}")
-    expect(k.code).to eq(0), k.out
+    run!("kontena certificate import --private-key=#{key_path} #{cert_path}")
 
     with_fixture_dir('stack/certificates') do
       k = run('kontena stack install -v certificate=localhost kontena-lb.yml')
@@ -57,8 +56,7 @@ describe 'kontena/lb certificates' do
   end
 
   it 'deploys the certificate to the LB for https' do
-    k = run("curl --cacert #{cert_path} https://localhost")
-    expect(k.code).to eq(0), k.out
+    k = run!("curl --cacert #{cert_path} https://localhost")
     expect(k.out).to include 'whoami-1.cert-test.e2e.kontena.local'
   end
 end

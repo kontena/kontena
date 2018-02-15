@@ -12,11 +12,9 @@ describe 'stack volumes' do
 
 
   it 'creates stack with reference to external volume' do
-    k = run 'kontena volume create --scope instance --driver local redis-data'
-    expect(k.code).to eq(0)
+    run! 'kontena volume create --scope instance --driver local redis-data'
     with_fixture_dir("stack/volumes") do
-      k = run 'kontena stack install redis-simple.yml'
-      expect(k.code).to eq(0), k.out
+      run! 'kontena stack install redis-simple.yml'
     end
 
     container = find_container('redis.redis-1')

@@ -126,6 +126,13 @@ describe Kontena::LoadBalancers::Configurer do
       subject.ensure_config(container)
     end
 
+    it 'sets http check port' do
+      container.labels['io.kontena.health_check.port'] = 9090
+      expect(etcd).to receive(:set).
+        with("#{etcd_prefix}/lb/services/test-api/health_check_port", {value: 9090})
+      subject.ensure_config(container)
+    end
+
     it 'removes tcp-services' do
       expect(subject.wrapped_object).to receive(:rmdir).
         with("#{etcd_prefix}/lb/tcp-services/test-api")

@@ -1,5 +1,6 @@
 require_relative '../service_pods/creator'
 require_relative '../service_pods/starter'
+require_relative '../service_pods/restarter'
 require_relative '../service_pods/stopper'
 require_relative '../service_pods/terminator'
 require_relative '../service_pods/migrator'
@@ -18,7 +19,7 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
 
     attr_reader :node, :prev_state, :service_pod
-    attr_accessor :service_pod, :container_state_changed, :hook_manager
+    attr_accessor :service_pod, :hook_manager
 
     # @param node [Node]
     # @param service_pod [ServicePod]
@@ -27,9 +28,10 @@ module Kontena::Workers
       @service_pod = service_pod
       @hook_manager = Kontena::ServicePods::LifecycleHookManager.new(node)
       @prev_state = nil # last state sent to master; do not go backwards in time
-      @container_state_changed = true
       @deploy_rev_changed = false
       @restarts = 0
+      @restarting_at = nil # restart requested for container if still running at given timestamp
+      @apply_started_at = @apply_finished_at = nil
       subscribe('container:event', :on_container_event)
     end
 
@@ -44,6 +46,18 @@ module Kontena::Workers
       end
     end
 
+    def apply_started!
+      @apply_started_at = Time.now
+    end
+    def apply_finished!
+      @apply_finished_at = Time.now
+    end
+
+    # @return [Boolean]
+    def apply_finished?
+      !!@apply_finished_at && @apply_finished_at > @apply_started_at
+    end
+
     # @param service_pod [Kontena::Models::ServicePod]
     # @return [Boolean]
     def needs_apply?(service_pod)
@@ -51,7 +65,10 @@ module Kontena::Workers
                      @service_pod.deploy_rev != service_pod.deploy_rev
       return false if restarting?
 
-      @container_state_changed == true
+      # retry apply if it did not complete succesfully
+      return true if !apply_finished?
+
+      return false
     end
 
     # @param service_pod [Kontena::Models::ServicePod]
@@ -69,9 +86,16 @@ module Kontena::Workers
     # @param event [Docker::Event]
     def on_container_event(topic, event)
       if @container && event.id == @container.id
-        debug "container event: #{event.status}"
-        @container_state_changed = true
-        handle_restart_on_die if event.status == 'die'.freeze
+        at = Time.at(event.time_nano.to_f / 10**9)
+        if at > @container.started_at
+          debug "#{@service_pod} container event: #{event.status} at #{at.utc.xmlschema(9)}"
+
+          if event.status == 'die'
+            handle_restart_on_die
+          end
+        else
+          debug "#{@service_pod} stale container event: #{event.status} at #{at.utc.xmlschema(9)} < #{@container.started_at.utc.xmlschema(9)}"
+        end
       end
     end
 
@@ -84,9 +108,9 @@ module Kontena::Workers
       backoff = @restarts ** 2
       backoff = max_restart_backoff if backoff > max_restart_backoff
       if backoff == 0
-        info "restarting #{@service_pod.name_for_humans} because it has stopped"
+        info "restarting #{@service_pod} because it has stopped"
       else
-        info "restarting #{@service_pod.name_for_humans} because it has stopped (delay: #{backoff}s)"
+        info "restarting #{@service_pod} because it has stopped (delay: #{backoff}s)"
       end
       ts = Time.now.utc
       @restarts += 1
@@ -111,6 +135,22 @@ module Kontena::Workers
       @restarts > 0
     end
 
+    # User requested service restart
+    def restart(at = Time.now, container_id: nil, started_at: nil)
+      if container_id && @container.id != container_id
+        debug "stale #{@service_pod} restart for container id=#{container_id}"
+        return
+      end
+      if started_at && @container.started_at != started_at
+        debug "stale #{@service_pod} restart for container started_at=#{started_at}"
+        return
+      end
+
+      debug "mark #{@service_pod} for restart at #{at}"
+      @restarting_at = at
+      apply
+    end
+
     def destroy
       @service_pod.mark_as_terminated
       apply
@@ -121,6 +161,8 @@ module Kontena::Workers
       container = nil
 
       exclusive {
+        apply_started!
+
         # make sure we sync the correct service_pod rev back to the master, if it changes later during the apply
         service_pod = @service_pod
 
@@ -130,10 +172,11 @@ module Kontena::Workers
 
         # reset restart counter if instance stays up 10s
         @restart_counter_reset_timer = after(10) {
-          info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter" if restarting?
+          info "#{@service_pod} stayed up 10s, resetting restart backoff counter" if restarting?
           @restarts = 0
         }
-        @container_state_changed = false
+
+        apply_finished! # skipped on errors, so we retry because needs_apply? => true
       }
 
       if service_pod.running? && service_pod.wait_for_port
@@ -147,7 +190,7 @@ module Kontena::Workers
       end
 
     rescue => error
-      warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
+      warn "failed to apply #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
       warn error
       sync_state_to_master(service_pod, container, error) # XXX: unknown container?
     else
@@ -204,6 +247,9 @@ module Kontena::Workers
       elsif service_container && service_pod.running? && !service_container.running?
         info "starting #{service_pod.name}"
         ensure_started
+      elsif service_pod.running? && service_container && service_container.running? && restart_service_container?(service_container)
+        info "restarting #{service_pod.name}"
+        ensure_restarted
       elsif service_pod.stopped? && (service_container && service_container.running?)
         info "stopping #{service_pod.name}"
         ensure_stopped
@@ -229,7 +275,7 @@ module Kontena::Workers
     rescue => exc
       log_service_pod_event(
         "service:create_instance",
-        "unexpected error while creating #{service_pod.name_for_humans}: #{exc.message}",
+        "unexpected error while creating #{service_pod}: #{exc.message}",
         Logger::ERROR
       )
       raise exc
@@ -240,7 +286,18 @@ module Kontena::Workers
     rescue => exc
       log_service_pod_event(
         "service:start_instance",
-        "Unexpected error while starting service instance #{service_pod.name_for_humans}: #{exc.message}",
+        "Unexpected error while starting service instance #{service_pod}: #{exc.message}",
+        Logger::ERROR
+      )
+      raise exc
+    end
+
+    def ensure_restarted
+      Kontena::ServicePods::Restarter.new(service_pod).perform
+    rescue => exc
+      log_service_pod_event(
+        "service:restart_instance",
+        "Unexpected error while restarting service instance #{service_pod}: #{exc.message}",
         Logger::ERROR
       )
       raise exc
@@ -251,7 +308,7 @@ module Kontena::Workers
     rescue => exc
       log_service_pod_event(
         "service:stop_instance",
-        "Unexpected error while stopping service instance #{service_pod.name_for_humans}: #{exc.message}",
+        "Unexpected error while stopping service instance #{service_pod}: #{exc.message}",
         Logger::ERROR
       )
       raise exc
@@ -262,7 +319,7 @@ module Kontena::Workers
     rescue => exc
       log_service_pod_event(
         "service:remove_instance",
-        "Unexpected error while removing service instance #{service_pod.name_for_humans}: #{exc.message}",
+        "Unexpected error while removing service instance #{service_pod}: #{exc.message}",
         Logger::ERROR
       )
       raise exc
@@ -320,6 +377,11 @@ module Kontena::Workers
       service_pod.labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
     end
 
+    # @return [Boolean]
+    def restart_service_container?(service_container)
+      @restarting_at && service_container.started_at <= @restarting_at
+    end
+
     # @return [Kontena::Workers::ImagePullWorker]
     def image_puller
       Actor[:image_pull_worker]
@@ -366,11 +428,11 @@ module Kontena::Workers
 
       exclusive {
         if @prev_state && @prev_state[:rev] && service_pod.deploy_rev < @prev_state[:rev]
-          warn "skip #{service_pod.name_for_humans} state sync at #{service_pod.deploy_rev}: stale, last sync at #{@prev_state[:rev]}"
+          warn "skip #{service_pod} state sync at #{service_pod.deploy_rev}: stale, last sync at #{@prev_state[:rev]}"
         elsif state == @prev_state
-          debug "skip #{service_pod.name_for_humans} state sync at #{service_pod.deploy_rev}: unchanged"
+          debug "skip #{service_pod} state sync at #{service_pod.deploy_rev}: unchanged"
         else
-          debug "sync #{service_pod.name_for_humans} state at #{service_pod.deploy_rev}: #{state}"
+          debug "sync #{service_pod} state at #{service_pod.deploy_rev}: #{state}"
           rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
           @prev_state = state
         end

@@ -5,7 +5,7 @@ class Certificate
   field :subject, type: String
   field :valid_until, type: DateTime
   field :alt_names, type: Array
-  field :encrypted_private_key, type: String, encrypted: true # PEM encoded
+  field :encrypted_private_key, type: String, encrypted: { random_iv: true } # PEM encoded
   field :certificate, type: String # PEM encoded certificate, no need to encrypt
   field :chain, type: String # Trust chain
 
@@ -45,7 +45,7 @@ class Certificate
   def auto_renewable?
     self.all_domains.each do |domain|
       domain_auth = self.grid.grid_domain_authorizations.find_by(domain: domain)
-      unless domain_auth && domain_auth.authorization_type == 'tls-sni-01' && domain_auth.grid_service
+      unless domain_auth && domain_auth.auto_renewable?
         return false
       end
     end

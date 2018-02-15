@@ -24,7 +24,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
         'volumes' => [],
         'dependencies' => nil,
         'source' => /stack:/,
-        'parent_name' => nil,
+        'parent' => nil,
         'expose' => nil
       }
     end
