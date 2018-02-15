@@ -9,7 +9,7 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
-    HEALTHY_STATUSES = (200 .. 299).to_a.freeze
+    HEALTHY_STATUSES = (200 .. 399)
 
     finalizer :log_exit
 
@@ -78,7 +78,8 @@ module Kontena::Workers
           connect_timeout: timeout,
           headers: {
             "User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"
-          }
+          },
+          middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower],
         )
         debug "got status: #{response.status}"
         data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
