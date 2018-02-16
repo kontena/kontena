@@ -10,7 +10,7 @@ describe 'kontena service shutdown' do
       end
     end
 
-    context "using system default signal handler" do
+    context "using ungraceful shutdown to fail requests" do
       before(:all) do
         with_fixture_dir('stack/shutdown-test') do
           run! "kontena stack install -n shutdown-test-fail -v trap=false"
