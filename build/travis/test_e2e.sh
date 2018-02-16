@@ -11,5 +11,6 @@ cd test && \
   bundle install --system --without development && \
   rm Gemfile && \
   kontena -v && \
+  docker-compose down; \
   rake compose:setup && \
-  rake
+  docker-compose run --build test rspec spec/
