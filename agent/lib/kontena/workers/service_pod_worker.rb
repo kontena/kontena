@@ -91,7 +91,7 @@ module Kontena::Workers
           debug "#{@service_pod} container event: #{event.status} at #{at.utc.xmlschema(9)}"
 
           if event.status == 'die'
-            handle_restart_on_die
+            on_container_die(exit_code: event.actor.attributes['exitCode'])
           end
         else
           debug "#{@service_pod} stale container event: #{event.status} at #{at.utc.xmlschema(9)} < #{@container.started_at.utc.xmlschema(9)}"
@@ -100,7 +100,7 @@ module Kontena::Workers
     end
 
     # Handles events when container has died
-    def handle_restart_on_die
+    def on_container_die(exit_code: )
       cancel_restart_timers
       return unless @service_pod.running?
 
