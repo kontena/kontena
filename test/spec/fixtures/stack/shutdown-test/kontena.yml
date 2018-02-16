@@ -1,5 +1,8 @@
 stack: test/shutdown-test
 variables:
+  trap:
+    type: boolean
+    default: true
   graceful_shutdown:
     type: boolean
   healthcheck:
@@ -26,9 +29,11 @@ services:
       - KONTENA_LB_INTERNAL_PORT=8000
       - KONTENA_LB_VIRTUAL_PATH=/
       - REQUEST_DELAY=3.0
+      # {% if trap %}
       - TRAP=true
       # {% if graceful_shutdown %}
       - SHUTDOWN=true
+      # {% endif %}
       # {% endif %}
   client:
     build:

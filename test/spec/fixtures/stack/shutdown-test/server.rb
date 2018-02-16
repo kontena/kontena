@@ -34,9 +34,12 @@ if TRAP
       $stderr.puts "shutdown on SIGTERM with #{server.tokens.max - server.tokens.size} active clients"
       server.shutdown # closes listeners after stopping
     else
-      $stderr.puts "skip SIGTERM!"
+      $stderr.puts "skip SIGTERM"
     end
   end
+else
+  # kill the process instead of allowing webrick to handle the SignalException: SIGTERM
+  trap 'TERM', 'SYSTEM_DEFAULT'
 end
 
 $logger.info "start :#{PORT}"

@@ -9,6 +9,29 @@ describe 'kontena service shutdown' do
         run! 'kontena stack build --no-push'
       end
     end
+
+    context "using system default signal handler" do
+      before(:all) do
+        with_fixture_dir('stack/shutdown-test') do
+          run! "kontena stack install -n shutdown-test-fail -v trap=false"
+        end
+      end
+      after(:all) do
+        run! 'kontena stack rm --force shutdown-test-fail'
+      end
+
+      describe "after re-deploying the server" do
+        before do
+          run! 'kontena service deploy --force shutdown-test-fail/server'
+        end
+
+        it "will result in client errors" do
+          events = service_events('shutdown-test-fail/client')
+
+          expect(events.select{|e| e[:type] == 'instance_exit'}).to_not be_empty
+        end
+      end
+    end
     
     context "using graceful shutdown to close the listening socket" do
       before(:all) do
@@ -21,7 +44,6 @@ describe 'kontena service shutdown' do
       end
 
       describe "after re-deploying the server" do
-
         before do
           run! 'kontena service deploy --force shutdown-test-graceful/server'
         end
@@ -45,7 +67,6 @@ describe 'kontena service shutdown' do
       end
 
       describe "after re-deploying the server" do
-
         before do
           run! 'kontena service deploy --force shutdown-test-nohealthcheck/server'
         end
@@ -69,7 +90,6 @@ describe 'kontena service shutdown' do
       end
 
       describe "after re-deploying the server" do
-
         before do
           run! 'kontena service deploy --force shutdown-test-delay/server'
         end
