@@ -28,7 +28,7 @@ describe 'kontena service shutdown' do
         it "will result in client errors" do
           events = service_events('shutdown-test-fail/client')
 
-          expect(events.select{|e| e[:type] == 'instance_exit'}).to_not be_empty
+          expect(events.select{|e| e[:type] == 'instance_crash'}).to_not be_empty
         end
       end
     end
@@ -51,7 +51,7 @@ describe 'kontena service shutdown' do
         it "does not result in any client errors" do
           events = service_events('shutdown-test-graceful/client')
 
-          expect(events.select{|e| e[:type] == 'instance_exit'}).to be_empty
+          expect(events.select{|e| e[:type] == 'instance_crash'}).to be_empty
         end
       end
     end
@@ -74,7 +74,7 @@ describe 'kontena service shutdown' do
         it "does not result in any client errors" do
           events = service_events('shutdown-test-nohealthcheck/client')
 
-          expect(events.select{|e| e[:type] == 'instance_exit'}).to be_empty
+          expect(events.select{|e| e[:type] == 'instance_crash'}).to be_empty
         end
       end
     end
@@ -97,10 +97,9 @@ describe 'kontena service shutdown' do
         it "does not result in any client errors" do
           events = service_events('shutdown-test-delay/client')
 
-          expect(events.select{|e| e[:type] == 'instance_exit'}).to eq []
+          expect(events.select{|e| e[:type] == 'instance_crash'}).to eq []
         end
       end
     end
-
   end
 end
