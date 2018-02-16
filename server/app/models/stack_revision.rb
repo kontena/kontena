@@ -6,13 +6,13 @@ class StackRevision
   field :stack_name, type: String
   field :registry, type: String
   field :source, type: String
-  field :variables, type: Hash
+  field :variables, type: Hash, default: {}
   field :version, type: String
   field :revision, type: Integer, default: 1
   field :expose, type: String
-  field :services, type: Array
-  field :volumes, type: Array
-  field :metadata, type: Hash
+  field :services, type: Array, default: []
+  field :volumes, type: Array, default: []
+  field :metadata, type: Hash, default: {}
 
   belongs_to :stack
 
