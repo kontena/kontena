@@ -74,7 +74,6 @@ module Kontena
           dputs "Retrieving #{stack.stack_name} from registry"
           content = client.pull(stack_name)
           yaml    = ::YAML.safe_load(content, [], [], true, stack.stack_name.to_s)
-          require 'byebug'; byebug
           new_stack_name = Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
           puts new_stack_name.inspect
           new_stack = CachedStack.new(new_stack_name)
