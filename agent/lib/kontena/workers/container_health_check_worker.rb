@@ -84,7 +84,8 @@ module Kontena::Workers
         debug "got status: #{response.status}"
         data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status
-      rescue
+      rescue => exc
+        debug "got error #{exc.class}: #{exc}"
         data['status'] = 'unhealthy'
       end
       data
@@ -106,7 +107,8 @@ module Kontena::Workers
         debug "got status: #{response}"
         data['status'] = response ? 'healthy' : 'unhealthy'
         data['status_code'] = response ? 'open' : 'closed'
-      rescue
+      rescue => exc
+        debug "got error #{exc.class}: #{exc}"
         data['status'] = 'unhealthy'
       end
       data
