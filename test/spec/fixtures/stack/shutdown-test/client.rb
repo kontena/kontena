@@ -10,7 +10,7 @@ def getenv(name, default = nil, &block)
   elsif default
     default
   else
-    fail "Missinsg ENV #{name}"
+    fail "Missing ENV #{name}"
   end
 end
 
@@ -27,15 +27,21 @@ def time
   return Time.now - t, r
 end
 
+def client_request(url = URL)
+  Net::HTTP.start(url.hostname, url.port) do |http|
+    return http.request_post(url.path, '')
+  end
+end
+
 def client_thread(i)
   $logger.info "Start #{i}/#{THREADS}..."
 
   loop do
     sleep rand() * SKEW
 
-    latency, response = time { Net::HTTP.get_response(URL) }
+    latency, response = time { client_request(URL) }
 
-    $logger.info "[thread #{'%2d' % i}/#{THREADS}] GET #{URL} => HTTP #{response.code} in #{'%.3fs' % latency}: #{response.body.strip}"
+    $logger.info "[thread #{'%2d' % i}/#{THREADS}] POST #{URL} => HTTP #{response.code} in #{'%.3fs' % latency}: #{response.body.strip}"
 
     response.value # raises
   end
