@@ -1,0 +1,39 @@
+stack: test/shutdown-test
+variables:
+  graceful_shutdown:
+    type: boolean
+services:
+  lb:
+    image: kontena/lb
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    image: shutdown-test-server
+    instances: 3
+    health_check:
+      protocol: http
+      port: 8000
+      uri: "/health?status=200"
+      initial_delay: 5
+    links:
+      - lb
+    environment:
+      - KONTENA_LB_INTERNAL_PORT=8000
+      - KONTENA_LB_VIRTUAL_PATH=/
+      - REQUEST_DELAY=3.0
+      - TRAP=true
+      # {% if graceful_shutdown %}
+      - SHUTDOWN=true
+      # {% endif %}
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    image: shutdown-test-client
+    instances: 3
+    environment:
+      - THREADS=8
+      - URL=http://lb/
+    depends_on:
+      - server
