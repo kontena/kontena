@@ -107,11 +107,13 @@ module Kontena::Workers
       # backoff restarts
       backoff = @restarts ** 2
       backoff = max_restart_backoff if backoff > max_restart_backoff
-      if backoff == 0
-        info "restarting #{@service_pod} because it has stopped"
-      else
-        info "restarting #{@service_pod} because it has stopped (delay: #{backoff}s)"
-      end
+      info "#{@service_pod} exited with code #{exit_code}, restarting (delay: #{backoff}s)"
+
+      log_service_pod_event("service:instance_exit",
+        "service #{@service_pod} instance exited with code #{exit_code}, restarting (delay: #{backoff}s)",
+        Logger::WARN
+      )
+
       ts = Time.now.utc
       @restarts += 1
       @restart_backoff_timer = after(backoff) {
