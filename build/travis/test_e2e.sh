@@ -12,4 +12,4 @@ cd test && \
   rm Gemfile && \
   kontena -v && \
   rake compose:setup && \
-  docker-compose run --rm test rspec spec/
+  rspec spec/
