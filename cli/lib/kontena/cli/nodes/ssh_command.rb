@@ -5,6 +5,8 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
+    usage "[OPTIONS] [NODE] -- [COMMANDS] ..."
+
     parameter "[NODE]", "SSH to Grid node. Use --any to connect to the first available node"
     parameter "[COMMANDS] ...", "Run command on host"
     option ["-a", "--any"], :flag, "Connect to first available node"
@@ -35,7 +37,11 @@ module Kontena::Cli::Nodes
         unless Kontena::PluginManager::Common.installed?('vagrant')
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
-        cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list
+        cmd = ['vagrant', 'node', 'ssh', node['name']]
+        unless commands_list.empty?
+          cmd << '--'
+          cmd.concat(commands_list)
+        end
         Kontena.run!(cmd)
       else
         cmd = ['ssh']
@@ -49,6 +55,7 @@ module Kontena::Cli::Nodes
         end
         cmd << "#{user}@#{ip}"
         cmd += commands_list
+        logger.debug { "Running ssh command: #{cmd.inspect}" }
         exec(*cmd)
       end
     end
