@@ -28,7 +28,7 @@ services:
     environment:
       - KONTENA_LB_INTERNAL_PORT=8000
       - KONTENA_LB_VIRTUAL_PATH=/
-      - REQUEST_DELAY=3.0
+      - REQUEST_DELAY=1.0
       # {% if trap %}
       - TRAP=true
       # {% if graceful_shutdown %}
@@ -42,7 +42,8 @@ services:
     image: shutdown-test-client
     instances: 3
     environment:
-      - THREADS=8
+      - SKEW=0.2
+      - THREADS=32
       - URL=http://lb/
     depends_on:
       - server
