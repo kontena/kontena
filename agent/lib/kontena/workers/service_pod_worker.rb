@@ -109,7 +109,7 @@ module Kontena::Workers
       backoff = max_restart_backoff if backoff > max_restart_backoff
       info "#{@service_pod} exited with code #{exit_code}, restarting (delay: #{backoff}s)"
 
-      log_service_pod_event("service:instance_exit",
+      log_service_pod_event("service:instance_crash",
         "service #{@service_pod} instance exited with code #{exit_code}, restarting (delay: #{backoff}s)",
         Logger::WARN
       )
