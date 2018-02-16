@@ -49,12 +49,24 @@ namespace :compose do
   end
 
   desc "setup compose"
-  task :setup => [:setup_master, :setup_grid]
+  task :setup => [:compose_down, :setup_master, :setup_grid]
+
+  desc "compose down"
+  task :compose_down do
+    sh "docker-compose down -v"
+    require 'timeout'
+    Timeout.timeout(30) do
+      sleep 0.5 until `docker-compose ps -q`.strip.empty?
+    end
+  end
 
   desc "setup compose master"
   task :setup_master do
+    require 'timeout'
     sh "docker-compose up -d api"
-    sleep 20
+    Timeout.timeout(60) do
+      sleep 0.5 until `docker inspect --format='{{.State.Status}}' test_api_1`.strip == 'running'
+    end
     sh "kontena master login --code initialadmincode --name compose-e2e http://localhost:9292"
   end
 
@@ -62,7 +74,9 @@ namespace :compose do
   task :setup_grid do
     sh "kontena grid create --token e2etoken e2e"
     sh "docker-compose up -d agent"
-    sleep 30
+    Timeout.timeout(60) do
+      sleep 0.5 until !`kontena node ls -q`.strip.empty?
+    end
     sh "kontena node ls"
   end
 
