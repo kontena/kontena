@@ -3,15 +3,22 @@ sudo: required
 cache:
   bundler: true
   directories:
-  - $TEST_DIR/vendor/bundle
-  - $HOME/docker
+    - $TEST_DIR/vendor/bundle
+    - $HOME/docker
+before_cache:
+  # Save and gzip tagged images
+  - if [[ "$TEST_DIR" = "test" ]]; then mkdir -p $HOME/docker && docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}' | xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz'; fi
 before_install:
+  # Load cached images
+  - if [[ "$TEST_DIR" = "test" ]] && [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
   # Pull images to get layers
   - if [[ "$TEST_DIR" = "test" ]]; then docker pull kontena/agent:latest; docker pull kontena/server:latest; docker pull kontena/cli:latest; docker pull mongo:3.4; fi
+  # Run before_install script
   - ./build/travis/before_install.sh
 
 services:
   - docker
+
 bundler_args: --without development
 env:
   global:
