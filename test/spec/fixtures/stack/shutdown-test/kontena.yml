@@ -2,6 +2,8 @@ stack: test/shutdown-test
 variables:
   graceful_shutdown:
     type: boolean
+  healthcheck:
+    type: boolean
 services:
   lb:
     image: kontena/lb
@@ -11,11 +13,13 @@ services:
       dockerfile: Dockerfile.server
     image: shutdown-test-server
     instances: 3
+    # {% if healthcheck %}
     health_check:
       protocol: http
       port: 8000
       uri: "/health?status=200"
       initial_delay: 5
+    # {% endif %}
     links:
       - lb
     environment:

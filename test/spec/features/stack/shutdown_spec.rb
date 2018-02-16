@@ -34,6 +34,30 @@ describe 'kontena service shutdown' do
       end
     end
 
+    context "using graceful shutdown without a healthcheck" do
+      before(:all) do
+        with_fixture_dir('stack/shutdown-test') do
+          run! "kontena stack install -n shutdown-test-nohealthcheck -v graceful_shutdown=true -v healthcheck=false"
+        end
+      end
+      after(:all) do
+        run! 'kontena stack rm --force shutdown-test-nohealthcheck'
+      end
+
+      describe "after re-deploying the server" do
+
+        before do
+          run! 'kontena service deploy --force shutdown-test-nohealthcheck/server'
+        end
+
+        it "does not result in any client errors" do
+          events = service_events('shutdown-test-nohealthcheck/client')
+
+          expect(events.select{|e| e[:type] == 'instance_exit'}).to be_empty
+        end
+      end
+    end
+
     context "using delayed shutdown without closing the listening socket" do
       before(:all) do
         with_fixture_dir('stack/shutdown-test') do
