@@ -69,6 +69,9 @@ module Stacks
         services: sort_services(self.services),
         volumes: self.volumes
       }
+      # update labels only if assigned
+      latest_rev.attributes[:labels] = self.labels if self.labels
+
       if latest_rev.changed?
         new_rev = latest_rev.dup
         new_rev.revision += 1

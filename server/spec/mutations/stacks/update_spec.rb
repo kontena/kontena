@@ -10,6 +10,7 @@ describe Stacks::Update do
       version: '0.1.0',
       registry: 'file://',
       source: '...',
+      labels: ['foo=bar'],
       services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
     ).result
   }
@@ -33,6 +34,7 @@ describe Stacks::Update do
       outcome = subject.run
       expect(outcome.success?).to be_truthy
       expect(outcome.result.stack_revisions.count).to eq(2)
+      expect(outcome.result.latest_rev.labels).to eq(['foo=bar'])
       expect(stack.reload.grid_services.first.image_name).to eq('redis:2.8')
     end
 
@@ -69,6 +71,23 @@ describe Stacks::Update do
         outcome = subject.run
         expect(outcome.success?).to be_truthy
       }.to change{ stack.grid_services.count }.by(1)
+    end
+
+    it 'updates and replaces existing labels' do
+      services = [{name: 'redis', image: 'redis:3.0'}]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services,
+        labels: ['fqdn=about.me']
+      )
+
+      outcome = subject.run
+      expect(outcome.success?).to be_truthy
+      expect(outcome.result.latest_rev.labels).to eq(['fqdn=about.me'])
     end
 
     it 'fails to create new volumes' do

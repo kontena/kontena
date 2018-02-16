@@ -43,8 +43,8 @@ describe Stacks::Common do
 
     it 'sorts services by links' do
       sorted = subject.sort_services(services)
-      expect(sorted[0][:name]).to eq('postgres')
-      expect(sorted[1][:name]).to eq('lb')
+      expect(sorted[0][:name]).to eq('lb')
+      expect(sorted[1][:name]).to eq('postgres')
       expect(sorted[2][:name]).to eq('redis')
       expect(sorted[3][:name]).to eq('sidekiq')
     end

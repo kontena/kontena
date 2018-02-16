@@ -32,6 +32,7 @@ describe '/v1/stacks', celluloid: true do
       source: '...',
       variables: { foo: 'bar' },
       registry: 'file',
+      labels: ['fqdn=about.me'],
       services: [
         { name: 'app', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -50,6 +51,7 @@ describe '/v1/stacks', celluloid: true do
       source: '...',
       variables: { foo: 'bar' },
       registry: 'file',
+      labels: ['fqdn=about.you'],
       services: [
         { name: 'app2', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -61,7 +63,7 @@ describe '/v1/stacks', celluloid: true do
 
   let(:expected_attributes) do
     %w(id created_at updated_at name stack version revision
-    services state expose source variables registry parent children)
+    services state expose source variables registry parent children labels)
   end
 
   describe 'GET /:name' do
@@ -80,6 +82,12 @@ describe '/v1/stacks', celluloid: true do
       expect(response.status).to eq(200)
       expect(json_response['services'].size).to eq(2)
       expect(json_response['services'][0].keys).to include('id', 'name')
+    end
+
+    it 'includes assigned labels' do
+      get "/v1/stacks/#{stack.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['labels']).to eq(['fqdn=about.me'])
     end
 
     it 'returns 404 for unknown stack' do
@@ -193,6 +201,7 @@ describe '/v1/stacks', celluloid: true do
         source: stack.latest_rev.source,
         variables: stack.latest_rev.variables,
         version: stack.latest_rev.version,
+        labels: ['foo=1', 'bar=2'],
         services: [
           {
             name: 'app_xyz',
@@ -204,6 +213,7 @@ describe '/v1/stacks', celluloid: true do
       expect {
         put "/v1/stacks/#{stack.to_path}", data.to_json, request_headers
         expect(response.status).to eq(200)
+        expect(stack.reload.latest_rev.labels).to eq(['foo=1', 'bar=2'])
       }.to change{ stack.stack_revisions.count }.by(1)
     end
 

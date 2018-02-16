@@ -55,6 +55,7 @@ module Stacks
       %w( parent parent_name ).each { |k| attributes.delete(k.to_sym)}
       grid = attributes.delete(:grid)
       stack = Stack.create(name: self.name, grid: grid, parent_name: resolve_parent_name)
+
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)
@@ -66,6 +67,8 @@ module Stacks
       attributes[:services] = services
       attributes[:volumes] = self.volumes
       attributes[:stack_name] = attributes.delete(:stack)
+      # set labels only if assigned
+      attributes[:labels] = self.labels if self.labels
       stack.stack_revisions.create!(attributes)
 
       create_services(stack, services)

@@ -12,6 +12,15 @@
 * Realtime (websocket) channel to Kontena Agents
 
 ## Development
+Run all tests
+```
+CI=1 bundle exec rspec
+```
+
+Run single test suite
+```
+CI=1 bundle exec rspec spec/models/host_node_spec.rb
+```
 
 ### Get started
 

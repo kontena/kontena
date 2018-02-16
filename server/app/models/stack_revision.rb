@@ -12,10 +12,12 @@ class StackRevision
   field :expose, type: String
   field :services, type: Array
   field :volumes, type: Array
+  field :labels, type: Array, default: []
 
   belongs_to :stack
 
   index({ stack_id: 1 })
+  index({ labels: 1 })
 
   before_create :increase_version
 
