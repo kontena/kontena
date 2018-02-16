@@ -39,7 +39,9 @@ if TRAP
   end
 else
   # kill the process instead of allowing webrick to handle the SignalException: SIGTERM
-  trap 'TERM', 'SYSTEM_DEFAULT'
+  trap 'TERM' do
+    exit!
+  end
 end
 
 $logger.info "start :#{PORT}"

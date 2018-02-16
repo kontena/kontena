@@ -42,7 +42,7 @@ services:
     image: shutdown-test-client
     instances: 3
     environment:
-      - SKEW=0.2
+      - SKEW=0.5
       - THREADS=32
       - URL=http://lb/
     depends_on:

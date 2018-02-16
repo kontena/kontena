@@ -34,14 +34,19 @@ def client_request(url = URL)
 end
 
 def client_thread(i)
+  t = Time.now
   $logger.info "Start #{i}/#{THREADS}..."
 
   loop do
-    sleep rand() * SKEW
+    skew = rand() * SKEW
+    sleep(skew)
 
     latency, response = time { client_request(URL) }
 
-    $logger.info "[thread #{'%2d' % i}/#{THREADS}] POST #{URL} => HTTP #{response.code} in #{'%.3fs' % latency}: #{response.body.strip}"
+    dt = Time.now - t
+    t = Time.now
+    
+    $logger.info "[thread #{'%2d' % i}/#{THREADS}] POST #{URL} => HTTP #{response.code} in #{'%.3fs' % latency} req + #{'%.3fs' % skew} skew + #{'%.3fs' % (dt - skew - latency)} overhead: #{response.body.strip}"
 
     response.value # raises
   end
