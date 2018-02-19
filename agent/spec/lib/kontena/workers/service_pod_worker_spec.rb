@@ -93,7 +93,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
           nil
         end
         expect(subject.wrapped_object).to receive(:terminate)
-        expect(subject.wrapped_object).to_not receive(:sync_state_to_master)
+        expect(subject.wrapped_object).to receive(:sync_state_to_master)
 
         subject.destroy
       end
@@ -193,24 +193,40 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   end
 
   describe '#current_state' do
+    context 'for a terminated service pod' do
+      let(:service_pod) do
+        Kontena::Models::ServicePod.new(
+          'id' => 'foo/2',
+          'instance_number' => 2,
+          'updated_at' => Time.now.to_s,
+          'deploy_rev' => Time.now.to_s,
+          'desired_state' => 'terminated',
+        )
+      end
+
+      it 'returns terminated if container is not found' do
+        expect(subject.current_state(service_pod, nil)).to eq('terminated')
+      end
+    end
+
     it 'returns missing if container is not found' do
-      expect(subject.current_state(nil)).to eq('missing')
+      expect(subject.current_state(service_pod, nil)).to eq('missing')
     end
 
     it 'returns running if container is running' do
       container = double(:container, :running? => true)
-      expect(subject.current_state(container)).to eq('running')
+      expect(subject.current_state(service_pod, container)).to eq('running')
     end
 
     it 'returns restarting if restart is in progress' do
       container = double(:container, :running? => false)
       allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
-      expect(subject.current_state(container)).to eq('restarting')
+      expect(subject.current_state(service_pod, container)).to eq('restarting')
     end
 
     it 'returns stopped if container is not running or restarting' do
       container = double(:container, :running? => false, :restarting? => false)
-      expect(subject.current_state(container)).to eq('stopped')
+      expect(subject.current_state(service_pod, container)).to eq('stopped')
     end
   end
 

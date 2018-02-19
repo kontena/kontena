@@ -42,7 +42,7 @@ class GridServiceDeployer
   end
 
   def deploy
-    info "starting to deploy #{self.grid_service.to_path}"
+    info "starting to deploy #{self.grid_service.state} service #{self.grid_service.to_path}"
     log_service_event("service #{self.grid_service.to_path} deploy started")
     self.grid_service_deploy.set(:_deploy_state => :ongoing)
     deploy_rev = Time.now.utc

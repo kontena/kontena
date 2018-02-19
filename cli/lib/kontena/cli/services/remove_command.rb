@@ -27,21 +27,18 @@ module Kontena::Cli::Services
     def remove(name)
       confirm_command(name) unless forced?
 
-      spinner "Removing service #{pastel.cyan(name)} " do
+      spinner "Terminating service #{pastel.cyan(name)}" do
+        deployment = terminate_service(name)
+        wait_for_deploy_to_finish(deployment, vocabulary: {
+            :verb => "Terminate",
+            :verb_ing => "Terminating",
+            :verb_ed  => "Terminated",
+            :preposition => "on",
+        })
+      end
+
+      spinner "Removing service #{pastel.cyan(name)}" do
         client.delete("services/#{parse_service_id(name)}")
-        removed = false
-        until removed == true
-          sleep 1
-          begin
-            client.get("services/#{parse_service_id(name)}")
-          rescue Kontena::Errors::StandardError => exc
-            if exc.status == 404
-              removed = true
-            else
-              raise exc
-            end
-          end
-        end
       end
     end
 
