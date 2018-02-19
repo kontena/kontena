@@ -33,9 +33,8 @@ module Stacks
           handle_service_outcome_errors(service.name, outcome.errors)
         end
       end
-      if stack.grid_services.count == 0
-        stack.destroy
-      end
+
+      stack.destroy unless has_errors?
     end
   end
 end
