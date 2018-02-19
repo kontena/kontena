@@ -1,7 +1,7 @@
 #!/bin/sh
 set -ue
 
-openssl aes-256-cbc -K $encrypted_12d917fc848a_key -iv $encrypted_12d917fc848a_iv -in build/travis/kontena.p12.enc -out kontena.p12.txt -d
+openssl aes-256-cbc -K $encrypted_12d917fc848a_key -iv $encrypted_12d917fc848a_iv -in ./build/travis/kontena.p12.enc -out kontena.p12.txt -d
 cat kontena.p12.txt | base64 --decode > kontena.p12
 security create-keychain -p buildpwd build.keychain
 security default-keychain -s build.keychain
