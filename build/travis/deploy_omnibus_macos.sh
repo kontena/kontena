@@ -10,7 +10,8 @@ curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-
 chmod +x /tmp/github-release
 
 # prepare install path for omnibus build
-sudo install -o travis -d /opt/kontena
+sudo mkdir -p /opt/kontena
+sudo chown travis /opt/kontena
 
 cd cli/omnibus
 
