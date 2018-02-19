@@ -42,5 +42,17 @@ module GridServices
 
       save_grid_service(grid_service)
     end
+
+    # @param grid_service [GridService]
+    # @param state [String] desired state
+    # @param force [Boolean] force-update revision
+    def deploy_grid_service(grid_service, state = 'running', force: false)
+      grid_service.deploy_requested_at = Time.now.utc
+      grid_service.state = state
+
+      if force ? update_grid_service(grid_service, force: true) : save_grid_service(grid_service)
+        GridServiceDeploy.create(grid_service: grid_service)
+      end
+    end
   end
 end
