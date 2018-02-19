@@ -90,6 +90,20 @@ module V1
         end
       end
 
+      # @param [Stack] stack
+      def terminate_stack(stack)
+        outcome = Stacks::Terminate.run(stack: stack)
+        if outcome.success?
+          @stack_deploy = outcome.result
+          audit_event(request, @grid, @stack, 'terminate')
+          response.status = 200
+          render('stack_deploys/show')
+        else
+          response.status = 422
+          {error: outcome.errors.message}
+        end
+      end
+
       # /v1/stacks/:grid/
       r.on ':grid/:name' do |grid, name|
 
@@ -110,6 +124,10 @@ module V1
 
           r.on 'restart' do
             restart_stack(@stack)
+          end
+
+          r.on 'terminate' do
+            terminate_stack(@stack)
           end
         end
 
