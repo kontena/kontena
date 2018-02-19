@@ -287,45 +287,41 @@ module Kontena
 
         # @param [Hash] deployment
         # @return [String] multi-line
-        def render_service_deploy_instances(deployment, vocabulary)
+        def render_service_deploy_instances(deployment)
           deployment['instance_deploys'].map{ |instance_deploy|
-            description = "instance #{deployment['service_id']}-#{instance_deploy['instance_number']} #{vocabulary[:preposition]} node #{instance_deploy['node']}"
+            description = "instance #{deployment['service_id']}-#{instance_deploy['instance_number']} to node #{instance_deploy['node']}"
 
             case instance_deploy['state']
             when 'created'
-              "#{pastel.dark('⊝')} #{vocabulary[:verb]} #{description}"
+              "#{pastel.dark('⊝')} Deploy #{description}"
             when 'ongoing'
-              "#{pastel.cyan('⊙')} #{vocabulary[:verb_ing]} #{description}..."
+              "#{pastel.cyan('⊙')} Deploying #{description}..."
             when 'success'
-              "#{pastel.green('⊛')} #{vocabulary[:verb_ed]} #{description}"
+              "#{pastel.green('⊛')} Deployed #{description}"
             when 'error'
-              "#{pastel.red('⊗')} Failed to #{vocabulary[:verb]} #{description}: #{instance_deploy['error']}"
+              "#{pastel.red('⊗')} Failed to deploy #{description}: #{instance_deploy['error']}"
             else
-              "#{pastel.dark('⊗')} #{vocabulary[:verb]} #{description}?"
+              "#{pastel.dark('⊗')} Deploy #{description}?"
             end
           }
         end
 
+        # @param [String] token
         # @param [Hash] deployment
         # @param [Fixnum] timeout
         # @param [Boo lean] verbose
         # @raise [Kontena::Errors::StandardError]
-        def wait_for_deploy_to_finish(deployment, timeout: 600, vocabulary: {
-              :verb => "Deploy",
-              :verb_ing => "Deploying",
-              :verb_ed  => "Deployed",
-              :preposition => "to",
-        })
+        def wait_for_deploy_to_finish(token, deployment, timeout: 600)
           Timeout::timeout(timeout) do
             until deployment['finished_at']
               sleep 1
-              deployment = client.get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
+              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
             end
 
             if deployment['state'] == 'error'
-              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment, vocabulary))
+              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment))
             else
-              puts render_service_deploy_instances(deployment, vocabulary).join("\n")
+              puts render_service_deploy_instances(deployment).join("\n")
             end
           end
         rescue Timeout::Error
