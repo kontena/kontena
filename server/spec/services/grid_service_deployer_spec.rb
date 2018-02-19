@@ -1,7 +1,10 @@
 
 describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid, deploy_requested_at: Time.now - 5.0, state: 'running') }
+  let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid,
+    state: :running,
+    deploy_requested_at: Time.now - 5.0,
+  ) }
   let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
   let(:node1) { grid.create_node!('node-1', node_id: SecureRandom.uuid, node_number: 1, mem_total: 1.gigabytes) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
@@ -137,6 +140,7 @@ describe GridServiceDeployer do
           grid.grid_services.create!(
             name: 'redis',
             image_name: 'kontena/redis:2.8',
+            state: :running,
             deploy_opts: {
               min_health: 0.0,
             },
