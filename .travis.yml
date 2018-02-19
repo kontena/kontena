@@ -26,7 +26,7 @@ stages:
   - name: deploy gem
     if: tag IS present
   - name: deploy omnibus
-    #if: tag IS present
+    if: tag IS present
   - name: deploy images
     if: tag IS present
 jobs:
@@ -67,26 +67,26 @@ jobs:
       script: ./build/travis/test.sh
       rvm: 2.4
       env: TEST_DIR=server
-   # - stage: test e2e
-   #   script: ./build/travis/test_e2e.sh
-   #   rvm: 2.4
-   #   env:
-   #     - TEST_DIR=cli
+    - stage: test e2e
+      script: ./build/travis/test_e2e.sh
+      rvm: 2.4
+      env:
+        - TEST_DIR=cli
     - stage: deploy gem
       script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
       tags: true
       repo: kontena/kontena
       rvm: 2.3
       env: TEST_DIR=cli
-    #- stage: deploy omnibus
-    #  script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
-    #  tags: true
-    #  repo: kontena/kontena
-    #  rvm: 2.4
-    #  env: TEST_DIR=cli
+    - stage: deploy omnibus
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.4
+      env: TEST_DIR=cli
     - stage: deploy omnibus
       script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus_macos.sh"
-      #tags: true
+      tags: true
       os: osx
       repo: kontena/kontena
       rvm: 2.4
