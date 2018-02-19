@@ -214,21 +214,11 @@ describe '/v1/stacks', celluloid: true do
   end
 
   describe 'DELETE /:name' do
-    let(:worker_klass) do
-      Class.new do
-        include Celluloid
-      end
-    end
-
-    let(:worker) do
-      worker = worker_klass.new
-      Celluloid::Actor[:stack_remove_worker] = worker
-    end
-
     it 'deletes stack' do
-      expect(worker.wrapped_object).to receive(:perform)
-      delete "/v1/stacks/#{stack.to_path}", nil, request_headers
-      expect(response.status).to eq(200)
+      expect{
+        delete "/v1/stacks/#{stack.to_path}", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{Stack.where(id: stack.id).exists?}.from(true).to(false)
     end
 
     it 'returns 404 for unknown stack' do
