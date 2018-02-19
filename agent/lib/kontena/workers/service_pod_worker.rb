@@ -1,5 +1,6 @@
 require_relative '../service_pods/creator'
 require_relative '../service_pods/starter'
+require_relative '../service_pods/restarter'
 require_relative '../service_pods/stopper'
 require_relative '../service_pods/terminator'
 require_relative '../service_pods/migrator'
@@ -30,6 +31,7 @@ module Kontena::Workers
       @prev_state = nil # last state sent to master; do not go backwards in time
       @deploy_rev_changed = false
       @restarts = 0
+      @restarting_at = nil # restart requested for container if still running at given timestamp
       @apply_started_at = @apply_finished_at = nil
       subscribe('container:event', :on_container_event)
     end
@@ -90,7 +92,7 @@ module Kontena::Workers
           debug "#{@service_pod} container event: #{event.status} at #{at.utc.xmlschema(9)}"
 
           if event.status == 'die'
-            handle_restart_on_die
+            on_container_die(exit_code: event.actor.attributes['exitCode'])
           end
         else
           debug "#{@service_pod} stale container event: #{event.status} at #{at.utc.xmlschema(9)} < #{@container.started_at.utc.xmlschema(9)}"
@@ -99,18 +101,20 @@ module Kontena::Workers
     end
 
     # Handles events when container has died
-    def handle_restart_on_die
+    def on_container_die(exit_code: )
       cancel_restart_timers
       return unless @service_pod.running?
 
       # backoff restarts
       backoff = @restarts ** 2
       backoff = max_restart_backoff if backoff > max_restart_backoff
-      if backoff == 0
-        info "restarting #{@service_pod} because it has stopped"
-      else
-        info "restarting #{@service_pod} because it has stopped (delay: #{backoff}s)"
-      end
+      info "#{@service_pod} exited with code #{exit_code}, restarting (delay: #{backoff}s)"
+
+      log_service_pod_event("service:instance_crash",
+        "service #{@service_pod} instance exited with code #{exit_code}, restarting (delay: #{backoff}s)",
+        Logger::WARN
+      )
+
       ts = Time.now.utc
       @restarts += 1
       @restart_backoff_timer = after(backoff) {
@@ -132,6 +136,22 @@ module Kontena::Workers
     # @return [Boolean]
     def restarting?
       @restarts > 0
+    end
+
+    # User requested service restart
+    def restart(at = Time.now, container_id: nil, started_at: nil)
+      if container_id && @container.id != container_id
+        debug "stale #{@service_pod} restart for container id=#{container_id}"
+        return
+      end
+      if started_at && @container.started_at != started_at
+        debug "stale #{@service_pod} restart for container started_at=#{started_at}"
+        return
+      end
+
+      debug "mark #{@service_pod} for restart at #{at}"
+      @restarting_at = at
+      apply
     end
 
     def destroy
@@ -231,6 +251,9 @@ module Kontena::Workers
       elsif service_container && service_pod.running? && !service_container.running?
         info "starting #{service_pod.name}"
         ensure_started
+      elsif service_pod.running? && service_container && service_container.running? && restart_service_container?(service_container)
+        info "restarting #{service_pod.name}"
+        ensure_restarted
       elsif service_pod.stopped? && (service_container && service_container.running?)
         info "stopping #{service_pod.name}"
         ensure_stopped
@@ -268,6 +291,17 @@ module Kontena::Workers
       log_service_pod_event(
         "service:start_instance",
         "Unexpected error while starting service instance #{service_pod}: #{exc.message}",
+        Logger::ERROR
+      )
+      raise exc
+    end
+
+    def ensure_restarted
+      Kontena::ServicePods::Restarter.new(service_pod).perform
+    rescue => exc
+      log_service_pod_event(
+        "service:restart_instance",
+        "Unexpected error while restarting service instance #{service_pod}: #{exc.message}",
         Logger::ERROR
       )
       raise exc
@@ -345,6 +379,11 @@ module Kontena::Workers
     # @return [Boolean]
     def labels_outdated?(service_container)
       service_pod.labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
+    end
+
+    # @return [Boolean]
+    def restart_service_container?(service_container)
+      @restarting_at && service_container.started_at <= @restarting_at
     end
 
     # @return [Kontena::Workers::ImagePullWorker]

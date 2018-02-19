@@ -22,14 +22,17 @@ class Kontena::Callback
       else
         cmd_type = cmd_type.to_sym
       end
-      cmd_types[cmd_class.to_sym] = cmd_type
+      cmd_types[cmd_class.to_sym] ||= []
+      cmd_types[cmd_class.to_sym] << cmd_type
     end
 
     # Finally it should be normalized into a hash that looks like :cmd_class => :cmd_type, :app => :init, :grid => :all
-    cmd_types.each do |cmd_class, cmd_type|
-      Kontena::Callback.callbacks[cmd_class] ||= {}
-      Kontena::Callback.callbacks[cmd_class][cmd_type] ||= []
-      Kontena::Callback.callbacks[cmd_class][cmd_type] << self
+    cmd_types.each do |cmd_class, cmd_types|
+      cmd_types.each do |cmd_type|
+        Kontena::Callback.callbacks[cmd_class] ||= {}
+        Kontena::Callback.callbacks[cmd_class][cmd_type] ||= []
+        Kontena::Callback.callbacks[cmd_class][cmd_type] << self
+      end
     end
   end
 

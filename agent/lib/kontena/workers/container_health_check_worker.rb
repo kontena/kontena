@@ -9,7 +9,7 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
-    HEALTHY_STATUSES = (200 .. 299).to_a.freeze
+    HEALTHY_STATUSES = (200 .. 399)
 
     finalizer :log_exit
 
@@ -78,12 +78,14 @@ module Kontena::Workers
           connect_timeout: timeout,
           headers: {
             "User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"
-          }
+          },
+          middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower],
         )
         debug "got status: #{response.status}"
         data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status
-      rescue
+      rescue => exc
+        debug "got error #{exc.class}: #{exc}"
         data['status'] = 'unhealthy'
       end
       data
@@ -105,14 +107,20 @@ module Kontena::Workers
         debug "got status: #{response}"
         data['status'] = response ? 'healthy' : 'unhealthy'
         data['status_code'] = response ? 'open' : 'closed'
-      rescue
+      rescue => exc
+        debug "got error #{exc.class}: #{exc}"
         data['status'] = 'unhealthy'
       end
       data
     end
 
     def restart_container
-      Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
+      Celluloid::Notifications.publish('service_pod:restart', {
+        service_id: @container.service_id,
+        instance_number: @container.instance_number,
+        container_id: @container.id,
+        started_at: @container.started_at,
+      })
     end
 
     # @param [String] type
