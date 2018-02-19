@@ -30,7 +30,7 @@ class GridServiceSchedulerWorker
         info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
         return nil
 
-      elsif service_deploy.grid_service.running? || service_deploy.grid_service.initialized?
+      elsif service_deploy.grid_service.running?
         info "starting #{service_deploy.grid_service.to_path} deploy"
         service_deploy.set(started_at: Time.now.utc)
         return service_deploy
