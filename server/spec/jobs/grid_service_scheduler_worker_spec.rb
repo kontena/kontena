@@ -2,7 +2,9 @@
 describe GridServiceSchedulerWorker, celluloid: true do
 
   let(:grid) { Grid.create(name: 'test')}
-  let(:service) { GridService.create(name: 'test', image_name: 'foo/bar:latest', grid: grid)}
+  let(:service) { GridService.create(name: 'test', image_name: 'foo/bar:latest', grid: grid,
+    state: :running,
+  )}
   let(:subject) { described_class.new(false) }
 
   describe '#watch' do
