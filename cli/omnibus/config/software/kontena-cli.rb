@@ -11,7 +11,8 @@ whitelist_file "./wrappers/sh/kontena"
 build do
   gem "install rb-readline -v 0.5.4 --no-ri --no-doc"
   gem "install nokogiri -v 1.6.8 --no-ri --no-doc"
-  gem "install kontena-cli -v #{default_version} --no-ri --no-doc"
+  gem "build kontena-cli.gemspec", env: env, cwd: File.expand_path('..', Omnibus::Config.project_root)
+  gem "install -N kontena-cli-%s.gem" % default_version, env: env, cwd: File.expand_path('..', Omnibus::Config.project_root)
   gem "install kontena-plugin-cloud --no-ri --no-doc"
   copy "sh/kontena", "#{install_dir}/bin/kontena"
 end
