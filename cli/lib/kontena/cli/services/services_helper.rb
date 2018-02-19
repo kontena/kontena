@@ -323,7 +323,7 @@ module Kontena
             end
 
             if deployment['state'] == 'error'
-              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment))
+              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment, vocabulary))
             else
               puts render_service_deploy_instances(deployment, vocabulary).join("\n")
             end
