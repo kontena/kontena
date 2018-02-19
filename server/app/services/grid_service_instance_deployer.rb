@@ -116,6 +116,8 @@ class GridServiceInstanceDeployer
       raise ServiceError, service_instance.error
     elsif service_instance.rev > deploy_rev
       raise StateError, "Service instance was re-deployed" # by someone else
+    elsif desired_state == 'stopped' && service_instance.state == 'missing'
+      return service_instance
     elsif service_instance.state != desired_state
       raise StateError, "Service instance is not #{desired_state}, but #{service_instance.state}"
     else
