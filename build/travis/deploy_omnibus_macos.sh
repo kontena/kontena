@@ -11,7 +11,7 @@ security default-keychain -s build.keychain
 security unlock-keychain -p buildpwd build.keychain
 
 echo "importing kontena.p12 to build.keychain"
-security import kontena.p12 -k build.keychain -P "" -T /usr/bin/codesign
+security import kontena.p12 -k build.keychain -P "" -A
 
 
 # install github-release
