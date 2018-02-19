@@ -3,7 +3,7 @@ class StackDeploy
   include Mongoid::Timestamps
 
   field :error, type: String
-  field :finished_at, type: DateTime
+  field :error_at, type: DateTime
 
   index({ stack_id: 1 })
 
@@ -11,7 +11,7 @@ class StackDeploy
   has_many :grid_service_deploys, dependent: :destroy
 
   def error!(message)
-    self.finished_at = Time.now
+    self.error_at = Time.now
     self.error = message
     self.save!
   end
@@ -25,7 +25,7 @@ class StackDeploy
 
   # @return [DateTime]
   def finished_at
-    return self.finished_at if self.finished_at
+    return self.error_at if self.error_at
 
     timestamps = self.grid_service_deploys.map{|service_deploy| service_deploy.finished_at}
 
@@ -42,7 +42,7 @@ class StackDeploy
   # @return [Boolean]
   def error?
     return true if self.error
-    
+
     self.grid_service_deploys.any? { |service_deploy| service_deploy.error? }
   end
 
