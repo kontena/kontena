@@ -34,9 +34,9 @@ module Kontena::Cli::Stacks
         end
 
         wait_for_deploy_to_finish(deployment) if wait?
+        
         spinner "Removing stack #{pastel.cyan(name)} " do
           remove_stack(name)
-          wait_stack_removal(name)
         end
       end
     end
@@ -66,23 +66,6 @@ module Kontena::Cli::Stacks
     # @return [Hash]
     def remove_stack(name)
       client.delete("stacks/#{current_grid}/#{name}")
-    end
-
-    # @param name [String]
-    def wait_stack_removal(name)
-      removed = false
-      until removed == true
-        begin
-          client.get("stacks/#{current_grid}/#{name}")
-          sleep 1
-        rescue Kontena::Errors::StandardError => exc
-          if exc.status == 404
-            removed = true
-          else
-            raise exc
-          end
-        end
-      end
     end
   end
 end
