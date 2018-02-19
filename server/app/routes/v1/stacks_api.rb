@@ -52,9 +52,9 @@ module V1
         outcome = Stacks::Deploy.run(stack: stack)
 
         if outcome.success?
+          @stack_deploy = outcome.result
           audit_event(request, @grid, @stack, 'deploy')
           response.status = 200
-          @stack_deploy = outcome.result
           render('stack_deploys/show')
         else
           response.status = 422
