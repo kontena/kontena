@@ -5,6 +5,13 @@ unset BUILD_ID
 #rm -f /usr/local/bin/kontena || true
 #rm -f pkg/*
 
+# install github-release
+curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 | tar -xjO > /tmp/github-release
+chmod +x /tmp/github-release
+
+# prepare install path for omnibus build
+sudo install -o travis -d /opt/kontena
+
 cd cli/omnibus
 
 # faster bundle install
