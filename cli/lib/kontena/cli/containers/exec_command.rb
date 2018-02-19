@@ -6,6 +6,8 @@ module Kontena::Cli::Containers
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::ExecHelper
 
+    usage "[OPTIONS] [CONTAINER_ID] -- [CMD] ..."
+
     parameter "CONTAINER_ID", "Container id"
     parameter "CMD ...", "Command"
 
