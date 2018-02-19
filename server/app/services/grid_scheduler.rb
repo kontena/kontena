@@ -52,7 +52,9 @@ class GridScheduler
   # @param [GridService] service
   # @return [Boolean]
   def active_deploys_within_stack?(service)
-    service.stack.stack_deploys.where(:created_at.gt => 30.minutes.ago, :_deploy_state.in => [:created, :ongoing]).count > 0
+    stack_deploy_ids = service.stack.stack_deploys.where(:created_at.gt => 30.minutes.ago).map{|stack_deploy| stack_deploy.id}
+
+    GridServiceDeploy.deploying.where(:stack_deploy.in => stack_deploy_ids).exists?
   end
 
   # @param [GridService] service
