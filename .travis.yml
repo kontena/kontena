@@ -26,7 +26,7 @@ stages:
   - name: deploy gem
     if: tag IS present
   - name: deploy omnibus
-    if: tag IS present
+    #if: tag IS present
   - name: deploy images
     if: tag IS present
 jobs:
