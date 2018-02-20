@@ -128,6 +128,7 @@ describe GridServiceInstanceDeployer do
         expect(service_instance.host_node).to eq node
         expect(service_instance.deploy_rev).to eq deploy_rev
         expect(service_instance.desired_state).to eq 'running'
+        expect(service_instance.state).to eq 'running'
       end
 
       describe "with state stopped" do
@@ -148,6 +149,27 @@ describe GridServiceInstanceDeployer do
           expect(service_instance.host_node).to eq node
           expect(service_instance.deploy_rev).to eq deploy_rev
           expect(service_instance.desired_state).to eq 'stopped'
+          expect(service_instance.state).to eq 'stopped'
+        end
+
+        it "also accepts a container in the missing state" do
+          expect(subject).to receive(:deploy_service_instance).once.with(GridServiceInstance, node, deploy_rev, 'stopped').and_call_original
+          expect(subject).to receive(:notify_node).with(node)
+          expect(subject).to receive(:wait_until!).with("service test-grid/null/redis-2 is stopped on node test-grid/node at #{deploy_rev}", timeout: 300) do
+            grid_service.grid_service_instances.first.set(rev: deploy_rev, state: 'missing')
+          end
+
+          expect{
+            subject.ensure_service_instance(deploy_rev, 'stopped')
+          }.to change{service_instance.reload.deploy_rev}.from(old_rev).to(deploy_rev)
+
+          service_instance = grid_service.grid_service_instances.first
+
+          expect(service_instance.instance_number).to eq instance_number
+          expect(service_instance.host_node).to eq node
+          expect(service_instance.deploy_rev).to eq deploy_rev
+          expect(service_instance.desired_state).to eq 'stopped'
+          expect(service_instance.state).to eq 'missing'
         end
       end
     end
