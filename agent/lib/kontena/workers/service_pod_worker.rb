@@ -443,6 +443,9 @@ module Kontena::Workers
           @prev_state = state
         end
       }
+    rescue Kontena::RpcClient::Error => exc
+      # leaves @prev_state unset, so we can retry
+      warn "failed to sync #{service_pod} at #{service_pod.deploy_rev}: #{exc}"
     end
 
     # @param type [String]
