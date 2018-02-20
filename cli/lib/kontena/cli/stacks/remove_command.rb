@@ -29,12 +29,8 @@ module Kontena::Cli::Stacks
           end
         end
 
-        deployment = spinner "Terminating stack #{name} services" do
-          client.post("stacks/#{current_grid}/#{name}/terminate", {})
-        end
+        terminate_stack(name)
 
-        wait_for_deploy_to_finish(deployment) if wait?
-        
         spinner "Removing stack #{pastel.cyan(name)} " do
           remove_stack(name)
         end
@@ -60,6 +56,14 @@ module Kontena::Cli::Stacks
     # @return [Hash]
     def fetch_stack(name)
       client.get("stacks/#{current_grid}/#{name}")
+    end
+
+    def terminate_stack(name)
+      deployment = spinner "Terminating stack #{name} services" do
+        client.post("stacks/#{current_grid}/#{name}/terminate", {})
+      end
+
+      wait_for_deploy_to_finish(deployment) if wait?
     end
 
     # @param name [String]
