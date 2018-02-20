@@ -25,16 +25,14 @@ module Kontena::Cli::Services
     end
 
     def remove(name)
+      token = require_token
+
       confirm_command(name) unless forced?
 
       spinner "Terminating service #{pastel.cyan(name)}" do
         deployment = terminate_service(name)
-        wait_for_deploy_to_finish(deployment, vocabulary: {
-            :verb => "Terminate",
-            :verb_ing => "Terminating",
-            :verb_ed  => "Terminated",
-            :preposition => "on",
-        })
+
+        wait_for_deploy_to_finish(token, deployment)
       end
 
       spinner "Removing service #{pastel.cyan(name)}" do
