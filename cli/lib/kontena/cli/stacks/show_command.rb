@@ -26,6 +26,10 @@ module Kontena::Cli::Stacks
       @variables ||= stack['variables'] || {}
     end
 
+    def metadata
+      @metadata ||= stack['metadata'] || {}
+    end
+
     def stack
       @stack ||= client.get("stacks/#{current_grid}/#{name}")
     end
@@ -41,7 +45,7 @@ module Kontena::Cli::Stacks
     def write_variables
       File.write(values_to, variable_yaml)
     end
-      
+
     def show_stack
       puts "#{stack['name']}:"
       puts "  created: #{stack['created_at']}"
@@ -51,10 +55,19 @@ module Kontena::Cli::Stacks
       puts "  version: #{stack['version']}"
       puts "  revision: #{stack['revision']}"
       puts "  expose: #{stack['expose'] || '-'}"
+
       puts "  variables:#{' -' if variables.empty?}"
       variables.each do |var, val|
         puts "    #{var}: #{val}"
       end
+
+      puts "  metadata:#{' -' if metadata.empty?}"
+      unless metadata.empty?
+        output_lines = YAML.dump(metadata).split(/[\r\n]/)
+        output_lines.shift # get rid of "---"
+        puts output_lines.map { |line| '    %s' % line }.join("\n")
+      end
+
       puts "  parent: #{stack['parent'] ? stack['parent']['name'] : '-'}"
       if stack['children'] && !stack['children'].empty?
         puts "  children:"
@@ -62,6 +75,7 @@ module Kontena::Cli::Stacks
           puts "    - #{child['name']}"
         end
       end
+
       puts "  services:"
       stack['services'].each do |service|
         show_service(service['id'])
