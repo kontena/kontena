@@ -29,6 +29,15 @@ module Kontena::Cli::Stacks
 
     # @return [Kontena::Stacks::ChangeResolver]
     def execute
+      kontena_requirement = loader.yaml.dig('meta', 'required_kontena_version')
+      unless kontena_requirement.nil?
+        master_version = Gem::Version.new(client.server_version)
+        unless Gem::Requirement.new(kontena_requirement).satisfied_by?(master_version)
+          puts "#{pastel.red("Warning: ")} Stack requires kontena version #{kontena_requirement} but Master version is #{master_version}"
+          confirm("Are you sure? You can skip this prompt by running this command with --force option") unless force?
+        end
+      end
+
       old_data = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
         gather_master_data(stack_name)
       end

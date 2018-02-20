@@ -10,6 +10,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
   before(:each) do
     ENV['STACK'] = nil
+    allow(client).to receive(:server_version).and_return(Kontena::Cli::VERSION)
   end
 
   describe '#execute' do
@@ -93,7 +94,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
           'metadata' => hash_including(
             'tags' => array_including('tag1', 'tag2'),
             'readme' => /Text goes/,
-            'required_kontena_version' => ">= 1.5.0"
+            'required_kontena_version' => ">= 0.5.0"
           )
         )
       end
@@ -101,6 +102,12 @@ describe Kontena::Cli::Stacks::InstallCommand do
       it 'includes the metadata in the json sent to master' do
         expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including(stack_meta_expectation))
         subject.run(['--no-deploy', fixture_path('kontena_v3_with_metadata.yml')])
+      end
+
+      it 'requires force if master version does not match metadata required_kontena_version' do
+        expect(client).to receive(:server_version).and_return('0.2.0')
+        expect(subject).to receive(:confirm).and_call_original
+        expect{subject.run(['--no-deploy', fixture_path('kontena_v3_with_metadata.yml')])}.to exit_with_error.and output(/version/).to_stdout
       end
     end
   end
