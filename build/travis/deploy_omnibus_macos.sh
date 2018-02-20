@@ -16,7 +16,7 @@ security import kontena.p12 -k build.keychain -P "" -T /usr/bin/productbuild
 security set-key-partition-list -S apple-tool:,apple: -s -k buildpwd build.keychain
 
 # install github-release
-curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 | tar -xjO > /tmp/github-release
+curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/darwin-amd64-github-release.tar.bz2 | tar -xjO > /tmp/github-release
 chmod +x /tmp/github-release
 
 # prepare install path for omnibus build
