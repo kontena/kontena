@@ -9,11 +9,10 @@ echo "creating build.keychain"
 security create-keychain -p buildpwd build.keychain
 security default-keychain -s build.keychain
 security unlock-keychain -p buildpwd build.keychain
-security set-key-partition-list -S apple-tool:,apple: -s -k buildpwd build.keychain
 
 echo "importing kontena.p12 to build.keychain"
 security import kontena.p12 -k build.keychain -P "" -T /usr/bin/productbuild
-
+security set-key-partition-list -S apple-tool:,apple: -s -k buildpwd build.keychain
 
 # install github-release
 curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 | tar -xjO > /tmp/github-release
