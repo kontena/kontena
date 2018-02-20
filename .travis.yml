@@ -38,10 +38,6 @@ jobs:
   include:
     - stage: test
       script: ./build/travis/test.sh
-      rvm: 2.1
-      env: TEST_DIR=cli
-    - stage: test
-      script: ./build/travis/test.sh
       rvm: 2.2
       env: TEST_DIR=cli
       if: type = pull_request
@@ -81,6 +77,13 @@ jobs:
     - stage: deploy omnibus
       script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
       tags: true
+      repo: kontena/kontena
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: deploy omnibus
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus_macos.sh"
+      tags: true
+      os: osx
       repo: kontena/kontena
       rvm: 2.4
       env: TEST_DIR=cli
