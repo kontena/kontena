@@ -71,7 +71,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
           # XXX: in this case both the failing initial wait_for_port, and the restart will report state...
           expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, restarted_container)
 
-          subject.on_container_event('container:event', double(id: container_id, status: 'die', time_nano: (Time.now.to_f * 1e9).to_s))
+          subject.on_container_event('container:event', double(id: container_id, status: 'die', time_nano: (Time.now.to_f * 1e9).to_s, actor: double(attributes: {'exitCode' => 1})))
 
           false
         end
@@ -363,7 +363,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
       it 'ignores any events' do
         event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'die')
 
-        expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+        expect(subject.wrapped_object).to_not receive(:on_container_die)
 
         subject.on_container_event('container:event', event)
       end
@@ -378,11 +378,12 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
 
       let(:event_id) { '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025' }
       let(:event_at) { Time.now - 59.0 }
-      let(:event_status) { 'die' }
+      let(:event_attributes) { }
       let(:event) { double(:event,
         id: event_id,
         status: event_status,
         time_nano: (event_at.to_f * 1e9).to_s,
+        actor: double(attributes: event_attributes),
       ) }
 
       before do
@@ -391,19 +392,21 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
 
       context 'for an event with the wrong container ID' do
         let(:event_id) { 'f02a583a0dd44a685a14c445b9826b5f8a8c46555fabf003de3009180ff7a24c' }
+        let(:event_status) { 'die' }
 
         it 'ignores the event' do
-          expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+          expect(subject.wrapped_object).to_not receive(:on_container_die)
 
           subject.on_container_event('container:event', event)
         end
       end
 
       context 'for an event from before the container start' do
+        let(:event_status) { 'die' }
         let(:event_at) { Time.now - 61.0 }
 
         it 'ignores the event' do
-          expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+          expect(subject.wrapped_object).to_not receive(:on_container_die)
 
           subject.on_container_event('container:event', event)
         end
@@ -413,36 +416,41 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
         let(:event_status) { 'start' }
 
         it 'ignores the event' do
-          expect(subject.wrapped_object).to_not receive(:handle_restart_on_die)
+          expect(subject.wrapped_object).to_not receive(:on_container_die)
 
           subject.on_container_event('container:event', event)
         end
       end
 
-      it 'triggers restart logic on container die events' do
-        expect(subject.wrapped_object).to receive(:handle_restart_on_die)
+      context 'for a die event' do
+        let(:event_status) { 'die' }
+        let(:event_attributes) { { 'exitCode' => 1 } }
 
-        subject.on_container_event('container:event', event)
+        it 'triggers restart logic on container die events' do
+          expect(subject.wrapped_object).to receive(:on_container_die)
+
+          subject.on_container_event('container:event', event)
+        end
       end
     end
   end
 
-  describe '#handle_restart_on_die' do
+  describe '#on_container_die' do
     it 'triggers restart without backoff by default if service_pod state is running' do
       allow(service_pod).to receive(:running?).and_return(true)
       expect(subject.wrapped_object).to receive(:after).with(0).once
-      subject.handle_restart_on_die
+      subject.on_container_die(exit_code: 1)
     end
 
     it 'does not trigger restart if service_pod state is not running' do
       expect(subject.wrapped_object).not_to receive(:after)
-      subject.handle_restart_on_die
+      subject.on_container_die(exit_code: 1)
     end
 
     it 'does not trigger restart if apply is in progress' do
       allow(subject.wrapped_object).to receive(:apply_in_progress?).and_return(true)
       expect(subject.wrapped_object).not_to receive(:after)
-      subject.handle_restart_on_die
+      subject.on_container_die(exit_code: 1)
     end
   end
 

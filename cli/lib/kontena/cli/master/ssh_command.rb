@@ -2,8 +2,9 @@ require 'kontena/plugin_manager'
 
 module Kontena::Cli::Master
   class SshCommand < Kontena::Command
-
     include Kontena::Cli::Common
+
+    usage "[OPTIONS] -- [COMMANDS] ..."
 
     parameter "[COMMANDS] ...", "Run command on host"
 
@@ -56,7 +57,12 @@ module Kontena::Cli::Master
     end
 
     def run_vagrant_ssh
-      Kontena.run!(['vagrant', 'master', 'ssh'] + commands_list)
+      cmd = %w(vagrant master ssh)
+      unless commands_list.empty?
+        cmd << '--'
+        cmd.concat commands_list
+      end
+      Kontena.run!(cmd)
     end
 
     def execute
