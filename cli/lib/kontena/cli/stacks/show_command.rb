@@ -63,7 +63,7 @@ module Kontena::Cli::Stacks
 
       puts "  metadata:#{' -' if metadata.empty?}"
       unless metadata.empty?
-        output_lines = YAML.dump(metadata).split(/[\r\n]/)
+        output_lines = ::YAML.dump(metadata).split(/[\r\n]/)
         output_lines.shift # get rid of "---"
         puts output_lines.map { |line| '    %s' % line }.join("\n")
       end
