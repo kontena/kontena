@@ -8,6 +8,7 @@ module Kontena::Cli::Services
     parameter "NAME ...", "Service name", attribute_name: :names
     option "--instance", "INSTANCE", "Remove only given instance"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
+    option '--[no-]wait', :flag, 'Wait for service to terminate', default: true
 
     banner "Remove a service"
 
@@ -25,16 +26,16 @@ module Kontena::Cli::Services
     end
 
     def remove(name)
+      token = require_token
+
       confirm_command(name) unless forced?
 
-      spinner "Terminating service #{pastel.cyan(name)}" do
-        deployment = terminate_service(name)
-        wait_for_deploy_to_finish(deployment, vocabulary: {
-            :verb => "Terminate",
-            :verb_ing => "Terminating",
-            :verb_ed  => "Terminated",
-            :preposition => "on",
-        })
+      if wait?
+        deployment = spinner "Terminating service #{pastel.cyan(name)}" do
+           terminate_service(name)
+        end
+
+        wait_for_deploy_to_finish(token, deployment)
       end
 
       spinner "Removing service #{pastel.cyan(name)}" do
