@@ -1,5 +1,6 @@
 stack: user/stackname
 version: 0.1.1
+labels: ['fqdn=wordpress.com']
 services:
   wordpress:
     extends:

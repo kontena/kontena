@@ -1,0 +1,10 @@
+stack: user/stackname
+version: 0.1.1
+services:
+  wordpress_stateful:
+    image: image
+    stateful: true
+
+  wordpress_stateless:
+    image: image
+    stateful: false
