@@ -4,7 +4,7 @@
 # after package is installed.
 #
 chown $USER /opt/kontena/embedded/bin
-chown $USER -R /opt/kontena/embedded/lib/ruby/gems/2.1.0
+chown $USER -R /opt/kontena/embedded/lib/ruby/gems/2.5.0
 
 mkdir -p /usr/local/bin
 ln -s /opt/kontena/bin/kontena /usr/local/bin/kontena
