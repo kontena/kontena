@@ -35,9 +35,9 @@ bundle install
 bundle exec omnibus build kontena --log-level info
 
 # upload kontena pkg to github
-#/tmp/github-release upload \
-#    --user kontena \
-#    --repo kontena \
-#    --tag $TRAVIS_TAG \
-#    --name "kontena-cli-osx-${TRAVIS_TAG}-amd64.pkg" \
-#    --file pkg/kontena-cli-*.pkg
+/tmp/github-release upload \
+    --user kontena \
+    --repo kontena \
+    --tag $TRAVIS_TAG \
+    --name "kontena-cli-osx-${TRAVIS_TAG}-amd64.pkg" \
+    --file pkg/kontena-cli-*.pkg

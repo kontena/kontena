@@ -27,7 +27,6 @@ stages:
     if: tag IS present
   - name: deploy omnibus
     if: tag IS present
-  - name: deploy omnibus macos
   - name: deploy images
     if: tag IS present
 jobs:
@@ -85,7 +84,7 @@ jobs:
       repo: kontena/kontena
       rvm: 2.4
       env: TEST_DIR=cli
-    - stage: deploy omnibus macos
+    - stage: deploy omnibus
       script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus_macos.sh"
       tags: true
       os: osx
