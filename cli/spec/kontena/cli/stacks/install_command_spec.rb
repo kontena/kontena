@@ -25,7 +25,8 @@ describe Kontena::Cli::Stacks::InstallCommand do
         'dependencies' => nil,
         'source' => /stack:/,
         'parent' => nil,
-        'expose' => nil
+        'expose' => nil,
+        'metadata' => {}
       }
     end
 
@@ -83,6 +84,23 @@ describe Kontena::Cli::Stacks::InstallCommand do
           "-v", "dep_var=1", fixture_path('stack-with-dependencies-dep-2.yml')])
         expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including('stack' => 'user/depstack1', 'name' => 'deptest'))
         subject.run(['-n', 'deptest', '--no-deploy', '-v', 'dep_1.dep_1.dep_var=1', fixture_path('stack-with-dependencies.yml')])
+      end
+    end
+
+    context 'with a stack including metadata' do
+      let(:stack_meta_expectation) do
+        stack_expectation.merge(
+          'metadata' => hash_including(
+            'tags' => array_including('tag1', 'tag2'),
+            'readme' => /Text goes/,
+            'required_kontena_version' => ">= 1.5.0"
+          )
+        )
+      end
+
+      it 'includes the metadata in the json sent to master' do
+        expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including(stack_meta_expectation))
+        subject.run(['--no-deploy', fixture_path('kontena_v3_with_metadata.yml')])
       end
     end
   end

@@ -658,6 +658,28 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
       "external": "otherName"
     }
   ]
+  "metadata": {
+    "description": "Short summary",
+    "icon": "an url to an svg or a png icon",
+    "home": "an url to stack home page",
+    "source": "an url stack source code / repository",
+    "readme": "an url to stack readme file or markdown readme content",
+    "issues": "an url to stack issue tracking",
+    "tags": [
+      "tag"
+    ]
+    "app_version": {
+      "app-name": "version number for an application included in the stack"
+    },
+    "maintainers": [
+      {
+        "name": "maintainer's name",
+        "email": "maintainer's email address",
+        "url": "maintainer's url"
+      }
+    ],
+    "required_kontena_version": ">= 1.5.0"
+  }
 }
 ```
 
@@ -675,6 +697,7 @@ services | A list of stack services (see [services](#services) for more info)
 volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
 parent | Null or an object referencing the parent stack in a stack dependency chain
 children | An array of objects referencing the child stacks in a stack dependency chain
+metadata | A hash of metadata for additional information, tags and search keywords
 
 ### Volume attributes
 
