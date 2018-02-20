@@ -18,7 +18,7 @@ module Kontena::Cli::Services
       data[:force] = true if force?
       spinner "Deploying service #{pastel.cyan(name)} " do
         deployment = deploy_service(token, name, data)
-        wait_for_deploy_to_finish(deployment) if wait?
+        wait_for_deploy_to_finish(token, deployment) if wait?
       end
     end
   end
