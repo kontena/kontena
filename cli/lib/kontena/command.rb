@@ -5,8 +5,9 @@ require 'kontena/cli/bytes_helper'
 require 'kontena/cli/grid_options'
 require 'excon/error'
 
-class Kontena::Command < Clamp::Command
+Clamp.allow_options_after_parameters = true
 
+class Kontena::Command < Clamp::Command
   option ['-D', '--[no-]debug'], :flag, "Enable debug", environment_variable: 'DEBUG', attribute_name: :debug_option do |debug|
     unless debug.kind_of?(String)
       ENV['DEBUG'] = debug.to_s
