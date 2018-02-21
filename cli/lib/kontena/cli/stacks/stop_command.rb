@@ -10,8 +10,8 @@ module Kontena::Cli::Stacks
 
     banner "Stops all services of a stack"
 
-    option '--[no-]wait', :flag, 'Do not wait for service deployment', default: true
     parameter "NAME ...", "Stack name", attribute_name: :names
+    option '--[no-]wait', :flag, 'Wait for stack services to stop', default: true
 
     requires_current_master
     requires_current_master_token

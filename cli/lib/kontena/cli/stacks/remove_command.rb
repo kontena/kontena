@@ -13,7 +13,7 @@ module Kontena::Cli::Stacks
     parameter "NAME ...", "Stack name", attribute_name: :names
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
     option "--keep-dependencies", :flag, "Do not remove dependencies"
-    option '--[no-]wait', :flag, 'Do not wait for service deployment', default: true
+    option '--[no-]wait', :flag, 'Wait for stack services to terminate', default: true
 
     requires_current_master
     requires_current_master_token
