@@ -7,7 +7,7 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
-    option '--[no-]wait', :flag, 'Do not wait for service deployment', default: true
+    option '--[no-]wait', :flag, 'Wait for service deployment to finish', default: true
     option '--force', :flag, 'Force deploy even if service does not have any changes'
 
     def execute
