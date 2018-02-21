@@ -11,9 +11,10 @@ class StackDeploy
   has_many :grid_service_deploys, dependent: :destroy
 
   def error!(message)
-    self.error_at = Time.now
-    self.error = message
-    self.save!
+    update!(
+      error_at: Time.now,
+      error: message,
+    )
   end
 
   # @return [DateTime]
