@@ -71,6 +71,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     end
 
     it 'requires force if master version does not match metadata required_kontena_version' do
+      expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
       expect(client).to receive(:server_version).and_return('0.2.0')
       expect(subject).to receive(:confirm).and_call_original
       expect{subject.run(['--no-deploy', 'stack-a', fixture_path('kontena_v3_with_metadata.yml')])}.to exit_with_error.and output(/version/).to_stdout
