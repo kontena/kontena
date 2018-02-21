@@ -159,4 +159,40 @@ describe 'stack install' do
       end
     end
   end
+
+  context 'For a stack with version requirement' do
+    context 'When the requirement is matched' do
+      it 'installs normally' do
+        with_fixture_dir("stack/metadata") do
+          run! 'kontena stack install -n simple --no-deploy'
+        end
+      end
+    end
+
+    context 'When the requirement is not matched' do
+      it 'prompts for confirmation' do
+        with_fixture_dir("stack/metadata") do
+          k = kommando 'kontena stack install -n simple --no-deploy future.yml', timeout: 20
+          k.out.on "you sure" do
+            k.in << "y\r"
+          end
+          k.run
+          expect(k.code).to eq(0)
+        end
+        k = run! 'kontena stack show simple'
+        expect(k.out).to match /^\s+metadata:/
+        expect(k.out).to match /^\s+required_kontena_version:/
+      end
+
+      it 'installs if --force is used' do
+        with_fixture_dir("stack/metadata") do
+          k = run!  'kontena stack install --force -n simple --no-deploy future.yml', timeout: 20
+          expect(k.out).to match /Warning.*version/
+        end
+        k = run! 'kontena stack show simple'
+        expect(k.out).to match /^\s+metadata:/
+        expect(k.out).to match /^\s+required_kontena_version:/
+      end
+    end
+  end
 end

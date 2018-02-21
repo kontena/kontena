@@ -26,9 +26,9 @@ describe 'stack show' do
     end
 
     k = run! "kontena stack show simple"
-    expect(k.out.match(/^simple:/)).to be_truthy
-    expect(k.out.match(/^\s+metadata:/)).to be_truthy
-    expect(k.out.match(/^\s+tags:/)).to be_truthy
-    expect(k.out.match(/^\s+- tag1/)).to be_truthy
+    expect(k.out).to match /^simple:/
+    expect(k.out).to match /^\s+metadata:/
+    expect(k.out).to match /^\s+tags:/
+    expect(k.out).to match /^\s+- tag1/
   end
 end

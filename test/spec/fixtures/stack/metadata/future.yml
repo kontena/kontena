@@ -10,4 +10,5 @@ meta:
   readme: |
     Text goes
     here
-  required_kontena_version: "<= 99.0.0"
+  required_kontena_version: ">= 99.0.0"
+
