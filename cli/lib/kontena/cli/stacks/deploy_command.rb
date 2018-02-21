@@ -17,9 +17,8 @@ module Kontena::Cli::Stacks
 
     def execute
       names.each do |name|
-        deployment = nil
-        spinner "Triggering deployment of stack #{pastel.cyan(name)}" do
-          deployment = deploy_stack(name)
+        deployment = spinner "Triggering deployment of stack #{pastel.cyan(name)}" do
+          deploy_stack(name)
         end
         if wait?
           spinner "Waiting for deployment to start" do

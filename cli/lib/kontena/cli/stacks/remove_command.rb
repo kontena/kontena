@@ -1,16 +1,19 @@
 require_relative 'common'
+require_relative 'stacks_helper'
 
 module Kontena::Cli::Stacks
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
+    include StacksHelper # XXX: must be after Common, because that includes ServiceHelper, which has similarly named methods >_>
 
     banner "Removes a stack in a grid on Kontena Master"
 
     parameter "NAME ...", "Stack name", attribute_name: :names
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
     option "--keep-dependencies", :flag, "Do not remove dependencies"
+    option '--[no-]wait', :flag, 'Wait for stack services to terminate', default: true
 
     requires_current_master
     requires_current_master_token
@@ -26,9 +29,10 @@ module Kontena::Cli::Stacks
           end
         end
 
+        terminate_stack(name)
+
         spinner "Removing stack #{pastel.cyan(name)} " do
           remove_stack(name)
-          wait_stack_removal(name)
         end
       end
     end
@@ -54,27 +58,18 @@ module Kontena::Cli::Stacks
       client.get("stacks/#{current_grid}/#{name}")
     end
 
+    def terminate_stack(name)
+      deployment = spinner "Terminating stack #{name} services" do
+        client.post("stacks/#{current_grid}/#{name}/terminate", {})
+      end
+
+      wait_for_deploy_to_finish(deployment) if wait?
+    end
+
     # @param name [String]
     # @return [Hash]
     def remove_stack(name)
       client.delete("stacks/#{current_grid}/#{name}")
-    end
-
-    # @param name [String]
-    def wait_stack_removal(name)
-      removed = false
-      until removed == true
-        begin
-          client.get("stacks/#{current_grid}/#{name}")
-          sleep 1
-        rescue Kontena::Errors::StandardError => exc
-          if exc.status == 404
-            removed = true
-          else
-            raise exc
-          end
-        end
-      end
     end
   end
 end

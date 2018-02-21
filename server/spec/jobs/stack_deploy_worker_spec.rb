@@ -15,52 +15,47 @@ describe StackDeployWorker, celluloid: true do
     ).result
   end
 
+  let(:stack_deploy) { stack.stack_deploys.create! }
+  let(:stack_rev) { stack.latest_rev }
+  let(:service) { stack.grid_services.first }
+
   describe '#deploy_stack' do
     it 'changes stack_deploy state to success' do
-      stack_deploy = stack.stack_deploys.create
-      stack_rev = stack.latest_rev
-
-      deploy_result = double(:result, :success? => true, :error? => false)
-      allow(subject.wrapped_object).to receive(:deploy_service).and_return(deploy_result)
-      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
-      expect(stack_deploy.success?).to be_truthy
-    end
-
-    it 'changes deploy state to success when deploy is done' do
-      stack_deploy = stack.stack_deploys.create
-      stack_rev = stack.latest_rev
-
-      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
-      expect(subject.wrapped_object).to receive(:wait_until!) do
-        stack_deploy.grid_service_deploys.first.set(:_deploy_state => :success, :finished_at => Time.now.utc)
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: service) do
+        double(success?: true, result: GridServiceDeploy.create!(grid_service: service,
+          started_at: Time.now - 5.0,
+          finished_at: Time.now - 1.0,
+          deploy_state: :success,
+        ))
       end
-      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
-      expect(stack_deploy).to be_success
+
+      expect{
+        subject.deploy_stack(stack_deploy, stack_rev)
+      }.to change{stack_deploy.reload.state}.from(:created).to(:success)
     end
 
     it 'changes state to error when deploy mutation fails' do
-      stack_deploy = stack.stack_deploys.create
-      stack_rev = stack.latest_rev
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: service) do
+        double(success?: false, errors: double(message: { 'image' => "Invalid image" }))
+      end
 
-      deploy_result = double(:result, :success? => false, :error? => true, :errors => double(message: { 'foo' => 'bar'}))
-      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_return(deploy_result)
-      expect(subject.wrapped_object).to receive(:error).once.with(/service test\/stack\/redis deploy failed:/)
-      expect(subject.wrapped_object).to receive(:error).once
-      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
-      expect(stack_deploy.error?).to be_truthy
+      expect{
+        subject.deploy_stack(stack_deploy, stack_rev)
+      }.to change{stack_deploy.reload.state}.from(:created).to(:error).and raise_error(RuntimeError)
     end
 
     it 'changes state to error when deploy fails' do
-      stack_deploy = stack.stack_deploys.create
-      stack_rev = stack.latest_rev
-
-      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
-      expect(subject.wrapped_object).to receive(:wait_until!) do
-        stack_deploy.grid_service_deploys.first.set(:_deploy_state => :error, :finished_at => Time.now.utc)
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: service) do
+        double(success?: true, result: GridServiceDeploy.create!(grid_service: service,
+          started_at: Time.now - 5.0,
+          finished_at: Time.now - 1.0,
+          deploy_state: :error,
+        ))
       end
 
-      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
-      expect(stack_deploy).to be_error
+      expect{
+        subject.deploy_stack(stack_deploy, stack_rev)
+      }.to change{stack_deploy.reload.state}.from(:created).to(:error).and raise_error(RuntimeError)
     end
   end
 

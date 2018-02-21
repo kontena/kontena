@@ -52,9 +52,9 @@ module V1
         outcome = Stacks::Deploy.run(stack: stack)
 
         if outcome.success?
+          @stack_deploy = outcome.result
           audit_event(request, @grid, @stack, 'deploy')
           response.status = 200
-          @stack_deploy = outcome.result
           render('stack_deploys/show')
         else
           response.status = 422
@@ -66,9 +66,10 @@ module V1
       def stop_stack(stack)
         outcome = Stacks::Stop.run(stack: stack)
         if outcome.success?
+          @stack_deploy = outcome.result
           audit_event(request, @grid, @stack, 'stop')
           response.status = 200
-          {}
+          render('stack_deploys/show')
         else
           response.status = 422
           {error: outcome.errors.message}
@@ -83,6 +84,20 @@ module V1
           audit_event(request, @grid, @stack, 'restart')
           response.status = 200
           {}
+        else
+          response.status = 422
+          {error: outcome.errors.message}
+        end
+      end
+
+      # @param [Stack] stack
+      def terminate_stack(stack)
+        outcome = Stacks::Terminate.run(stack: stack)
+        if outcome.success?
+          @stack_deploy = outcome.result
+          audit_event(request, @grid, @stack, 'terminate')
+          response.status = 200
+          render('stack_deploys/show')
         else
           response.status = 422
           {error: outcome.errors.message}
@@ -109,6 +124,10 @@ module V1
 
           r.on 'restart' do
             restart_stack(@stack)
+          end
+
+          r.on 'terminate' do
+            terminate_stack(@stack)
           end
         end
 

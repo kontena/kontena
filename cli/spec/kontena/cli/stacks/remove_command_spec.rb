@@ -4,30 +4,33 @@ describe Kontena::Cli::Stacks::RemoveCommand do
 
   include ClientHelpers
 
+  let(:deployment) { double() }
+
   describe '#execute' do
-    it 'sends remove command to master' do
-      allow(subject).to receive(:fetch_stack).and_return({})
-      allow(subject).to receive(:wait_stack_removal)
-      expect(client).to receive(:delete).with('stacks/test-grid/test-stack')
-      subject.run(['--force', 'test-stack'])
-    end
+    context "with an installed stack" do
+      let(:stack) { {
 
-    it 'waits until service is removed' do
-      allow(subject).to receive(:fetch_stack).and_return({})
-      allow(client).to receive(:delete).with('stacks/test-grid/test-stack')
-      expect(client).to receive(:get).with('stacks/test-grid/test-stack')
-        .and_raise(Kontena::Errors::StandardError.new(404, 'Not Found'))
-      subject.run(['--force', 'test-stack'])
-    end
+      } }
 
-    it 'raises exception on server error' do
-      allow(subject).to receive(:fetch_stack).and_return({})
-      expect(client).to receive(:delete).with('stacks/test-grid/test-stack')
-      expect(client).to receive(:get).with('stacks/test-grid/test-stack')
-        .and_raise(Kontena::Errors::StandardError.new(500, 'internal error'))
-      expect{
+      before do
+        allow(subject).to receive(:fetch_stack).and_return(stack)
+      end
+
+      it 'waits for terminate deploy before deleting' do
+        expect(client).to receive(:post).with('stacks/test-grid/test-stack/terminate', {}).and_return(deployment)
+        expect(subject).to receive(:wait_for_deploy_to_finish).with(deployment)
+        expect(client).to receive(:delete).with('stacks/test-grid/test-stack')
+
         subject.run(['--force', 'test-stack'])
-      }.to exit_with_error
+      end
+
+      it 'raises exception on server error' do
+        expect(client).to receive(:post).with('stacks/test-grid/test-stack/terminate', {}).and_raise(Kontena::Errors::StandardError.new(500, 'internal error'))
+
+        expect{
+          subject.run(['--force', 'test-stack'])
+        }.to exit_with_error
+      end
     end
 
     describe 'with stack dependencies' do
@@ -51,7 +54,7 @@ describe Kontena::Cli::Stacks::RemoveCommand do
         end
 
         before(:each) do
-          allow(subject).to receive(:wait_stack_removal)
+          allow(subject).to receive(:terminate_stack)
         end
 
         it 'removes the children' do

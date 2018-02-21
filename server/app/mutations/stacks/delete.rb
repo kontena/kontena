@@ -3,7 +3,7 @@ require_relative 'common'
 module Stacks
   class Delete < Mutations::Command
     include Common
-    include Workers
+    include Stacks::SortHelper
 
     required do
       model :stack, class: Stack
@@ -26,7 +26,15 @@ module Stacks
     end
 
     def execute
-      worker(:stack_remove).async.perform(self.stack.id)
+      services = sort_services(stack.grid_services.to_a).reverse
+      services.each do |service|
+        outcome = GridServices::Delete.run(grid_service: service)
+        unless outcome.success?
+          handle_service_outcome_errors(service.name, outcome.errors)
+        end
+      end
+
+      stack.destroy unless has_errors?
     end
   end
 end

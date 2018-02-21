@@ -1,12 +1,67 @@
 class StackDeploy
   include Mongoid::Document
   include Mongoid::Timestamps
-  include Mongoid::Enum
+
+  field :error, type: String
+  field :error_at, type: DateTime
 
   index({ stack_id: 1 })
 
-  enum :deploy_state, [:created, :ongoing, :success, :error], default: :created
-
   belongs_to :stack
   has_many :grid_service_deploys, dependent: :destroy
+
+  def error!(message)
+    update!(
+      error_at: Time.now,
+      error: message,
+    )
+  end
+
+  # @return [DateTime]
+  def started_at
+    timestamps = self.grid_service_deploys.map { |service_deploy| service_deploy.started_at }
+
+    timestamps.compact.min
+  end
+
+  # @return [DateTime]
+  def finished_at
+    return self.error_at if self.error_at
+
+    timestamps = self.grid_service_deploys.map { |service_deploy| service_deploy.finished_at }
+
+    return nil if timestamps.any? { |timestamp| !timestamp }
+
+    timestamps.max
+  end
+
+  # @return [Boolean]
+  def created?
+    self.grid_service_deploys.empty?
+  end
+
+  # @return [Boolean]
+  def error?
+    return true if self.error
+
+    self.grid_service_deploys.any? { |service_deploy| service_deploy.error? }
+  end
+
+  # @return [Boolean]
+  def success?
+    self.grid_service_deploys.all? { |service_deploy| service_deploy.success? }
+  end
+
+  # @return [Symbol]
+  def state
+    if error?
+      :error
+    elsif created?
+      :created
+    elsif success?
+      :success
+    else
+      :ongoing
+    end
+  end
 end

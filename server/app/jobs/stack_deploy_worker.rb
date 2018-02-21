@@ -11,13 +11,14 @@ class StackDeployWorker
     if stack_deploy && stack_rev
       deploy_stack(stack_deploy, stack_rev)
     end
+  rescue => exc
+    error exc
   end
 
   # @param [StackDeploy] stack_deploy
   # @param [StackRevision] stack_rev
   def deploy_stack(stack_deploy, stack_rev)
     stack = stack_deploy.stack
-    stack_deploy.ongoing!
 
     remove_services(stack, stack_rev)
     stack.reload
@@ -25,15 +26,9 @@ class StackDeployWorker
     services.each do |service|
       deploy_service(service, stack_deploy)
     end
-
-    stack_deploy.success!
-
-    stack_deploy
   rescue => exc
-    error exc.message
-    error exc.backtrace.join("\n")
-    stack_deploy.error!
-    stack_deploy
+    stack_deploy.error! "#{exc.class}: #{exc}"
+    raise
   end
 
   # @param [GridService] service

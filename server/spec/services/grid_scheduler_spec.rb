@@ -176,23 +176,67 @@ describe GridScheduler do
   end
 
   describe '#active_deploys_within_stack?' do
-    it 'returns false by default' do
-      expect(subject.active_deploys_within_stack?(service)).to be_falsey
+    context "without any stack deploys" do
+      it 'returns false' do
+        expect(subject.active_deploys_within_stack?(service)).to be_falsey
+      end
     end
 
-    it 'returns true if service has active deploys' do
-      service.stack.stack_deploys.create
-      expect(subject.active_deploys_within_stack?(service)).to be_truthy
+    context "with created deploys" do
+      let!(:stack_deploy) { service.stack.stack_deploys.create! }
+      let!(:service_deploy) { GridServiceDeploy.create!(grid_service: service, stack_deploy: stack_deploy,
+        deploy_state: :created,
+      )}
+
+      it 'returns true' do
+        expect(subject.active_deploys_within_stack?(service)).to be_truthy
+      end
     end
 
-    it 'returns false if service has only finished deploys' do
-      service.stack.stack_deploys.create(deploy_state: :success)
-      expect(subject.active_deploys_within_stack?(service)).to be_falsey
+    context "with running deploys" do
+      let!(:stack_deploy) { service.stack.stack_deploys.create! }
+      let!(:service_deploy) { GridServiceDeploy.create!(grid_service: service, stack_deploy: stack_deploy,
+        started_at: Time.now.utc - 30.0,
+        deploy_state: :ongoing,
+      )}
+
+      it 'returns true' do
+        expect(subject.active_deploys_within_stack?(service)).to be_truthy
+      end
     end
 
-    it 'returns false if service has only stale deploys' do
-      service.stack.stack_deploys.create(created_at: 1.hour.ago)
-      expect(subject.active_deploys_within_stack?(service)).to be_falsey
+    context "with finished deploys" do
+      let!(:stack_deploy) { service.stack.stack_deploys.create! }
+      let!(:service_deploy) { GridServiceDeploy.create!(grid_service: service, stack_deploy: stack_deploy,
+        started_at: Time.now.utc - 30.0,
+        finished_at: Time.now.utc - 10.0,
+        deploy_state: :success,
+      )}
+
+      it 'returns false' do
+        expect(subject.active_deploys_within_stack?(service)).to be_falsey
+      end
+    end
+
+    context "with stale service deploys" do
+      let!(:stack_deploy) { service.stack.stack_deploys.create! }
+      let!(:service_deploy) { GridServiceDeploy.create!(grid_service: service, stack_deploy: stack_deploy,
+        created_at: 35.minutes.ago,
+        deploy_state: :ongoing,
+        started_at: 32.minutes.ago,
+      )}
+
+      it 'returns false' do
+        expect(subject.active_deploys_within_stack?(service)).to be_falsey
+      end
+    end
+
+    context "with stale stack deploy" do
+      let!(:stack_deploy) { service.stack.stack_deploys.create!(created_at: 1.hour.ago) }
+
+      it 'returns false' do
+        expect(subject.active_deploys_within_stack?(service)).to be_falsey
+      end
     end
   end
 
