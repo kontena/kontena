@@ -20,8 +20,14 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.2.0"
 
-  spec.add_development_dependency "bundler", "~> 1.7"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.metadata = {
+    "bug_tracker_uri"   => "https://github.com/kontena/kontena/issues",
+    "changelog_uri"     => "https://raw.githubusercontent.com/kontena/kontena/master/CHANGELOG.md",
+    "documentation_uri" => "https://kontena.io/docs/",
+    "homepage_uri"      => "https://kontena.io/",
+    "source_code_uri"   => "https://github.com/kontena/kontena"
+  }
+
   spec.add_runtime_dependency "excon", "0.60.0"
   spec.add_runtime_dependency "tty-prompt", "0.14.0"
   spec.add_runtime_dependency "clamp", "~> 1.2.1"
@@ -33,4 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "liquid", "~> 4.0.0"
   spec.add_runtime_dependency "tty-table", "~> 0.9.0"
   spec.add_runtime_dependency "kontena-websocket-client", "~> 0.1.1"
+
+  spec.add_development_dependency "bundler", "~> 1.7"
+  spec.add_development_dependency "rake", "~> 10.0"
 end
