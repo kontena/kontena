@@ -19,7 +19,7 @@ class StackDeploy
 
   # @return [DateTime]
   def started_at
-    timestamps = self.grid_service_deploys.map{|service_deploy| service_deploy.started_at}
+    timestamps = self.grid_service_deploys.map { |service_deploy| service_deploy.started_at }
 
     timestamps.compact.min
   end
@@ -28,9 +28,9 @@ class StackDeploy
   def finished_at
     return self.error_at if self.error_at
 
-    timestamps = self.grid_service_deploys.map{|service_deploy| service_deploy.finished_at}
+    timestamps = self.grid_service_deploys.map { |service_deploy| service_deploy.finished_at }
 
-    return nil if timestamps.any? {|timestamp| !timestamp }
+    return nil if timestamps.any? { |timestamp| !timestamp }
 
     timestamps.max
   end
