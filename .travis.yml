@@ -11,7 +11,7 @@ services:
 
 before_cache:
   # Remove any versions of kontena-cli gem before caching $HOME/.gems
-  - GEM_HOME=$HOME/.gems gem uninstall -I -a -x kontena-cli
+  - GEM_HOME=/home/travis/.gems gem uninstall -I -a -x kontena-cli
 
 before_install:
   - ./build/travis/before_install.sh
