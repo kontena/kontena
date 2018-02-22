@@ -4,14 +4,13 @@ cache:
   bundler: true
   directories:
     - $TEST_DIR/vendor/bundle
-    - /home/travis/.gems/
+    - /home/travis/.gem/
     - /home/travis/.rvm/
 services:
   - docker
 
 before_cache:
-  # Remove any versions of kontena-cli gem before caching $HOME/.gems
-  - GEM_HOME=/home/travis/.gems gem uninstall -I -a -x kontena-cli
+  - gem uninstall --user-install -I -a -x kontena-cli
 
 before_install:
   - ./build/travis/before_install.sh
