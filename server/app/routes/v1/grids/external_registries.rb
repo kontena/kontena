@@ -26,8 +26,7 @@ V1::GridsApi.route('external_registries') do |r|
         response.status = 201
         render('external_registries/show')
       else
-        response.status = 422
-        outcome.errors.message
+        halt_request(422, { error: outcome.errors.message })
       end
     end
   end

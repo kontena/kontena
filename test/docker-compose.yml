@@ -27,6 +27,7 @@ services:
       - VAULT_IV=kljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljh
       - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
       - INITIAL_ADMIN_CODE=initialadmincode
+      - "KONTENA_SERVER_GZIP=true"
     depends_on:
       - mongodb
 
@@ -38,6 +39,7 @@ services:
     environment:
       - KONTENA_URI=ws://localhost:9292
       - KONTENA_TOKEN=e2etoken
+      - LOG_LEVEL=0
     network_mode: "host"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -46,5 +48,4 @@ services:
       - api
 
   mongodb:
-    image: mongo:3.0
-    command: mongod --smallfiles
+    image: mongo:3.4

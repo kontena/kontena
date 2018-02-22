@@ -52,6 +52,15 @@ module Rpc
         created_at: time
       }
       @db_session[:host_node_stats].insert_one(stat)
+      node.set(
+        latest_stats: {
+          memory: data['memory'],
+          load: data['load'],
+          filesystem: data['filesystem'],
+          cpu: data['cpu'],
+          usage: data['usage']
+        }
+      )
     end
   end
 end

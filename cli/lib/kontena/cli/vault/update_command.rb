@@ -16,7 +16,7 @@ module Kontena::Cli::Vault
     end
 
     def execute
-      vspinner "Updating #{name.colorize(:cyan)} value in the vault " do
+      vspinner "Updating #{pastel.cyan(name)} value in the vault " do
         client.put("secrets/#{current_grid}/#{name}", {name: name, value: value, upsert: upsert? })
       end
     end

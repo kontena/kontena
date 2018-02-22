@@ -24,5 +24,6 @@ services:
     environment:
       - "REDIS1_PORT_6379_TCP_ADDR=${redis_from_registry}"
       - "REDIS2_PORT_6379_TCP_ADDR=${redis_from_yml}"
+      - "STACKNAME=${STACK}"
     ports:
       - "${port}:6000"

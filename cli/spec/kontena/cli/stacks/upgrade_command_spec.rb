@@ -11,6 +11,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
   before(:each) do
     ENV['STACK'] = nil
+    allow(client).to receive(:server_version).and_return(Kontena::Cli::VERSION)
   end
 
   describe '#execute' do
@@ -69,6 +70,13 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
       subject.run(['--force', 'stack-a', fixture_path('kontena_v3.yml')])
     end
 
+    it 'requires force if master version does not match metadata required_kontena_version' do
+      expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
+      expect(client).to receive(:server_version).and_return('0.2.0')
+      expect(subject).to receive(:confirm).and_call_original
+      expect{subject.run(['--no-deploy', 'stack-a', fixture_path('kontena_v3_with_metadata.yml')])}.to exit_with_error.and output(/version/).to_stdout
+    end
+
     context '--no-deploy option' do
       it 'does not trigger deploy' do
         expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
@@ -76,10 +84,9 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
           'stacks/test-grid/stack-a', anything
         ).and_return({})
         expect(Kontena).not_to receive(:run!).with(['stack', 'deploy', 'stack-a'])
-        subject.run(['--no-deploy', 'stack-a', fixture_path('kontena_v3.yml')])
+        subject.run(['--no-deploy', '--force', 'stack-a', fixture_path('kontena_v3.yml')])
       end
     end
-
     context 'with a stack including dependencies' do
 
       let(:expectation)     {{ 'name' => 'deptest', 'stack' => 'user/depstack1' }}

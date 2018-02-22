@@ -42,6 +42,7 @@ module Kontena::Cli::Services
     option "--health-check-initial-delay", "DELAY", "Initial for HTTP health check"
     option "--health-check-port", "PORT", "Port for HTTP health check"
     option "--health-check-protocol", "PROTOCOL", "Protocol of health check"
+    option "--stop-signal", "STOP_SIGNAL", "Alternative signal to stop container"
     option "--stop-timeout", "STOP_TIMEOUT", "Timeout (duration) to stop a container"
 
     def execute
@@ -49,7 +50,7 @@ module Kontena::Cli::Services
       token = require_token
 
       data = parse_service_data_from_options
-      spinner "Updating #{name.colorize(:cyan)} service " do
+      spinner "Updating #{pastel.cyan(name)} service " do
         update_service(token, name, data)
       end
     end
@@ -85,6 +86,7 @@ module Kontena::Cli::Services
       health_check = parse_health_check
       data[:health_check] = health_check unless health_check.empty?
       data[:pid] = pid if pid
+      data[:stop_signal] = stop_signal if stop_signal
       data[:stop_grace_period] = stop_timeout if stop_timeout
       data
     end

@@ -6,18 +6,6 @@ describe 'vpn remove' do
     wait_until_container_gone('vpn.server-1')
   end
 
-  after(:each) do
-    run 'kontena stack rm --force vpn'
-  end
-
-  it 'removes the vpn stack' do
-    run 'kontena vpn create'
-    k = run 'kontena stack rm --force vpn'
-    expect(k.code).to eq(0)
-    k = run 'kontena stack show vpn'
-    expect(k.code).not_to eq(0)
-  end
-
   it 'returns error if vpn does not exist' do
     k = run 'kontena vpn remove --force'
     expect(k.code).not_to eq(0)

@@ -23,7 +23,7 @@ module Kontena::Cli::Stacks::Registry
         end
       end
       spinner "Removing #{pastel.cyan(stack_name)} from the registry" do
-        stacks_client.destroy(stack_name.stack_name, stack_name.version)
+        stacks_client.destroy(stack_name)
       end
     end
   end

@@ -7,6 +7,12 @@ class RpcServer
   include Celluloid
   include Logging
 
+  QUEUE_SIZE = 1000
+
+  def self.queue
+    @queue ||= SizedQueue.new(QUEUE_SIZE)
+  end
+
   HANDLERS = {
     'containers' => Rpc::ContainerHandler,
     'container_exec' => Rpc::ContainerExecHandler,
@@ -29,11 +35,13 @@ class RpcServer
   attr_reader :handlers
 
   # @param [SizedQueue] queue
-  def initialize(queue)
-    @queue = queue
+  def initialize(autostart: true)
+    @queue = self.class.queue
     @handlers = {}
     @counter = 0
     @processing = false
+
+    async.process! if autostart
   end
 
   def process!
@@ -56,23 +64,27 @@ class RpcServer
   # @return [Array]
   def handle_request(ws_client, grid_id, message)
     msg_id = message[1]
-    handler = message[2].split('/')[1]
-    method = message[2].split('/')[2]
+    msg_path = message[2]
+    _, handler, method = msg_path.split('/')
     if instance = handling_instance(grid_id, handler)
+      start_time = Time.now
       begin
         result = instance.send(method, *message[3])
-        send_message(ws_client, [1, msg_id, nil, result])
       rescue RpcServer::Error => exc
         send_message(ws_client, [1, msg_id, {code: exc.code, message: exc.message}, nil])
         @handlers[grid_id].delete(handler)
       rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
-        debug exc.backtrace.join("\n")
+        error "request #{msg_path} => #{exc.class}: #{exc}"
+        error exc
         send_message(ws_client, [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}"}, nil])
         @handlers[grid_id].delete(handler)
+      else
+        dt = Time.now - start_time
+        debug "request #{msg_path} => #{result.class} in #{'%.3f' % dt}s"
+        send_message(ws_client, [1, msg_id, nil, result])
       end
     else
-      warn "handler #{handler} not implemented"
+      warn "handler #{msg_path} not implemented"
       send_message(ws_client, [1, msg_id, {code: 501, error: 'service not implemented'}, nil])
     end
   end
@@ -80,18 +92,22 @@ class RpcServer
   # @param [String] grid_id
   # @param [Array] message msgpack-rpc notification array
   def handle_notification(grid_id, message)
-    handler = message[1].split('/')[1]
-    method = message[1].split('/')[2]
+    msg_path = message[1]
+    _, handler, method = msg_path.split('/')
     if instance = handling_instance(grid_id, handler)
+      start_time = Time.now
       begin
         instance.send(method, *message[2])
       rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
-        error exc.backtrace.join("\n")
+        error "notify #{msg_path} => #{exc.class}: #{exc}"
+        error exc
         @handlers[grid_id].delete(handler)
+      else
+        dt = Time.now - start_time
+        debug "notify #{msg_path} in #{'%.3f' % dt}s"
       end
     else
-      warn "handler #{handler} not implemented"
+      warn "handler #{msg_path} not implemented"
     end
   end
 

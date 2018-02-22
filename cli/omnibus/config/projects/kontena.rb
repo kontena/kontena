@@ -11,6 +11,8 @@ description "Command-line tool for the Kontena Platform"
 maintainer "Kontena, Inc."
 homepage "https://kontena.io"
 
+override :ruby, version: "2.5.0"
+
 # Defaults to C:/kontena on Windows
 # and /opt/kontena on all other platforms
 install_dir "#{default_root}/#{name}"

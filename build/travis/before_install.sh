@@ -8,3 +8,6 @@ if [ "$TEST_DIR" = "server" ]; then
   sudo rm -rf /var/lib/mongodb
   sudo apt-get install -y -q -f mongodb-org-server=3.0.12
 fi
+
+gem update --system
+gem install bundler-audit --no-ri --no-rdoc

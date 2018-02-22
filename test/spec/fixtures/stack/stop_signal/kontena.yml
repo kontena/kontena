@@ -1,0 +1,7 @@
+stack: simple
+version: 0.1.0
+services:
+  app:
+    image: busybox:latest
+    command: sh -c 'trap "exit 0" SIGINT;trap "exit 1" SIGTERM;while true; do :; done'
+    stop_signal: 'SIGINT'

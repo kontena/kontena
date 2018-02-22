@@ -232,7 +232,7 @@ module GridServices
           end
           string :entrypoint
           array :env do
-            string matches: /\A[^=]+=/
+            string matches: /\A[^=]+=/, max_length: 128 * 1024
           end
           array :secrets do
             hash do
@@ -352,6 +352,7 @@ module GridServices
               integer :initial_delay, default: 10
             end
           end
+          string :stop_signal, matches: /\A((SIG)([A-Z0-9]+|RTMIN\+\d+|RTMAX-\d+)|\d+)\z/i
           string :stop_grace_period, matches: Duration::VALIDATION_PATTERN
         end
       end

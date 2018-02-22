@@ -1,5 +1,5 @@
 describe Rpc::ContainerHandler do
-  let(:grid) { Grid.create! }
+  let(:grid) { Grid.create!(name: 'test') }
   let(:subject) { described_class.new(grid) }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
 
@@ -221,28 +221,37 @@ describe Rpc::ContainerHandler do
   end
 
   describe '#health' do
-    it 'saves container health status and sends pubsub notification' do
-      container = grid.containers.create!(grid_service: grid_service, container_id: SecureRandom.hex(16), name: 'foo-1', health_status: 'unknown')
-      expect(MongoPubsub).to receive(:publish).with('service:health_status_events', {id: grid_service.id.to_s})
-      expect {
-        subject.health({'id' => container.container_id, 'status' => 'healthy'})
-      }.to change{container.reload.health_status}.to 'healthy'
-    end
-
     it 'warns if container not found' do
       expect(subject).to receive(:warn).with('health status update failed, could not find container for id: foo')
-      subject.health({'id' => 'foo', 'status' => 'healthy'})
+      result = subject.health({'id' => 'foo', 'status' => 'healthy'})
+      expect(!result).to be_truthy # can't use nil? for celluloid async proxy
     end
 
-    it 'saves container health status, does not send notification when no service linked to container' do
-      container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', health_status: 'unknown')
-      expect(MongoPubsub).not_to receive(:publish)
-      expect {
-        subject.health({'id' => container.container_id, 'status' => 'healthy'})
-      }.to change{container.reload.health_status}.to 'healthy'
+    context 'with an existing container' do
+      let(:container) { grid.containers.create!(grid_service: grid_service, container_id: SecureRandom.hex(16), name: 'foo-1', health_status: 'unknown') }
+
+      it 'saves container health status and sends pubsub notification' do
+        allow(MongoPubsub).to receive(:publish_async).and_call_original
+        expect(MongoPubsub).to receive(:publish_async).with('FirehoseApiEvent', {event: 'update', type: 'GridService', object: hash_including(id: 'test/null/redis')}).and_call_original
+
+        expect {
+          result = subject.health({'id' => container.container_id, 'status' => 'healthy'})
+          expect(!result).to be_truthy # can't use nil? for celluloid async proxy
+        }.to change{container.reload.health_status}.to 'healthy'
+      end
+
+      context 'not linked to any grid service' do
+        let(:grid_service) { nil }
+
+        it 'saves container health status, does not send notification when no service linked to container' do
+          expect(MongoPubsub).not_to receive(:publish_async).with('FirehoseApiEvent', {event: 'update', type: 'GridService', object: Hash})
+
+          expect {
+            result = subject.health({'id' => container.container_id, 'status' => 'healthy'})
+            expect(!result).to be_truthy # can't use nil? for celluloid async proxy
+          }.to change{container.reload.health_status}.to 'healthy'
+        end
+      end
     end
-
-
   end
-
 end

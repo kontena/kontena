@@ -25,11 +25,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
   before do
     allow(subject.wrapped_object).to receive(:async).and_return(async_proxy)
-
-    # for testing #start
-    allow(subject.wrapped_object).to receive(:every) do |&block|
-      block.call
-    end
   end
 
   context 'for a disconnected client' do
@@ -37,11 +32,13 @@ describe Cloud::WebsocketClient, :celluloid => true do
       expect(subject.connected?).to be false
     end
 
-    it 'is not connecting' do
-      expect(subject.connecting?).to be false
-    end
-
     describe '#start' do
+      before do
+        allow(subject.wrapped_object).to receive(:after) do |&block|
+          block.call
+        end
+      end
+
       it 'connects' do
         expect(subject.wrapped_object).to receive(:connect)
 
@@ -63,7 +60,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
         subject.connect
 
-        expect(subject).to be_connecting
         expect(subject).to_not be_connected
       end
     end
@@ -85,24 +81,11 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
   context 'for a connecting websocket client' do
     before do
-      subject.wrapped_object.instance_variable_set('@connecting', true)
       subject.wrapped_object.instance_variable_set('@ws', ws)
     end
 
     it 'is not connected' do
       expect(subject.connected?).to be false
-    end
-
-    it 'is connecting' do
-      expect(subject.connecting?).to be true
-    end
-
-    describe '#start' do
-      it 'does not connect' do
-        expect(subject.wrapped_object).not_to receive(:connect)
-
-        subject.start
-      end
     end
 
     describe '#connect_client' do
@@ -143,7 +126,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
           subject.on_open
 
-          expect(subject.connecting?).to be false
           expect(subject.connected?).to be true
         end
       end
@@ -152,24 +134,12 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
   context 'for a connected client' do
     before do
-      subject.wrapped_object.instance_variable_set('@connected', true)
+      subject.connected!
       subject.wrapped_object.instance_variable_set('@ws', ws)
-    end
-
-    it 'is not connecting' do
-      expect(subject.connecting?).to be false
     end
 
     it 'is connected' do
       expect(subject.connected?).to be true
-    end
-
-    describe '#start' do
-      it 'does not connect' do
-        expect(subject.wrapped_object).not_to receive(:connect)
-
-        subject.start
-      end
     end
 
     describe '#on_message' do
@@ -204,7 +174,6 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
         subject.on_close(1337, 'testing')
 
-        expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
       end
 
@@ -355,6 +324,57 @@ describe Cloud::WebsocketClient, :celluloid => true do
 
             WaitHelper.wait_until!(timeout: 1.0, interval: 0.1) { @ok }
           end
+        end
+      end
+    end
+
+    describe '#resolve_users' do
+      let!(:grid) do
+        grid = Grid.create!(name: 'test')
+        grid.users << john
+        grid
+      end
+
+      let(:master_admin_role) do
+        Role.create!(name: 'master_admin', description: 'Master admin')
+      end
+
+      let!(:john) do
+        john = User.create(email: 'john.doe@example.org', external_id: '12345')
+        john.roles << master_admin_role
+        john
+      end
+
+      let!(:jane) do
+        jane = User.create(email: 'jane.doe@example.org', external_id: '67890')
+        grid.users << jane
+        jane
+      end
+
+      context 'when passing grid_id' do
+        context 'when grid is found' do
+          it 'returns master admins and grid users' do
+            users = subject.resolve_users(grid.name)
+            expect(users).to eq([john.external_id, jane.external_id])
+          end
+        end
+
+        context 'when grid is not found' do
+          before(:each) do
+            grid.destroy
+          end
+
+          it 'returns master admins' do
+            users = subject.resolve_users(grid.name)
+            expect(users).to eq([john.external_id])
+          end
+        end
+      end
+
+      context 'when grid_id nil' do
+        it 'returns master admins' do
+          users = subject.resolve_users(nil)
+          expect(users).to eq([john.external_id])
         end
       end
     end

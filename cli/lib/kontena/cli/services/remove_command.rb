@@ -5,7 +5,7 @@ module Kontena::Cli::Services
     include Kontena::Cli::Common
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "NAME ...", "Service name", attribute_name: :names
     option "--instance", "INSTANCE", "Remove only given instance"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
@@ -15,17 +15,19 @@ module Kontena::Cli::Services
     requires_current_master_token
 
     def execute
-      if instance
-        remove_instance
-      else
-        remove
+      names.each do |name|
+        if instance
+          remove_instance(name)
+        else
+          remove(name)
+        end
       end
     end
 
-    def remove
+    def remove(name)
       confirm_command(name) unless forced?
 
-      spinner "Removing service #{name.colorize(:cyan)} " do
+      spinner "Removing service #{pastel.cyan(name)} " do
         client.delete("services/#{parse_service_id(name)}")
         removed = false
         until removed == true
@@ -43,14 +45,14 @@ module Kontena::Cli::Services
       end
     end
 
-    def remove_instance
+    def remove_instance(name)
       instance_name = "#{name}/#{instance}"
       confirm_command("#{name}/#{instance}") unless forced?
       service_instance = client.get("services/#{parse_service_id(name)}/instances")['instances'].find{ |i|
         i['instance_number'] == instance.to_i
       }
       exit_with_error("Instance not found") unless service_instance
-      spinner "Removing service instance #{instance_name.colorize(:cyan)} " do
+      spinner "Removing service instance #{pastel.cyan(instance_name)} " do
         client.delete("services/#{parse_service_id(name)}/instances/#{service_instance['id']}")
       end
     end

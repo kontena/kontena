@@ -12,8 +12,8 @@ describe RpcServer, celluloid: true do
     end
   end
 
-  let(:queue) { SizedQueue.new(800) }
-  let(:subject) { described_class.new(queue) }
+  let(:queue) { RpcServer.queue }
+  let(:subject) { described_class.new(autostart: false) }
 
   let(:grid) { Grid.create!(name: 'test') }
 

@@ -45,7 +45,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
 
     it "fails if fetch_deploy_item returns a non-pending deploy" do
       service_deploy = GridServiceDeploy.create(grid_service: service, created_at: 1.hour.ago, started_at: 1.hour.ago)
-      
+
       expect(subject.check_deploy_queue).to be_nil
       expect(service_deploy.reload).to be_finished
       expect(service_deploy.reason).to eq "service deploy aborted: deploy not pending"
@@ -54,13 +54,13 @@ describe GridServiceSchedulerWorker, celluloid: true do
     it "aborts deploy when un-handled error occurs" do
       service_deploy = GridServiceDeploy.create(grid_service: nil, created_at: 1.hour.ago)
       expect(subject.wrapped_object).to receive(:fetch_deploy_item).and_return(service_deploy)
-      
+
       expect(subject.check_deploy_queue).to be_nil
       expect(service_deploy.reload).to be_aborted
       expect(service_deploy.deploy_state).to eq :error
       expect(service_deploy.reason).not_to be_nil
     end
-    
+
   end
 
   context "without any deploys" do
@@ -382,31 +382,6 @@ describe GridServiceSchedulerWorker, celluloid: true do
     end
   end
 
-  context "with dependent services" do
-    let(:dependent_service) {
-      grid.grid_services.create(name: 'test2',
-          image_name: 'foo/bar:latest',
-          volumes_from: [
-            'test-%s',
-          ]
-      )
-    }
-
-    before do
-      dependent_service.link_to(service)
-
-      expect(service.dependant_services).to eq [dependent_service]
-    end
-
-    describe '#deploy_dependant_services' do
-      it "creates deploys for the dependent service" do
-        subject.deploy_dependant_services(service)
-
-        expect(dependent_service).to be_deploying
-      end
-    end
-  end
-
   describe '#deploy' do
     let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
 
@@ -430,13 +405,6 @@ describe GridServiceSchedulerWorker, celluloid: true do
       expect{
         subject.deploy(service_deploy)
       }.to raise_error(RuntimeError).and change{service_deploy.reload.finished_at}.from(nil).to(a_value >= 1.second.ago)
-    end
-
-    it "deploys dependent services" do
-      expect(deployer).to receive(:deploy).once
-      expect(subject.wrapped_object).to receive(:deploy_dependant_services).with(service)
-
-      subject.deploy(service_deploy)
     end
   end
 end

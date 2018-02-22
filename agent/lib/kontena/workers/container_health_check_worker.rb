@@ -9,7 +9,7 @@ module Kontena::Workers
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
 
-    HEALTHY_STATUSES = [200]
+    HEALTHY_STATUSES = (200 .. 399)
 
     finalizer :log_exit
 
@@ -55,7 +55,7 @@ module Kontena::Workers
         # Restart the container, master will handle re-scheduling logic
         info "About to restart container #{name} as it's reported to be unhealthy"
         emit_service_pod_event("service:health_check", "restarting #{name} because it's reported as unhealthy", Logger::WARN)
-        
+
         restart_container
       end
     end
@@ -74,11 +74,18 @@ module Kontena::Workers
         'id' => @container.id
       }
       begin
-        response = Excon.get(url, :connect_timeout => timeout, :headers => {"User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"})
+        response = Excon.get(url,
+          connect_timeout: timeout,
+          headers: {
+            "User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"
+          },
+          middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower],
+        )
         debug "got status: #{response.status}"
         data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status
-      rescue
+      rescue => exc
+        debug "got error #{exc.class}: #{exc}"
         data['status'] = 'unhealthy'
       end
       data
@@ -100,14 +107,20 @@ module Kontena::Workers
         debug "got status: #{response}"
         data['status'] = response ? 'healthy' : 'unhealthy'
         data['status_code'] = response ? 'open' : 'closed'
-      rescue
+      rescue => exc
+        debug "got error #{exc.class}: #{exc}"
         data['status'] = 'unhealthy'
       end
       data
     end
 
     def restart_container
-      Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
+      Celluloid::Notifications.publish('service_pod:restart', {
+        service_id: @container.service_id,
+        instance_number: @container.instance_number,
+        container_id: @container.id,
+        started_at: @container.started_at,
+      })
     end
 
     # @param [String] type

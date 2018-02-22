@@ -60,7 +60,7 @@ describe '/v1/stacks', celluloid: true do
 
 
   let(:expected_attributes) do
-    %w(id created_at updated_at name stack version revision
+    %w(id created_at updated_at name stack version revision metadata
     services state expose source variables registry parent children)
   end
 
@@ -85,6 +85,36 @@ describe '/v1/stacks', celluloid: true do
     it 'returns 404 for unknown stack' do
       get "/v1/stacks/#{grid.name}/unknown-stack", nil, request_headers
       expect(response.status).to eq(404)
+    end
+
+    context 'stacks with metadata' do
+      let!(:metastack) do
+        outcome = Stacks::Create.run(
+          current_user: david,
+          grid: grid,
+          name: 'metastack',
+          stack: 'metastack',
+          parent_name: nil,
+          version: '0.1.0',
+          source: '...',
+          variables: { foo: 'bar' },
+          registry: 'file',
+          services: [
+            { name: 'redis', image: 'redis:2.8', stateful: false }
+          ],
+          metadata: {
+            tags: %w(tag1 tag2)
+          }
+        )
+        outcome.result
+      end
+
+      it 'returns stack json including metadata' do
+        get "/v1/stacks/#{metastack.to_path}", nil, request_headers
+        expect(json_response['metadata']).to match hash_including(
+          'tags' => array_including('tag1', 'tag2')
+        )
+      end
     end
 
     context 'nested stacks' do

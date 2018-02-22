@@ -8,3 +8,5 @@ docs/_book
 .rspec-local
 .DS_Store
 .byebug_history
+.ruby-version
+.ruby-gemset

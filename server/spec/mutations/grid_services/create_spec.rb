@@ -546,6 +546,20 @@ describe GridServices::Create do
       expect(outcome.errors.message).to eq 'env' => [ "Env[0] isn't in the right format" ]
     end
 
+    it 'validates env length' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'redis',
+        image: 'redis:2.8',
+        stateful: false,
+        env: [
+          "FOO=#{'A' * 1024 * 128}b",
+        ],
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'env' => [ "Env[0] is too long" ]
+    end
+
     it 'saves stop_grace_period with default if not given' do
       outcome = described_class.new(
           grid: grid,
@@ -565,6 +579,101 @@ describe GridServices::Create do
           stop_grace_period: 'foo'
       ).run
       expect(outcome).not_to be_success
+    end
+
+    context 'stop_signal' do
+      it 'saves stop_signal' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            stop_signal: 'SIGQUIT'
+        ).run
+        expect(outcome).to be_success
+        expect(outcome.result.stop_signal).to eq('SIGQUIT')
+      end
+
+      it 'validates stop_signal syntax' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: 'invalid'
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'stop_signal' => "Stop Signal isn't in the right format"
+      end
+
+      it 'does not allow empty strings' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: ''
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message.keys).to include('stop_signal')
+      end
+
+      it 'does not allow signal to start with - char' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: '-SIGQUIT'
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message.keys).to include('stop_signal')
+      end
+
+      it 'does not allow signal to end in - char' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: 'SIGRTMIN-'
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message.keys).to include('stop_signal')
+      end
+
+      it 'allows numeric strings as signals' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: '9'
+        ).run
+        expect(outcome).to be_success
+      end
+
+      it 'allows signals with offsets' do
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: false,
+          stop_signal: 'SIGRTMIN+2'
+        ).run
+        expect(outcome).to be_success
+      end
+
+      it 'fails to save with invalid stop_signal' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            stop_signal: 'foo'
+        ).run
+        expect(outcome).not_to be_success
+      end
     end
 
     context 'hooks' do

@@ -9,9 +9,8 @@ describe 'service update' do
 
   context 'health check' do
     it 'updates health check' do
-      k = run "kontena service update --health-check-port 8080 --health-check-protocol http --health-check-uri / test-1"
-      expect(k.code).to eq(0)
-      k = run "kontena service show test-1"
+      run! "kontena service update --health-check-port 8080 --health-check-protocol http --health-check-uri / test-1"
+      k = run! "kontena service show test-1"
       expect(k.out.match(/port: 8080/)).to be_truthy
       expect(k.out.match(/protocol: http/)).to be_truthy
       expect(k.out.match(/uri: \//)).to be_truthy
@@ -19,17 +18,15 @@ describe 'service update' do
 
     it 'allows to remove health check' do
       run "kontena service update --health-check-port 8080 --health-check-protocol http --health-check-uri / test-1"
-      k = run "kontena service update --health-check-port none --health-check-protocol none test-1"
-      expect(k.code).to eq(0)
+      k = run! "kontena service update --health-check-port none --health-check-protocol none test-1"
       expect(k.out.match(/port: 8080/)).not_to be_truthy
     end
   end
 
   context 'stop_grace_period' do
     it 'allows update stop-timeout' do
-      k = run "kontena service update --stop-timeout 1m23s test-1"
-      expect(k.code).to eq(0)
-      k = run "kontena service show test-1"
+      run! "kontena service update --stop-timeout 1m23s test-1"
+      k = run! "kontena service show test-1"
       expect(k.out.match(/stop_grace_period: 83s/)).to be_truthy
     end
   end

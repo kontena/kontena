@@ -25,7 +25,7 @@ module Kontena::Cli::Cloud::Master
     def execute
       attrs = get_attributes
       unless attrs
-        puts "Failed to obtain master credentials".colorize(:red)
+        puts pastel.red("Failed to obtain master credentials")
         exit 1
       end
 

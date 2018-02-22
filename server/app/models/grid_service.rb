@@ -40,7 +40,8 @@ class GridService
   field :revision, type: Integer, default: 1
   field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
-  field :stop_grace_period, type: Fixnum, default: 10
+  field :stop_signal, type: String
+  field :stop_grace_period, type: Integer, default: 10
 
   belongs_to :grid
   belongs_to :image
@@ -50,7 +51,7 @@ class GridService
   has_many :container_logs
   has_many :container_stats
   has_many :audit_logs
-  has_many :grid_service_deploys, dependent: :destroy
+  has_many :grid_service_deploys, dependent: :delete
   has_many :event_logs
   has_many :grid_domain_authorizations
   has_and_belongs_to_many :networks
@@ -234,55 +235,6 @@ class GridService
   # @return [Mongoid::Criteria]
   def linked_from_services
     self.grid.grid_services.where(:'grid_service_links.linked_grid_service_id' => self.id)
-  end
-
-  # Resolve services that depend on us
-  #
-  # @return [Array<GridService>]
-  def dependant_services
-    grid = self.grid
-    dependant = []
-    dependant += grid.grid_services.where(:$or => [
-        {:volumes_from => {:$regex => /^#{self.name}-%s/}},
-        {:volumes_from => {:$regex => /^#{self.name}-\d+/}},
-        {:affinity => "service==#{self.name}"},
-        {:affinity => "service!=#{self.name}"},
-        {:net => {:$regex => /^container:#{self.name}-%s/}},
-        {:net => {:$regex => /^container:#{self.name}-\d+/}}
-      ]
-    )
-    dependant.delete(self)
-
-    dependant
-  end
-
-  # Are there any dependant services?
-  #
-  # @return [Boolean]
-  def dependant_services?
-    self.dependant_services.size > 0
-  end
-
-  # Is service depending on other services?
-  #
-  # @return [Boolean]
-  def depending_on_other_services?
-    if self.affinity
-      if self.affinity.any?{|a| a.match(/\Aservice(!=|==).+/)}
-        return true
-      end
-      if self.affinity.any?{|a| a.match(/\Acontainer(!=|==).+/)}
-        return true
-      end
-    end
-
-    if self.volumes_from
-      return true if self.volumes_from.size > 0
-    end
-
-    return true if self.net.to_s.match(/\Acontainer:.+/)
-
-    false
   end
 
   def health_status

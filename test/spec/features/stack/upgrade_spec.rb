@@ -16,17 +16,14 @@ describe 'stack upgrade' do
     end
 
     it 'upgrades a stack' do
-      k = run 'kontena service show redis/redis'
-      expect(k.code).to eq(0)
+      k = run! 'kontena service show redis/redis'
       expect(k.out).to match /image: redis:3.0.7-alpine/
 
       with_fixture_dir("stack/upgrade") do
-        k = run 'kontena stack upgrade redis version2.yml'
-        expect(k.code).to eq(0), k.out
+        run! 'kontena stack upgrade --force --reuse-values redis version2.yml'
       end
 
-      k = run 'kontena service show redis/redis'
-      expect(k.code).to eq(0)
+      k = run! 'kontena service show redis/redis'
       expect(k.out).to match /image: redis:3.2.8-alpine/
     end
 
@@ -48,8 +45,7 @@ describe 'stack upgrade' do
       run 'kontena service rm --force external-linking-service'
       run 'kontena stack rm --force links-external-linked'
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack install external-linked_1.yml'
-        expect(k.code).to eq(0), k.out
+        run! 'kontena stack install external-linked_1.yml'
       end
     end
 
@@ -59,8 +55,7 @@ describe 'stack upgrade' do
     end
 
     it 'fails to upgrade if linked' do
-      k = run 'kontena service create --link links-external-linked/bar external-linking-service redis'
-      expect(k.code).to eq(0), k.out
+      run! 'kontena service create --link links-external-linked/bar external-linking-service redis'
 
       with_fixture_dir("stack/links") do
         k = run 'kontena stack upgrade --force --no-deploy links-external-linked external-linked_2.yml'
@@ -71,12 +66,10 @@ describe 'stack upgrade' do
 
     it 'fails to deploy if linked' do
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack upgrade --force --no-deploy links-external-linked external-linked_2.yml'
-        expect(k.code).to eq(0), k.out
+        run! 'kontena stack upgrade --force --no-deploy links-external-linked external-linked_2.yml'
       end
 
-      k = run 'kontena service create --link links-external-linked/bar external-linking-service redis'
-      expect(k.code).to eq(0), k.out
+      run! 'kontena service create --link links-external-linked/bar external-linking-service redis'
 
       with_fixture_dir("stack/links") do
         k = run 'kontena stack deploy links-external-linked'
@@ -97,16 +90,14 @@ describe 'stack upgrade' do
     context "when a new dependency is added" do
       it 'installs the added stack' do
         with_fixture_dir("stack/depends") do
-          run 'kontena stack install'
+          run! 'kontena stack install'
         end
 
         with_fixture_dir("stack/depends/monitor_added") do
-          k = run 'kontena stack upgrade --force twemproxy'
-          puts k.out unless k.code.zero?
-          expect(k.code).to eq (0)
+          run! 'kontena stack upgrade --force twemproxy'
         end
 
-        k = run 'kontena stack ls -q'
+        k = run! 'kontena stack ls -q'
         expect(k.out).to match /twemproxy-redis_from_yml-monitor/
       end
     end
@@ -114,19 +105,17 @@ describe 'stack upgrade' do
     context "when a dependency is removed" do
       it 'removes the stack' do
         with_fixture_dir("stack/depends/monitor_added") do
-          run 'kontena stack install'
+          run! 'kontena stack install'
         end
 
-        k = run 'kontena stack ls -q'
+        k = run! 'kontena stack ls -q'
         expect(k.out).to match /twemproxy-redis_from_yml-monitor/
 
         with_fixture_dir("stack/depends/monitor_removed") do
-          k = run 'kontena stack upgrade --force twemproxy'
-          puts k.out unless k.code.zero?
-          expect(k.code).to eq (0)
+          run! 'kontena stack upgrade --force twemproxy'
         end
 
-        k = run 'kontena stack ls -q'
+        k = run! 'kontena stack ls -q'
         expect(k.out).not_to match /twemproxy-redis_from_yml-monitor/
       end
     end
@@ -134,19 +123,17 @@ describe 'stack upgrade' do
     context "when a dependency is replaced" do
       it 'removes the stack' do
         with_fixture_dir("stack/depends") do
-          run 'kontena stack install'
+          run! 'kontena stack install'
         end
 
-        k = run 'kontena stack show twemproxy-redis_from_yml'
+        k = run! 'kontena stack show twemproxy-redis_from_yml'
         expect(k.out).to match /stack: test\/redis/
 
         with_fixture_dir("stack/depends/second_redis_replaced") do
-          k = run 'kontena stack upgrade --force twemproxy'
-          puts k.out unless k.code.zero?
-          expect(k.code).to eq (0)
+          run! 'kontena stack upgrade --force twemproxy'
         end
 
-        k = run 'kontena stack show twemproxy-redis_from_yml'
+        k = run! 'kontena stack show twemproxy-redis_from_yml'
         expect(k.out).to match /stack: kontena\/redis/
       end
     end

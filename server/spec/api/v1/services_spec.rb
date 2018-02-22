@@ -86,7 +86,7 @@ describe '/v1/services' do
         instances cmd entrypoint ports env memory memory_swap shm_size cpus cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
-        stack_revision stop_grace_period read_only certificates
+        stack_revision stop_signal stop_grace_period read_only certificates
       ).sort
 
   describe 'GET /:id' do
@@ -142,6 +142,14 @@ describe '/v1/services' do
       expect(response.status).to eq(200)
       expect(json_response['health_status']).to be_nil
       expect(json_response['health_check']).to be_nil
+    end
+
+    it 'returns stop_signal' do
+      redis_service.stop_signal = 'SIGQUIT'
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stop_signal']).to eq('SIGQUIT')
     end
 
     it 'returns stop_grace_period' do
@@ -332,18 +340,18 @@ describe '/v1/services' do
       }.to change{ redis_service.reload.deploy_pending? }.from(false).to(true)
     end
 
-    it 'does not change updated_at by default' do
+    it 'does not change revision by default' do
       expect {
         post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
-      }.not_to change{ redis_service.reload.updated_at }
+      }.not_to change{ redis_service.reload.revision }
     end
 
-    it 'changes updated_at when force=true' do
+    it 'changes revision when force=true' do
       expect {
         post "/v1/services/#{redis_service.to_path}/deploy", {force: true}.to_json, request_headers
         expect(response.status).to eq(200)
-      }.to change{ redis_service.reload.updated_at }
+      }.to change{ redis_service.reload.revision }
     end
   end
 

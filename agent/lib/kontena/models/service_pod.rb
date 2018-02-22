@@ -1,6 +1,12 @@
 module Kontena
   module Models
     class ServicePod
+      # Additionally, the limit per string is 32 pages (the kernel constant MAX_ARG_STRLEN)
+      ENV_MAX_STRLEN = 32 * 4096
+
+      class ConfigError < StandardError
+
+      end
 
       attr_reader :id,
                   :desired_state,
@@ -43,6 +49,7 @@ module Kontena
                   :wait_for_port,
                   :volume_specs,
                   :read_only,
+                  :stop_signal,
                   :stop_grace_period
       attr_accessor :entrypoint, :cmd
 
@@ -88,7 +95,13 @@ module Kontena
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
         @read_only = attrs['read_only']
+        @stop_signal = attrs['stop_signal']
         @stop_grace_period = attrs['stop_grace_period']
+      end
+
+      # @return [String]
+      def to_s
+        self.name_for_humans
       end
 
       # @return [Boolean]
@@ -158,6 +171,7 @@ module Kontena
         self.stack_name.nil? || self.stack_name.to_s == 'null'.freeze
       end
 
+      # @raise [ConfigError]
       # @return [Hash]
       def service_config
         docker_opts = {
@@ -172,6 +186,7 @@ module Kontena
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
         docker_opts['Entrypoint'] = self.entrypoint if self.entrypoint
+        docker_opts['StopSignal'] = self.stop_signal if self.stop_signal
 
         if self.can_expose_ports? && self.ports
           docker_opts['ExposedPorts'] = self.build_exposed_ports
@@ -345,6 +360,10 @@ module Kontena
         end
         secrets_hash.each do |name, value|
           env << "#{name}=#{value}"
+        end
+        env.each do |envstr|
+          name, value = envstr.split('=', 2)
+          raise ConfigError, "Env #{name} is too large at #{envstr.bytesize} bytes" if envstr.bytesize > ENV_MAX_STRLEN
         end
         env
       end

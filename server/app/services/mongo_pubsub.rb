@@ -15,22 +15,36 @@ class MongoPubsub
       @channel = channel
       @block = block
       @queue = Queue.new
+      @future = Celluloid::Future.new do
+        process
+      end
     end
 
     def terminate
       stop
     end
 
+    # Suspend the calling celluloid task until the subscription is stopped and finishes processing
+    def wait
+      @future.value
+    end
+
     def stop
       @queue.close
     end
 
+    # @param data [BSON::Binary] MessagePack'd data
     def queue_message(data)
       @queue << data
     rescue ClosedQueueError
-      nil
+      debug "dropped #{@channel}: closed"
+    else
+      debug "queued #{@channel}..."
     end
 
+    private
+
+    # runs the @future thread
     # returns once stopped, and queued messages have been processed
     def process
       while data = @queue.shift
@@ -38,9 +52,7 @@ class MongoPubsub
       end
     end
 
-    private
-
-    # @param [Hash] data
+    # @param data [BSON::Binary] MessagePack'd data
     def send_message(data)
       payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
       @block.call(payload)
@@ -51,28 +63,59 @@ class MongoPubsub
 
   attr_accessor :collection
 
+  finalizer :finalize
+
+  # @return [Array<Subscription>]
+  def self.subscriptions
+    @subscriptions ||= []
+  end
+
   # @param [Mongoid::Document] model
   def initialize(model)
     # The collection session is local to this Actor's thread
     @collection = model.collection
-    @subscriptions = []
+
+    info "initialized"
+
+    start
+  end
+
+  # @return [Array<Subscription>]
+  def subscriptions
+    self.class.subscriptions
+  end
+
+  def start
     async.tail!
+
+    # restore any active subscriptions from before crash
+    subscriptions.each do |subscription|
+      debug "restoring #{subscription.channel}..."
+
+      async.process_subscription(subscription)
+    end
   end
 
   # @param [Subscription] subscription
   def process_subscription(subscription)
-    defer {
-      subscription.process
-    }
+    subscription.wait
+  rescue Celluloid::TaskTerminated # actor crashed
+    debug "preserving #{subscription.channel} on crash"
+    subscription = nil
   ensure
-    @subscriptions.delete(subscription)
+    if subscription
+      debug "stopped #{subscription.channel}"
+      subscriptions.delete(subscription)
+    end
   end
 
   # @param [String] channel
   # @return [Subscription]
   def subscribe(channel, block)
+    debug "subscribe #{channel}"
+
     subscription = Subscription.new(channel, block)
-    @subscriptions << subscription
+    subscriptions << subscription
 
     async.process_subscription(subscription)
 
@@ -87,6 +130,8 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def publish(channel, data)
+    debug "publish #{channel}"
+
     self.collection.insert_one(
       channel: channel,
       data: BSON::Binary.new(MessagePack.pack(data)),
@@ -94,20 +139,24 @@ class MongoPubsub
     )
   end
 
-  # @param [String] channel
-  # @param [Hash] data
+  # @param channel [String]
+  # @param data [BSON::Binary] MessagePack'd data
   def queue_message(channel, data)
-    @subscriptions.each do |subscription|
+    subscriptions.each do |subscription|
       subscription.queue_message(data.dup) if subscription.channel == channel
     end
   end
 
   # Stop all subscribers
   def clear!
-    @subscriptions.each do |subscription|
+    subscriptions.each do |subscription|
       subscription.stop
     end
-    @subscriptions = []
+    subscriptions.clear
+  end
+
+  def finalize
+    info "terminated"
   end
 
   # @param [String] channel
@@ -135,6 +184,10 @@ class MongoPubsub
 
   def self.started?
     !@supervisor.nil?
+  end
+
+  def self.actor
+    @supervisor.actors.first
   end
 
   # @param [Mongoid::Document] model

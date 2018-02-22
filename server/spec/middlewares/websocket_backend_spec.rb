@@ -3,19 +3,17 @@ require_relative '../../app/middlewares/websocket_backend'
 describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
+  let(:rpc_queue) { instance_double(SizedQueue) }
 
   let(:logger) { instance_double(Logger) }
   before do
+    allow(subject).to receive(:rpc_queue).and_return(rpc_queue)
     allow(subject).to receive(:logger).and_return(logger)
     allow(logger).to receive(:debug)
   end
 
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')
-  end
-
-  after(:each) do
-    subject.stop_rpc_server
   end
 
   describe '#our_version' do
@@ -74,7 +72,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
   end
 
   context "for a connecting client" do
-    let(:grid) do
+    let!(:grid) do
       Grid.create!(name: 'test', token: 'secret123')
     end
 
@@ -98,8 +96,6 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     }.compact)}
 
     before do
-      grid
-
       # block weird errors from unexpected send_message -> ws.send
       expect(client_ws).to_not receive(:send)
     end
@@ -171,14 +167,10 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a grid token and node ID that has a node token " do
-      let(:host_node) { grid.create_node!('node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
+      let!(:host_node) { grid.create_node!('node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { 'secret123' }
       let(:node_token) { nil }
-
-      before do
-        host_node
-      end
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
@@ -193,14 +185,10 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node token" do
-      let(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf') }
+      let!(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'the wrong secret' }
-
-      before do
-        host_node
-      end
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
@@ -216,15 +204,11 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node ID" do
-      let(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
+      let!(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'asdfasdfasdfasdf' }
       let(:node_id) { 'nodeXYZ' }
-
-      before do
-        host_node
-      end
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
@@ -241,17 +225,12 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a duplicate node ID" do
-      let(:host_node1) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
-      let(:host_node2) { grid.create_node!('node-2', token: 'asdfasdfasdfasdf2') }
+      let!(:host_node1) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
+      let!(:host_node2) { grid.create_node!('node-2', token: 'asdfasdfasdfasdf2') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'asdfasdfasdfasdf2' }
       let(:node_id) { 'nodeABC' }
-
-      before do
-        host_node1
-        host_node2
-      end
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
@@ -328,6 +307,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           host_node = grid.host_nodes.first
 
           expect(host_node.node_id).to eq node_id
+          expect(host_node.name).to eq 'node-1'
+          expect(host_node.labels).to eq ['test=yes']
           expect(host_node.connected).to eq false
           expect(host_node.connected_at).to be < Time.now.utc
           expect(host_node.status).to eq :offline
@@ -373,11 +354,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         end
 
         context "with a duplicate node name" do
-          let(:host_node1) { grid.create_node!('node-1', node_id: 'nodeXYZ') }
-
-          before do
-            host_node1
-          end
+          let!(:host_node1) { grid.create_node!('node-1', node_id: 'nodeXYZ') }
 
           describe '#on_open' do
             it 'creates the node with a suffixed name' do
@@ -394,6 +371,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
               expect(host_node.node_id).to eq node_id
               expect(host_node.node_number).to eq 2
               expect(host_node.name).to eq 'node-1-2'
+              expect(host_node.labels).to eq ['test=yes']
 
               # XXX: racy via mongo pubsub
               expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1-2')]])
@@ -406,14 +384,12 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
 
       context 'with a valid node token' do
-        let(:host_node) { grid.create_node!('test-1', token: 'asdfasdfasdfasdf') }
+        let!(:host_node) { grid.create_node!('test-1', token: 'asdfasdfasdfasdf',
+          labels: ['test-2=no'],
+        ) }
 
         let(:grid_token) { nil }
         let(:node_token) { 'asdfasdfasdfasdf' }
-
-        before do
-          host_node
-        end
 
         it 'accepts the connection and sets the node ID' do
           expect(host_node.status).to eq :created
@@ -447,7 +423,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           expect(host_node.node_id).to eq node_id
           expect(host_node.name).to eq 'test-1' # the agent-provided Kontena-Node-Name: node-1 header is ignored
-          expect(host_node.labels).to eq ['test=yes']
+          expect(host_node.labels).to contain_exactly('test=yes', 'test-2=no')
           expect(host_node.agent_version).to eq '0.9.1'
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_s

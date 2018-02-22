@@ -34,7 +34,7 @@ module Kontena::Cli::Master::User
           elsif self.return?
             return response
           else
-            puts "Invitation created for #{response['email']}".colorize(:green)
+            puts pastel.green("Invitation created for #{response['email']}")
             puts "  * code:    #{response['invite_code']}"
             puts "  * command: kontena master join #{current_master.url} #{response['invite_code']}"
           end
