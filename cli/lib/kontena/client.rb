@@ -542,6 +542,14 @@ module Kontena
 
       if data.is_a?(Hash) && data.has_key?('error') && data['error'].is_a?(Hash)
         raise Kontena::Errors::StandardErrorHash.new(response.status, response.reason_phrase, data['error'])
+      elsif data.is_a?(Hash) && data.has_key?('errors') && data['errors'].is_a?(Array) && data['errors'].all? { |e| e.is_a?(Hash) }
+        error_with_status = data['errors'].find { |error| error.key?('status') }
+        if error_with_status
+          status = error_with_status['status']
+        else
+          status = response.status
+        end
+        raise Kontena::Errors::StandardErrorHash.new(status, response.reason_phrase, data)
       elsif data.is_a?(Hash) && data.has_key?('error')
         raise Kontena::Errors::StandardError.new(response.status, data['error'] + request_path)
       elsif data.is_a?(String) && !data.empty?

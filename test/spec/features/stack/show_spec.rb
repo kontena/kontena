@@ -19,4 +19,16 @@ describe 'stack show' do
     expect(k.code).not_to eq(0)
     expect(k.out.match(/not found/i)).to be_truthy
   end
+
+  it 'includes stack metadata' do
+    with_fixture_dir("stack/metadata") do
+      run! 'kontena stack install -n simple --no-deploy'
+    end
+
+    k = run! "kontena stack show simple"
+    expect(k.out).to match /^simple:/
+    expect(k.out).to match /^\s+metadata:/
+    expect(k.out).to match /^\s+tags:/
+    expect(k.out).to match /^\s+- tag1/
+  end
 end

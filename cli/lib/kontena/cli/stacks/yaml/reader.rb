@@ -213,7 +213,9 @@ module Kontena::Cli::Stacks
           result['dependencies']  = dependencies
           result['source']        = raw_content
           result['variables']     = variable_values(without_defaults: true, without_vault: true)
+          result['metadata']      = raw_yaml['meta'] || {}
         end
+
         if parent_name
           result['parent'] = { 'name' => parent_name }
         else
