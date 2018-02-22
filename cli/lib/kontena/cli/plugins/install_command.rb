@@ -17,7 +17,7 @@ module Kontena::Cli::Plugins
 
     def execute
       if installed?(name)
-        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do
+        installed = spinner "Upgrading plugin #{pastel.cyan(name)}" do
           installer.upgrade
         end
 
@@ -25,7 +25,7 @@ module Kontena::Cli::Plugins
           Kontena::PluginManager::Cleaner.new(name).cleanup
         end
       else
-        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do
+        installed = spinner "Installing plugin #{pastel.cyan(name)}" do
           installer.install
         end
       end

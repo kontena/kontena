@@ -97,6 +97,44 @@ module OutputHelpers
     end
   end
 
+  matcher :output_yaml do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      actual = ::YAML.safe_load(output)
+
+      values_match?(expected, actual)
+    end
+  end
+
+  matcher :output_json do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      @actual = JSON.parse(output)
+
+      values_match?(expected,   @actual)
+    end
+
+    failure_message do |block|
+      return "expected block to return #{expected}, but returned #{@actual}"
+    end
+  end
+
+  module CaptureStdout
+    def self.capture(block)
+      capture = StringIO.new
+      original = $stdout
+      $stdout = capture
+      block.call
+      capture.string
+    ensure
+      $stdout = original
+    end
+  end
+
   module CaptureStdoutLines
     def self.capture(block)
       capture = StringIO.new

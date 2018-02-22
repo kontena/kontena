@@ -7,8 +7,7 @@ module Kontena::Cli::Stacks::Registry
 
     banner "Pushes (uploads) a stack to the stack registry"
 
-    include Kontena::Cli::Stacks::Common::StackFileOrNameParam
-    include Kontena::Cli::Stacks::Common::StackValuesFromOption
+    parameter "[FILE]", "Kontena stack file path", default: "kontena.yml", attribute_name: :source
 
     requires_current_account_token
 
@@ -20,17 +19,21 @@ module Kontena::Cli::Stacks::Registry
     end
 
     def includes_local_extends?
-      stack.fetch(:services) { {} }.any? { |svc| svc['extends'] && svc[:extends]['file'] }
+      loader.yaml.fetch('services', {}).any? { |_, svc| svc.key?('extends') && svc['extends'].key?('file') }
     end
 
     def execute
-      set_env_variables(stack_name, 'validate', 'validate-platform')
-
+      exit_with_error "Can only perform push from local files" unless loader.origin == "file"
       exit_with_error "Stack file contains dependencies to local files" if includes_local_dependencies?
       exit_with_error "Stack file has services that extend from local files" if includes_local_extends?
 
-      spinner("Pushing #{pastel.cyan(source)} to stacks registry as #{loader.stack_name}") do
-        stacks_client.push(stack_name, loader.stack_name.version, loader.content) unless dry_run?
+      spinner("Pushing #{pastel.cyan(source)} to stack registry as #{loader.stack_name}") do
+        unless dry_run?
+          stacks_client.push(
+            loader.stack_name,
+            loader.content
+          )
+        end
       end
     end
   end

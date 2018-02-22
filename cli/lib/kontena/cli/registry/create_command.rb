@@ -111,7 +111,7 @@ module Kontena::Cli::Registry
 
       client(token).post("grids/#{current_grid}/stacks", data)
       deployment = client(token).post("stacks/#{current_grid}/registry/deploy", {})
-      spinner "Deploying #{data[:name].colorize(:cyan)} stack " do
+      spinner "Deploying #{pastel.cyan(data[:name])} stack " do
         wait_for_deploy_to_finish(deployment)
       end
       puts "\n"

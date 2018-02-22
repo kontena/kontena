@@ -146,7 +146,7 @@ module Kontena::Cli::Cloud::Master
       elsif self.id?
         puts response['data']['id']
       else
-        puts "Registered master.".colorize(:green)
+        puts pastel.green("Registered master.")
         puts "ID: #{response['data']['id']}"
         puts "Client ID: #{response['data']['attributes']['client-id']}"
         puts "Client Secret: #{response['data']['attributes']['client-secret']}"

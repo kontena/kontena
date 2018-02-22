@@ -1,9 +1,11 @@
 require_relative 'common'
+require_relative 'helpers'
 
 module GridServices
   class Create < Mutations::Command
     include Common
     include Duration
+    include Helpers
 
     common_validations
 
@@ -75,12 +77,8 @@ module GridServices
       end
 
       grid_service = GridService.new(attributes)
-      unless grid_service.save
-        grid_service.errors.each do |key, message|
-          add_error(key, :invalid, message)
-        end
-      end
-      grid_service
+
+      save_grid_service(grid_service)
     end
 
     def strategies

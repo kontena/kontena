@@ -65,6 +65,7 @@ module Stacks
           string :expose
           string :registry
           model :variables, class: Hash
+          model :metadata, class: Hash
           array :volumes do
             model :object, class: Hash
           end

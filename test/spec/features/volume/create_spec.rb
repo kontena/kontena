@@ -6,9 +6,8 @@ describe 'volume create' do
   end
 
   it 'creates a volume' do
-    k = run "kontena volume create --driver local --scope instance testVol"
-    expect(k.code).to eq(0)
-    k = run "kontena volume ls"
+    run! "kontena volume create --driver local --scope instance testVol"
+    k = run! "kontena volume ls"
     expect(k.out.match(/testVol/)).to be_truthy
   end
 
@@ -25,13 +24,9 @@ describe 'volume create' do
 
 
   it 'removes a volume' do
-    k = run "kontena volume create --driver local --scope instance testVol"
-    expect(k.code).to eq(0)
-
-    k = run "kontena volume rm --force testVol"
-    expect(k.code).to eq(0)
-
-    k = run "kontena volume ls"
+    run! "kontena volume create --driver local --scope instance testVol"
+    run! "kontena volume rm --force testVol"
+    k = run! "kontena volume ls"
     expect(k.out.match(/testVol/)).to be_falsey
   end
 end

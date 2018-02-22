@@ -43,7 +43,7 @@ module Kontena::Cli::Services
             else
               color = :yellow
             end
-            print "■".colorize(color)
+            print pastel.send(color, "■")
           end
           puts ''
         end

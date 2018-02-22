@@ -9,4 +9,5 @@ if [ "$TEST_DIR" = "server" ]; then
   sudo apt-get install -y -q -f mongodb-org-server=3.0.12
 fi
 
+gem update --system
 gem install bundler-audit --no-ri --no-rdoc

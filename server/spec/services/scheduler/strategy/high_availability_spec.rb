@@ -51,9 +51,9 @@ describe Scheduler::Strategy::HighAvailability do
       end
 
       it 'returns node from az that does not yet have service instance' do
-        nodes[2].schedule_counter = 1 # az=b
+        nodes[2].scheduled_instance! 1 # az=b
         expect(['a', 'c']).to include(subject.find_node(stateful_service, 2, nodes).availability_zone)
-        nodes[1].schedule_counter = 1 # az=a
+        nodes[1].scheduled_instance! 2 # az=a
         expect(['c']).to include(subject.find_node(stateful_service, 3, nodes).availability_zone)
       end
 
@@ -96,9 +96,9 @@ describe Scheduler::Strategy::HighAvailability do
       end
 
       it 'returns node from az that does not yet have service instance' do
-        nodes[2].schedule_counter = 1 # az=b
+        nodes[2].scheduled_instance! 1 # az=b
         expect(['a', 'c']).to include(subject.find_node(stateless_service, 2, nodes).availability_zone)
-        nodes[1].schedule_counter = 1 # az=a
+        nodes[1].scheduled_instance! 2 # az=a
         expect(['c']).to include(subject.find_node(stateless_service, 3, nodes).availability_zone)
       end
     end
@@ -143,8 +143,10 @@ describe Scheduler::Strategy::HighAvailability do
       node1 = nodes[0]
       node2 = nodes[1]
       node3 = nodes[2]
-      node1.schedule_counter = 2
-      node2.schedule_counter = 2
+      node1.scheduled_instance! 1
+      node1.scheduled_instance! 2
+      node1.scheduled_instance! 3
+      node1.scheduled_instance! 4
       node3.set(labels: ['region=eu-west-1', 'az=b'])
       expect(subject.availability_zone_count(node1, nodes)).to eq(4)
       expect(subject.availability_zone_count(node3, nodes)).to eq(0)

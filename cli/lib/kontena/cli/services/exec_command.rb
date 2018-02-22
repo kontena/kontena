@@ -19,6 +19,8 @@ module Kontena::Cli::Services
       end
     end
 
+    usage "[OPTIONS] [NAME] -- [CMD] ..."
+
     parameter "NAME", "Service name"
     parameter "CMD ...", "Command"
 

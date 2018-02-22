@@ -23,7 +23,7 @@ describe Kontena::Cli::Stacks::YAML::RegistryLoader do
     let(:subject) { described_class.new('user/stack') }
 
     before do
-      allow(Kontena::StacksCache).to receive(:pull).with('user/stack').and_return(
+      allow(Kontena::StacksCache).to receive(:pull).with(duck_type(:stack_name)).and_return(
         fixture('kontena_v3.yml')
       )
     end

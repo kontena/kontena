@@ -7,8 +7,7 @@ describe 'certificate import' do
 
   before(:all) do
     with_fixture_dir('certificates/test') do
-      k = run('kontena certificate import --private-key key.pem --chain ca.pem cert.pem')
-      expect(k.code).to eq(0), k.out
+      run!('kontena certificate import --private-key key.pem --chain ca.pem cert.pem')
     end
   end
   after(:all) do
@@ -16,8 +15,7 @@ describe 'certificate import' do
   end
 
   it 'exports certificate bundle' do
-    k = run("kontena certificate export test")
-    expect(k.code).to eq(0), k.out
+    k = run!("kontena certificate export test")
 
     out = k.out.gsub("\r\n", "\n")
 
@@ -27,33 +25,23 @@ describe 'certificate import' do
   end
 
   it 'exports certificate' do
-    k = run("kontena certificate export --certificate test")
-    expect(k.code).to eq(0), k.out
-
+    k = run!("kontena certificate export --certificate test")
     expect(k.out.gsub("\r\n", "\n")).to eq(cert_pem)
   end
 
   it 'exports private key' do
-    k = run("kontena certificate export --private-key test")
-    expect(k.code).to eq(0), k.out
-
+    k = run!("kontena certificate export --private-key test")
     expect(k.out.gsub("\r\n", "\n")).to eq(key_rsa_pem) # gets converted
   end
 
   it 'exports chain' do
-    k = run("kontena certificate export --chain test")
-    expect(k.code).to eq(0), k.out
-
+    k = run!("kontena certificate export --chain test")
     expect(k.out.gsub("\r\n", "\n")).to eq(ca_pem)
   end
 
   it 'logs audit' do
-    k = run("kontena certificate export --chain test")
-    expect(k.code).to eq(0), k.out
-
-    k = run('kontena grid audit-log --lines=10')
-    expect(k.code).to eq(0), k.out
-
+    run!("kontena certificate export --chain test")
+    k = run!('kontena grid audit-log --lines=10')
     expect(k.out).to match /Certificate.*export/
   end
 end

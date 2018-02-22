@@ -26,7 +26,7 @@ module Kontena::Cli::Cloud::Master
       spinner "Retrieving a list of registered masters on Kontena Cloud" do
         response = cloud_client.get('user/masters')
         unless response && response.kind_of?(Hash) && response['data'].kind_of?(Array)
-          abort 'Listing masters failed'.colorize(:red)
+          abort pastel.red('Listing masters failed')
         end
       end
 

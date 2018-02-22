@@ -13,7 +13,7 @@ module Kontena::Cli::Services::Envs
       require_api_url
       token = require_token
       data = {env: env}
-      spinner "Adding env variable to #{name.colorize(:cyan)} service " do
+      spinner "Adding env variable to #{pastel.cyan(name)} service " do
         client(token).post("services/#{parse_service_id(name)}/envs", data)
       end
     end

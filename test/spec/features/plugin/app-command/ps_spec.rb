@@ -5,9 +5,7 @@ describe 'app subcommand' do
     describe 'app ps', subcommand: :app do
       it "returns list" do
         with_fixture_dir('app/simple') do
-          k = run('kontena app ps')
-          STDERR.puts k.out
-          expect(k.code).to eq(0)
+          k = run!('kontena app ps')
           %w(lb nginx redis).each do |service|
             expect(k.out).to match(/#{service}/)
           end

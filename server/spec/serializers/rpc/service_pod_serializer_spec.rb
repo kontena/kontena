@@ -10,6 +10,7 @@ describe Rpc::ServicePodSerializer do
       image_name: 'kontena/lb:latest'
     )
   end
+  let(:service_certificates) { nil }
   let(:service) do
     GridService.create!(
       name: 'app',
@@ -20,7 +21,8 @@ describe Rpc::ServicePodSerializer do
       networks: [grid.networks.first],
       service_volumes: [ServiceVolume.new(volume: volume, path:'/data'), ServiceVolume.new(volume: ext_vol, path: '/foo')],
       stop_signal: 'SIGQUIT',
-      stop_grace_period: 20
+      stop_grace_period: 20,
+      certificates: service_certificates,
     )
   end
 
@@ -40,14 +42,6 @@ describe Rpc::ServicePodSerializer do
 
   let! :ext_vol do
     Volume.create(grid: grid, name: 'ext-vol', scope: 'instance', driver: 'local')
-  end
-
-  let! :domain_auth_dns do
-    GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
-  end
-
-  let! :domain_auth_tls do
-    GridDomainAuthorization.create!(grid: grid, authorization_type: 'tls-sni-01', grid_service: service, domain: 'www.kontena.io', tls_sni_certificate: 'TLS_AUTH')
   end
 
   describe '#to_hash' do
@@ -154,7 +148,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes secrets' do
-      expect(subject.to_hash[:secrets].size).to eq(1)
+      expect(subject.to_hash[:secrets]).to eq []
     end
 
     it 'includes default network' do
@@ -167,11 +161,6 @@ describe Rpc::ServicePodSerializer do
 
     it 'stop_grace_period' do
       expect(subject.to_hash).to include(:stop_grace_period => 20)
-    end
-
-    it 'includes domain auth as secret' do
-
-      expect(subject.to_hash[:secrets].find { |s| s[:name] == 'SSL_CERTS'}[:value]).to eq('TLS_AUTH')
     end
 
     describe '[:env]' do
@@ -193,20 +182,78 @@ describe Rpc::ServicePodSerializer do
     end
 
     describe '[:secrets]' do
-      it 'includes certificates as secrets' do
-        Certificate.create!(grid: grid,
+      context 'with a service certificate' do
+        let!(:cerificate) { Certificate.create!(grid: grid,
           subject: 'kontena.io',
           valid_until: Time.now + 90.days,
           private_key: 'private_key',
           certificate: 'certificate',
-          chain: 'chain')
-        service.certificates.create!(subject: 'kontena.io', name: 'CERT')
-        subject = described_class.new(service_instance)
-        secrets = subject.to_hash[:secrets]
+          chain: 'chain',
+        ) }
 
-        expect(secrets.size).to eq(2) # There's also the tls domain auth secret
+        let(:service_certificates) { [
+           GridServiceCertificate.new(subject: 'kontena.io', name: 'SSL_CERTS'),
+        ] }
 
-        expect(secrets.find{ |s| s[:name] == 'CERT'}[:value]).to eq('certificatechainprivate_key')
+        it 'includes service certificates as secrets' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' }
+          ]
+        end
+
+        context 'and a TLS-SNI-01 challenge cert' do
+          let! :domain_auth_tls do
+            GridDomainAuthorization.create!(grid: grid,
+              state: :created,
+              authorization_type: 'tls-sni-01',
+              expires_at: Time.now + 300,
+              grid_service: service,
+              domain: 'www.kontena.io',
+              tls_sni_certificate: 'TLS_AUTH',
+            )
+          end
+
+          it 'includes the challenge cert as a secret after the normal certificate' do
+            expect(subject.to_hash[:secrets]).to eq [
+              { name: 'SSL_CERTS', type: 'env', value: 'certificatechainprivate_key' },
+              { name: 'SSL_CERT_acme_challenge_www_kontena_io', type: 'env', value: 'TLS_AUTH' },
+            ]
+          end
+        end
+      end
+
+      context 'with a http-01 domain authorization' do
+        let(:challenge_token) { 'LoqXcYV8q5ONbJQxbmR7SCTNo3tiAXDfowyjxAjEuX0' }
+        let(:challenge_content) { 'LoqXcYV8q5ONbJQxbmR7SCTNo3tiAXDfowyjxAjEuX0.9jg46WB3rR_AHD-EBXdN7cBkH1WOu0tA3M9fm21mqTI' }
+        let!(:domain_auth) {
+          GridDomainAuthorization.create!(grid: grid,
+            state: :created,
+            domain: 'www.kontena.io',
+            authorization_type: 'http-01',
+            expires_at: Time.now + 300,
+            grid_service: service,
+            challenge_opts: {
+              'token' => challenge_token,
+              'content' => challenge_content,
+            },
+          )
+        }
+
+        it 'includes the challenge as an ACME_CHALLENGE env' do
+          expect(subject.to_hash[:secrets]).to eq [
+            { name: "ACME_CHALLENGE_#{challenge_token}", type: 'env', value: challenge_content },
+          ]
+        end
+      end
+
+      context 'with a DNS-01 domain authorization' do
+        let! :domain_auth_dns do
+          GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
+        end
+
+        it 'does not include any challenge secrets' do
+          expect(subject.to_hash[:secrets]).to eq []
+        end
       end
     end
 

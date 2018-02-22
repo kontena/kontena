@@ -122,7 +122,7 @@ Grid can be only created by users with master_admin role.
 ### JSON Attributes
 
 Attribute        | Default          | Example  | Description
----------------- | ---------------- | ---------
+---------------- | ---------------- | --------- | ------------
 name             | (required)       | `"test"`    | user provided name
 initial_size     | (required)       | `3`         | Initial (minimum) number of nodes in the grid ([Grids / Initial Nodes](http://www.kontena.io/docs/using-kontena/grids.html#initial-nodes))
 token            | (generated)      | `"J6d...ArKg=="` |(optional) Use a fixed grid token instead of having the server generate a new one
@@ -658,6 +658,28 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
       "external": "otherName"
     }
   ]
+  "metadata": {
+    "description": "Short summary",
+    "icon": "an url to an svg or a png icon",
+    "home": "an url to stack home page",
+    "source": "an url stack source code / repository",
+    "readme": "an url to stack readme file or markdown readme content",
+    "issues": "an url to stack issue tracking",
+    "tags": [
+      "tag"
+    ]
+    "app_version": {
+      "app-name": "version number for an application included in the stack"
+    },
+    "maintainers": [
+      {
+        "name": "maintainer's name",
+        "email": "maintainer's email address",
+        "url": "maintainer's url"
+      }
+    ],
+    "required_kontena_version": ">= 1.5.0"
+  }
 }
 ```
 
@@ -675,6 +697,7 @@ services | A list of stack services (see [services](#services) for more info)
 volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
 parent | Null or an object referencing the parent stack in a stack dependency chain
 children | An array of objects referencing the child stacks in a stack dependency chain
+metadata | A hash of metadata for additional information, tags and search keywords
 
 ### Volume attributes
 
@@ -696,7 +719,9 @@ Accept: application/json
     "version": "0.1.0",
     "registry": "file://",
     "services": [],
-    "parent_name": "parent-stack-name"
+    "parent": {
+        "id": "parent-stack-id"
+    }
 }
 ```
 
@@ -1468,28 +1493,40 @@ Let's Encrypt domain authorization management for certificate handling.
 
 ```json
 {
-    "id": "e2e/kontena.io",
-    "domain": "kontena.io",
-	"status": "deploying",
-	"challenge": {
-		"token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
-		"uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
-		"type": "tls-sni-01"
-	},
-	"challenge_opts": null,
-	"authorization_type": "tls-sni-01",
-	"linked_service": {
-		"id": "e2e/null/lb"
-	}
+  "id": "e2e/kontena.io",
+  "domain": "kontena.io",
+  "status": "deploying",
+  "challenge": {
+    "token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
+    "uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
+    "type": "tls-sni-01"
+  },
+  "challenge_opts": null,
+  "authorization_type": "tls-sni-01",
+  "expires_at": "2017-11-13T09:28:35.454+00:00",
+  "linked_service": {
+    "id": "e2e/null/lb"
+  }
 }
 ```
 
-`challenge_opts` are challenge type specific details. For example in `dns-01` challenges there will be the DNS TXT records details.
+Attribute | Description
+--------- | -----------
+id | Unique ID used for `/v1/domain_authorizations/...` API
+domain | Unique domain
+status | Current status, which can change dynamically (see below)
+challenge | Let's Encrypt domain authorization challenge details
+challenge_opts | Challenge type specific details, e.g. the DNS TXT records for `dns-01` challenges
+authorization_type | The domain authorization challenge type used to request verification
+expires_at | Timestamp for when the challenge expires, `null` if unknown
+linked_service | Optional linked Kontena Loadbalancer service for `tls-sni-01` challenges
 
-`status` can be any of the following:
+### Status values
+
 - `created`: authorization has been created, no firther actions yet taken
 - `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
 - `deploy_error`: The deployment of the linked service has errored out, more details can be found from the linked services event logs
+- `expired`: The domain authorization can no longer be used to request a certificate, the domain must be re-authorized
 - `requested`: Authorization has been requested from Let's Encrypt
 - `validated`: Let's Encrypt has succesfully validated the challenge
 - `error`: Error has happened in the validation, re-authorization should be done
@@ -1553,15 +1590,25 @@ Let's Encrypt certificate management.
 ```json
 {
    "id" : "my-grid/example.com",
+   "subject" : "example.com",
+   "valid_until" : "2017-12-14T13:34:00.000+00:00",
    "alt_names" : [
       "www.example.com",
       "test.example.com"
    ],
-   "subject" : "example.com",
-   "auto_renewable" : true,
-   "valid_until" : "2017-12-14T13:34:00.000+00:00"
+   "auto_renewable" : true
 }
 ```
+
+Attribute | Description
+--------- | -----------
+id | Unique ID used in the `/v1/certificates/...` API
+subject | Unique certificate Subject
+valid_until | Timestamp for when the certificate expires
+alt_names | Optional certificate subjectAltNames
+auto_renewable | Kontena will auto-renew the certificate before it expires
+
+Certificates are `auto_renewable` if all `subject` and `alt_names` domains have Let's Encrypt domain authorizations using `tls-sni-01` with a linked Kontena Load Balancer service.
 
 ## Register email to Let's Encrypt
 

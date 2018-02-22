@@ -14,7 +14,7 @@ module Kontena::Cli::Stacks::Registry
 
     def execute
       target = no_cache? ? stacks_client : Kontena::StacksCache
-      content = target.pull(stack_name.stack_name, stack_name.version)
+      content = target.pull(stack_name)
       if return?
         return content
       elsif file
