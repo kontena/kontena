@@ -1,22 +1,13 @@
 class Kontena::Cli::WhoamiCommand < Kontena::Command
   include Kontena::Cli::Common
 
-  option '--bash-completion-path', :flag, 'Show bash completion path', hidden: true
   option '--token', :flag, 'Show current master token', hidden: true
 
   def execute
-    if bash_completion_path?
-      puts File.realpath(File.join(__dir__, '../scripts/init'))
-      exit 0
-    end
-
     if self.token?
-      if config.current_master && config.current_master.token
-        puts config.current_master.token.access_token
-        exit 0
-      else
-        exit 1
-      end
+      exit 1 unless current_master && current_master.token.access_token
+      Kontena.run(%w(master token current --token))
+      exit 0
     end
 
     require_api_url

@@ -12,6 +12,8 @@ if ARGV[0] == 'complete'
   ARGV.delete_at(0)
   $VERSION_WARNING_ADDED=true
   require 'kontena/scripts/completer'
+elsif ARGV.last == '--bash-completion-path'
+  puts File.realpath(File.join(__dir__, '../lib/kontena/scripts/init'))
 else
 
   arg_end_idx = ARGV.index('--') || ARGV.size
