@@ -1,4 +1,5 @@
 require 'rspec/core/rake_task'
+require 'timeout'
 
 RSpec::Core::RakeTask.new(:spec)
 
@@ -54,7 +55,6 @@ namespace :compose do
   desc "compose down"
   task :compose_down do
     sh "docker-compose down -v"
-    require 'timeout'
     Timeout.timeout(30) do
       sleep 0.5 until `docker-compose ps -q`.strip.empty?
     end
@@ -62,7 +62,6 @@ namespace :compose do
 
   desc "setup compose master"
   task :setup_master do
-    require 'timeout'
     sh "docker-compose up -d api"
     Timeout.timeout(60) do
       sleep 0.5 until `docker inspect --format='{{.State.Status}}' test_api_1`.strip == 'running'

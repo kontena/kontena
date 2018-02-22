@@ -4,14 +4,14 @@ cache:
   bundler: true
   directories:
     - $TEST_DIR/vendor/bundle
+services:
+  - docker
+
 before_install:
   # Pull images to get layers
   - if [[ "$TEST_DIR" = "test" ]]; then docker pull kontena/agent:latest; docker pull kontena/server:latest; docker pull kontena/cli:latest; docker pull mongo:3.4; fi
   # Run before_install script
   - ./build/travis/before_install.sh
-
-services:
-  - docker
 
 bundler_args: --without development
 env:

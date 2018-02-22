@@ -11,7 +11,3 @@ fi
 
 gem update --system
 gem install bundler-audit --no-ri --no-rdoc
-
-if [ "$TRAVIS_COMMIT" != "" ]; then
-  sed -i -e "s/:latest/:${TRAVIS_COMMIT}/g" test/docker-compose.yml
-fi

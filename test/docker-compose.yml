@@ -5,7 +5,7 @@ services:
     build:
       context: ..
       dockerfile: test/Dockerfile.test
-    image: kontena/e2e:latest
+    image: kontena/e2e:e2e
     network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -14,7 +14,7 @@ services:
     command: rake compose:setup spec compose:teardown
 
   api:
-    image: kontena/server:latest
+    image: kontena/server:e2e
     build:
       context: ../server
       dockerfile: Dockerfile
@@ -35,7 +35,7 @@ services:
 
   agent:
     container_name: kontena-agent
-    image: kontena/agent:latest
+    image: kontena/agent:e2e
     build:
       context: ../agent
       dockerfile: Dockerfile
