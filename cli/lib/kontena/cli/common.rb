@@ -230,7 +230,7 @@ module Kontena
 
         @client = Kontena::Client.new(
           api_url || require_current_master.url,
-          token || require_current_master.token,
+          token || ENV['KONTENA_TOKEN'] || require_current_master.token
           ssl_cert_path: require_current_master.ssl_cert_path,
           ssl_subject_cn: require_current_master.ssl_subject_cn,
         )

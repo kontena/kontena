@@ -15,6 +15,11 @@ class Kontena::Command < Clamp::Command
     end
   end
 
+  option '--master', '[NAME]', 'Use a master from client configuration by name (default: config or $KONTENA_MASTER)' do |master_name|
+    Kontena::Cli::Config.reset_instance
+    ENV['KONTENA_MASTER'] = master_name
+  end
+
   attr_accessor :arguments
   attr_reader :result
   attr_reader :exit_code
