@@ -8,9 +8,6 @@ docs/_book
 .rspec-local
 .DS_Store
 .byebug_history
-<<<<<<< HEAD
 .bundle/*
-=======
 .ruby-version
 .ruby-gemset
->>>>>>> upstream/master
