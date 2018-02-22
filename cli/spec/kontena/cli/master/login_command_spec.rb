@@ -116,7 +116,19 @@ describe Kontena::Cli::Master::LoginCommand do
           expect{subject.select_a_server(nil, 'foo')}.to exit_with_error
         end
 
+        it 'should try to find a cloud master with name' do
+          expect(subject).to receive(:cloud_auth?).and_return(true)
+          expect(config).to receive(:find_server).with('foo').and_return(nil)
+          client_double = double(:cloud_client)
+          expect(subject).to receive(:cloud_client).and_return(client_double)
+          allow(config).to receive(:find_server_by).with(name: 'foo').and_return(nil)
+          expect(client_double).to receive(:get).and_return('data' => [ {'id' => '123', 'attributes' => { 'name' => 'foo', 'url' => 'http://foo' }} ])
+          server = subject.select_a_server(nil, 'foo')
+          expect(server.url).to eq 'http://foo'
+        end
+
         it 'should exit with error if a server with that name is not found' do
+          expect(subject).to receive(:cloud_auth?).and_return(false)
           expect(config).to receive(:find_server).with('foo').and_return(nil)
           expect{subject.select_a_server(nil, 'foo')}.to exit_with_error
         end

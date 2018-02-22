@@ -320,11 +320,21 @@ module Kontena::Cli::Master
               exit_with_error "Master #{url} was found from config, but it does not have an URL and no URL was provided on command line"
             end
             return name_match
-          else
-            exit_with_error "Can't find a master with name #{name} from configuration"
+          elsif cloud_auth?
+            masters = cloud_client.get('user/masters')
+            if masters.kind_of?(Hash) && masters['data'].kind_of?(Array)
+              cloud_master = masters['data'].find { |master| master['attributes']['name'] == url }
+              if cloud_master
+                return Kontena::Cli::Config::Server.new(
+                  url: cloud_master['attributes']['url'],
+                  name: config.find_server_by(name: cloud_master['attributes']['name']).nil? ? cloud_master['attributes']['name'] : next_name(cloud_master['attributes']['name'])
+                )
+              end
+            end
           end
         end
       end
+      exit_with_error "Can't find a master from configuration"
     end
 
   end
