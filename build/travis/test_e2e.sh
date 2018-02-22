@@ -3,6 +3,7 @@ set -ue
 
 if which ruby >/dev/null && which gem >/dev/null; then
   PATH="$(ruby -rubygems -e 'puts Gem.user_dir')/bin:$PATH"
+  GEM_PATH="$(ruby -rubygems -e 'puts Gem.user_dir');$GEM_PATH"
 else
   echo "'which ruby' or 'which gem' failed"
   exit 1
