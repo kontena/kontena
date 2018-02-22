@@ -33,7 +33,9 @@ describe Kontena::Workers::EventWorker do
     it 'starts processing events' do
       expect(subject.wrapped_object).to receive(:stream_events)
       expect(subject.wrapped_object).to receive(:process_events)
+
       subject.start
+      subject.nil? # ping it with something inconsequential to allow the async tasks to run
     end
 
     it 'streams and processes events' do
@@ -44,7 +46,7 @@ describe Kontena::Workers::EventWorker do
         times.times {
           block.call(Docker::Event.new(event))
         }
-        sleep 0.1
+        sleep 0.5
         subject.stop_processing
       }
       subject.start
