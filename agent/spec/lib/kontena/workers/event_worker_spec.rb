@@ -46,7 +46,7 @@ describe Kontena::Workers::EventWorker do
         times.times {
           block.call(Docker::Event.new(event))
         }
-        sleep 0.1
+        sleep 0.5
         subject.stop_processing
       }
       subject.start
