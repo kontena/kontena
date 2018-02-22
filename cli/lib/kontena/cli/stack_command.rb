@@ -1,28 +1,19 @@
-require_relative 'stacks/install_command'
-require_relative 'stacks/remove_command'
-require_relative 'stacks/deploy_command'
-require_relative 'stacks/upgrade_command'
-require_relative 'stacks/list_command'
-require_relative 'stacks/show_command'
-require_relative 'stacks/build_command'
-require_relative 'stacks/monitor_command'
-require_relative 'stacks/logs_command'
-require_relative 'stacks/registry_command'
-require_relative 'stacks/validate_command'
-
 class Kontena::Cli::StackCommand < Kontena::Command
-
-  subcommand "install", "Install a stack to a grid", Kontena::Cli::Stacks::InstallCommand
-  subcommand ["ls", "list"], "List installed stacks in a grid", Kontena::Cli::Stacks::ListCommand
-  subcommand ["remove","rm"], "Remove a deployed stack from a grid", Kontena::Cli::Stacks::RemoveCommand
-  subcommand "show", "Show details about a stack in a grid", Kontena::Cli::Stacks::ShowCommand
-  subcommand "upgrade", "Upgrade a stack in a grid", Kontena::Cli::Stacks::UpgradeCommand
-  subcommand ["start", "deploy"], "Deploy an installed stack in a grid", Kontena::Cli::Stacks::DeployCommand
-  subcommand "logs", "Show logs from services in a stack", Kontena::Cli::Stacks::LogsCommand
-  subcommand "monitor", "Monitor services in a stack", Kontena::Cli::Stacks::MonitorCommand
-  subcommand "build", "Build images listed in a stack file and push them to an image registry", Kontena::Cli::Stacks::BuildCommand
-  subcommand ["reg", "registry"], "Stack registry related commands", Kontena::Cli::Stacks::RegistryCommand
-  subcommand "validate", "Process and validate a stack file", Kontena::Cli::Stacks::ValidateCommand
+  subcommand "install", "Install a stack to a grid", load_subcommand('stacks/install_command')
+  subcommand ["ls", "list"], "List installed stacks in a grid", load_subcommand('stacks/list_command')
+  subcommand ["remove","rm"], "Remove a deployed stack from a grid", load_subcommand('stacks/remove_command')
+  subcommand "show", "Show details about a stack in a grid", load_subcommand('stacks/show_command')
+  subcommand "inspect", "Inspect a stack in a grid", load_subcommand('stacks/inspect_command')
+  subcommand "upgrade", "Upgrade a stack in a grid", load_subcommand('stacks/upgrade_command')
+  subcommand ["start", "deploy"], "Deploy an installed stack in a grid", load_subcommand('stacks/deploy_command')
+  subcommand "logs", "Show logs from services in a stack", load_subcommand('stacks/logs_command')
+  subcommand "events", "Show events from services in a stack", load_subcommand('stacks/events_command')
+  subcommand "monitor", "Monitor services in a stack", load_subcommand('stacks/monitor_command')
+  subcommand "build", "Build images listed in a stack file and push them to an image registry", load_subcommand('stacks/build_command')
+  subcommand ["reg", "registry"], "Stack registry related commands", load_subcommand('stacks/registry_command')
+  subcommand "validate", "Process and validate a stack file", load_subcommand('stacks/validate_command')
+  subcommand "stop", "Stop stacks services", load_subcommand('stacks/stop_command')
+  subcommand "restart", "Restart stacks services", load_subcommand('stacks/restart_command')
 
   def execute
   end

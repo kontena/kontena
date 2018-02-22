@@ -1,75 +1,53 @@
+require_relative 'common'
+
 module Grids
   class Update < Mutations::Command
+    include Common
 
     required do
       model :grid
       model :user
     end
 
-    optional do
-      hash :stats do
-        required do
-          hash :statsd do
-            required do
-              string :server
-              integer :port
-            end
-          end
-        end
-      end
-      array :trusted_subnets do
-        string
-      end
-      array :default_affinity do
-        string
-      end
-    end
+    common_validations
 
     def validate
       add_error(:user, :invalid, 'Operation not allowed') unless user.can_update?(grid)
-      if self.trusted_subnets
-        self.trusted_subnets.each do |subnet|
-          begin
-            IPAddr.new(subnet)
-          rescue IPAddr::InvalidAddressError
-            add_error(:trusted_subnets, :invalid, "Invalid trusted_subnet #{subnet}")
-          end
-        end
-      end
+
+      validate_common
     end
 
     def execute
-      attributes = {}
-      if self.stats
-        attributes[:stats] = self.stats
-      end
-      if self.trusted_subnets
-        attributes[:trusted_subnets] = self.trusted_subnets
-      end
-      if self.default_affinity
-        attributes[:default_affinity] = self.default_affinity
-      end
-      grid.update_attributes(attributes)
-      if grid.errors.size > 0
-        grid.errors.each do |key, message|
+      execute_common(self.grid)
+
+      unless self.grid.save
+        self.grid.errors.each do |key, message|
           add_error(key, :invalid, message)
         end
         return
       end
 
       self.notify_nodes
+      self.reschedule_grid(self.grid) if self.default_affinity
 
-      grid
+      self.grid
     end
 
     def notify_nodes
-      Celluloid::Future.new {
-        grid.host_nodes.connected.each do |node|
-          plugger = Agent::NodePlugger.new(grid, node)
-          plugger.send_node_info
-        end
-        GridScheduler.new(grid).reschedule
-      }
+      grid.host_nodes.connected.each do |node|
+        plugger = Agent::NodePlugger.new(node)
+        plugger.send_node_info
+      end
+    end
+
+    # @return [Celluloid::Proxy::Cell<GridSchedulerJob>]
+    def grid_scheduler
+      Celluloid::Actor[:grid_scheduler_job]
+    end
+
+    # @param grid [Grid]
+    def reschedule_grid(grid)
+      grid_scheduler.async.reschedule_grid(grid)
     end
   end
 end

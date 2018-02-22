@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Launchers::Etcd do
 
@@ -29,9 +28,11 @@ describe Kontena::Launchers::Etcd do
   end
 
   describe '#on_overlay_start' do
+    let(:node) { Node.new({}) }
+
     it 'starts etcd' do
       expect(subject.wrapped_object).to receive(:start_etcd).and_return(true)
-      subject.on_overlay_start('topic', {})
+      subject.on_overlay_start('topic', node)
     end
 
     it 'retries 4 times if Docker::Error::ServerError is raised' do
@@ -39,23 +40,25 @@ describe Kontena::Launchers::Etcd do
         raise Docker::Error::ServerError
       end
       expect(subject.wrapped_object).to receive(:start_etcd).exactly(5).times
-      subject.on_overlay_start('topic', {})
+      subject.on_overlay_start('topic', node)
     end
   end
 
   describe '#start_etcd' do
+    let(:node) { Node.new({}) }
+
     it 'creates etcd containers after image is pulled' do
       allow(subject.wrapped_object).to receive(:image_pulled?).and_return(true)
       expect(subject.wrapped_object).to receive(:create_data_container)
       expect(subject.wrapped_object).to receive(:create_container)
-      subject.start_etcd({})
+      subject.start_etcd(node)
     end
 
     it 'waits for image pull' do
       expect(subject.wrapped_object).not_to receive(:create_data_container)
       expect {
         Timeout.timeout(0.1) do
-          subject.start_etcd({})
+          subject.start_etcd(node)
         end
       }.to raise_error(Timeout::Error)
     end
@@ -88,8 +91,8 @@ describe Kontena::Launchers::Etcd do
   end
 
   context "for the first initial node in a three-node grid" do
-    let :node_info do
-      {
+    let :node do
+      Node.new(
         'node_number' => 1,
         'overlay_ip' => '10.81.0.1',
         'grid' => {
@@ -97,7 +100,7 @@ describe Kontena::Launchers::Etcd do
           'initial_size' => 3,
           'subnet' => '10.81.0.0/16',
         }
-      }
+      )
     end
 
     describe '#create_container' do
@@ -108,29 +111,27 @@ describe Kontena::Launchers::Etcd do
         allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
         expect(subject.wrapped_object).to receive(:add_dns)
 
-        subject.create_container('etcd', node_info)
+        subject.create_container('etcd', node)
 
         expect(subject.instance_variable_get(:@running)).to eq(true)
       end
 
       it 'starts if etcd already exists but not running' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
         allow(container).to receive(:running?).and_return(false)
         allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
         expect(subject.wrapped_object).to receive(:add_dns)
-        expect(container).to receive(:start)
+        expect(container).to receive(:start!)
 
-        subject.create_container('etcd', node_info)
+        subject.create_container('etcd', node)
 
         expect(subject.instance_variable_get(:@running)).to eq(true)
       end
-    end
 
-    describe '#create_container' do
       it 'deletes and recreates the container' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
         allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
         allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
         expect(container).to receive(:delete)
@@ -156,16 +157,16 @@ describe Kontena::Launchers::Etcd do
             'RestartPolicy' => {'Name' => 'always'},
             'VolumesFrom' => ['kontena-etcd-data']
           })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start)
+        expect(etcd_container).to receive(:start!)
         allow(etcd_container).to receive(:id).and_return('12345')
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
-        subject.create_container('etcd', node_info)
+        subject.create_container('etcd', node)
       end
 
       it 'creates new container' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(nil)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
         allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
         expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
 
@@ -190,11 +191,19 @@ describe Kontena::Launchers::Etcd do
             'RestartPolicy' => {'Name' => 'always'},
             'VolumesFrom' => ['kontena-etcd-data']
           })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start)
+        expect(etcd_container).to receive(:start!)
         allow(etcd_container).to receive(:id).and_return('12345')
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
-        subject.create_container('etcd', node_info)
+        subject.create_container('etcd', node)
+      end
+
+      it 'lets random Docker errors fall through' do
+        expect(subject.wrapped_object).to receive(:get_container).and_raise(Docker::Error::ServerError)
+        expect {
+          # Call through wrapped object to avoid nasty traces in rspec output
+          subject.wrapped_object.create_container('etcd', node)
+        }.to raise_error(Docker::Error::ServerError)
       end
     end
 
@@ -205,7 +214,7 @@ describe Kontena::Launchers::Etcd do
         allow(excon).to receive(:get).and_raise(Excon::Errors::Error)
         expect(excon).to receive(:get).exactly(3).times
 
-        expect(subject.find_etcd_node(node_info)).to eq(nil)
+        expect(subject.find_etcd_node(node)).to eq(nil)
       end
 
       it 'returns connection to working etcd node' do
@@ -216,7 +225,7 @@ describe Kontena::Launchers::Etcd do
         allow(excon).to receive(:get).and_return(response)
         allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
 
-        expect(subject.find_etcd_node(node_info)).to eq(excon)
+        expect(subject.find_etcd_node(node)).to eq(excon)
       end
     end
 
@@ -230,7 +239,7 @@ describe Kontena::Launchers::Etcd do
         expect(subject.wrapped_object).to receive(:delete_membership).with(excon, '4e12ae023cc6f88d')
         expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.1:2380')
 
-        expect(subject.update_membership(node_info)).to eq('existing')
+        expect(subject.update_membership(node)).to eq('existing')
       end
 
       it 'return new when matching peer found from etcd' do
@@ -242,15 +251,14 @@ describe Kontena::Launchers::Etcd do
         expect(subject.wrapped_object).not_to receive(:delete_membership)
         expect(subject.wrapped_object).not_to receive(:add_membership)
 
-        expect(subject.update_membership(node_info)).to eq('new')
+        expect(subject.update_membership(node)).to eq('new')
       end
-
     end
   end
 
   context "for the third initial node in a three-node grid" do
-    let :node_info do
-      {
+    let :node do
+      Node.new(
         'node_number' => 3,
         'overlay_ip' => '10.81.0.3',
         'grid' => {
@@ -258,7 +266,7 @@ describe Kontena::Launchers::Etcd do
           'initial_size' => 3,
           'subnet' => '10.81.0.0/16',
         }
-      }
+      )
     end
 
     describe '#update_membership' do
@@ -271,14 +279,14 @@ describe Kontena::Launchers::Etcd do
         expect(subject.wrapped_object).not_to receive(:delete_membership)
         expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.3:2380')
 
-        expect(subject.update_membership(node_info)).to eq('new')
+        expect(subject.update_membership(node)).to eq('new')
       end
     end
   end
 
   context "for the second node in an --inital-size=1 grid" do
-    let :node_info do
-      {
+    let :node do
+      Node.new(
         'node_number' => 2,
         'overlay_ip' => '10.81.0.2',
         'grid' => {
@@ -286,7 +294,7 @@ describe Kontena::Launchers::Etcd do
           'name' => 'some_grid',
           'subnet' => '10.81.0.0/16',
         }
-      }
+      )
     end
 
     describe '#create_container' do
@@ -312,11 +320,11 @@ describe Kontena::Launchers::Etcd do
             'RestartPolicy' => {'Name' => 'always'},
             'VolumesFrom' => ['kontena-etcd-data']
           })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start)
+        expect(etcd_container).to receive(:start!)
         allow(etcd_container).to receive(:id).and_return('12345')
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.2', name: 'etcd.kontena.local'})
 
-        subject.create_container('etcd', node_info)
+        subject.create_container('etcd', node)
       end
     end
   end
@@ -336,6 +344,26 @@ describe Kontena::Launchers::Etcd do
       expect(excon).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.1:2380"]}'))
 
       subject.add_membership(excon, 'http://10.81.0.1:2380')
+    end
+  end
+
+  describe '#get_container' do
+    it 'returns kontena-etcd container' do
+      etcd = double
+      expect(Docker::Container).to receive(:get).and_return(etcd)
+      expect(subject.get_container).to eq(etcd)
+    end
+
+    it 'returns nil if kontena-etcd does not exist' do
+      expect(Docker::Container).to receive(:get).and_raise(Docker::Error::NotFoundError)
+      expect(subject.get_container).to eq(nil)
+    end
+
+    it 'raises if docker raises' do
+      expect(Docker::Container).to receive(:get).and_raise(Docker::Error::ServerError)
+      expect {
+        subject.wrapped_object.get_container
+      }.to raise_error(Docker::Error::ServerError)
     end
   end
 end

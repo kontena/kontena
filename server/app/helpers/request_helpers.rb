@@ -6,16 +6,14 @@ module RequestHelpers
     base.plugin :default_headers, 'Content-Type'=>'application/json'
     base.plugin :render, cache: true, engine: 'json.jbuilder', views: 'app/views/v1'
     base.plugin :error_handler do |e|
+      log_message = "\n#{e.class} (#{e.message}):\n"
+      log_message << "  " << e.backtrace.join("\n  ") << "\n\n" if e.backtrace
+      puts log_message
+
       if e.is_a?(RpcClient::Error)
         { code: e.code, message: e.message, backtrace: e.backtrace }
       else
-        response.status = 500
-        log_message = "\n#{e.class} (#{e.message}):\n"
-        log_message << "  " << e.backtrace.join("\n  ") << "\n\n" if e.backtrace
-        puts log_message
-        json = { message: 'Internal server error' }
-
-        json
+        { message: 'Internal server error' }
       end
     end
   end
@@ -50,6 +48,18 @@ module RequestHelpers
     response.status = status
     response.write(body.to_json)
     request.halt
+  end
+
+  ##
+  # @param [String] name
+  # @return [Grid]
+  def load_grid(name)
+    @grid = Grid.find_by(name: name)
+    halt_request(404, {error: 'Not found'}) unless @grid
+    unless current_user.has_access?(@grid)
+      halt_request(403, {error: 'Access denied'})
+    end
+    @grid
   end
 
   def test_env?

@@ -1,5 +1,1274 @@
 # Changelog
 
+## [1.4.2](https://github.com/kontena/kontena/releases/tag/v1.4.2) (2017-12-08)
+
+The 1.4.2 release fixes regressions in the 1.4.0 and 1.4.1 releases, as well as some other issues.
+
+### Fixed issues
+
+* kontena certificate register Let's Encrypt TOS link is out of date #3105
+* HTTP 404 Not Found error on kontena certificate register #3104
+* kontena stack install fails in 1.4.1 with KONTENA_URL=... #3089
+* CLI stack validate outputs stack create API request instead of interpolated stack YAML #2887
+* cAdvisor queries missing containers over and over #2700
+
+### Changes
+
+#### Agent
+
+* Agent: Bump cadvisor to 0.27.2 (#3115)
+
+#### Server
+
+* Fix certificates API POST request routing (#3107)
+* Fix server to filter out node peer_ip duplicates (#3112)
+
+#### CLI
+
+* Fix stack deploy to not raise RuntimeError on deploy errors (#2931)
+* CLI: Use a unique temp dir for specs instead of /tmp (#3010)
+* Fix CLI volume driver opts parsing (#3101)
+* Update CLI kontena certificate register Let's Encrypt ToS link (#3106)
+* Fix CLI stack validate to output either interpolated stack YAML or API JSON (#2938)
+* Fix CLI config to correctly load both master server and cloud account settings from envs or config file (#3090)
+
+## [1.4.1](https://github.com/kontena/kontena/releases/tag/v1.4.1) (2017-11-23)
+
+**Master & Agents:**
+
+* Fix agent to start container healthchecks for non-http protocols (#3080)
+* Fix server to only deploy pending/active domain authorization challenge certs (#2994)
+* Fix agent LogWorker to not exclusively block in start until websocket connected (#3069)
+* Fix performance issue in vault secrets listing (#3061)
+* Fix ping api to check that process is healthy (#3036)
+* Fix server websocket backend to not overwrite node labels on initial connection (#2989)
+* Fix server node connected events (#2995)
+* Fix server websocket exec error handling (#2912)
+* Fix server to omit container io.kontena.health_check.uri label for non-http health-check protocols (#3023)
+* Fix agent healthchecks to accept any HTTP 2xx response as healthy (#3006)
+* Fix POST /v1/grids/:grid/external_registries API error response (#3043)
+* Fix server RpcServer to be supervised and restart on crashes (#3037)
+* Allow configuring of Mongo ssl_verify and ssl_ca_cert through env (#3071)
+* Improve scheduler performance (#2921)
+* Server/Agent websocket client reconnect backoff (#2916)
+* Validate service env size limits (#2951)
+* Validate HostNode grid presence (#3018)
+* Add missing HostNode attributes to HostNodeSerializer (#3017)
+* Update mongo driver to 2.4.3 (#3048)
+* Kontena certificate import/export (#2988)
+* Mongo debug logging with DEBUG_MONGO=true (#3049)
+
+**CLI:**
+
+* Fix exec --tty for valid non-ASCII unicode input (#2900)
+* Fix variable interpolation in extended stack files (#2945)
+* Fix command exception handling with DEBUG (#2993)
+* Fix cloud token env variable (#3013)
+* Fix kontena external-registry add to use https:// by default (#3034)
+* Fix certificate show output formatting (#2966)
+* Fix DEBUG=true with Kontena::Errors::StandardError (#3024)
+* Fix crash in kontena external registry ls -q (#3051)
+* Enable anchor/aliases support in YAML parsing (#2771)
+* Add stack variables certificates resolver (#2990)
+* Upgrade tty-table dependency to 0.9.0 (#3015)
+* Add support for entrypoint in stack files (#2950)
+* Turn off debugging by using DEBUG=false (#2960)
+
+**Other:**
+
+* Add server API docs for the new certificates API (#3011)
+* Bump travis ruby to 2.4.2 (#2944)
+* Fix CLI specs to not give false positives on SystemExit (#3021)
+* Use bundle audit to check gem vulnerabilities (#3047)
+* Docs: Fix broken JSON Attributes table in index.html.md (#3078)
+* Docs: certificate, domain authz API JSON fields (#3077)
+
+## [1.4.0](https://github.com/kontena/kontena/releases/tag/v1.4.0) (2017-10-16)
+
+### Highlights
+
+#### Fully automated LetsEncrypt certificates using `tls-sni-01`
+
+The new Kontena Certificate support integrates with the Kontena Loadbalancer to provide fully automated Let's Encrypt `tls-sni-01` domain authorizations.
+
+The `kontena certificate authorize` command can be used to request a **tls-sni-01** domain authorization challenge from Let's Encrypt, and also deploy the challenge certificate to the linked Kontena load-balancer. The new `kontena certificate request` command can then be immediately used to request a new certificate for the authorized domains. The new certificates will show up in `kontena certificate list` together with their validity period, and the Kontena Master will automatically renew the certificates 7 days before expiry.
+
+These new certificates can be deployed to the load-balancer service using the new Kontena Stack YAML `certificates` syntax.
+
+```yaml
+stack: example/lb
+services:
+  lb:
+    image: kontena/lb
+    certificates:
+      - subject: example.com
+```
+
+Any existing `LE_CERTIFICATE_*` secrets will also be migrated to Kontena Certificates during the upgrade.
+
+#### Stack dependencies
+
+Kontena Stacks can now embed other Kontena Stacks, and these child stacks will be automatically installed, upgraded and removed as part of the top-level stack. The child stack variables can either be set by the parent stack, or using the new `kontena stack install -v child.variable=value` CLI options.
+
+```yaml
+stack: example/app
+depends:
+  db:
+    stack: example/db
+services:
+  app:
+    image: example/app
+    env:
+      - DB=$db.$GRID.kontena.local
+```
+
+### CLI changes
+
+* `kontena app`
+
+    The deprecated `app` commands have been moved into a separate plugin: `kontena plugin install app-command`.
+
+* `kontena cloud platform|organization|region`
+
+    The new `kontena cloud` commands are included in the `cloud` plugin: `kontena plugin install cloud`.
+
+    The `cloud` plugin is included in the CLI installer packages.
+
+* `kontena node list`
+
+    The node `status` shows additional states including `connecting` and `drain`. It also shows how long the node has been online/offline for.
+
+* `kontena node create`
+
+    Kontena Nodes can provisioned using per-node tokens as an alternative to the current per-grid tokens. The `kontena node create` command can be used to create a node with a generated node token for manual provisioning.
+
+* `kontena node update --availability=drain`
+
+    Nodes can be placed into the `drain` state, where no new service instances will be scheduled onto the node, any stateless service instances will be re-scheduled onto other nodes, and stateful service instances will be stopped.
+
+    Use `kontena node update --availability=active` to restore the node into active use. Stateful service instances will be re-started, and stateless services will be re-balanced to deploy back onto the node.
+
+* `kontena node reset-token`
+
+    Kontena Nodes provisioned using per-node tokens can have their node tokens reset. This can also be used to convert nodes to use per-node tokens, or revert back to grid tokens.
+
+    This will also disconnect any agents connected using the old node token, and prevent any agents from reconnecting using the old node token. The node must be manually reconfigured to use the new node token.
+
+* `kontena node remove`
+
+    The `kontena node remove` command can now be used to remove online nodes if they were provisioned using per-node tokens, disconnecting the agent.
+
+    Nodes using grid tokens cannot be removed if they are still online.
+
+* `kontena node health`
+
+    The `kontena node health` command shows more information about any websocket connection errors, and also shows grid `etcd` health.
+
+* `kontena node env`
+
+    Generate the `/etc/kontena-agent.env` configuration required for manual provisioning of nodes using per-node tokens.
+
+* `kontena grid create --statsd-server --log-forwarder`
+
+    The `kontena grid create` command now supports the same `--statsd-server`, `--log-forwarder` and `--log-opt` options previously only supported in `kontena grid update`.
+
+* `kontena grid|stack|service|container logs|events -f --tail`
+
+    The `kontena * logs` and `kontena * events` commands have been changed to to use `--follow` `--tail=N` options.
+
+* `kontena stack install -v foo=bar`
+
+    Provide values for stack variables when installing, skipping any prompts. Similar to `--values-from`.
+
+    Use `-v foo.var=bar` to provide values for the `depends: foo` child stack `variables`.
+
+* `kontena stack install|upgrade|build|validate --values-from-stack`
+
+    Copy variable values from an installed stack.
+
+* `kontena stack upgrade --dry-run`
+
+    Show services and child stack dependencies that would added, removed and upgraded without actually affecting the installed stacks on the server.
+
+* `kontena stack|service deploy --no-wait`
+
+    Trigger a stack/service deploy without waiting for it to complete.
+
+* `kontena stack logs STACK [SERVICE...]`
+
+    The `kontena stack logs` command can be used to show logs for specific services in the stack.
+
+* `kontena stack show --values --values-to`
+
+    The `kontena stack show` output also includes the stack variable values as stored on the server, and used for upgrades.
+
+    The `--values` and `--values-to` options can be used to display/store these separately.
+
+* `kontena service|container exec`
+
+    The CLI exec commands and websocket client have been rewritten to be more robust.
+
+    The interactive `--tty` execs now run with the correct terminal size.
+
+* `kontena certificate list`
+
+    List certificates obtained using the new `kontena certificate request` command.
+
+    The server will automatically renew any expiring certificates if the all domains were authorized with `--type tls-sni-01` (listed as auto-renewable). The auto-renewal job will automatically deploy the new domain authorization challenge certificates and the renewed certificates to the linked loadbalancer service.
+
+* `kontena certificate show`
+
+* `kontena certificate register --agree-tos`
+
+    The `kontena certificate register` command now prompts for the LetsEncrypt Terms of Service. Use the `--agree-tos` to accept the TOS programmatically.
+
+* `kontena certificate authorize --type tls-sni-01 --linked-service`
+
+    Use the new integrated Kontena Loadbalancer support to request a LetsEncrypt `tls-sni-01` challenge, and automatically deploy the challenge cert to the linked load balancer.
+
+    Certificates using domains authorized with `tls-sni-01` challenges can be requested using `kontena certificate request` without any intervening manual steps, and will also be automatically renewed by the server.
+
+    The default `kontena certificate authorize --type` remains `dns-01`, which requires the DNS challenge records to be deployed manually.
+
+* `kontena certificate request`
+
+    The new `kontena certificate request` command replaces the deprecated `kontena certificate get` command. Certificates obtained using the new `kontena certificate request` command will show up in `kontena certificate list`, and can be deployed to stack services using the new `certificates: - subject: ...` stack YAML.
+
+    Certificates obtained using `kontena certificate request` will not show up as secrets in `kontena vault list`.
+
+* `kontena certificate get` (deprecated)
+
+    The `kontena certificate get` command is retained to support services using the existing `secret: - name: LE_CERTIFICATE_*` stack YAML, but is deprecated in favor of the new `kontena certificate request` command.
+
+    Certificates obtained in the form of `kontena vault` secrets using `kontena certificate get` will not show up in `kontena certificate list`, and will not be auto-renewed by the server.
+
+* `kontena certificate delete`
+
+    Remove a certificate that is no longer in use by any services.
+
+    Cleanup unused certificates to prevent the certificate auto-renewal from unnecessarily consuming LetsEncrypt rate-limits.
+
+* `kontena registry create`
+
+    The `--s3-v4auth` optional is now the default.
+
+* `kontena volume list -q`
+
+    Output the plain volume name `foo` used for scripting `kontena volume ...` commands, instead of the full `gridname/foo` ID.
+
+* `kontena plugin uninstall`
+
+    No longer prompts for confirmation or accepts `--force`.
+
+### Service / Stack YAML changes
+
+New Kontena Stack YAML variables, attributes and `kontena service create|update` options:
+
+* `$PLATFORM`
+
+    Stack YAML files can also interpolate the `$PLATFORM` variable, which matches the `$GRID`.
+
+* Soft `affinity`: `==~`
+
+    Normal "hard" affinities will fail the service deploy if the scheduler cannot satisfy the condition. The scheduler will attempt to satisfy soft affinities, but will ignore them if unable to. Typically used for negative affinities two avoid scheduling services onto the same node if possible.
+
+* `cpus` / `--cpus`
+
+    Limit the maximum CPU utilization of a service containers.
+
+* `certificates`
+
+    Deploy certificates generated using `kontena certificate request` to services, similarly to the `LE_CERTIFICATE_*_BUNDLE` secrets.
+
+    ```yaml
+    services:
+      lb:
+        image: kontena/lb
+        certificates:
+          - subject: example.com
+            name: SSL_CERTS
+    ```
+
+    Only certificates available in `kontena certificate list` can be deployed this way.
+
+* `hooks`: `type: post_start`
+
+    The service `post_start` hooks are now run on every container start, not just when deploying containers. This happens on deploys that (re)create the container, `kontena service start`, or when the container process exits and is restarted by the agent.
+
+    The `post_start` hooks do not run on `kontena service restart`,
+    or on healthcheck restarts.
+
+* `hooks`: `type: pre_start`
+
+    The new `pre_start` hooks run before every container start. This happens on deploys that (re)create the container, `kontena service start`, or when the container process exits and is restarted by the agent.
+
+    The `pre_start` hooks are run in a separate container, with the service image, envs and volumes. Changes to the container overlay filesystem in `pre_start` hooks are not preserved, and the `pre_start` hooks run with a different overlay network address than the service container.
+
+    The `pre_start` hooks do not run on `kontena service restart`,
+    or on healthcheck restarts.
+
+* `hooks`: `type: pre_stop`
+
+    The new `pre_stop` hooks run before every container stop. This happens on deploys that (re)create the container, `kontena service stop`, and when the service is scaled down or removed.
+
+    The `pre_stop` hooks do not run on `kontena service restart`,
+    or on healthcheck restarts.
+
+* `read_only` / `--read-only`
+
+    The container overlay filesystem from the Docker image is mounted readonly, and only explicit volume mounts can be written to.
+
+* `shm_size` / `--shm-size`
+
+    Override the default 64MB `/dev/shm` size for service containers.
+
+* `stop_grace_period` / `--stop-timeout`
+
+    Timeout in seconds for stopping the container.
+
+* `stop_signal` / `--stop-signal`
+
+    Override the default `SIGTERM` signal used to stop a container.
+
+### Breaking changes
+
+* Docker versions older than 1.12 are no longer supported on host/master nodes (#2589)
+
+    Docker versions from 1.12 (CoreOS stable) to 17.06 (CoreOS alpha) are supported.
+
+* Service `post_start` hooks now run on every container start, not just when deploying (#2701)
+
+    Existing service `post_start` hooks used to only run on service deploys that (re)created the service container. The existing `post_start` and new `pre_start` hooks are now also run on each `kontena service start`, or when the container process exits and is restarted by the agent.
+
+    This does not affect `oneshot: true` hooks, which are still only executed once when the container is first started.
+
+* The CLI `kontena {container,service,stack} {logs,events}` options have changed (#2046)
+
+    The old Heroku-style `--lines=N --tail` options have been replaced by `--tail=N --follow` matching the options used by most other common tools.
+
+* Stack variables are no longer `to: env` by default (#2802)
+
+    Stack variables can always be interpolated using `$foo` within the same stack file, but are no longer (by default) exposed to other dependent stacks, other variables using `from: env`, or any processes spawned by the CLI.
+
+    Variables can still use `to: env` explicitly, or the new `from: variable` resolver.
+
+* API node `id` field has been changed to use `:grid/:node` (#2483)
+
+    The API used to return node IDs in the form of `{"id": "CAR3:26...AB:6Y3Q"}`. The API responses have been changed to return nodes in the form of `{"id": ":grid/:name", "node_id": "..."}` to match the other APIs.
+
+### Deprecations
+
+* The `kontena certificate get` command has been deprecated (#2736)
+
+    The old `secrets`-based `kontena certificate get` workflow (using `name: LE_CERTIFICATE_example.com_BUNDLE`) has been replaced by the new `certificate`-based workflow (using `subject: example.com`). Certificates created using `kontena certificate request` are visible in `kontena certificate list`, and can be referred to by stack services using `certificates` -> `subject: ...`.
+
+### Known issues
+
+* Agent ServicePodWorker gets confused by service restarts ()#2781)
+* Dependent stack variables are not interpolated (#2799)
+
+    The new stack `depends` do not yet support the use of interpolation for the child stack `variables`.
+
+* CLI stack validate outputs stack create API request instead of interpolated stack YAML #2887
+
+### Fixed issues
+
+* Node evacuate #1030
+* Agent Weave unnecessarily calls weaveexec launch-router, and logs error #1397
+* Set node labels from kontena-container labels #1771
+* Missing CLI omnibus package for Ubuntu #1954
+* Race condition on reserve_node_number with concurrent node creates #2071
+* kontena-agent needs a restart to notice new v1 volume plugins #2237
+* Upgrade to Alpine 3.6 #2374
+* agent: sometimes agent does not remove containers causing deploys to fail #2415
+* Allow to set node name via environment variable #2465
+* stateful: true service should not get deployed on instances with ephemeral[=yes] label #2487
+* Soft affinity for services (#2490)
+* Agent does not validate KONTENA_URI=wss:// SSL certs (#2500)
+* CLI: kontena stack build to read values from installed stack #2515
+* Raise weave connection limit (#2539)
+* Difficult to get rid of a node that is missing a name and stuck as (initializing) #2558
+* Return also unhealthy count in service json (#2564)
+* Ubuntu kontena-agent package is not compatible with Docker 17.06 (#2588)
+* Move app commands to plugin (#2597)
+* Agent container exec only returns exit code 0 on Docker API errors #2598
+* Cli exec does not set terminal size #2601
+* CLI validation of wss:// SSL certs for exec commands is broken #2603
+* (Docs) Default command for s3 image registry fails (#2606)
+* Add platform as grid alias in stack yml (#2633)
+* Expose platform name as env (#2634)
+* CLI timeout is too low (#2637)
+* LogWorker shouldn't spam docker logs #2661
+* Server Cloud::WebsocketClient does not validate SSL certificates (#2685)
+* CLI: stack logs by service #2712
+* 1.3 Agent stuck connecting to master (#2723)
+* Make fluentd forwarded logs more structured by default (#2735)
+* Agent container exec input can block the entire RPC server #2740
+* kontena node/labels update does not notify nodes (#2746)
+* Support async stack deployments #2757
+* Support for shm size #2764
+* Server stack remove fails to stop services #2777
+* Having a dry-run option for stack upgrade would be great #2819
+* Service oneshot hooks might not get executed if the initial service deploy fails #2844
+* Service oneshot hooks can get executed more than once in special circumstances #2845
+* Remove experimental status from volume commands #2857
+* CLI: ls -q outputs headers when result set empty #2874
+* Server leaks memory if new containers are constantly created and destroyed #2895
+* Certificate auto-renewal can fail if domain authz's linked service has been removed bug server #2881
+* CLI: kontena volume ls -q returns grid/volumename #2925
+
+### Changes
+
+Commits that affect multiple components are listed separately under each affected component.
+
+#### Agent
+
+* Fix Etcd launcher to tolerate docker errors better (#2509)
+* Add configurable stop timeout for services (#2033)
+* Run post_start hooks before wait for port (#2543)
+* Unlimited connections for weave (#2547)
+* Read-only container instances (#2550)
+* Create HostNode with per-node token for websocket auth (#2504)
+* Rewrite agent websocket client (#2560)
+* Ubuntu kontena-agent: Use /usr/bin/dockerd for compatibility with Docker 1.12 - 17.06 (#2589)
+* Configurable agent node ID, labels (#2590)
+* Agent: minimal update of ruby 2.4 dependencies (#2629)
+* agent: fix nil node_labels from Docker.info (#2642)
+* agent: fix websocket client to not deadlock on sync actor calls from on_pong (#2650)
+* Update agent to ruby 2.4 (#2630)
+* Fix agent Docker.info caching (#2676)
+* Agent: Allow overriding KONTENA_NODE_NAME (#2693)
+* Agent: Upgrade docker-api gem to 1.33.6 (#2695)
+* Agent: upgrade vmstat to 2.3.0 (#2696)
+* Always create HostNode with unique name and node_number (#2694)
+* agent: have SIGTTIN handler use Celluloid.dump (#2727)
+* Fix agent websocket disconnected notifications (#2725)
+* agent: have SIGTTIN handler also dump non-celluloid threads (#2742)
+* Fix agent LogWorker start/stop (#2728)
+* Fix agent container exec input RPC hang (#2743)
+* Add metadata to fluent event hash (#2738)
+* agent: report container exec errors (#2745)
+* Fix Agent ServicePodWorker#container_outdated? to fail if service updated_at is in the future (#2304)
+* Don't start weave if it's already running (#2760)
+* Add rbtrace support to server & agent (#2528)
+* Send & store logs in batches (#2750)
+* Implement container restart policies in the agent ServicePodWorker (#2689)
+* Service cpus limit (#2541)
+* Fix agent ServicePodWorker to ignore old container events (#2773)
+* Implement synchronous Observers and lightweight Observables (#2704)
+* Fix agent ServicePodWorker to not block on wait_for_port (#2776)
+* Support shm_size (#2767)
+* Migrate restart-policy containers (#2791)
+* Fix exec console size (#2708)
+* Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
+* Change log RPCs to use xmlschema timestamps with sub-second precision (#2832)
+* Support for stop_signal (#2918)
+
+#### Server
+
+* server mongo: remove hardcoded read mode because it's default (#2476)
+* Fix healtcheck port validation to check port in unix port range (#2496)
+* Fix LE cert authorization mutation to fail gracefully if not yet registered (#2497)
+* server GridServices::Update: spec and fix multiple names for the same secret (#2506)
+* Server: Upgrade to Alpine 3.6, Ruby 2.4 (#2456)
+* Server: Upgrade rack & roda to latest version (#2457)
+* Server: upgrade puma to 3.9.1 (#2458)
+* Unify common grid create/update POST/PUT parameters (#2488)
+* Fix server .ruby-version (#2527)
+* Automatically determine volume driver version from installed plugins (#2526)
+* Fix any versioned kontena/lb:* image to resolve as an LB service, not just latest (#2530)
+* Server: Fix HostNode connected_at field to type: Time (#2529)
+* Fix mongoid last sort (#2534)
+* Add configurable stop timeout for services (#2033)
+* Use latest HostNodeStat entry when serializing host node (#2555)
+* Support basic authentication in auth provider userinfo request (#2260)
+* Ephemeral nodes should not get any stateful services (#2549)
+* Read-only container instances (#2550)
+* Fix usage of node IDs in CLI, server API JSON + docs (#2483)
+*  Fix server grids update notify (#2585)
+* Create HostNode with per-node token for websocket auth (#2504)
+* Fix grid user remove access check (#2579)
+* Add new user_admin role (#2577)
+* Server: dockerignore docs/ to optimize image build (#2613)
+* Ubuntu kontena-agent: Use /usr/bin/dockerd for compatibility with Docker 1.12 - 17.06 (#2589)
+* Configurable agent node ID, labels (#2590)
+* Update server/docs dependencies for ruby 2.4 (#2632)
+* Fix node token clear to use DELETE /v1/nodes/:id/token (#2636)
+* Prefer reading stats/logs from secondary db node (#2646)
+* Update agent to ruby 2.4 (#2630)
+* Add support for soft affinities (#2540)
+* Add platform name a.k.a grid name to container env and labels (#2670)
+* Remove unnecessary and thread unsafe request parsing in token auth (#2684)
+* Node scheduling availability (#2306)
+* Add unhealthy container counts to service API (#2674)
+* Always create HostNode with unique name and node_number (#2694)
+* Make stack logs accept service names as filters (#2713)
+* Server: Replace use of Celluloid::Future for async threads  (#2699)
+* Fix server node update grid notify (#2747)
+* agent: report container exec errors (#2745)
+* Container#status as running if it's running but previously oom_killed (#2751)
+* Return related services in secret json (#2755)
+* Add rbtrace support to server & agent (#2528)
+* Rewrite server cloud websocket client (#2692)
+* Send & store logs in batches (#2750)
+* Don't fetch too many log items in stream loop (#2761)
+* Service cpus limit (#2541)
+* Initial tls-sni support and new api for domain authorizations (#2732)
+* Fix server GridServices::Start/Stop to not use async_thread (#2778)
+* Fix server HostNode::Update/Remove mutations to not use async_thread (#2783)
+* Fix server Grids::Update mutation to not use async_thread (#2784)
+* Fix server MongoPubsub to rescue block errors, and not use async_thread (#2785)
+* Allow stacks to depend on other stacks (#2707)
+* New certificate model, API, service YAML (#2736)
+* Enhanced HostNode status, health (#2511)
+* Certificate auto renewal (#2816)
+* Force update and trigger automatic service deploys after cert update (#2818)
+* Fix missing certificates validation on service update (#2824)
+* Show certs with service details (#2826)
+* Support shm_size (#2767)
+* Validate total service DNS hostname+domain length (#2376)
+* Fix exec console size (#2708)
+* Fix HostNode index updates to single migration (#2852)
+* Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
+* Fix websocket agent version check (#2855)
+* Add cert delete API and CLI command (#2850)
+* Fix server NodeVolumeHandler to not be a Celluloid actor (#2868)
+* List auto-renewable certificates; Migrate existing LE cert secrets to new certificate models (#2867)
+* Add ID field to stack dependency relations in JSON response (#2866)
+* Change log RPCs to use xmlschema timestamps with sub-second precision (#2832)
+* Remove experimental status from volumes (#2864)
+* Fix server stack view to not crash for orphaned child stacks (#2885)
+* Fix server cloud event serializer to use HostNode#to_path as node id (#2892)
+* Fix server ContainerInfoMapper memory leak (#2896)
+* Check ports from scheduled instances (#2910)
+* Check service affinity via service instances (#2911)
+* Support for stop_signal (#2918)
+* Docs: Add stack depends parent/children fields to API documentation (#2862)
+* Fix certificates to not auto-renew if missing the linked service (#2933)
+
+#### CLI
+
+* cli: fix stream_stdin_to_ws to only use STDIN.raw mode if tty exec (#2499)
+* Fix cli node list sorting, specs (#2512)
+* Unify common grid create/update POST/PUT parameters (#2488)
+* cli: change stacks deploy helper to wait on deployment state (#2525)
+* cli: update grid cloud-config to use [Link] Unmanaged=true (#2494)
+* Add configurable stop timeout for services (#2033)
+* Read-only container instances (#2550)
+* Fix usage of node IDs in CLI, server API JSON + docs (#2483)
+* Create HostNode with per-node token for websocket auth (#2504)
+* Fix kontena node rm: NameError: undefined local variable or method `node_id` (#2580)
+* Build deb package with omnibus (#2614)
+* Rewrite CLI container exec websocket client (#2599)
+* Remove development deps from CLI Omnibus Gemfile (#2624)
+* Fix node token clear to use DELETE /v1/nodes/:id/token (#2636)
+* cli: fix Dockerfile gem install needing ruby-dev for websocket-driver (#2640)
+* Fix cli omnibus package name to kontena-cli (#2656)
+* Add support for soft affinities (#2540)
+* Fix unnecessary spinner nesting during master deploy wizard (#2660)
+* Change CLI log --tail/follow options to match Docker (#2046)
+* Raise cli excon timeout defaults (#2671)
+* Fix kontena registry create to use --s3-v4auth by default (#2673)
+* Fix nil resource usage error on node show cmd (#2678)
+* Add PLATFORM as variable for stack parsing (#2677)
+* Fix error message when trying to use nonexistent master (#2668)
+* CLI: Error out from init-cloud when master already cloud-enabled (#2680)
+* Node scheduling availability (#2306)
+* Fix node show specs to include availability attribute (#2687)
+* CLI: Exit with error from node ssh --any if no nodes are online (#2686)
+* Make stack yml interpolation default ENVs extendable for plugin devs (#2667)
+* Refactor plugin manager (#2434)
+* CLI: Use the "press any key" dialog from tty-prompt library (#2666)
+* cli: bump kontena-websocket-client to 0.1.1 (#2698)
+* CLI: Removed the app subcommand, it is now available as a plugin (#2675)
+* Make stack logs accept service names as filters (#2713)
+* agent: report container exec errors (#2745)
+* Add kontena stack deploy --no-wait (#2758)
+* Add LE TOS agreement on register command (#2754)
+* Service cpus limit (#2541)
+* Initial tls-sni support and new api for domain authorizations (#2732)
+* Allow stacks to depend on other stacks (#2707)
+* New certificate model, API, service YAML (#2736)
+* Fix CLI stack source not found error from "can't determine origin" to generic "no such file" (#2809)
+* Fix stack upgrade to use --keep-dependencies (#2808)
+* Fix stack variables to not write to env by default (#2802)
+* Enhanced HostNode status, health (#2511)
+* Show certs with service details (#2826)
+* Fix interpolation of stack variables declared by `to: env` (#2822)
+* Support shm_size (#2767)
+* Add cloud plugin to installers (#2831)
+* Add --values option to kontena stack show command (#2409)
+* Fix exec console size (#2708)
+* CLI: Add --values-from-stack option to stack commands for reading values from an installed stack (#2795)
+* Fix stack validate command and validity checking when installing (#2812)
+* CLI: Add --no-wait option to kontena service deploy (#2847)
+* Fix oneshot hooks; Change post_start hooks to run on start; Add pre_start, pre_stop hooks (#2701)
+* Add cert delete API and CLI command (#2850)
+* Add --dry-run to simulate kontena stack upgrade (#2823)
+* List auto-renewable certificates; Migrate existing LE cert secrets to new certificate models (#2867)
+* Fix cli node health specs duration off-by-one timing (#2870)
+* Remove experimental status from volumes (#2864)
+* Fix missing stack and grid variables when running validate with --online flag (#2886)
+* Change "new stacks" color to green in stack upgrade report (#2890)
+* CLI: Do not output field names in quiet mode when there is no data (#2876)
+* Deploy CLI omnibus deb to bintray (#2658)
+* Fix CLI omnibus liblzma source (#2903)
+* Fix CLI omnibus liblzma source url (#2907)
+* Support for stop_signal (#2918)
+* Fix CLI output hang after exceptions raised in spinners (#2906)
+* CLI: Make volumes ls -q output name instead of grid/name (#2926)
+
+#### Docs
+
+* Fixing typo in LB docs (#2492)
+* docs (nodes) Fix dockerd labels without a value (#2454)
+* Unify common grid create/update POST/PUT parameters (#2488)
+* Automatically determine volume driver version from installed plugins (#2526)
+* Update What Is Kontena? documentation (#2451)
+* Add configurable stop timeout for services (#2033)
+* Run post_start hooks before wait for port (#2543)
+* Support basic authentication in auth provider userinfo request (#2260)
+* Ephemeral nodes should not get any stateful services (#2549)
+* make local gitbook work without GA & Hubspot tokens (#2586)
+* Create HostNode with per-node token for websocket auth (#2504)
+* Add new user_admin role (#2577)
+* Rewrite agent websocket client (#2560)
+* Ubuntu kontena-agent: Use /usr/bin/dockerd for compatibility with Docker 1.12 - 17.06 (#2589)
+* Configurable agent node ID, labels (#2590)
+* Add support for soft affinities (#2540)
+* Add v4auth to create registry with s3 driver (#2242)
+* Node scheduling availability (#2306)
+* Agent: Allow overriding KONTENA_NODE_NAME (#2693)
+* CLI: Removed the app subcommand, it is now available as a plugin (#2675)
+* Split out docs as a separate repo (#2752)
+
+## [1.3.5](https://github.com/kontena/kontena/releases/tag/v1.3.5) (2017-11-03)
+
+The 1.3.5 release fixes several issues in the 1.3 release, as well as some older issues.
+
+This release also includes a change to how the server estimates container memory utilization when selecting a node with sufficient free memory: instead of looking at the current memory utilization of the oldest service container, the server will now use the peak memory utilization across all service containers for the past hour.
+
+### Fixed issues
+
+* kontena node/labels update does not notify nodes #2746
+
+    This issue can cause new nodes being provisioned within the same `region` to establish weave connections using their public IP, instead of the private IP that nodes should be using within the same region. This affects nodes in AWS VPCs with security groups managed by `kontena aws node create` in particular. Workaround is to restart the `kontena-agent` on the nodes.
+
+    Introduced in version 1.3.0, does not affect 1.2 or earlier.
+
+* Server leaks memory if new containers are constantly created and destroyed #2895
+
+* Continual high CPU usage #2719
+
+    The background service re-scheduling is now more efficient, consuming significantly less CPU while idle.
+
+### Changes
+
+#### Master
+
+* Fix server ContainerInfoMapper memory leak (#2896) (#2940)
+* backport #2747 (#2941)
+* Improve scheduler performance (#2921) (#2973)
+
+## [1.3.4](https://github.com/kontena/kontena/releases/tag/v1.3.4) (2017-07-20)
+
+### Known issues
+
+* Ubuntu kontena-agent package is not compatible with Docker 17.06 #2588
+
+    This has been fixed for the 1.3 releases by marking the Ubuntu packages as incompatible with the newest `docker-ce` 17.06 packages.
+
+    The 1.4 release will support the Docker 17.06 release, but will also bump the minimum Docker version from 1.10 to 1.12.
+
+### Fixed issues
+
+* `kontena grid update` does not notify nodes #2584
+* Grid non-admin user can remove other users from grid #2578
+
+### Changes
+
+#### Master
+
+* Fix server grids update notify (#2585)
+* Fix grid user remove access check (#2579)
+* Fix Ubuntu kontena-server/kontena-agent packages to be incompatible with docker 17.06 (#2593)
+
+#### Agents
+* Fix Ubuntu kontena-server/kontena-agent packages to be incompatible with docker 17.06 (#2593)
+
+## [1.3.3](https://github.com/kontena/kontena/releases/tag/v1.3.3) (2017-07-06)
+
+**Master & Agents:**
+
+- Use latest HostNodeStat entry when serializing host node (#2555)
+- Run post_start hooks before wait for port (#2543)
+
+
+## [1.3.2](https://github.com/kontena/kontena/releases/tag/v1.3.2) (2017-06-30)
+
+**Master & Agents:**
+
+- Server: Fix GridServices::Update with multiple names for the same service secret (#2506)
+- Fix LE cert authorization mutation to fail gracefully if not yet registered (#2497)
+- Fix healtcheck port validation to check port in unix port range (#2496)
+- Fix Etcd launcher to tolerate docker errors better (#2509)
+- Automatically determine volume driver version from installed plugins (#2526)
+- Fix any versioned kontena/lb:* image to resolve as an LB service, not just latest (#2530)
+- Fix mongoid last sort (#2534)
+
+**CLI:**
+
+- Only use STDIN.raw for tty-mode execs (#2499)
+- Fix cli node list sorting, specs (#2512)
+
+## [1.3.1](https://github.com/kontena/kontena/releases/tag/v1.3.1) (2017-06-16)
+
+**Master & Agents:**
+
+- Allow server port to be set via env (#2455)
+- Increase RpcClient timeouts from 2s to 5s (#2461)
+- Fix oauth2 api request body www-form decoding (#2485)
+
+**CLI:**
+
+- Fix plugin installation SafeYAML errors (#2462)
+- Fix exit code when plugin install fails (#2471)
+- Show an initializing node name as (initializing) instead of nil error in node list (#2478)
+- Add a "Getting started" banner to main command help (#2385)
+
+**Other:**
+
+- Tests: Upgrade agent test vagrant docker-compose to version 1.13 (#2463)
+- Tests: Update test kommando to fix missing bash failures (#2475)
+- Tests: Fix container specs to use quiet option and with proper regexp (#2467)
+- Tests: bundle update Gemfile.lock with kommando 0.1.2, safe_yaml changes (#2481)
+- Docs: Add capped collection size envs (#2464)
+- Docs: add nodes to summary (#2473)
+- Docs: fix upgrading major.major typo (#2472)
+- Master-dev: Bump mongoid pool size (#2477)
+
+## [1.3.0](https://github.com/kontena/kontena/releases/tag/v1.3.0) (2017-06-09)
+
+### Highlights
+
+This release upgrades the used MongoDB driver to a version which supports newer MongoDB release than 3.0. It essentially means that now there's support for using hosted (e.g. Mongo Atlas) services as Kontena Master database. And naturally, the newer mongoid and underlying db driver boosts the stability of the server.
+
+We've also added support for using Kontena CLI to open an interactive terminals into running service instances. This makes debugging and executing any maintenance scripts a lot easier.
+
+All CLI list commands such as `kontena node list` or `kontena service list` now accept `-q` or `--quiet` parameter for outputting only the identifying column of the list, such as node name or container ID. This makes it easier to pipe the output to other commands. For example: `kontena service ls -q|xargs -n1 kontena service show`.
+
+### Breaking changes
+
+CLI trusted-subnet command has been refactored to match same pattern with other commands to use the current grid automatically. If a user has written some scripts that utilize any of these subcommands, after this change they will simply fail due to `ERROR: too many arguments` and not corrupt any data until the extra grid parameter is removed from said scripts.
+
+`kontena service exec` command has changed the meaning of short `-i` option. Now it means `--interactive`, the new option for executing on specific instance is `--instance`. This change is done to comply with `docker exec -it` options which users are accustomed to use tp get interactive terminals into running containers.
+
+### Deprecations
+
+CLI `kontena app ...` commands have been now deprecated in favor of `kontena stack` commands.
+
+
+**Master & Agents:**
+
+- Fix agent env validation abort, defaults (#2302)
+- Refactor agent WeaveHelper to avoid unnecessary sync actor calls (#2207)
+- Validate service envs on server, simplify syntax for parsing/validation (#2315)
+- Stack stop and restart commands (#2299)
+- Fix server stack services sorting (#1980)
+- Upgrade to Mongoid 5.2 (#2257)
+- Don't crash VolumeManager if volume remove fails (#2343)
+- Serialize all pubsub payloads to avoid issues with dotted fields (#2342)
+- Improve mutations to return multiple errors for a field (#2058)
+- Notify nodes when volumes are removed (#2352)
+- Fix server HealthCheckWorker pubsub payload (#2361)
+- Wrap server MongoPubsub subscribe payload in a HashWithIndifferentAccess (#2357)
+- Do not split www-authenticate header to multiple lines (#2329)
+- Increase master authentication logging (#2367)
+- Cleanup leftover HostNode methods (#2326)
+- Remove unused agent Kontena::Pubsub class (#2337)
+- Fix websocket node connection plug, unplug races (#2144)
+- Destroy access_token only if not nil (#2375)
+- Fix server mutations validations regexps (#2325)
+- Add tracking if service embedded docs changes (#2377)
+- Update JsonPath gem (#2382)
+- Do not send Content-Type in AuthProvider GET requests (#2386)
+- Service and container exec interactive tty support (#2271)
+- Improve platform identification on the Kontena Cloud (#2388)
+- Add tty as separate option in container/service exec (#2412)
+- Fix auth api debug message (#2429)
+- Terminate ContainerHealthCheckWorker less brutally (#2440)
+- Render service links with qualified name (#2421)
+
+
+**CLI:**
+
+- Activate plugin gem and dependencies before loading the plugin (#2180)
+- Remove broken/dead code for cli ssh command parameter handling  (#2309)
+- Make trusted-subnet subcommands use the current_grid or --grid (#2294)
+- Stack stop and restart commands (#2299)
+- Exit with non-zero exit code when commands run other commands that fail  (#2209)
+- Replace implementation of "press any key" dialog (#2052)
+- Add deprecation flag for app commands (#2336)
+- Fix subcommand loading bug when running init-cloud (#2350)
+- Fix stack YAML reader exception with invalid port syntax (#2332)
+- Remote cloud login (#2331)
+- Make all "kontena XX list" commands accept -q (or --quiet) to only output the id column without header (#2327)
+- Increase MEM_MAX_LIMITS readability (#2341)
+- Allow stack registry read operations without cloud authentication (#2328)
+- CLI error and debug logging improvements (#2263)
+- Speed up CLI loading by reducing the number of explicitly loaded files (#2335)
+- Revert any_key_to_continue implementation (#2379)
+- Make kontena master ssh work without server.provider set (#2380)
+- Service instance resolver undefined local variable or method  (#2381)
+- Finetune header formatting on list commands (#2397)
+- Fix completions that got broken in 1.3.0rc (#2395)
+- Replace websocket-client-simple with embedded ws client (#2396)
+- Add yaml loading to error handling (#2402)
+- Fix master join command option forwarding to master login (#2394)
+- Fix cloud master update endpoint (#2422)
+- Add tty as separate option in container/service exec (#2412)
+- Fix typo in service exec ws close (#2432)
+- Fix include/extend in the master deploy wizard (#2405)
+- Added requires for excon and json to plugin_manager (#2420)
+- Fix error in exec commands when master url does not have a trailing slash (#2424)
+- Avoid missing constants by using autoload (#2425)
+- Add autoload for StringIO (#2443)
+- Fix init-cloud call args during deploy wizard (#2444)
+
+
+**Other:**
+
+- E2E tests: service_link resolver requires kontena stack validate --online (#2285)
+- Fix Bearer token header examples in docs (#2330)
+- Fix flaky vpn E2E specs (#2370)
+- fix broken e2e link spec (#2363)
+- Statsd exporting example was missing grid name (#2389)
+
+
+
+## [1.2.2](https://github.com/kontena/kontena/releases/tag/v1.2.2) (2017-05-10)
+
+The 1.2.2 release fixes several issues in the 1.2 release, as well as some older issues.
+
+### Fixed issues
+
+#### [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc2) (2017-05-09)
+
+* GridServiceDeploy can get stuck in pending state if deploy create races with service remove #2275
+
+#### [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc1) (2017-05-08)
+* kontena registry create "ERROR" #2246
+* Syntax errors in kontena.yml service environment cause API 500 errors #2238
+* CLI: kontena grid update clears out default-affinity #2252
+* grid statsd server cannot be cleared once set #2230
+* Stopping service does not abort running deploy #2214
+* Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
+* Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
+* Server GridServiceDeployer can run for longer than 5-10 minutes, allowing further deploys to run simultaneously #2215
+* Agent: Actor crash-and-restart loop will eat lot of resources #2231
+* Agent WeaveWorker starts seeing container events twice after weave restart event #2225
+* Server API views should be optimized to pre-fetch referenced objects, avoiding O(N) queries #2234
+* Kontena 1.2 fails to re-schedule stateful ha service instance on removed node #2274
+* Random strategy moves services constantly #2244
+* Random strategy fails to schedule stateful service with existing instances #2254
+* Service `*.kontena.local` DNS aliases missing after `kontena grid trusted-subnet` changes #2158
+
+### Changes
+
+#### Packaging
+* sign osx pkg properly (#2255)
+
+#### Agent
+* Don't crash StatsWorker actor if statsd config fails (#2262)
+* Prevent WeaveWorker from doing duplicate subscription for container:event (#2265)
+* Fix agent weave restart (#2278)
+* Fix flaky WeaveWorker notification spec (#2282)
+* Fix agent ServicePodWorker to log complete apply error (#2292)
+
+#### Server
+* Fix server deploy queuing (#2221)
+* add missing includes to boost query performance (#2264)
+* Include grid and service in container log query (#2266)
+* Fix random strategy (#2256)
+* Add `--no-statsd-server` and `--no-default-affinity` to "kontena grid update" (#2251)
+* Fix GridServiceSerializer deploy_opts min_health typo (#2268)
+* Fix handling of aborted service deploys (#2281)
+* Abort deploy gracefully in exceptional cases (#2280)
+* Do not run server workers in specs (#2284)
+
+#### CLI
+* Fix registry create command (#2240)
+* Make stack environment variable validation fail if array item has no equals sign (#2241)
+* Add require for securerandom in after deploy hook (#2247)
+* Add `--no-statsd-server` and `--no-default-affinity` to "kontena grid update" (#2251)
+* Fix handling of aborted service deploys (#2281)
+
+## [1.2.1](https://github.com/kontena/kontena/releases/tag/v1.2.1) (2017-04-28)
+
+The 1.2.1 release fixes various issues in the 1.2.0 release.
+
+### Fixed issues
+
+#### [1.2.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-04-27)
+* Stack upgrade variable defaulting from master broke in 1.2.0 #2216
+* Service volume mounts with :ro breaks validation in 1.2.0 #2219
+* CLI: stack reader explodes on an empty stack file: `NoMethodError : undefined method ''[]' for false:FalseClass` #2204
+* Missing documentation re upgrading path for named volumes #2222
+* OSX cli package (omnibus) is missing readline #2194
+* Server: GridServiceHealthMonitorJob can pile up deployments #2208
+
+### Known issues
+
+Known regressions in the Kontena 1.2 releases compared to earlier releases.
+
+* Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
+* Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
+* Stopping service does not abort running deploy #2214
+
+### Changes
+
+No changes from `1.2.1.rc1`.
+
+* Fix 1.2.0 release notes to document volume migration upgrades (#2223)
+
+#### Agent
+* Do not send un-managed volume infos to master (#2189)
+
+#### Server
+* Fix GridService#deploy_pending? to consider all unfinished deploys as pending (#2211)
+
+#### CLI
+* SSL: Give hint about setting certs path (#2201)
+* Make kontena_cli_spec spec test what it was supposed to (#2210)
+* Fix variable value defaulting from master during stack upgrade (#2217)
+* Fix validation of volume definitions with permission flags (#2220)
+* Handle empty YAML files in stack commands (#2206)
+* Add rb-readline to CLI installer (#2205)
+
+## [1.2.0](https://github.com/kontena/kontena/releases/tag/v1.2.0) (2017-04-21)
+
+### Highlights
+
+#### Experimental volumes support
+The Kontena 1.2 release introduces [experimental support for volume management](https://kontena.io/docs/using-kontena/volumes).
+Stack services can now [use](https://kontena.io/docs/references/kontena-yml#volumes) volumes created by `kontena volume create`, and the service and volume instances will be scheduled together.
+
+Kontena volumes can use volume drivers provided by Docker plugins installed on the host nodes, such as [rexray](https://rexray.codedellemc.com/).
+
+See the [Upgrading](#upgrading-stacks-with-services-using-named-docker-volumes) section for existing stacks with services using named volumes, which were previously deployed as implicitly created local Docker volumes.
+
+The exact details of how these Kontena volumes are managed may still change as the implementation evolves. If you use the experimental Kontena volumes support, be prepared to change your volume definitions as necessary when upgrading to newer Kontena versions.
+
+#### Native IPsec overlay network encryption
+
+Host nodes will be upgraded to Weave 1.9.3, and switch to using the new IPSec [encrypted datapath](https://kontena.io/docs/core-concepts/networking#encrypted-datapath) for the overlay networking between host nodes.
+
+The new encrypted datapath uses native Linux IPsec encryption, providing improved performance compared to the current [userspace `sleeve`](https://kontena.io/docs/core-concepts/networking#sleeve) transport.
+Host nodes will fall back to the current UDP-based `sleeve` transport if they are unable to send or receive IPsec ESP packets. Note that the default firewall rules for e.g. Google Cloud Platform deny IPsec ESP packets by default.
+
+#### Improved service deployment and agent communication
+
+The server and agent have been improved to be more robust in the case of various error and overload situations affecting service deployments.
+The agent can now recover from various errors, healing itself and resolving any deployment inconsistencies.
+
+The `kontena service deploy` and `kontena stack` commands now provide better reporting of deployment errors.
+
+#### Support for Kontena Cloud metrics and real-time updates
+
+The Kontena 1.2 release supports additional host/container stats used for the updated [Kontena Cloud](https://cloud.kontena.io) dashboard, as well as realtime streaming of updates as services are deployed or host nodes update. Refer to the [release blog post](https://blog.kontena.io/kontena-1-2-0-release/#kontenacloudupdates) for more details.
+
+#### CLI
+
+* [`kontena shell`](https://github.com/kontena/kontena-plugin-shell#kontena-shell)
+
+    The [Kontena Shell](https://github.com/kontena/kontena-plugin-shell#kontena-shell) is available as an optional plugin for Kontena 1.2, offering an improved interactive console interface: `kontena plugin install shell`
+
+* [`kontena grid create --subnet --supernet`](https://kontena.io/docs/using-kontena/grids#grid-subnet-supernet)
+
+    If the default `10.80.0.0/12` internal overlay network address space overlaps with the the private networking address space on the host node provider, you can chose a different internal overlay networking address space for use by the Kontena host nodes and service containers.
+
+* [`kontena grid update --log-forwarder fluentd`](https://kontena.io/docs/using-kontena/grids#logging-options)
+
+    The agent can ship service container logs to an external `fluentd` server.
+
+* `kontena grid|stack|service events`
+
+    Follow scheduling and deployment related-events across the Kontena master and node agents.
+
+* `kontena stack install|upgrade|build|validate --values-to --values-from`
+
+    Automate [Kontena stack variables](https://kontena.io/docs/references/kontena-yml-variables) across deployments.
+
+* `kontena stack validate --online`
+
+    Stack validation happens offline by default, avoiding any side-effects such as Kontena Vault writes.
+
+* `kontena stack upgrade --force`
+
+    Require confirmation if upgrading a different stack file.
+
+* `kontena service show`
+
+   List containers by instance.
+
+* `kontena service rm --instance`
+
+   Force a service instance to be rescheduled.
+
+* `kontena node ssh --any`
+
+    SSH to the first available connected node.
+
+* `kontena node rm`
+
+    Refuse to remove a node that is still online.
+
+* `kontena master user`
+
+    Renamed and deprecated `kontena master users`.
+
+* `kontena volume create`, `show`, `remove`, `list`
+
+    See the [Volumes](https://kontena.io/docs/using-kontena/volumes) documentation.
+
+#### Stacks
+
+* Support named `service: volumes: - volume:/path`
+
+    All [named service volumes](https://www.kontena.io/docs/references/kontena-yml.html#named-volume) must now be defined in the new `volumes` section.
+
+* New `volumes` section
+
+    See the new [Stack Volume Configuration Reference](https://www.kontena.io/docs/references/kontena-yml.html#volume-configuration-reference) documentation.
+
+### Upgrading
+
+#### Upgrading stacks with services using named Docker volumes
+
+Kontena Services could also use named volumes prior to Kontena 1.2, which would implicitly create local Docker volumes on each host node that service instances were deployed to.
+
+After upgrading the server to Kontena 1.2, any such named Docker volumes used by existing services will appear in `kontena volume ls`, in the form of [grid-scoped volumes](https://www.kontena.io/docs/using-kontena/volumes.html#scope-grid) using the default `local` driver. However, trying to install or upgrade a existing stack file containing services that use those named volumes will fail with a validation error: `service ... volumes ...: defines volume name, but file does not contain volumes definitions`
+
+The stack files containing services using named Docker volumes must be edited to use to use the new `volumes` section. The migrated Kontena volumes shown in `kontena volume ls` can be referenced as external volumes in the stack:
+
+```yaml
+stack: test/test
+services:
+  test:
+    volumes:
+      - test:/test
+volumes:
+  test:
+    external:      # equivalent to `external: true`, matching the name of the volumes section
+      name: test
+```
+
+After editing the stack file, the stack can be upgraded, and the services can continue to be deployed as before. Assuming the services are using affinity filters such that they continue to be deployed to the same host nodes, then any service containers deployed with Kontena 1.2 will use the existing named local Docker volumes that were implicitly created by earlier Kontena deployments. Using affinity filters to schedule onto specific nodes was already necessary for the stable use of named service volumes in earlier versions of Kontena.
+
+### Known issues
+
+Known regressions in the new Kontena 1.2 release compared to earlier releases.
+
+* Kontena 1.2 cadvisor with rshared bind-mounts is broken on distros running Docker in a non-shared mount namespace #2175
+
+    Service container stats will not be available for host nodes installed using distribution packages that configure the Docker service to run in a separate non-shared mount namespace.
+
+* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
+
+    Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
+
+### Fixed issues
+
+#### [1.2.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc1) (2017-04-07)
+
+* Inconistent `master_admin` access checks (#1442)
+* Enable us to pipe service(/cluster?) logs to ELK Stack for example (#1719)
+* Agent websocket client connect errors are too vauge (#1749)
+* stack install && upgrade to have --values-to (#1789)
+* Constant GridServiceDeployer messages for 'daemon' services (#1862)
+* Stack deploy hangs in "Waiting for deployment to start" if the deployed service is in restart loop (#1866)
+* ServiceBalancerJob loop on daemon services with affinity filter (#1895)
+* can not remove "partially_running" stack (#1928)
+* Google OAuth 2.0 needs redirect URI to get an access token (#2015)
+* Stack vault resolver shows errors (#2059)
+* Secret update triggers update of linked service even value does not change (#2094)
+
+#### [1.2.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc2) (2017-04-13)
+
+* After weave upgrade, service aliases are missing from DNS #2079
+* Agent should check that volume driver match before reusing it #2089
+* Stack upgrade can remove linked-to services, breaking linking services #1769
+* Cli: kontena volume ls cuts long volume names #2083
+* Stack deploy and service deploy error states are broken #2127
+* Stateful service with daemon strategy behaviour is broken #2133
+* Re-creating indexes in migrations may timeout puma worker boot #2120
+
+#### [1.2.0.rc3](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc3) (2017-04-20)
+
+* Agent starts outdated container instead of re-creating it #2154
+* Service with newer image is not deployed without force #2171
+* CreateEventLog migration throws error if index is building #2164
+* Unresolvable statsd endpoint crashes NodeInfoWorker #2165
+* rake kontena:reset_admin throws error #2168
+
+#### [1.2.0](https://github.com/kontena/kontena/releases/tag/v1.2.0) (2017-04-21)
+
+* Stack complains about bind mounts #2192
+* Agent pulls images and may re-create service containers after reboot/upgrade if Docker image has been updated #2197
+* CLI: kontena stack deploy does not report instance deploy errors #2196
+
+### Changes
+
+* Improve how agent rpc server handles requests (#1607)
+* more e2e specs (#1830)
+* Configurable grid subnet, supernet (#1323)
+* Refactor all agent communication to msgpack rpc (#1855)
+* Run e2e specs with docker-compose inside docker-compose with CoreOS inside Vagrant (#1878)
+* Add timestamps to host node and container stats (#1908)
+* Test: Skip compose build, bind-mount /app instead (#1881)
+* Remove unnecessary spec_helper requires in tests (#1932)
+* Fix ubuntu packages to also support docker-{ce,ee}, fix docker-engine dependencies (#1950)
+* Fix travis Ubuntu package deployment to bintray (#1953)
+* Fluentd log forwarder (#1860)
+* Fix querying of service logs by instance number (#1874)
+* Fix Ubuntu xenial package install to not override prompted debconf values with empty values from the default config file (#1975)
+* Refactor agent to pull services desired state from the master (#1873)
+* Change 2.4.0 to 2.4.1 in travis (#2017)
+* Store docker engine plugin information (#2022)
+* Volumes api (#1849)
+* Metrics API > Services and Containers (#1995)
+* Adding CPU to node usage.  Adding more memory stats to metrics API responses.  Adding more unit tests, updating docs. (#2035)
+* Volume instance scheduling (#2020)
+* Fix nil backtraces in rpc errors (#1998)
+* Service instance deploy state, errors (#2034)
+* WaitHelper threshold for logging (#2072)
+* Grid/stack/service event logs (#2028)
+* Volume show command & API (#2099)
+* Service instances api & related cli enhancements (#2101)
+* Do not log entire yield value from wait_helper (#2124)
+* fix e2e service start/stop tests (#2130)
+* Improve websocket timeouts and node connection open/close logging (#2142)
+
+#### Docs
+* Docs: link env variables reference to summary (#1912)
+* Updating development.md guide to include step to delete master nodes from local cli config file (#1909)
+* docs: fix upgrading section links (#1941)
+* docs (lb) Example on how to include cert intermediates. (#1939)
+* Volume related api docs (#2075)
+* Docs for volumes (#2049)
+* kontena.yml reference improvements (#2179)
+* Mention that re-scheduling happens only if service is stateless (#2178)
+* docs: service rescheduling after node removal (#2182)
+
+#### Agent
+* Agent: Upgrade to faye-websocket 0.10.7 with connection error reasons, close timeouts (#1757)
+* Agent: Update weave to 1.9.3 (#1922)
+* Fix Agent state_in_sync for stopped containers (#2023)
+* Bump IPAM to version 0.2.2 (#2030)
+* Refactor agent to use Observable node info (#2011)
+* Agent observable fixes (#2042)
+* Fix pod manager to populate service name from docker containers (#2064)
+* Send both legacy & new driver information from a node (#2061)
+* Mount cAdvisor volumes with rshared (#2005)
+* Improve agent RPC request error handling (#2008)
+* Fix observable spec races (#2106)
+* Throttle agent logs streams if queue is full (#2111)
+* Fix agent to raise on service container start, stop, restart errors (#2138)
+* Check volume driver match when ensuring volume existence (#2135)
+* Improve agent resource usage (#2143)
+* Reduce agent info logging (#2155)
+* Fix agent WeaveWorker to not start until Weave has started (#2153)
+* ContainerInfoWorker fixes (#2147)
+* Refactor node stats to NodeStatsWorker (#2166)
+* Remove unused ContainerStarterWorker (#2181)
+* Don't crash ImagePullWorker if pull fails (#2172)
+* Fixing nice stats collection typo bug (#2190)
+* Check that image is up-to-date in ServicePodWorker (#2177)
+* trigger image pull only if deploy_rev changes (#2198)
+
+#### Server
+* Display server version on master container startup (#1839)
+* Stack deploy command spec was sleeping (#1746)
+* Fix master auth config race condition issues (#1921)
+* Fixing node_id issue in server node_handler_spec. (#1944)
+* Fix grid update specs for --log-forwarder fluentd (#1971)
+* Harmonize grid access checks (#1970)
+* Fix error in #stop_current_instance if host_node is nil (#2007)
+* Save host_node_id in CreateGridServiceInstance migration (#2006)
+* Replace server timeout { sleep until ... } loops with non-interrupting wait_until { ... } loops (#1987, #2010)
+* Send redirect_uri in authorization_code request as required by some providers (#2016)
+* Fix missing server Rpc::GridSerializer fields (#2014)
+* Trace and fix server sharing of Moped::Session connections between threads (#1965)
+* Send events to Kontena Cloud in real time (#1906)
+* don't count volume containers into totals in aggregation (#2031)
+* Fix grid metrics CPU calculation (#2044)
+* remove duplicate json-serializer from Gemfile (#2055)
+* Improve RpcServer performance (#2050)
+* Improve server stack mutatations to return errors for multiple services (#1976)
+* Remove volume creation as part of stacks (#2070)
+* Fix possible thread leaks in WebsocketBackend (#2056)
+* Refactor stacks api to always require extenal name for a volume (#2077)
+* Add missing DuplicateMigrationVersionError (#2066)
+* Do nothing if secret value does not change on update (#2095)
+* Only cleanup nodes labeled as ephemeral (#2084)
+* Fix service update changes detection (#2097)
+* Fix scheduler to raise better error if given empty nodes (#2107)
+* Fix migration timeout issues (#2123)
+* do not reschedule stateful service automatically (#2137)
+* Fix service, stack deploy errors (#2132)
+* Server WebsocketBackend EventMachine watchdog (#2139)
+* migration service instance also from volume containers (#2129)
+* Fix stack deploy service removal (#2128)
+* Bring scheduler node offline grace period back (#2141)
+* Include CPU in resource usage json (#2151)
+* Add service pod caching on Rpc::NodeServicePodHandler (#2146)
+* Fix scheduler to notice if instance node was removed (#2152)
+* Fix server NodePlugger.plugin logging of new nodes without names (#2156)
+* Fix rake tasks to require celluloid/current (#2169)
+* Return container stats only from running instances (#2160)
+* remove bundler from bin/kontena-console (#2170)
+* Fix Service Metrics CPU (#2162)
+* Raise puma worker boot timeout & remove background threads (#2187)
+
+#### CLI
+* Upgrade to tty-prompt 0.11 with improved windows support (#1901)
+* Fix cli specs to use an explicit client instance_double (#1747)
+* Modifications to simplify kontena-cli homebrew formula (#1889)
+* CLI: Fix stacks YAML reader handling of undefined variables (#1884)
+* kontena node ssh --any: connect to first connected node (#1359)
+* Speed up CLI launching by lazy-loading subcommands (#1093)
+* Fixing paths for nested sub commands in calls to load_subcommand. (#1934)
+* Send file:// as registry url to allow backwards compatibility with pre v1.1.2 masters (#1930)
+* Require --force or confirmation when upgrading to a different stack (#1940)
+* Fix omnibus osx wrapper args passing (#1967)
+* Fix CLI to output API errors to STDERR (#1963)
+* Upgrade opto to 1.8.4 (#1935)
+* Validate hook names in kontena.yml (#2019)
+* Add --values-to from stack validate to the rest of the stack subcommands (#1985)
+* Stack yaml volume mapping parser and validation support (#1957)
+* Validate volumes before stack gets created or updated (#2043)
+* Deprecate master users subcommand in favor of master user (#1984)
+* CLI exception output normalization (#2057)
+* Make stack validate not connect to master unless asked (#2060)
+* cli: fix node ssh command API URLs (#2078)
+* Invite and invite hook were using the deprecated "master users" (#1984) (#2085)
+* require force or confirmation to remove a volume (#2093)
+* Refuse to remove an online node (#2086)
+* Fix cli master logout module definition (#2104)
+* Fix CLI stack logs missing requires, spec (#2103)
+* Added prompt to commands that wait for input from STDIN (#2045)
+* bump hash-validator to 0.7.1 which fixes the 'external: false' validation (#2105)
+* Make stack variable yes/no prompts honor default value (#2053)
+* CLI: mark volumes commands as experimental (#2108)
+* In cli login command, finish method was returning nil, which caused browser web flow prompt even when a valid token was passed in (#2145)
+* Use tty-table for volume ls (#2136)
+* Reduce already initialized constant warnings in api client (#2140)
+* "kontena complete --subcommand-tree" prints out the full command tree for tests (#2102)
+* CLI logo now says "cli" (#2167)
+* Warn, don't exit, when a plugin fails to load (#2184)
+* Validate volume declaration on cli only if named volumes used (#2193)
+* Stack deploy error reporting (#2199)
+
 ## [1.1.2](https://github.com/kontena/kontena/releases/tag/v1.1.2) (2017-02-24)
 
 **Master & Agents:**

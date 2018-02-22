@@ -8,49 +8,53 @@ module Kontena
       include Kontena::Logging
       include Common
 
-      attr_reader :service_id, :instance_number
+      attr_reader :service_pod, :hook_manager
 
-      # @param [String] service_id
-      # @param [Integer] instance_number
+      # @param service_pod [ServicePod]
+      # @param hook_manager [LifecycleHookManager]
       # @param [Hash] opts
-      def initialize(service_id, instance_number, opts = {})
-        @service_id = service_id
-        @instance_number = instance_number
-        @opts = opts
+      def initialize(service_pod, hook_manager)
+        @service_pod = service_pod
+        @hook_manager = hook_manager
+        @hook_manager.track(service_pod)
       end
 
       # @return [Docker::Container]
       def perform
-        service_container = get_container(self.service_id, self.instance_number)
+        service_container = get_container(service_pod.service_id, service_pod.instance_number)
         if service_container
-          if remove_from_load_balancer?(service_container)
-            remove_from_load_balancer(service_container)
-          end
-          info "terminating service: #{service_container.name}"
-          service_container.stop('timeout' => 10)
+          hook_manager.on_pre_stop(service_container) if service_container.running?
+          info "terminating service: #{service_container.name_for_humans}"
+          log_service_pod_event(
+            service_pod.service_id, service_pod.instance_number,
+            "service:remove_instance", "removing service instance #{service_container.name_for_humans}"
+          )
+          service_container.stop('timeout' => service_container.stop_grace_period)
           service_container.wait
           service_container.delete(v: true)
+
+          log_service_pod_event(
+            service_pod.service_id, service_pod.instance_number,
+            "service:remove_instance", "service instance #{service_container.name_for_humans} removed successfully"
+          )
         end
-        data_container = get_container(self.service_id, self.instance_number, 'volume')
+        data_container = get_container(service_pod.service_id, service_pod.instance_number, 'volume')
         if data_container
           info "cleaning up service volumes: #{data_container.name}"
+          log_service_pod_event(
+            service_pod.service_id, service_pod.instance_number,
+            "service:remove_instance", "removing service instance #{service_container.name_for_humans} data volume"
+          ) if service_container
+
           data_container.delete(v: true)
+
+          log_service_pod_event(
+            service_pod.service_id, service_pod.instance_number,
+            "service:remove_instance", "service instance #{service_container.name_for_humans} data volume removed succesfully"
+          ) if service_container
         end
 
         service_container
-      end
-
-      # @param [Docker::Container] service_container
-      def remove_from_load_balancer(service_container)
-        Celluloid::Notifications.publish('lb:remove_config', service_container)
-      end
-
-      # @param [Docker::Container] service_container
-      # @return [Boolean]
-      def remove_from_load_balancer?(service_container)
-        service_container.load_balanced? &&
-          service_container.instance_number == 1 &&
-          @opts['lb'] == true
       end
     end
   end

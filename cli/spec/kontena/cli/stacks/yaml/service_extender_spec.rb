@@ -1,4 +1,3 @@
-require_relative '../../../../spec_helper'
 require 'kontena/cli/stacks/yaml/service_extender'
 
 describe Kontena::Cli::Stacks::YAML::ServiceExtender do
@@ -30,21 +29,30 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
 
     context 'environment variables' do
       it 'inherites env vars from upper level' do
-        from = { 'environment' => ['FOO=bar'] }
+        from = { 'env' => ['FOO=bar'] }
         to = {}
         result = described_class.new(to).extend_from(from)
         expect(result['environment']).to eq(['FOO=bar'])
       end
 
       it 'overrides values' do
-        from = { 'environment' => ['FOO=bar'] }
+        from = { 'env' => ['FOO=bar'] }
         to = { 'environment' => ['FOO=baz'] }
         result = described_class.new(to).extend_from(from)
         expect(result['environment']).to eq(['FOO=baz'])
       end
 
       it 'combines variables' do
-        from = { 'environment' => ['FOO=bar'] }
+        from = { 'env' => ['FOO=bar'] }
+        to = { 'environment' => ['BAR=baz'] }
+        result = described_class.new(to).extend_from(from)
+        expect(result['environment'].include?('BAR=baz')).to be_truthy
+        expect(result['environment'].include?('FOO=bar')).to be_truthy
+        expect(result['environment'].size).to eq 2
+      end
+
+      it 'combines and overrides variables' do
+        from = { 'env' => ['FOO=bar', 'BAR=buz'] }
         to = { 'environment' => ['BAR=baz'] }
         result = described_class.new(to).extend_from(from)
         expect(result['environment'].include?('BAR=baz')).to be_truthy

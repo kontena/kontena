@@ -1,8 +1,8 @@
 require 'ostruct'
 require 'singleton'
 require 'forwardable'
-require 'json'
 require 'logger'
+autoload :JSON, 'json'
 
 module Kontena
   module Cli
@@ -13,49 +13,121 @@ module Kontena
     class Config < OpenStruct
       include Singleton
 
+      module Fields
+        def keys
+          @table.keys
+        end
+
+        def values_at(*fields)
+          (fields.first.is_a?(Array) ? fields.first : fields).map { |field| self[field] }
+        end
+      end
+
+      include Fields
+
       attr_accessor :logger
       attr_accessor :current_server
       attr_reader :current_account
+
 
       def self.reset_instance
         Singleton.send :__init__, self
         self
       end
 
-      class TokenExpiredError < StandardError;  end
+      TokenExpiredError = Class.new(StandardError)
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'CONFIG'
-        load_settings_from_env || load_settings_from_config_file
+        @logger = Kontena.logger
 
-        logger.debug "Configuration loaded with #{servers.count} servers."
-        logger.debug "Current master: #{current_server || '(not selected)'}"
-        logger.debug "Current grid: #{current_grid || '(not selected)'}"
+        load_settings_from_config_file
+
+        override_master_settings_from_env
+        override_cloud_settings_from_env
+
+        debug { "Configuration loaded with #{servers.count} servers and #{accounts.count} accounts." }
+        debug { "Current master: #{current_server || '(not selected)'}" }
+        debug { "Current grid: #{current_grid || '(not selected)'}" }
+        debug { "Current account: #{current_account.nil? ? '(not selected)' : current_account.name}" }
       end
 
-      # Craft a regular looking configuration based on ENV variables
-      def load_settings_from_env
-        return nil unless ENV['KONTENA_URL']
-        logger.debug 'Loading configuration from ENV'
-        servers << Server.new(
-          url: ENV['KONTENA_URL'], 
-          name: 'default',
-          token: Token.new(access_token: ENV['KONTENA_TOKEN'], parent_type: :master, parent_name: 'default'),
-          grid: ENV['KONTENA_GRID'],
-          parent_type: :master,
-          parent_name: 'default'
-        )
-        accounts << Account.new(
-          url: ENV['AUTH_API_URL'] || 'https://auth.kontena.io',
-          name: 'kontena',
-          token: Token.new(access_token: ENV['KONTENA_ACCOUNT_TOKEN'], parent_type: :account, parent_name: 'default')
-        )
+      def debug(&block)
+        Kontena.logger.add(Logger::DEBUG, nil, 'CONFIG', &block)
+      end
 
-        self.current_master  = 'default'
-        self.current_account = 'kontena'
+      def override_master_settings_from_env
+        if ENV['KONTENA_URL']
+          server = find_server_by(url: ENV['KONTENA_URL'])
+          if server.nil?
+            debug { 'Using new master url from env KONTENA_URL' }
+            server = Server.new(
+              url: ENV['KONTENA_URL'],
+              name: ENV['KONTENA_MASTER'] || 'default'
+            )
+            servers << server
+          else
+            debug { "Using master #{server.name} in config found via url in env KONTENA_URL" }
+          end
+        elsif ENV['KONTENA_MASTER']
+          server = find_server_by(name: ENV['KONTENA_MASTER'])
+          if server
+            debug { "Using master #{ENV['KONTENA_MASTER']} set via env KONTENA_MASTER" }
+          end
+        elsif current_master
+          server = current_master
+        end
+
+        if server.nil?
+          debug { 'Could not determine a master through config or env' }
+          self.current_master = nil
+          return
+        else
+          self.current_master = server.name
+        end
+
+        if ENV['KONTENA_GRID']
+          debug { "Using grid #{ENV['KONTENA_GRID']} from env KONTENA_GRID" }
+          server.grid = ENV['KONTENA_GRID']
+        end
+
+        if ENV['KONTENA_TOKEN']
+          debug { 'Using master token from env KONTENA_TOKEN' }
+          server.token ||= Token.new(parent_type: :master, parent_name: server.name)
+          server.token.access_token = ENV['KONTENA_TOKEN']
+          server.token.refresh_token = nil
+          server.token.expires_at = nil
+        end
+      end
+
+      def override_cloud_settings_from_env
+        if ENV['KONTENA_CLOUD']
+          account = find_account(ENV['KONTENA_CLOUD'])
+          if account
+            debug { "Using cloud account #{ENV['KONTENA_CLOUD']} from config selected by env KONTENA_CLOUD" }
+            self.current_account = account.name
+          else
+            debug { "Using new cloud account #{ENV['KONTENA_CLOUD']} from env" }
+            account = Accout.new(kontena_account_data.merge(name: ENV['KONTENA_CLOUD']))
+            accounts << account
+          end
+        elsif current_account
+          account = current_account
+        end
+
+        if account.nil?
+          debug { 'No account data from config or env' }
+          self.current_account = nil
+          return
+        end
+
+        if ENV['KONTENA_CLOUD_TOKEN']
+          debug { 'Using cloud token from env KONTENA_CLOUD_TOKEN' }
+          account.token ||= Token.new(parent_type: :account, parent_name: account.name)
+          account.token.access_token = ENV['KONTENA_CLOUD_TOKEN']
+          account.token.refresh_token = nil
+          account.token.expires_at = nil
+        end
       end
 
       def extract_token!(hash={})
@@ -84,12 +156,12 @@ module Kontena
           if servers.find { |s| s['name'] == server.name}
             server.name = "#{server.name}-2"
             server.name.succ! until servers.find { |s| s['name'] == server.name }.nil?
-            logger.debug "Renamed server to #{server.name} because a duplicate was found in config"
+            debug { "Renamed server to #{server.name} because a duplicate was found in config" }
           end
           servers << server
         end
 
-        self.current_server = ENV['KONTENA_MASTER'] || settings['current_server']
+        self.current_server = settings['current_server']
 
         Array(settings['accounts']).each do |account_data|
           if account_data['token']
@@ -121,16 +193,17 @@ module Kontena
       def kontena_account_data
         {
           name: 'kontena',
-          url: 'https://cloud-api.kontena.io',
-          stacks_url: 'https://stacks.kontena.io',
-          token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
-          authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
-          userinfo_endpoint: 'https://cloud-api.kontena.io/user',
-          token_post_content_type: 'application/x-www-form-urlencoded',
-          code_requires_basic_auth: false,
-          token_method: 'post',
-          scope: 'user',
-          client_id: nil
+          url: ENV['KONTENA_CLOUD_URL'] || 'https://cloud-api.kontena.io',
+          stacks_url: ENV['KONTENA_STACK_REGISTRY_URL'] || 'https://stacks.kontena.io',
+          token_endpoint: ENV['AUTH_TOKEN_ENDPOINT'] || 'https://cloud-api.kontena.io/oauth2/token',
+          authorization_endpoint: ENV['AUTH_AUTHORIZE_ENDPOINT'] || 'https://cloud.kontena.io/login/oauth/authorize',
+          userinfo_endpoint: ENV['AUTH_USERINFO_ENDPOINT'] || 'https://cloud-api.kontena.io/user',
+          token_post_content_type: ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] || 'application/x-www-form-urlencoded',
+          code_requires_basic_auth: ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == true,
+          token_method: ENV['AUTH_TOKEN_METHOD'] || 'post',
+          scope: ENV['AUTH_USERINFO_SCOPE'] || 'user',
+          client_id: nil,
+          stacks_read_authentication: ENV['KONTENA_STACK_REGISTRY_READ_AUTHENTICATION'].to_s == 'true'
         }
       end
 
@@ -157,7 +230,7 @@ module Kontena
       #
       # @return [Hash]
       def default_settings
-        logger.debug 'Configuration file not found, using default settings.'
+        debug { 'Configuration file not found, using default settings.' }
         {
           'current_server' => 'default',
           'servers' => []
@@ -169,10 +242,10 @@ module Kontena
       # @param [Hash] settings_hash
       # @return [Hash] migrated_settings_hash
       def migrate_legacy_settings(settings)
-        logger.debug "Migrating from legacy style configuration"
+        debug { "Migrating from legacy style configuration" }
         {
           'current_server' => 'default',
-          'servers' => [ 
+          'servers' => [
             settings['server'].merge(
               'name' => 'default',
               'account' => 'kontena'
@@ -186,7 +259,7 @@ module Kontena
       #
       # @return [Hash] config_data
       def parse_config_file
-        logger.debug "Loading configuration from #{config_filename}"
+        debug { "Loading configuration from #{config_filename}" }
         settings = JSON.load(File.read(config_filename))
         if settings.has_key?('server')
           settings = migrate_legacy_settings(settings)
@@ -200,7 +273,13 @@ module Kontena
       #
       # @return [String] path
       def config_filename
-        @config_filename ||= ENV['KONTENA_CONFIG'] || default_config_filename
+        return @config_filename if @config_filename
+        if ENV['KONTENA_CONFIG']
+          debug { "Using #{ENV['KONTENA_CONFIG']} as config file set through env KONTENA_CONFIG"}
+          @config_filename = ENV['KONTENA_CONFIG']
+        else
+          @config_filename = default_config_filename
+        end
       end
 
       # Generate the default configuration filename
@@ -303,7 +382,7 @@ module Kontena
       def require_current_master_token
         require_current_master
         token = current_master.token
-        if token && token.access_token 
+        if token && token.access_token
           return token unless token.expired?
           raise TokenExpiredError, "The access token has expired and needs to be refreshed."
         end
@@ -364,12 +443,14 @@ module Kontena
         raise ArgumentError, "You have not selected a grid. Use: kontena grid"
       end
 
-      # Name of the currently selected grid. Can override using 
+      # Name of the currently selected grid. Can override using
       # KONTENA_GRID environment variable.
       #
       # @return [String, NilClass]
       def current_grid
-        ENV['KONTENA_GRID'] || (current_master && current_master.grid)
+        return ENV['KONTENA_GRID'] unless ENV['KONTENA_GRID'].to_s.empty?
+        return nil unless current_master
+        current_master.grid
       end
 
       # Set the current grid name.
@@ -433,11 +514,11 @@ module Kontena
         JSON.pretty_generate(to_hash)
       end
 
-      # Write the current configuration to config file. 
+      # Write the current configuration to config file.
       # Does nothing if using settings from environment variables.
       def write
         return nil if ENV['KONTENA_URL']
-        logger.debug "Writing configuration to #{config_filename}"
+        debug { "Writing configuration to #{config_filename}" }
         File.write(config_filename, to_json)
       end
 
@@ -468,6 +549,7 @@ module Kontena
       end
 
       class Account < OpenStruct
+        include Fields
         include TokenSerializer
         include ConfigurationInstance
 
@@ -484,6 +566,7 @@ module Kontena
       end
 
       class Server < OpenStruct
+        include Fields
         include TokenSerializer
         include ConfigurationInstance
 
@@ -491,9 +574,43 @@ module Kontena
           super
           @table[:account] ||= 'master'
         end
+
+        def uri
+          @uri ||= URI.parse(self.url)
+        end
+
+        # @return [String, nil] path to ~/.kontena/certs/*.pem
+        def ssl_cert_path
+          path = File.join(Dir.home, '.kontena', 'certs', "#{self.uri.host}.pem")
+
+          if File.exist?(path) && File.readable?(path)
+            return path
+          else
+            return nil
+          end
+        end
+
+        # @return [OpenSSL::X509::Certificate, nil]
+        def ssl_cert
+          if path = self.ssl_cert_path
+            return OpenSSL::X509::Certificate.new(File.read(path))
+          else
+            return nil
+          end
+        end
+
+        # @return [String, nil] ssl cert subject CN=
+        def ssl_subject_cn
+          if cert = self.ssl_cert
+            return cert.subject.to_a.select{|name, data, type| name == 'CN' }.map{|name, data, type| data }.first
+          else
+            nil
+          end
+        end
       end
 
       class Token < OpenStruct
+        include Fields
         include ConfigurationInstance
 
         # Hash representation of token data
@@ -518,7 +635,7 @@ module Kontena
         def account
           return @account if @account
           return config.find_account('master') unless parent
-          @account = 
+          @account =
             case parent_type
             when :master then config.find_account(parent.account)
             when :account then parent

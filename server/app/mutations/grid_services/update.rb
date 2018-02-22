@@ -1,8 +1,12 @@
 require_relative 'common'
+require_relative 'helpers'
 
 module GridServices
   class Update < Mutations::Command
     include Common
+    include Helpers
+    include Logging
+    include Duration
 
     common_validations
 
@@ -12,31 +16,37 @@ module GridServices
 
     optional do
       string :image
+      boolean :force
+    end
+
+    def name
+      self.grid_service.name
+    end
+    def grid
+      self.grid_service.grid
+    end
+    def stack
+      self.grid_service.stack
     end
 
     def validate
-      if self.links
-        validate_links(self.grid_service.grid, self.grid_service.stack, self.links)
-      end
+      validate_name
+      validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
-      if self.secrets
-        validate_secrets_exist(self.grid_service.grid, self.secrets)
-      end
+      validate_secrets
+      validate_certificates
       if self.grid_service.stateful?
         if self.volumes_from && self.volumes_from.size > 0
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
         end
-        if self.volumes
-          changed_volumes = self.volumes.select { |v| !self.grid_service.volumes.include?(v) }
-          if changed_volumes.any? { |v| !v.include?(':') }
-            add_error(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
-          end
-        end
+        validate_volumes(stateful_volumes: self.grid_service.service_volumes.select{|v| v.anonymous? })
+      else
+        validate_volumes()
       end
     end
 
@@ -47,9 +57,11 @@ module GridServices
       attributes[:container_count] = self.container_count if self.container_count
       attributes[:container_count] = self.instances if self.instances
       attributes[:user] = self.user if self.user
+      attributes[:cpus] = self.cpus if self.cpus
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory
       attributes[:memory_swap] = self.memory_swap if self.memory_swap
+      attributes[:shm_size] = self.shm_size if self.shm_size
       attributes[:privileged] = self.privileged unless self.privileged.nil?
       attributes[:cap_add] = self.cap_add if self.cap_add
       attributes[:cap_drop] = self.cap_drop if self.cap_drop
@@ -63,29 +75,44 @@ module GridServices
       attributes[:devices] = self.devices if self.devices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
-      attributes[:volumes] = self.volumes if self.volumes
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
+      attributes[:stop_signal] = self.stop_signal if self.stop_signal
+      attributes[:stop_grace_period] = parse_duration(self.stop_grace_period) if self.stop_grace_period
+      attributes[:read_only] = self.read_only unless self.read_only.nil?
+
+      embeds_changed = false
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(
+          self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
         )
+        embeds_changed ||= attributes[:grid_service_links] != self.grid_service.grid_service_links.to_a
       end
 
       if self.hooks
         attributes[:hooks] = self.build_grid_service_hooks(self.grid_service.hooks.to_a)
+        embeds_changed ||= attributes[:hooks] != self.grid_service.hooks.to_a
       end
 
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
+        embeds_changed ||= attributes[:secrets] != self.grid_service.secrets.to_a
       end
-      grid_service.attributes = attributes
-      if grid_service.changed?
-        grid_service.revision += 1
+      if self.volumes
+        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
+          self.grid_service.grid, self.grid_service.stack
+        )
+        embeds_changed ||= attributes[:service_volumes] != self.grid_service.service_volumes.to_a
       end
-      grid_service.save
+      if self.certificates
+        attributes[:certificates] = self.build_grid_service_certificates(self.grid_service.certificates.to_a)
+        embeds_changed ||= attributes[:certificates] != self.grid_service.certificates.to_a
+      end
 
-      grid_service
+      grid_service.attributes = attributes
+
+      update_grid_service(grid_service, force: embeds_changed || self.force)
     end
 
     # @param [Array<String>] envs
@@ -94,7 +121,7 @@ module GridServices
       new_env = GridService.new(env: env).env_hash
       current_env = self.grid_service.env_hash
       new_env.each do |k, v|
-        if v.empty? && current_env[k]
+        if (v.nil? || v.empty?) && current_env[k]
           new_env[k] = current_env[k]
         end
       end

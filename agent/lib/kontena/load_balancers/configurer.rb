@@ -15,7 +15,6 @@ module Kontena::LoadBalancers
       @etcd = Etcd.client(host: self.class.gateway, port: 2379)
       subscribe('lb:ensure_config', :on_ensure_config)
       subscribe('lb:remove_config', :on_remove_config)
-      subscribe('lb:remove_service', :on_remove_service)
       info 'initialized'
     end
 
@@ -27,15 +26,12 @@ module Kontena::LoadBalancers
       self.remove_config(event)
     end
 
-    def on_remove_service(topic, event)
-      self.remove_service(event)
-    end
-
     # @param [Docker::Container] container
     def ensure_config(container)
       name = container.labels['io.kontena.load_balancer.name']
       service_name = container.service_name_for_lb
       check_uri = container.labels['io.kontena.health_check.uri']
+      check_port = container.labels['io.kontena.health_check.port']
       etcd_path = "#{ETCD_PREFIX}/#{name}"
       env_hash = container.env_hash
 
@@ -54,6 +50,7 @@ module Kontena::LoadBalancers
         basic_auth_secrets = env_hash['KONTENA_LB_BASIC_AUTH_SECRETS'].to_s
         set("#{etcd_path}/services/#{service_name}/balance", balance)
         set("#{etcd_path}/services/#{service_name}/health_check_uri", check_uri)
+        set("#{etcd_path}/services/#{service_name}/health_check_port", check_port)
         set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
         set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
         set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)
@@ -79,26 +76,10 @@ module Kontena::LoadBalancers
       error exc.backtrace.join("\n") if exc.backtrace
     end
 
-    # @param [Docker::Container] container
-    def remove_config(container)
-      name = container.labels['io.kontena.load_balancer.name']
-      service_name = container.service_name_for_lb
-      mode = container.env_hash['KONTENA_LB_MODE'] || 'http'
-      info "un-registering #{service_name} from load balancer #{name} (#{mode})"
-      if mode == 'http'
-        etcd_path = "#{ETCD_PREFIX}/#{name}/services/#{service_name}"
-      else
-        etcd_path = "#{ETCD_PREFIX}/#{name}/tcp-services/#{service_name}"
-      end
-      rmdir(etcd_path)
-    rescue => exc
-      error "#{exc.class.name}: #{exc.message}"
-    end
+    # @param [String] service_name
+    def remove_config(service_name)
+      return if service_name.to_s.empty?
 
-
-    # @param [Docker::Container] container
-    def remove_service(container)
-      service_name = container.service_name_for_lb
       lsdir(ETCD_PREFIX).each do |key|
         if key_exists?("#{key}/services") || key_exists?("#{key}/tcp-services")
           # un-stacked lb
@@ -117,8 +98,6 @@ module Kontena::LoadBalancers
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
     end
-
-
 
     # @param [String] key
     # @param [String, NilClass] value

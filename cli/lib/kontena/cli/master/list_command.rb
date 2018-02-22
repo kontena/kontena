@@ -1,18 +1,24 @@
 module Kontena::Cli::Master
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::TableGenerator::Helper
+
+    def fields
+      @fields ||= quiet? ? %w(name) : %w(name url)
+    end
+
+    def current_master_name
+      @current_master_name ||= current_master.nil? ? nil : current_master.name
+    end
+
+    def mark_if_current(row)
+      unless quiet?
+        row.name.to_s.insert(0, pastel.yellow('* ')) if row.name == current_master_name
+      end
+    end
 
     def execute
-      puts '%-24s %-30s' % ['Name', 'Url']
-      current_master = config.current_master
-      config.servers.each do |server|
-        if current_master && server['name'] == current_master.name
-          name = "* #{server['name']}"
-        else
-          name = server['name']
-        end
-        puts '%-24s %-30s' % [name, server['url']]
-      end
+      print_table(config.servers, fields, &method(:mark_if_current))
     end
   end
 end

@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe UserAuthorizer do
 
@@ -8,12 +7,17 @@ describe UserAuthorizer do
     user
   end
 
+  let(:user_admin) do
+    user = User.create!(email: 'joe@domain.com')
+    user.roles << Role.create!(name: 'user_admin', description: 'User admin')
+    user
+  end
+
   let(:grid_admin) do
     user = User.create!(email: 'dan@domain.com')
     user.roles << Role.create!(name: 'grid_admin', description: 'Grid admin')
     user
   end
-
 
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
@@ -40,7 +44,21 @@ describe UserAuthorizer do
       end
     end
 
-    context 'when user is not master admin' do
+    context 'when user is user admin' do
+      it 'lets create user' do
+        expect(UserAuthorizer).to be_creatable_by(user_admin)
+      end
+
+      it 'lets read users' do
+        expect(UserAuthorizer).to be_readable_by(user_admin)
+      end
+
+      it 'lets remove users' do
+        expect(UserAuthorizer).to be_deletable_by(user_admin)
+      end
+    end
+
+    context 'when user is not user admin' do
       it 'does not let create user' do
         expect(UserAuthorizer).not_to be_creatable_by(grid_admin)
       end
@@ -58,6 +76,10 @@ describe UserAuthorizer do
   describe 'instance' do
     it 'lets master admins to assign to grid' do
       expect(user.authorizer).to be_assignable_by(master_admin, {to: grid})
+    end
+
+    it 'lets user admins to assign to grid' do
+      expect(user.authorizer).to be_assignable_by(user_admin, {to: grid})
     end
 
     it 'lets grid admins to assign to grid' do

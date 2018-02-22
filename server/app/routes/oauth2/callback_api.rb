@@ -18,6 +18,8 @@ module OAuth2Api
     include RequestHelpers
     include Logging
 
+    include OAuth2Api::Common
+
     def find_user_by_userdata(user_data)
       query = []
       query << { external_id: user_data[:id] }       if user_data[:id]
@@ -63,36 +65,70 @@ module OAuth2Api
         params = request.params
 
         if params['error']
+          debug { "Authorization server returned an error: #{params['error']} (#{params['error_description']})" }
           halt_request(502, "The authorization server returned an error: #{params['error']} #{params['error_description']} #{params['error_uri']}") and return
         end
 
         unless params['state']
+          debug { "No state parameter received in callback" }
           halt_request(400, 'invalid_request') and return
         end
 
         state = AuthorizationRequest.find_and_invalidate(params['state'])
         unless state
+          debug { "Could not find a matching state" }
           halt_request(400, 'invalid_request') and return
         end
 
-        token_data = AuthProvider.get_token(params['code']) rescue nil
-        if token_data.nil? || !token_data.kind_of?(Hash) || !token_data.has_key?('access_token')
+        auth_provider = AuthProvider.instance
+
+        unless auth_provider.valid?
+          error "Received a callback but authentication provider is not configured"
+          mime_halt(
+            501,
+            'server_error',
+            'Authentication provider not configured'
+          )
+          return
+        end
+
+        begin
+          token_data = auth_provider.get_token(params['code'])
+          if token_data.nil? || !token_data.kind_of?(Hash) || !token_data.has_key?('access_token')
+            info "Could not exchange authorization_code from authentication provider"
+            halt_request(400, 'Authentication failed') and return
+          end
+        rescue => ex
+          error "Could not exchange authorization_code from authentication provider"
+          error ex
           halt_request(400, 'Authentication failed') and return
         end
 
-        user_data = AuthProvider.get_userinfo(token_data['access_token']) rescue nil
-        if user_data.nil? || !user_data.kind_of?(Hash)
+
+        begin
+          user_data = auth_provider.get_userinfo(token_data['access_token'])
+          if user_data.nil? || !user_data.kind_of?(Hash)
+            info "Received an invalid response to user info request from authentication provider"
+            halt_request(400, 'Authentication failed') and return
+          elsif user_data[:error]
+            info "Received an error response to user info request from authentication provider: #{user_data[:error]}"
+            halt_request(400, "Authentication failed: #{user_data[:error]}") and return
+          end
+        rescue => ex
+          error "Could not retrieve user info from authentication provider"
+          error ex
           halt_request(400, 'Authentication failed') and return
-        elsif user_data[:error]
-          halt_request(400, "Authentication failed: #{user_data[:error]}") and return
         end
 
         user = state.user || find_user_by_userdata(user_data)
         if user.nil? || user.is_local_admin?
+          error "Tried to externally authenticate local admin" if user && user.is_local_admin?
+          debug { "Could not find the local user using state or #{user_data.inspect}" }
           halt_request(403, 'Access denied') and return
         end
 
         unless update_user_from_userdata(user, user_data)
+          debug { "Invalid userdata: #{user.errors.inspect}" }
           halt_request(400, "Invalid userdata #{user.errors.inspect}") and return
         end
 
@@ -103,8 +139,10 @@ module OAuth2Api
           with_code: true
         )
 
-        unless task.success?
-          debug "Could not create internal access token: #{task.errors.message.inspect}"
+        if task.success?
+          debug { "Created an access token for #{user.email}" }
+        else
+          debug { "Could not create internal access token: #{task.errors.message.inspect}" }
           halt_request(500, 'server_error') and return
         end
 

@@ -1,9 +1,5 @@
-require_relative '../../spec_helper'
 
-describe '/v1/stacks/:id/container_logs' do
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe '/v1/stacks/:id/container_logs', celluloid: true do
 
   let(:grid) do
     Grid.create!(name: 'terminal-a')

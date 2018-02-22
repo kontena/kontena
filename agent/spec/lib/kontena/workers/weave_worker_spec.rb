@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::WeaveWorker do
 
@@ -14,20 +13,29 @@ describe Kontena::Workers::WeaveWorker do
     allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
 
     # initialize without calling start()
-    allow(network_adapter).to receive(:running?).and_return(false).once
+    allow(network_adapter).to receive(:already_started?).and_return(false).once
     subject
   end
 
   describe '#on_weave_start' do
     it 'calls start' do
       expect(subject.wrapped_object).to receive(:start)
-      subject.on_weave_start('topic', event)
+      Celluloid::Notifications.publish('network_adapter:start', nil)
+      subject.started? # sync ping to wait for async notification task to run
+    end
+  end
+  describe '#on_weave_restart' do
+    it 'calls start' do
+      expect(subject.wrapped_object).to receive(:start)
+      Celluloid::Notifications.publish('network_adapter:restart', nil)
+      subject.started? # sync ping to wait for async notification task to run
     end
   end
 
   describe '#on_container_event' do
     before(:each) do
       allow(network_adapter).to receive(:running?).and_return(true)
+      allow(subject.wrapped_object).to receive(:started?).and_return(true)
     end
 
     it 'calls #weave_attach on start event' do
@@ -44,8 +52,15 @@ describe Kontena::Workers::WeaveWorker do
 
     it 'calls #start on weave restart event' do
       event = spy(:event, id: 'foobar', status: 'restart', from: 'weaveworks/weave:1.4.5')
-      expect(network_adapter).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
+      expect(subject.wrapped_object).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
       expect(subject.wrapped_object).to receive(:start).once
+      subject.on_container_event('topic', event)
+    end
+
+    it 'does not do anything if not started' do
+      allow(subject.wrapped_object).to receive(:started?).and_return(false)
+      expect(Docker::Container).not_to receive(:get)
+      expect(network_adapter).not_to receive(:router_image?)
       subject.on_container_event('topic', event)
     end
   end
@@ -58,6 +73,14 @@ describe Kontena::Workers::WeaveWorker do
     it 'attaches overlay if container has overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
       allow(subject.wrapped_object).to receive(:register_container_dns)
+      expect(subject.wrapped_object).to receive(:attach_overlay).with(container)
+      subject.start_container(container)
+    end
+
+    it 'does not attach overlay if container is not service container' do
+      allow(container).to receive(:service_container?).and_return(false)
+      allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
+      expect(subject.wrapped_object).not_to receive(:register_container_dns)
       expect(subject.wrapped_object).to receive(:attach_overlay).with(container)
       subject.start_container(container)
     end

@@ -1,59 +1,77 @@
-require_relative '../grid_scheduler'
+require_relative '../../serializers/rpc/host_node_serializer'
 
 module Agent
   class NodePlugger
-    include Workers
+    include Logging
 
-    attr_reader :node, :grid
+    attr_reader :node
 
-    # @param [Grid] grid
     # @param [HostNode] node
-    def initialize(grid, node)
-      @grid = grid
+    def initialize(node)
       @node = node
     end
 
-    # @return [Celluloid::Future]
-    def plugin!
-      begin
-        prev_seen_at = node.last_seen_at
-        self.update_node
-        self.send_master_info
-        self.send_node_info
-        self.reschedule_services(prev_seen_at)
-      rescue => exc
-        puts exc.message
-      end
+    # @param [Time] connected_at
+    def plugin!(connected_at)
+      self.update_node!(connected_at,
+        connected: true,
+        updated: false,
+        last_seen_at: Time.now.utc,
+        websocket_connection: {
+          opened: true,
+        },
+      )
+      info "Connected node #{@node.to_path} at #{connected_at}"
+      self.publish_update_event
+      self.send_node_info
+    rescue => exc
+      error exc
     end
 
-    def update_node
-      node.set(connected: true, last_seen_at: Time.now.utc)
+    # Connection was rejected
+    #
+    # @param [Time] connected_at
+    # @param [Integer] code websocket close
+    # @param [String] reason websocket close
+    def reject!(connected_at, code, reason)
+      self.update_node!(connected_at,
+        connected: false,
+        updated: false,
+        websocket_connection: {
+          opened: false,
+          close_code: code,
+          close_reason: reason,
+        },
+      )
+      info "Rejected connection for node #{@node.to_path} at #{connected_at} with code #{code}: #{reason}"
+    rescue => exc
+      error exc
     end
 
-    def reschedule_services(prev_seen_at)
-      return if !prev_seen_at.nil? && prev_seen_at > 2.minutes.ago.utc
-      worker(:grid_scheduler).async.later(30, grid.id)
+    # @raise [RuntimeError] Node ... has already re-connected at ...
+    def update_node!(connected_at, **attrs)
+      connected_node = HostNode.where(:id => node.id)
+        .any_of({:connected_at => nil}, {:connected_at.lt => connected_at})
+        .find_one_and_update({:$set => {connected_at: connected_at, **attrs}})
+
+      fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
+
+      node.reload # find_one_and_update does not update mongoid document attrs
+    end
+
+    def publish_update_event
+      node.publish_update_event
     end
 
     def send_node_info
-      rpc_client.notify('/agent/node_info', node_info)
-    end
-
-    def send_master_info
-      rpc_client.notify('/agent/master_info', {version: Server::VERSION})
-    end
-
-    # @return [Hash]
-    def node_info
-      template = Tilt.new('app/views/v1/host_nodes/_host_node.json.jbuilder')
-      JSON.parse(template.render(nil, node: node))
+      rpc_client.notify('/agent/node_info', Rpc::HostNodeSerializer.new(node).to_hash)
     end
 
     private
 
     # @return [RpcClient]
     def rpc_client
-      RpcClient.new(node.node_id, 5)
+      RpcClient.new(node.node_id, 30)
     end
   end
 end

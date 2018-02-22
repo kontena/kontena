@@ -1,7 +1,7 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::ServicePods::Creator do
 
+  let(:pod_secrets) { nil }
   let(:data) do
     {
       'service_id' => 'aa',
@@ -15,19 +15,28 @@ describe Kontena::ServicePods::Creator do
         'io.kontena.service.name' => 'redis-cache',
         'io.kontena.container.overlay_cidr' => '10.81.23.2/19'
       },
-      'stateful' => true,
+      'stateful' => false,
       'image_name' => 'redis:3.0',
       'devices' => [],
       'ports' => [],
       'env' => [
         'KONTENA_SERVICE_NAME=redis-cache'
       ],
-      'net' => 'bridge'
+      'secrets' => pod_secrets,
+      'net' => 'bridge',
+      'volumes' => [
+        {'name' => 'someVolume', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}}
+      ]
     }
   end
 
   let(:service_pod) { Kontena::Models::ServicePod.new(data) }
-  let(:subject) { described_class.new(service_pod) }
+  let(:hook_manager) { double(:hook_manager) }
+  let(:subject) { described_class.new(service_pod, hook_manager) }
+
+  before(:each) do
+    allow(hook_manager).to receive(:track)
+  end
 
   describe '#ensure_data_container' do
     it 'creates data container if it does not exist' do
@@ -44,87 +53,37 @@ describe Kontena::ServicePods::Creator do
     end
   end
 
-  describe '#service_uptodate?' do
-    it 'returns false if image name changes' do
-      service_container = spy(:service_container, config: {
-        'Image' => 'foo/bar:latest'
-      })
-      expect(subject.service_uptodate?(service_container)).to be_falsey
+  describe '#perform' do
+    before do
+      expect(subject).to receive(:ensure_image).with('redis:3.0')
+      allow(subject).to receive(:wait_until!)
+
     end
 
-    it 'returns false if image does not exist' do
-      service_container = spy(:service_container,
-        info: {
-          'Created' => Time.now.utc.to_s
-        },
-        config: {
-          'Image' => service_pod.image_name
+    context 'for a pod with oversize envs' do
+      let(:pod_secrets) { (1..128).map{|i|
+        {
+          'name' => "SSL_CERTS",
+          'type' => 'env',
+          'value' => 'A' * 1024,
         }
-      )
-      allow(Docker::Image).to receive(:get).and_return(nil)
-      expect(subject.service_uptodate?(service_container)).to be_falsey
-    end
+      } }
 
-    it 'returns false if container created_at is less than service_pod updated_at' do
-      service_container = spy(:service_container,
-        info: {
-          'Created' => (Time.now.utc - 60).to_s
-        },
-        config: {
-          'Image' => service_pod.image_name
-        }
-      )
-      expect(subject.service_uptodate?(service_container)).to be_falsey
-    end
+      context 'with an existing stateless container' do
+        let(:container) { instance_double(Docker::Container) }
 
-    it 'returns true if container & image are uptodate' do
-      service_container = spy(:service_container,
-        info: {
-          'Created' => (Time.now.utc + 2).to_s
-        },
-        config: {
-          'Image' => service_pod.image_name
-        },
-        labels: {}
-      )
-      allow(Docker::Image).to receive(:get).and_return(spy(:image, info: {
-        'Created' => (Time.now.utc + 1).to_s
-      }))
-      expect(subject.service_uptodate?(service_container)).to be_truthy
-    end
-  end
+        before do
+          allow(subject).to receive(:get_container).with('aa', 2, 'volume').and_return(nil)
+          allow(subject).to receive(:get_container).with('aa', 2).and_return(container)
+        end
 
-  describe '#recreate_service_container?' do
-    it 'returns false if RestartPolicy=no' do
-      service_container = spy(:service_container,
-        state: {},
-        restart_policy: {'Name' => 'no'}
-      )
-      expect(subject.recreate_service_container?(service_container)).to be_falsey
-    end
+        it 'fails before cleaning up the old container' do
+          expect(subject).to_not receive(:cleanup_container)
+          expect(subject).to_not receive(:create_container)
 
-    it 'returns false if container is running' do
-      service_container = spy(:service_container,
-        state: {'Running' => true},
-        restart_policy: {'Name' => 'always'}
-      )
-      expect(subject.recreate_service_container?(service_container)).to be_falsey
-    end
-
-    it 'returns false if RestartPolicy=always and container is stopped without error message' do
-      service_container = spy(:service_container,
-        state: {'Running' => false, 'Error' => ''},
-        restart_policy: {'Name' => 'always'}
-      )
-      expect(subject.recreate_service_container?(service_container)).to be_falsey
-    end
-
-    it 'returns true if RestartPolicy=always and container is stopped with error message' do
-      service_container = spy(:service_container,
-        autostart?: true, running?: false,
-        state: {'Running' => false, 'Error' => 'oh noes'}
-      )
-      expect(subject.recreate_service_container?(service_container)).to be_truthy
+          expect{subject.perform}.to raise_error(Kontena::Models::ServicePod::ConfigError, 'Env SSL_CERTS is too large at 131209 bytes')
+        end
+      end
     end
   end
 
@@ -160,7 +119,7 @@ describe Kontena::ServicePods::Creator do
         )
       }
 
-      subject { described_class.new(service_pod) }
+      subject { described_class.new(service_pod, hook_manager) }
 
       it 'does not include weave-wait' do
         expect(network_adapter).to_not receive(:modify_create_opts)
@@ -169,30 +128,6 @@ describe Kontena::ServicePods::Creator do
 
         expect(config.dig('HostConfig', 'NetworkMode')).to eq('host')
         expect(config.dig('Entrypoint')).to be_nil
-      end
-    end
-
-    describe '#labels_outdated?' do
-      it 'returns true when labels are outdated' do
-        service_container = spy(:service_container,
-          labels: { 'io.kontena.load_balancer.name' => 'lb'}
-        )
-        expect(subject.labels_outdated?({}, service_container)).to be_truthy
-        expect(subject.labels_outdated?({ 'io.kontena.load_balancer.name' => 'lb2'}, service_container)).to be_truthy
-      end
-
-      it 'returns false with empty labels' do
-        service_container = spy(:service_container,
-          labels: {}
-        )
-        expect(subject.labels_outdated?({}, service_container)).to be_falsey
-      end
-
-      it 'returns false with up-to-date labels' do
-        service_container = spy(:service_container,
-          labels: { 'io.kontena.load_balancer.name' => 'lb'}
-        )
-        expect(subject.labels_outdated?({ 'io.kontena.load_balancer.name' => 'lb'}, service_container)).to be_falsey
       end
     end
 
@@ -221,7 +156,7 @@ describe Kontena::ServicePods::Creator do
         )
       }
 
-      subject { described_class.new(service_pod) }
+      subject { described_class.new(service_pod, hook_manager) }
 
       it 'does not include weave-wait' do
         expect(network_adapter).to receive(:modify_create_opts)

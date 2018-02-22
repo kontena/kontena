@@ -1,33 +1,40 @@
+require_relative '../helpers/rpc_helper'
+
 module Kontena::Workers
   class ContainerInfoWorker
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Helpers::RpcHelper
 
-    attr_reader :queue
+    attr_reader :container_coroner
 
-    ##
-    # @param [Queue] queue
+    # @param [String] node_id
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
+    def initialize(node_id, autostart = true)
+      @node_id = node_id
       subscribe('container:event', :on_container_event)
       subscribe('container:publish_info', :on_container_publish_info)
       subscribe('websocket:connected', :on_websocket_connected)
       info 'initialized'
+      @container_coroner = Kontena::Actors::ContainerCoroner.new(node_id, autostart)
       async.start if autostart
     end
 
     def start
-      info 'fetching containers information'
-      self.publish_all_containers
+      publish_all_containers if rpc_client.connected?
     end
 
     def publish_all_containers
-      Docker::Container.all(all: true).each do |container|
+      all_containers.each do |container|
         self.publish_info(container)
         sleep 0.05
       end
+    end
+
+    # @return [Array<Docker::Container>]
+    def all_containers
+      Docker::Container.all(all: true)
     end
 
     # @param [String] topic
@@ -38,22 +45,21 @@ module Kontena::Workers
 
       container = Docker::Container.get(event.id)
       if container
-        self.publish_info(container)
-        self.notify_coroner(container) if container.suspiciously_dead?
+        publish_info(container)
       end
     rescue Docker::Error::NotFoundError
-      self.publish_destroy_event(event)
+      publish_destroy_event(event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
     end
 
     def on_container_publish_info(topic, container)
-      self.publish_info(container)
+      publish_info(container)
     end
 
     def on_websocket_connected(topic, data)
-      self.publish_all_containers
+      publish_all_containers
     end
 
     ##
@@ -63,14 +69,11 @@ module Kontena::Workers
       labels = data['Config']['Labels'] || {}
       return if labels['io.kontena.container.skip_logs']
 
-      event = {
-        event: 'container:info'.freeze,
-        data: {
-          node: self.node_info['ID'],
-          container: data
-        }
+      data = {
+        node: @node_id,
+        container: data
       }
-      self.queue << event
+      rpc_client.async.request('/containers/save', [data])
     rescue Docker::Error::NotFoundError
     rescue => exc
       error exc.message
@@ -80,26 +83,12 @@ module Kontena::Workers
     # @param [Docker::Event] event
     def publish_destroy_event(event)
       data = {
-          event: 'container:event'.freeze,
-          data: {
-              id: event.id,
-              status: 'destroy'.freeze,
-              from: event.from,
-              time: event.time
-          }
+        id: event.id,
+        status: 'destroy'.freeze,
+        from: event.from,
+        time: event.time
       }
-      self.queue << data
-    end
-
-    # @return [Hash]
-    def node_info
-      @node_info ||= Docker.info
-    end
-
-    # @param [Docker::Container]
-    # @return [Kontena::Actors::ContainerCoroner]
-    def notify_coroner(container)
-      Kontena::Actors::ContainerCoroner.new(container)
+      rpc_client.async.request('/containers/event', [data])
     end
   end
 end

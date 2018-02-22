@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe GridStat do
   it { should be_timestamped_document }
@@ -19,7 +18,7 @@ describe GridStat do
   context '.grid_memory_usage' do
     before :each do
       i = 0
-      @current_time = Time.now
+      @current_time = Time.now.utc
       5.times do
         allow(Time).to receive(:now) { @current_time - (i* 60 * 60 * 24) } # first 5 days ago, then 4 days ago etc
         ContainerStat.create(grid: grid, container: container1, memory: { 'usage' => 1})
@@ -31,10 +30,10 @@ describe GridStat do
 
     it 'returns correct amount of stats' do
       stat = GridStat.memory_usage(grid.id, DateTime.now - 4.days, DateTime.now) # opt out first container_stat
-      expect(stat.length).to eq(4)
+      expect(stat.count).to eq(4)
 
       stat = GridStat.memory_usage(grid.id, DateTime.now - 5.days, DateTime.now - 1.day) # opt out last container_stat
-      expect(stat.length).to eq(4)
+      expect(stat.count).to eq(4)
     end
 
     it 'sums container memory usages' do

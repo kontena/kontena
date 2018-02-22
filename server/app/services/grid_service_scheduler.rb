@@ -16,10 +16,15 @@ class GridServiceScheduler
   def initialize(strategy)
     @strategy = strategy
     @filters = [
-        Scheduler::Filter::Affinity.new,
-        Scheduler::Filter::Port.new,
-        Scheduler::Filter::Memory.new,
-        Scheduler::Filter::Dependency.new
+      Scheduler::Filter::Availability.new,
+      Scheduler::Filter::Ephemeral.new,
+      Scheduler::Filter::VolumePlugin.new,
+      Scheduler::Filter::VolumeInstance.new,
+      Scheduler::Filter::Affinity.new,
+      Scheduler::Filter::Port.new,
+      Scheduler::Filter::Cpu.new,
+      Scheduler::Filter::Memory.new,
+      Scheduler::Filter::Dependency.new
     ]
     @mutex = Mutex.new
   end
@@ -34,10 +39,14 @@ class GridServiceScheduler
   ##
   # @param [GridService] grid_service
   # @param [Integer] instance_number
-  # @param [Array<HostNode>] nodes
+  # @param [Array<Scheduler::Node>] nodes
   # @raise [Scheduler::Error]
   # @return HostNode
   def select_node(grid_service, instance_number, nodes)
+    if nodes.empty?
+      raise Scheduler::Error, "There are no nodes available"
+    end
+
     selected_node = nil
     @mutex.synchronize {
       filtered_nodes = self.filter_nodes(grid_service, instance_number, nodes)
@@ -47,8 +56,8 @@ class GridServiceScheduler
       raise Scheduler::Error, "Strategy #{self.strategy.class.to_s} did not find any node"
     end
 
-    node = nodes.find{|n| n == selected_node}
-    node.schedule_counter += 1
+    node = nodes.find{ |n| n == selected_node }
+    node.scheduled_instance! instance_number
 
     selected_node
   end
@@ -56,7 +65,7 @@ class GridServiceScheduler
   ##
   # @param [GridService] grid_service
   # @param [Integer] instance_number
-  # @param [Array<HostNode>]
+  # @param [Array<Scheduler::Node>]
   # @raise [Scheduler::Error]
   # @return [Array<HostNode>]
   def filter_nodes(grid_service, instance_number, nodes)

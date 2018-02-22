@@ -1,4 +1,3 @@
-require_relative '../grid_options'
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
@@ -28,7 +27,7 @@ module Kontena::Cli::Services
       links << {name: target_service.to_s, alias: target.to_s}
       links.compact!
       data = {links: links}
-      spinner "Linking #{name.colorize(:cyan)} to #{target.colorize(:cyan)} " do
+      spinner "Linking #{pastel.cyan(name)} to #{pastel.cyan(target)} " do
         update_service(token, name, data)
       end
     end

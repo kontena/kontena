@@ -1,10 +1,5 @@
 language: ruby
 sudo: required
-rvm:
-  - 2.1.10
-  - 2.2.6
-  - 2.3.3
-  - 2.4.0
 cache: bundler
 cache:
   directories:
@@ -13,53 +8,88 @@ services:
   - docker
 before_install:
   - ./build/travis/before_install.sh
+bundler_args: --without development
 env:
   global:
-    - secure: "UyygtUDLvV2+14mEG6Pddo/deLazXc2Hit63KlbZ26Pi8cxbr1FeDUBi4WFVWlFh01smKe5mO+kk/4k06aSdolcTC59QUsltRrsINmsxj/BS66L7JbWP8/yPQP1drE6CH5oh6t1JAchuK19bLUOK9Tycn0J2VufW69ckw3D+rqU="
-    - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA="
-    - secure: "jX1rLCq1KBJ2KR42RSi2EFXYkmzvKMoMSfhMpW9HqnhqIcU8RImPb8ZIKGdN1+ncXisQjSMZ4Byz+GnC5oJooMjBp9oAwG7y4mqtsqE8gdreHzAEe8uBHleUF3M0KVHjsSmtSAPltdhpMr5wepcGvK/nC7t0KkVuyPx7pKaY5p0=" # b-u
-    - secure: "MU60vW00synoFhI44RAlGjLJQIB6tRHnFr/lFyn8SM7MgOZo2HX6EF0uu1y1AYWrVhekbHfVLoHTL8xMpKYGyXagtrD1BJVMWRwAVzmczsbyP9AVRenKeXzM2f5xZpnThZA3gxN3ZUq9ZAweYFxhlVOm3EUHWbJdmXlL/ZaQZYQ=" # b-k
-    - secure: "IV/3PBCZ0bVYqLdDUlvqjbXU0a+Vk/seNH57i9X8axENoS0166VXwjwTN8AlSWhKZQVadxG3J6T7V6U1G366gOOmlqtGT7AVNpvn7h4ShE0rE05sdo5GoCPGbs+5YB5qNchA7TUHrXC9pvDwmSz/pt/nA/WLiN1MJ4L8vtxLgKg=" # g
+    - secure: "UyygtUDLvV2+14mEG6Pddo/deLazXc2Hit63KlbZ26Pi8cxbr1FeDUBi4WFVWlFh01smKe5mO+kk/4k06aSdolcTC59QUsltRrsINmsxj/BS66L7JbWP8/yPQP1drE6CH5oh6t1JAchuK19bLUOK9Tycn0J2VufW69ckw3D+rqU=" # DOCKER_HUB_PASSWORD
+    - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA=" # RUBYGEMS_USER
+    - secure: "UlPV+vpgZnzb1zRgGlk6U0/i6B22W+YzUDjgUZRFmLobBzZgDoVcVZUIKRjVanFuc75sd/GV2SKm39RTV/ihJ5I5BAiL20E4XtSf52w1oX2PiAXDeLiW6+4flcs8JiejGdnJplYJwWkls39Sdq/KOR+J3erpxI70JlK19/oRtOc=" # BINTRAY_USER
+    - secure: "CjBV1vcOnzkz2lDJiyrVaHiJf9ukZAisF3Jglp7k/eFSjBs13I0klSurPL0Lkm+R8/lF98EW+C79jbSsQ/bYpyaGUxakJ2pY0i5r7JP4YBK5MKmLIURUuiRU358ywp1z/T41ldqyK78OoyGt9cmSilTx1f1FVN0rAqQtsALHZVs=" # BINTRAY_KEY
+    - secure: "kj4oS3to1iKpJBbph2VHSnTauvniP6F/RaN6Smn60ZFJCiJHST+Yq6GHONIxb9aNTpyYJWlYA0A1ReqVurS/T3puIYYZvPW6QQs2llB2I2GwAyPeSJSOX2z0vQtQq6ybdeROUuJLHkGL4zCI4V5QlJgSnmSOjvdiEZPtxWfy384=" # GITHUB_TOKEN
     - DOCS_GA=UA-60024048-1
     - DOCS_HS=2126125
-  matrix:
-    - TEST_DIR=agent
-    - TEST_DIR=cli
-    - TEST_DIR=server
-matrix:
-    exclude:
-    - rvm: 2.1.10
+    - ALLOW_FAILURES=false
+stages:
+  - name: test
+  - name: test e2e
+    if: type = pull_request OR type = cron
+  - name: deploy gem
+    if: tag IS present
+  - name: deploy omnibus
+    if: tag IS present
+  - name: deploy images
+    if: tag IS present
+jobs:
+  fast_finish: true
+  allow_failures:
+    - env:
+      - TEST_DIR=cli
+      - ALLOW_FAILURES=true
+  include:
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.2
+      env: TEST_DIR=cli
+      if: type = pull_request
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.3
+      env: TEST_DIR=cli
+      if: type = pull_request
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.5
+      env: TEST_DIR=cli
+      if: type = pull_request
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4
       env: TEST_DIR=agent
-    - rvm: 2.1.10
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4
       env: TEST_DIR=server
-    - rvm: 2.2.6
-      env: TEST_DIR=agent
-    - rvm: 2.2.6
+    - stage: test e2e
+      script: ./build/travis/test_e2e.sh
+      rvm: 2.4
+      env:
+        - TEST_DIR=cli
+    - stage: deploy gem
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.3
+      env: TEST_DIR=cli
+    - stage: deploy omnibus
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: deploy omnibus
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus_macos.sh"
+      tags: true
+      os: osx
+      repo: kontena/kontena
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: deploy images
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.4
       env: TEST_DIR=server
-    - rvm: 2.4.0
-      env: TEST_DIR=agent
-    - rvm: 2.4.0
-      env: TEST_DIR=server
-script: ./build/travis/test.sh
-deploy:
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
-      rvm: 2.3.3
-      repo: kontena/kontena
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
-      rvm: 2.3.3
-      repo: kontena/kontena
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_docs.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
-      rvm: 2.2.6
-      repo: kontena/kontena

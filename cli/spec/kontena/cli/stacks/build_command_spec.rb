@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/stacks/build_command"
 
 describe Kontena::Cli::Stacks::BuildCommand do
@@ -6,6 +5,10 @@ describe Kontena::Cli::Stacks::BuildCommand do
   include RequirementsHelper
 
   mock_current_master
+
+  before(:each) do
+    ENV['STACK'] = nil
+  end
 
   let(:subject) do
     described_class.new(File.basename($0))
@@ -34,23 +37,13 @@ describe Kontena::Cli::Stacks::BuildCommand do
     end
 
     before(:each) do
-      allow(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
-      allow(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(:name, :values)).and_return(stack)
+      allow(subject).to receive(:stack_name).and_return('stack-a')
+      allow(subject).to receive(:stack).and_return(stack)
       allow(subject).to receive(:system).and_return(true)
     end
 
     expect_to_require_current_master
     expect_to_require_current_master_token
-
-    it 'requires config file' do
-      expect(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
-      subject.run([])
-    end
-
-    it 'reads stack file' do
-      expect(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(:name, :values)).and_return(stack)
-      subject.run([])
-    end
 
     it 'builds docker image' do
       expect(subject).to receive(:system).with('docker', 'build', '-t', 'registry.kontena.local/test:latest', '--pull', File.expand_path('.'))

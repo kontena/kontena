@@ -1,23 +1,31 @@
-require 'open3'
+require 'kontena/plugin_manager'
 
 module Kontena::Cli::Plugins
   class UninstallCommand < Kontena::Command
     include Kontena::Util
     include Kontena::Cli::Common
 
-    parameter 'NAME', 'Plugin name'
-    option "--force", :flag, "Force remove", default: false, attribute_name: :forced
+    parameter 'NAME ...', 'Plugin name'
 
     def execute
-      confirm unless forced?
-      spinner "Uninstalling plugin #{name.colorize(:cyan)}" do |spin|
-        begin
-          Kontena::PluginManager.instance.uninstall_plugin(name)
-        rescue => ex
-          puts Kontena.pastel.red(ex.message)
-          spin.fail
+      name_list.each do |name|
+        exit_with_error "Plugin #{name} has not been installed" unless plugin_installed?(name)
+        spinner "Uninstalling plugin #{pastel.cyan(name)}" do
+          plugin_uninstaller(name).uninstall
         end
       end
+    end
+
+    # @param name [String]
+    # @return [Boolean]
+    def plugin_installed?(name)
+      Kontena::PluginManager::Common.installed?(name)
+    end
+
+    # @param name [String]
+    # @return [Kontena::PluginManager::Uninstaller]
+    def plugin_uninstaller(name)
+      Kontena::PluginManager::Uninstaller.new(name)
     end
   end
 end

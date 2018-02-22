@@ -2,7 +2,6 @@ require 'logger'
 
 module Kontena
   module Logging
-
     def self.initialize_logger(log_target = STDOUT, log_level = Logger::INFO)
       @logger = Logger.new(log_target)
       @logger.level = log_level
@@ -22,28 +21,37 @@ module Kontena
       Kontena::Logging.logger
     end
 
+    # @return [String]
+    def logging_prefix
+      self.class.name
+    end
+
     # Send a debug message
-    # @param [String] string
-    def debug(string)
-      logger.debug(self.class.name.gsub('Kontena::', '')) { string }
+    # @param message [String]
+    # @yield optionally set the message using a block
+    def debug(message = nil, &block)
+      logger.add(Logger::DEBUG, message, self.logging_prefix, &block)
     end
 
     # Send a info message
-    # @param [String] string
-    def info(string)
-      logger.info(self.class.name) { string }
+    # @param message [String]
+    # @yield optionally set the message using a block
+    def info(message = nil, &block)
+      logger.add(Logger::INFO, message, self.logging_prefix, &block)
     end
 
     # Send a warning message
-    # @param [String] string
-    def warn(string)
-      logger.warn(self.class.name) { string }
+    # @param message [String]
+    # @yield optionally set the message using a block
+    def warn(message = nil, &block)
+      logger.add(Logger::WARN, message, self.logging_prefix, &block)
     end
 
     # Send an error message
-    # @param [String] string
-    def error(string)
-      logger.error(self.class.name) { string }
+    # @param message [String]
+    # @yield optionally set the message using a block
+    def error(message = nil, &block)
+      logger.add(Logger::ERROR, message, self.logging_prefix, &block)
     end
   end
 end

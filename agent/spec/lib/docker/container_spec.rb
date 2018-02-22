@@ -1,17 +1,19 @@
-require_relative '../../spec_helper'
 
 describe Docker::Container do
 
   let(:subject) do
     Docker::Container.new()
   end
+  let(:labels) do
+    {
+      'io.kontena.container.name' => 'foo-1',
+    }
+  end
 
   before(:each) do
     allow(subject).to receive(:json).and_return({
       'Config' => {
-        'Labels' => {
-          'io.kontena.container.name' => 'foo-1'
-        }
+        'Labels' => labels,
       },
       'State' => {
         'Running' => true
@@ -44,12 +46,6 @@ describe Docker::Container do
   describe '#config' do
     it 'returns Config hash' do
       expect(subject.config.keys).to include('Labels')
-    end
-  end
-
-  describe '#restart_policy' do
-    it 'returns HostConfig.RestartPolicy hash' do
-      expect(subject.restart_policy).to include('Name' => 'always')
     end
   end
 
@@ -165,6 +161,42 @@ describe Docker::Container do
 
       expect(subject.service_name_for_lb).to eq('stack-service')
     end
+  end
 
+  describe '#health_check?' do
+    context 'without labels' do
+      it 'is false' do
+        expect(subject.health_check?).to be_falsey
+      end
+    end
+
+    context 'with http labels' do
+      let(:labels) do
+        {
+          'io.kontena.container.name' => 'foo-1',
+          'io.kontena.health_check.protocol' => 'http',
+          'io.kontena.health_check.port' => '8000',
+          'io.kontena.health_check.uri' => '/',
+        }
+      end
+
+      it 'is true' do
+        expect(subject.health_check?).to be_truthy
+      end
+    end
+
+    context 'with tcp labels' do
+      let(:labels) do
+        {
+          'io.kontena.container.name' => 'foo-1',
+          'io.kontena.health_check.protocol' => 'tcp',
+          'io.kontena.health_check.port' => '8000',
+        }
+      end
+
+      it 'is true' do
+        expect(subject.health_check?).to be_truthy
+      end
+    end
   end
 end

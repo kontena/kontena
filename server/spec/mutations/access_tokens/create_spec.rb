@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe AccessTokens::Create do
 
@@ -16,6 +15,11 @@ describe AccessTokens::Create do
         outcome = described_class.new(user: user, scopes: ['grid']).run
         expect(outcome.success?).to be_falsey
       }.to change{ AccessToken.count }.by(0)
+    end
+
+    it 'can add a description' do
+      described_class.new(user: user, scopes: ['user'], description: 'description test').run
+      expect(user.access_tokens.first.description).to eq 'description test'
     end
   end
 end

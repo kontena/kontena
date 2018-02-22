@@ -9,7 +9,7 @@ class Kontena::Callback
   # Register callback for command types it is supposed to run with.
   def self.matches_commands(*commands)
     cmd_types = {}
-    
+
     commands.each do |cmd|
       cmd_class, cmd_type = cmd.split(' ', 2)
 
@@ -22,14 +22,17 @@ class Kontena::Callback
       else
         cmd_type = cmd_type.to_sym
       end
-      cmd_types[cmd_class.to_sym] = cmd_type
+      cmd_types[cmd_class.to_sym] ||= []
+      cmd_types[cmd_class.to_sym] << cmd_type
     end
 
     # Finally it should be normalized into a hash that looks like :cmd_class => :cmd_type, :app => :init, :grid => :all
-    cmd_types.each do |cmd_class, cmd_type|
-      Kontena::Callback.callbacks[cmd_class] ||= {}
-      Kontena::Callback.callbacks[cmd_class][cmd_type] ||= []
-      Kontena::Callback.callbacks[cmd_class][cmd_type] << self
+    cmd_types.each do |cmd_class, cmd_types|
+      cmd_types.each do |cmd_type|
+        Kontena::Callback.callbacks[cmd_class] ||= {}
+        Kontena::Callback.callbacks[cmd_class][cmd_type] ||= []
+        Kontena::Callback.callbacks[cmd_class][cmd_type] << self
+      end
     end
   end
 
@@ -44,7 +47,7 @@ class Kontena::Callback
           if klass.instance_methods.include?(state)
             cb = klass.new(obj)
             if cb.send(state).kind_of?(FalseClass)
-              ENV["DEBUG"] && STDERR.puts("Execution aborted by #{klass}")
+              Kontena.logger.debug { "Execution aborted by #{klass}" }
               exit 1
             end
           end

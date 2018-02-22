@@ -1,4 +1,3 @@
-require_relative '../../../../spec_helper'
 require 'kontena/cli/stacks/yaml/validator_v3'
 
 describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
@@ -51,6 +50,23 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
 
       result = subject.validate_options('network_mode' => 'host')
       expect(result.errors.key?('network_mode')).to be_falsey
+    end
+
+    context 'entrypoint' do
+      it 'is optional' do
+        result = subject.validate_options({})
+        expect(result.errors.key?('entrypoint')).to be_falsey
+      end
+
+      it 'passes validation when string' do
+        result = subject.validate_options({'entrypoint' => 'abcd'})
+        expect(result.errors.key?('entrypoint')).to be_falsey
+      end
+
+      it 'fails validation when not a string' do
+        result = subject.validate_options({'entrypoint' => 1})
+        expect(result.errors.key?('entrypoint')).to be_truthy
+      end
     end
 
     context 'affinity' do
@@ -109,6 +125,38 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_falsey
       result = subject.validate_options('environment' => { 'KEY' => 'VALUE' })
       expect(result.errors.key?('environment')).to be_falsey
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2', 'KEY3='])
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
+    it 'fails validation if environment array includes items without equals sign' do
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2 VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environment has invalid key prefix" do
+      result = subject.validate_options('environment' => ['=VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environemnt has invalid key prefix with valud key prefix in value" do
+      result = subject.validate_options('environment' => ['=VALUE=VALUE2'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environment contains invalid key prefix with valid key prefix in multi-line value" do
+      result = subject.validate_options('environment' => ['=ASDF\nKEY=VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it 'passes validation if environment array includes items with booleans or nils' do
+      result = subject.validate_options('environment' => { 'KEY' => true, 'KEY2' => false, 'KEY3' => nil })
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
+    it 'passes validation if environment array includes items with multi-line values' do
+      result = subject.validate_options('environment' => [ "KEY=foo\nbar" ])
+      expect(result.errors.key?('environment')).to be_falsey
     end
 
     context 'validates secrets' do
@@ -166,6 +214,12 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
     end
 
     context 'hooks' do
+      context 'validates hook name' do
+        it 'must be valid hook' do
+          result = subject.validate_options('hooks' => { 'pre-build' => {} })
+          expect(result.errors.key?('hooks')).to be_truthy
+        end
+      end
       context 'validates pre_build' do
         it 'must be array' do
           result = subject.validate_options('hooks' => { 'pre_build' => {} })
@@ -298,5 +352,163 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         end
       end
     end
+
+    context 'certificates' do
+      it 'validates certificates is array' do
+        result = subject.validate_options('certificates' => 'kontena.io')
+        expect(result.errors.key?('certificates')).to be_truthy
+
+        result = subject.validate_options('certificates' => [])
+        expect(result.errors.key?('certificates')).to be_falsey
+      end
+
+      it 'validates certificates has all needed keys' do
+        result = subject.validate_options('certificates' => [{}])
+        expect(result.errors.key?('certificates')).to be_truthy
+        expect(result.errors['certificates'].has_key?('subject')).to be_truthy
+        expect(result.errors['certificates'].has_key?('name')).to be_truthy
+        expect(result.errors['certificates'].has_key?('type')).to be_truthy
+      end
+
+    end
+  end
+
+  describe '#validate' do
+    context 'stack' do
+      context 'stack name' do
+        let(:stack) do
+          {
+            'stack' => 'user/a_stack',
+            'services' => {
+              'app' => {
+                'image' => 'redis:latest'
+              }
+            }
+          }
+        end
+
+        it 'should warn about invalid stack names' do
+          result = subject.validate(stack)
+          expect(result[:notifications]).to match array_including(
+            hash_including('stack' => /stack name should/)
+          )
+        end
+      end
+    end
+
+    context 'services' do
+      context 'service name' do
+        let(:stack) do
+          {
+            'stack' => 'user/a-stack',
+            'services' => {
+              'invalid_service_name' => {
+                'image' => 'redis:latest'
+              }
+            }
+          }
+        end
+
+        it 'should warn about invalid service names' do
+          result = subject.validate(stack)
+          expect(result[:notifications]).to match array_including(
+            hash_including(
+              'services' => hash_including(
+                'invalid_service_name' => hash_including(
+                  'name' => /service name should/
+                )
+              )
+            )
+          )
+        end
+      end
+    end
+
+    context 'volumes' do
+      let(:stack) do
+        {
+          'stack' => 'a-stack',
+          'services' => {
+            'foo' => {
+              'volumes' => [
+                'foo:/app'
+              ]
+            }
+          },
+          'volumes' => {
+
+          }
+
+        }
+      end
+
+      it 'fails validation if volumes are not declared' do
+        result = subject.validate(stack)
+        expect(result[:errors]).not_to be_empty
+      end
+
+      it 'validation succeeds if volumes are declared' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => true
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when external: false' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => false
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).not_to be_empty
+      end
+
+      it 'validation succeeds if volumes are declared' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => {
+              'name' => 'foobar'
+            }
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation passes when mount points are defined with :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo:ro', '/tmp/foo:/bar:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when same mount point is defined multiple times' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'validation fails when same mount point is defined multiple times mixing :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'bind mount do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/var/run/docker.sock:/var/run/docker.sock']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'anon vols do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/data']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+    end
+
   end
 end

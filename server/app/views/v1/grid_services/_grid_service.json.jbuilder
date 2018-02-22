@@ -20,8 +20,10 @@ json.env grid_service.env
 json.secrets grid_service.secrets.as_json(only: [:secret, :name, :type])
 json.memory grid_service.memory
 json.memory_swap grid_service.memory_swap
+json.shm_size grid_service.shm_size
+json.cpus grid_service.cpus
 json.cpu_shares grid_service.cpu_shares
-json.volumes grid_service.volumes
+json.volumes grid_service.service_volumes.map {|sv| sv.to_s}
 json.volumes_from grid_service.volumes_from
 json.cap_add grid_service.cap_add
 json.cap_drop grid_service.cap_drop
@@ -33,14 +35,15 @@ json.stack do
   json.id grid_service.stack.to_path
   json.name grid_service.stack.name
 end
-json.links grid_service.grid_service_links.map{|s|
-  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name }
-}
+json.links grid_service.grid_service_links.map { |s|
+  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.qualified_name } if s.linked_grid_service
+}.compact
 json.log_driver grid_service.log_driver
 json.log_opts grid_service.log_opts
 json.strategy grid_service.strategy
 json.deploy_opts grid_service.deploy_opts
 json.pid grid_service.pid
+json.read_only grid_service.read_only
 json.instance_counts do
   if defined? instance_counts
     json.total instance_counts[:total]
@@ -54,13 +57,16 @@ json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
 json.revision grid_service.revision
 json.stack_revision grid_service.stack_revision
 if grid_service.health_check && grid_service.health_check.protocol
-	json.health_check do
-		json.protocol grid_service.health_check.protocol
-		json.uri grid_service.health_check.uri
-		json.port grid_service.health_check.port
-		json.timeout grid_service.health_check.timeout
-		json.initial_delay grid_service.health_check.initial_delay
-		json.interval grid_service.health_check.interval
-	end
-	json.health_status grid_service.health_status
+    json.health_check do
+        json.protocol grid_service.health_check.protocol
+        json.uri grid_service.health_check.uri
+        json.port grid_service.health_check.port
+        json.timeout grid_service.health_check.timeout
+        json.initial_delay grid_service.health_check.initial_delay
+        json.interval grid_service.health_check.interval
+    end
+    json.health_status grid_service.health_status
 end
+json.stop_signal grid_service.stop_signal
+json.stop_grace_period grid_service.stop_grace_period
+json.certificates grid_service.certificates.as_json(only: [:subject, :name, :type])

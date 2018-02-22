@@ -1,21 +1,20 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::HealthCheckWorker do
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
-  let(:container) { spy(:container, id: 'foo', labels: {'io.kontena.health_check.uri' => '/'}) }
-  let(:container_not_to_check) { spy(:container, id: 'foo', labels: {}) }
+  let(:subject) { described_class.new(false) }
+  let(:container) { spy(:container, id: 'foo', health_check?: true) }
+  let(:container_not_to_check) { spy(:container, id: 'foo', health_check?: false) }
 
 
   before(:each) do
     Celluloid.boot
+    mock_rpc_client
   end
 
   after(:each) { Celluloid.shutdown }
 
   describe '#start' do
-
     it 'starts container checks' do
       allow(Docker::Container).to receive(:all).and_return([container, container_not_to_check])
       expect(subject.wrapped_object).to receive(:start_container_check).twice
@@ -56,7 +55,7 @@ describe Kontena::Workers::HealthCheckWorker do
     it 'terminates worker if it exist' do
       worker = spy(:worker, :alive? => true)
       subject.workers[container.id] = worker
-      expect(Celluloid::Actor).to receive(:kill).with(worker)
+      expect(worker).to receive(:terminate)
       subject.stop_container_check(container.id)
     end
   end

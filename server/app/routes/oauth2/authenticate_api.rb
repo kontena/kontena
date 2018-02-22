@@ -25,7 +25,10 @@ module OAuth2Api
 
         params = request.params
 
-        unless AuthProvider.valid?
+        auth_provider = AuthProvider.instance
+
+        unless auth_provider.valid?
+          error "User authentication rejected: Auth provider not configured"
           mime_halt(
             501,
             'server_error',
@@ -35,6 +38,7 @@ module OAuth2Api
         end
 
         unless params['redirect_uri']
+          info "User authentication rejected: redirect_uri missing from request"
           mime_halt(400, 'invalid_request', 'Missing redirect_uri')
           return
         end
@@ -43,6 +47,7 @@ module OAuth2Api
 
         # Only allow redirect to client's localhost or back to same server's /code'
         unless (redirect_uri.host && redirect_uri.host == 'localhost') || (redirect_uri.host.nil? && redirect_uri.path == '/code')
+          info "User authentication rejected: unauthorized redirect_uri #{redirect_uri}"
           mime_halt(400, 'invalid_request', 'Invalid redirect_uri') and return
         end
 
@@ -50,14 +55,18 @@ module OAuth2Api
         if invite_code.kind_of?(String) && invite_code.length > 0
           user = User.where(invite_code: invite_code).first
           unless user
+            info "User authentication rejected: user not found using invite_code"
             mime_halt(403, 'access_denied', 'Invalid invite code') and return
           end
         elsif current_user && !current_user.is_local_admin?
           user = current_user
         end
 
+        email =  !user.nil? ? user.email : 'anonymous'
+        debug { "User authentication request for #{email} accepted, redirecting to auth provider" }
+
         response.redirect(
-          AuthProvider.authorize_url(
+          auth_provider.authorize_url(
             state: AuthorizationRequest.create(
               redirect_uri: params['redirect_uri'],
               expires_in: params['expires_in'].to_i,

@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Grids::AssignUser do
   let(:current_user) { User.create!(email: 'jane@domain.com') }
@@ -9,39 +8,52 @@ describe Grids::AssignUser do
     grid
   }
 
-  describe '#run' do
+  it 'validates that current user has permission to assign users' do
+    expect(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(false)
+    grid.users.delete_all
+    outcome = described_class.new(
+        current_user: current_user,
+        user: user,
+        grid: grid
+    ).run
+    expect(outcome).to_not be_success
+    expect(outcome.errors.message).to eq 'grid' => "Operation not allowed"
+  end
 
-    it 'validates that current user has permission to assign users' do
-      expect(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(false)
-      grid.users.delete_all
-      outcome = described_class.new(
-          current_user: current_user,
-          user: user,
-          grid: grid
-      ).run
-      expect(outcome.errors.size).to eq(1)
+  context 'for an authorized user' do
+    before do
+      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
     end
 
     it 'assigns a user to grid' do
-      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
       expect {
-        described_class.new(
+        outcome = described_class.new(
             current_user: current_user,
             user: user,
             grid: grid
         ).run
+        expect(outcome).to be_success
       }.to change{ user.grids.size }.by(1)
     end
 
-    it 'returns array of grid users' do
-      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
+    it 'publishes update event for user' do
+      expect(user).to receive(:publish_update_event).once
       outcome = described_class.new(
           current_user: current_user,
           user: user,
           grid: grid
       ).run
-      expect(outcome.result.is_a?(Array))
-      expect(outcome.result.size).to eq(2)
+      expect(outcome).to be_success
+    end
+
+    it 'returns array of grid users' do
+      outcome = described_class.new(
+          current_user: current_user,
+          user: user,
+          grid: grid
+      ).run
+      expect(outcome).to be_success
+      expect(outcome.result).to match_array [current_user, user]
     end
 
   end

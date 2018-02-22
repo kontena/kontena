@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Rpc::DockerContainerApi do
 

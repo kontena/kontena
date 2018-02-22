@@ -1,49 +1,27 @@
-require_relative 'services/list_command'
-require_relative 'services/show_command'
-require_relative 'services/update_command'
-require_relative 'services/deploy_command'
-require_relative 'services/stop_command'
-require_relative 'services/start_command'
-require_relative 'services/restart_command'
-require_relative 'services/create_command'
-require_relative 'services/scale_command'
-require_relative 'services/remove_command'
-require_relative 'services/containers_command'
-require_relative 'services/logs_command'
-require_relative 'services/stats_command'
-require_relative 'services/monitor_command'
-
-require_relative 'services/env_command'
-require_relative 'services/secret_command'
-
-require_relative 'services/link_command'
-require_relative 'services/unlink_command'
-require_relative 'services/exec_command'
-
 class Kontena::Cli::ServiceCommand < Kontena::Command
+  subcommand ["list","ls"], "List services", load_subcommand('services/list_command')
+  subcommand "create", "Create a new service", load_subcommand('services/create_command')
+  subcommand "show", "Show service details", load_subcommand('services/show_command')
+  subcommand "update", "Update service configuration", load_subcommand('services/update_command')
+  subcommand "deploy", "Deploy service", load_subcommand('services/deploy_command')
+  subcommand "stop", "Stop service", load_subcommand('services/stop_command')
+  subcommand "start", "Start service", load_subcommand('services/start_command')
+  subcommand "restart", "Restart service", load_subcommand('services/restart_command')
+  subcommand "scale", "Scale service", load_subcommand('services/scale_command')
+  subcommand ["remove", "rm"], "Remove service", load_subcommand('services/remove_command')
+  subcommand "containers", "List service containers", load_subcommand('services/containers_command')
+  subcommand "logs", "Show service logs", load_subcommand('services/logs_command')
+  subcommand "events", "Show service events", load_subcommand('services/events_command')
+  subcommand "stats", "Show service statistics", load_subcommand('services/stats_command')
+  subcommand "monitor", "Monitor", load_subcommand('services/monitor_command')
 
-  subcommand ["list","ls"], "List services", Kontena::Cli::Services::ListCommand
-  subcommand "create", "Create a new service", Kontena::Cli::Services::CreateCommand
-  subcommand "show", "Show service details", Kontena::Cli::Services::ShowCommand
-  subcommand "update", "Update service configuration", Kontena::Cli::Services::UpdateCommand
-  subcommand "deploy", "Deploy service", Kontena::Cli::Services::DeployCommand
-  subcommand "stop", "Stop service", Kontena::Cli::Services::StopCommand
-  subcommand "start", "Start service", Kontena::Cli::Services::StartCommand
-  subcommand "restart", "Restart service", Kontena::Cli::Services::RestartCommand
-  subcommand "scale", "Scale service", Kontena::Cli::Services::ScaleCommand
-  subcommand ["remove", "rm"], "Remove service", Kontena::Cli::Services::RemoveCommand
-  subcommand "containers", "List service containers", Kontena::Cli::Services::ContainersCommand
-  subcommand "logs", "Show service logs", Kontena::Cli::Services::LogsCommand
-  subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
-  subcommand "monitor", "Monitor", Kontena::Cli::Services::MonitorCommand
+  subcommand "env", "Environment variable specific commands", load_subcommand('services/env_command')
 
-  subcommand "env", "Environment variable specific commands", Kontena::Cli::Services::EnvCommand
+  subcommand "secret", "Secret specific commands", load_subcommand('services/secret_command')
 
-  subcommand "secret", "Secret specific commands", Kontena::Cli::Services::SecretCommand
-
-  subcommand "link", "Link service to another service", Kontena::Cli::Services::LinkCommand
-  subcommand "unlink", "Unlink service from another service", Kontena::Cli::Services::UnlinkCommand
-  subcommand "exec", "Execute commands in service containers", Kontena::Cli::Services::ExecCommand
+  subcommand "link", "Link service to another service", load_subcommand('services/link_command')
+  subcommand "unlink", "Unlink service from another service", load_subcommand('services/unlink_command')
+  subcommand "exec", "Execute commands in service containers", load_subcommand('services/exec_command')
 
   def execute
   end

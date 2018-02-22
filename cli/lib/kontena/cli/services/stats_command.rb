@@ -7,7 +7,8 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     MEM_MAX_LIMITS = [
-      1.8446744073709552e+19, 9.223372036854772e+18
+      2**64,
+      2**63 - 4096
     ]
 
     parameter "NAME", "Service name"
@@ -53,8 +54,10 @@ module Kontena::Cli::Services
       end
 
       cpu = stat['cpu'].nil? ? 'N/A' : stat['cpu']['usage']
-      network_in = stat['network'].nil? ? 'N/A' : filesize_to_human(stat['network']['rx_bytes'])
-      network_out = stat['network'].nil? ? 'N/A' : filesize_to_human(stat['network']['tx_bytes'])
+
+      network_in = stat['network'].nil? ? 'N/A' : filesize_to_human(network_bytes(stat['network'], 'rx_bytes'))
+      network_out = stat['network'].nil? ? 'N/A' : filesize_to_human(network_bytes(stat['network'], 'tx_bytes'))
+
       prefix = self.name.split('/')[0]
       instance_name = stat['container_id'].gsub("#{prefix}-", "")
       puts '%-30.30s %-15s %-20s %-15s %-15s' % [ instance_name, "#{cpu}%", "#{memory} / #{memory_limit}", "#{memory_pct}", "#{network_in}/#{network_out}"]
@@ -71,6 +74,14 @@ module Kontena::Cli::Services
       s.sub(/\.?0*$/, units[e])
     rescue FloatDomainError
       'N/A'
+    end
+
+    ##
+    # @param [Hash] network
+    # @param [String] key
+    # @return [Integer]
+    def network_bytes(network, key)
+      (network.dig('internal', key) || 0) + (network.dig('external', key) || 0)
     end
   end
 end

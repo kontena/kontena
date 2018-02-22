@@ -5,7 +5,7 @@ class GridSecret
   belongs_to :grid
 
   field :name, type: String
-  field :encrypted_value, type: String, encrypted: true
+  field :encrypted_value, type: String, encrypted: { random_iv: true }
 
   validates_presence_of :name, :encrypted_value
   validates_uniqueness_of :name, scope: [:grid_id]
@@ -15,5 +15,9 @@ class GridSecret
   # @return [String]
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
+  end
+
+  def services
+    self.grid.grid_services.where(:secrets.elem_match => { secret: self.name })
   end
 end

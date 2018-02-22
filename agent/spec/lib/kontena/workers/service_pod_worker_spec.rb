@@ -1,0 +1,607 @@
+describe Kontena::Workers::ServicePodWorker, :celluloid => true do
+  include RpcClientMocks
+
+  let(:node) { Node.new('id' => 'aa') }
+  let(:service_revision) { 1 }
+  let(:service_pod) do
+    Kontena::Models::ServicePod.new(
+      'id' => 'foo/2',
+      'instance_number' => 2,
+      'updated_at' => Time.now.to_s,
+      'deploy_rev' => Time.now.to_s,
+      'service_revision' => service_revision,
+    )
+  end
+  let(:subject) { described_class.new(node, service_pod) }
+
+  describe '#apply' do
+    let(:container_id) { '8919f1a9fd05a0730a4b36549771e25895d71b9dd54c426bd6f5be969d39773c' }
+    let(:overlay_ip) { '10.81.128.1' }
+    let(:container_started_at) { Time.now }
+    let(:container) {double(:container, id: container_id,
+      name: 'foo-2',
+      overlay_ip: overlay_ip,
+      started_at: container_started_at,
+    ) }
+    let(:restarted_container) {double(:container, id: container_id,
+      name: 'foo-2',
+      overlay_ip: overlay_ip,
+      started_at: container_started_at + 1.0,
+    ) }
+
+    it 'ensures the container, and syncs to master' do
+      expect(subject.wrapped_object).to receive(:ensure_desired_state).and_return(container)
+      expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, container)
+
+      subject.apply
+    end
+
+    it 'ensures the container, and syncs errors to master' do
+      expect(subject.wrapped_object).to receive(:ensure_desired_state).and_raise(RuntimeError.new('test'))
+      expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, nil, RuntimeError)
+
+      subject.apply
+    end
+
+    context 'with wait_for_port' do
+      let(:service_pod) do
+        Kontena::Models::ServicePod.new(
+          'id' => 'foo/2',
+          'instance_number' => 2,
+          'updated_at' => Time.now.to_s,
+          'deploy_rev' => Time.now.to_s,
+          'desired_state' => 'running',
+          'wait_for_port' => 1337,
+        )
+      end
+
+      it 'syncs state after waiting for the port' do
+        expect(subject.wrapped_object).to receive(:ensure_desired_state).and_return(container)
+        expect(subject.wrapped_object).to receive(:port_open?).with(overlay_ip, 1337, timeout: 1.0).and_return(true)
+        expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, container)
+
+        subject.apply
+      end
+
+      it 'aborts if the container crashes and restarts' do
+        expect(subject.wrapped_object).to receive(:ensure_desired_state).once.and_return(container)
+        expect(subject.wrapped_object).to receive(:port_open?).with(overlay_ip, 1337, timeout: 1.0).once do
+          expect(subject.wrapped_object).to receive(:ensure_desired_state).once.and_return(restarted_container)
+          expect(subject.wrapped_object).to receive(:wait_for_port)
+          # XXX: in this case both the failing initial wait_for_port, and the restart will report state...
+          expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, restarted_container)
+
+          subject.on_container_event('container:event', double(id: container_id, status: 'die', time_nano: (Time.now.to_f * 1e9).to_s, actor: double(attributes: {'exitCode' => 1})))
+
+          false
+        end
+        allow(subject.wrapped_object).to receive(:sleep)
+        allow(subject.wrapped_object).to receive(:port_open?).with(overlay_ip, 1337, timeout: 1.0).and_return(false)
+        expect(subject.wrapped_object).to receive(:sync_state_to_master).with(service_pod, container, RuntimeError) do |pod, container, error|
+          expect(error.message).to match /container restarted/
+        end
+
+
+        subject.apply
+      end
+    end
+
+    describe 'when terminating a service pod' do
+      it 'ensures the container, and terminates' do
+        expect(subject.wrapped_object).to receive(:ensure_desired_state) do
+          expect(service_pod).to be_terminated
+          nil
+        end
+        expect(subject.wrapped_object).to receive(:terminate)
+        expect(subject.wrapped_object).to_not receive(:sync_state_to_master)
+
+        subject.destroy
+      end
+    end
+  end
+
+  describe '#ensure_desired_state' do
+    before(:each) do
+      allow(subject.wrapped_object).to receive(:migrate_container)
+    end
+
+    it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
+      allow(service_pod).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:ensure_running)
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
+    end
+
+    it 'calls ensure_running if container is not running and service_pod desired_state is running' do
+      container = double(:container, :running? => false, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(subject.wrapped_object).to receive(:service_container_outdated?).and_return(false)
+      allow(service_pod).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:ensure_started)
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
+    end
+
+    context 'with an updated service pod' do
+      let(:service_revision) { 2 }
+      let(:container) { double(:container,
+        :running? => true, :restarting? => false,
+        :name => 'foo-2',
+        :service_revision => 1,
+      ) }
+
+      it 'calls ensure_running if service revision is newer than container' do
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+        allow(service_pod).to receive(:running?).and_return(true)
+        expect(subject.wrapped_object).to receive(:ensure_running)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+        expect(subject.ensure_desired_state).to eq container
+      end
+    end
+
+    it 'calls ensure_stopped if container is running and service_pod desired_state is stopped' do
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(service_pod).to receive(:running?).and_return(false)
+      allow(service_pod).to receive(:stopped?).and_return(true)
+      expect(subject.wrapped_object).to receive(:ensure_stopped)
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
+    end
+
+    it 'calls ensure_terminated if container exist and service_pod desired_state is terminated' do
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(service_pod).to receive(:terminated?).and_return(true)
+      allow(service_pod).to receive(:running?).and_return(false)
+      allow(service_pod).to receive(:stopped?).and_return(false)
+      expect(subject.wrapped_object).to receive(:ensure_terminated)
+      expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
+      expect(subject.ensure_desired_state).to be nil
+    end
+
+    it 'migrates container' do
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.wrapped_object).to receive(:migrate_container).with(container)
+      subject.ensure_desired_state
+    end
+  end
+
+  describe '#state_in_sync' do
+    let(:container) { instance_double(Docker::Container) }
+
+    context "for a stopped service pod" do
+      let(:service_pod) do
+        Kontena::Models::ServicePod.new(
+          'id' => 'foo/2',
+          'instance_number' => 2,
+          'updated_at' => Time.now.to_s,
+          'deploy_rev' => Time.now.to_s,
+          'desired_state' => 'stopped',
+        )
+      end
+
+      it "returns true for a stopped container" do
+        expect(container).to receive(:running?).and_return(false)
+
+        expect(subject.state_in_sync?(service_pod, container)).to be_truthy
+      end
+    end
+  end
+
+  describe '#current_state' do
+    it 'returns missing if container is not found' do
+      expect(subject.current_state(nil)).to eq('missing')
+    end
+
+    it 'returns running if container is running' do
+      container = double(:container, :running? => true)
+      expect(subject.current_state(container)).to eq('running')
+    end
+
+    it 'returns restarting if restart is in progress' do
+      container = double(:container, :running? => false)
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      expect(subject.current_state(container)).to eq('restarting')
+    end
+
+    it 'returns stopped if container is not running or restarting' do
+      container = double(:container, :running? => false, :restarting? => false)
+      expect(subject.current_state(container)).to eq('stopped')
+    end
+  end
+
+  describe '#sync_state_to_master' do
+    let(:container) { double(:container, :running? => true) }
+
+    before(:each) do
+      mock_rpc_client
+    end
+
+    it 'sends correct data' do
+      expect(rpc_client).to receive(:request).with(
+        '/node_service_pods/set_state',
+        [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
+      )
+      subject.sync_state_to_master(service_pod, container)
+    end
+
+    it 'sends error' do
+      expect(rpc_client).to receive(:request).with(
+        '/node_service_pods/set_state',
+        [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
+      )
+      subject.sync_state_to_master(service_pod, nil, Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+    end
+
+    context 'that has already updated' do
+      before do
+        expect(rpc_client).to receive(:request).with('/node_service_pods/set_state', [node.id, hash_including(rev: service_pod.deploy_rev)])
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'updates again with a diffrent state' do
+        allow(container).to receive(:running?).and_return(false)
+        expect(rpc_client).to receive(:request).with('/node_service_pods/set_state', [node.id, hash_including(rev: service_pod.deploy_rev, state: 'stopped')])
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'does not update again with the same state' do
+        expect(rpc_client).to_not receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'updates again with a newer rev' do
+        allow(service_pod).to receive(:deploy_rev).and_return((Time.now + 1.0).to_s)
+
+        expect(rpc_client).to receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'does not send an update for an older rev' do
+        allow(service_pod).to receive(:deploy_rev).and_return((Time.now - 1.0).to_s)
+
+        expect(rpc_client).to_not receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
+    end
+  end
+
+  describe '#needs_apply' do
+    it 'returns true when initialized' do
+      expect(subject.needs_apply?(service_pod)).to be_truthy
+    end
+
+    it 'returns false if restarting and desired_state or deploy_rev has not changed' do
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      expect(subject.needs_apply?(service_pod)).to be_falsey
+    end
+
+    it 'returns true if restarting and deploy_rev has changed' do
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      update = service_pod.dup
+      allow(update).to receive(:deploy_rev).and_return('new')
+      expect(subject.needs_apply?(update)).to be_truthy
+    end
+
+    context 'after a previous successful apply' do
+      before do
+        subject.apply_started!
+        sleep 0.001
+        subject.apply_finished!
+      end
+
+      it 'subject is not apply_finished?' do
+        expect(subject.apply_finished?).to be_truthy
+      end
+
+      it 'returns false if pod has not changed' do
+        expect(subject.needs_apply?(service_pod)).to be_falsey
+      end
+
+      it 'returns true if deploy_rev has changed' do
+        update = service_pod.dup
+        allow(update).to receive(:deploy_rev).and_return('new')
+        expect(subject.needs_apply?(update)).to be_truthy
+      end
+
+      it 'returns true if desired_state has changed' do
+        update = service_pod.dup
+        allow(update).to receive(:desired_state).and_return('stopped')
+        expect(subject.needs_apply?(update)).to be_truthy
+      end
+    end
+
+    context 'after a previous unsuccessful apply' do
+      before do
+        subject.apply_finished!
+        sleep 0.001
+        subject.apply_started!
+      end
+
+      it 'subject is not apply_finished?' do
+        expect(subject.apply_finished?).to be_falsey
+      end
+
+      it 'returns true if pod has not changed' do
+        expect(subject.needs_apply?(service_pod)).to be_truthy
+      end
+    end
+  end
+
+  describe '#check_deploy_rev' do
+    it 'does nothing if passed service_pod deploy_rev is nil' do
+      expect {
+        update = service_pod.dup
+        allow(update).to receive(:deploy_rev).and_return(nil)
+        subject.check_deploy_rev(update)
+      }.not_to change { subject.deploy_rev_changed? }
+    end
+
+    it 'does nothing if service_pod deploy_rev is nil' do
+      expect {
+        allow(service_pod).to receive(:deploy_rev).and_return(nil)
+        update = service_pod.dup
+        subject.check_deploy_rev(update)
+      }.not_to change { subject.deploy_rev_changed? }
+    end
+
+    it 'changes if deploy_rev has changed' do
+      expect {
+        update = service_pod.dup
+        allow(update).to receive(:deploy_rev).and_return('aaa')
+        subject.check_deploy_rev(update)
+      }.to change { subject.deploy_rev_changed? }.from(false).to(true)
+    end
+  end
+
+  describe '#on_container_event' do
+    context 'without any active container' do
+      it 'ignores any events' do
+        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'die')
+
+        expect(subject.wrapped_object).to_not receive(:on_container_die)
+
+        subject.on_container_event('container:event', event)
+      end
+    end
+
+    context 'with an active container' do
+      let(:started_at) { Time.now - 60.0 }
+      let(:container) { double(:container,
+        id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025',
+        started_at: started_at,
+      ) }
+
+      let(:event_id) { '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025' }
+      let(:event_at) { Time.now - 59.0 }
+      let(:event_attributes) { }
+      let(:event) { double(:event,
+        id: event_id,
+        status: event_status,
+        time_nano: (event_at.to_f * 1e9).to_s,
+        actor: double(attributes: event_attributes),
+      ) }
+
+      before do
+        subject.instance_variable_set('@container', container)
+      end
+
+      context 'for an event with the wrong container ID' do
+        let(:event_id) { 'f02a583a0dd44a685a14c445b9826b5f8a8c46555fabf003de3009180ff7a24c' }
+        let(:event_status) { 'die' }
+
+        it 'ignores the event' do
+          expect(subject.wrapped_object).to_not receive(:on_container_die)
+
+          subject.on_container_event('container:event', event)
+        end
+      end
+
+      context 'for an event from before the container start' do
+        let(:event_status) { 'die' }
+        let(:event_at) { Time.now - 61.0 }
+
+        it 'ignores the event' do
+          expect(subject.wrapped_object).to_not receive(:on_container_die)
+
+          subject.on_container_event('container:event', event)
+        end
+      end
+
+      context 'for a start event' do
+        let(:event_status) { 'start' }
+
+        it 'ignores the event' do
+          expect(subject.wrapped_object).to_not receive(:on_container_die)
+
+          subject.on_container_event('container:event', event)
+        end
+      end
+
+      context 'for a die event' do
+        let(:event_status) { 'die' }
+        let(:event_attributes) { { 'exitCode' => 1 } }
+
+        it 'triggers restart logic on container die events' do
+          expect(subject.wrapped_object).to receive(:on_container_die)
+
+          subject.on_container_event('container:event', event)
+        end
+      end
+    end
+  end
+
+  describe '#on_container_die' do
+    it 'triggers restart without backoff by default if service_pod state is running' do
+      allow(service_pod).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:after).with(0).once
+      subject.on_container_die(exit_code: 1)
+    end
+
+    it 'does not trigger restart if service_pod state is not running' do
+      expect(subject.wrapped_object).not_to receive(:after)
+      subject.on_container_die(exit_code: 1)
+    end
+
+    it 'does not trigger restart if apply is in progress' do
+      allow(subject.wrapped_object).to receive(:apply_in_progress?).and_return(true)
+      expect(subject.wrapped_object).not_to receive(:after)
+      subject.on_container_die(exit_code: 1)
+    end
+  end
+
+  describe '#service_container_outdated?' do
+    let(:puller) { double(:puller) }
+    let(:service_container) { double(:service_container) }
+
+    before(:each) do
+      allow(subject.wrapped_object).to receive(:container_outdated?).and_return(false)
+      allow(subject.wrapped_object).to receive(:labels_outdated?).and_return(false)
+      allow(subject.wrapped_object).to receive(:recreate_service_container?).and_return(false)
+      allow(subject.wrapped_object).to receive(:image_outdated?).and_return(false)
+      allow(puller).to receive(:ensure_image)
+      allow(subject.wrapped_object).to receive(:image_puller).and_return(puller)
+    end
+
+    it 'returns false if container is up-to-date' do
+      expect(subject.service_container_outdated?(service_container)).to be_falsey
+    end
+
+    it 'returns true if container is too old' do
+      allow(subject.wrapped_object).to receive(:container_outdated?).and_return(true)
+      expect(subject.service_container_outdated?(service_container)).to be_truthy
+    end
+
+    it 'returns true if labels need update' do
+      allow(subject.wrapped_object).to receive(:labels_outdated?).and_return(true)
+      expect(subject.service_container_outdated?(service_container)).to be_truthy
+    end
+
+    it 'returns true if service container needs to be recreated' do
+      allow(subject.wrapped_object).to receive(:recreate_service_container?).and_return(true)
+      expect(subject.service_container_outdated?(service_container)).to be_truthy
+    end
+
+    it 'returns true if deploy_rev has changed and service container image is outdated' do
+      allow(subject.wrapped_object).to receive(:deploy_rev_changed?).and_return(true)
+      allow(subject.wrapped_object).to receive(:image_outdated?).and_return(true)
+      expect(puller).to receive(:ensure_image).with(service_pod.image_name, service_pod.deploy_rev, nil)
+      expect(subject.service_container_outdated?(service_container)).to be_truthy
+    end
+  end
+
+  describe '#container_outdated?' do
+    context 'with an up-to-date container revision' do
+      let(:service_revision) { 1 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 1,
+      ) }
+
+      it 'returns false' do
+        expect(subject.container_outdated?(service_container)).to be_falsey
+      end
+    end
+
+    context 'with an out-of-date container revision' do
+      let(:service_revision) { 2 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 1,
+      ) }
+
+      it 'returns true' do
+        expect(subject.container_outdated?(service_container)).to be_truthy
+      end
+    end
+
+    context 'with an invalid container revision' do
+      let(:service_revision) { 1 }
+
+      let(:service_container) { double(:service_container,
+        service_revision: 2,
+      ) }
+
+      it 'returns false' do
+        expect(subject.container_outdated?(service_container)).to be_falsey
+      end
+    end
+  end
+
+  describe '#image_outdated?' do
+    it 'returns true if image id does not match to container' do
+      image = double(:image, id: 'abc')
+      service_container = double(:service_container,
+        info: { 'Image' => 'bcd' }
+      )
+      allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_return(image)
+      expect(subject.image_outdated?(service_container)).to be_truthy
+    end
+
+    it 'returns false if image id matches to container' do
+      image = double(:image, id: 'abc')
+      service_container = double(:service_container,
+        info: { 'Image' => 'abc' }
+      )
+      allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_return(image)
+      expect(subject.image_outdated?(service_container)).to be_falsey
+    end
+  end
+
+  describe '#labels_outdated?' do
+    it 'returns true when labels are outdated' do
+      service_container = spy(:service_container,
+        labels: { 'io.kontena.load_balancer.name' => 'lb'}
+      )
+      allow(service_pod).to receive(:labels).and_return({})
+      expect(subject.labels_outdated?(service_container)).to be_truthy
+
+      allow(service_pod).to receive(:labels).and_return({ 'io.kontena.load_balancer.name' => 'lb2' })
+      expect(subject.labels_outdated?(service_container)).to be_truthy
+    end
+
+    it 'returns false with empty labels' do
+      service_container = spy(:service_container,
+        labels: {}
+      )
+      allow(service_pod).to receive(:labels).and_return({})
+      expect(subject.labels_outdated?(service_container)).to be_falsey
+    end
+
+    it 'returns false with up-to-date labels' do
+      service_container = spy(:service_container,
+        labels: { 'io.kontena.load_balancer.name' => 'lb'}
+      )
+      allow(service_pod).to receive(:labels).and_return({ 'io.kontena.load_balancer.name' => 'lb' })
+      expect(subject.labels_outdated?(service_container)).to be_falsey
+    end
+  end
+
+  describe '#recreate_service_container?' do
+    it 'returns false if container is running' do
+      service_container = spy(:service_container,
+        state: {'Running' => true}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_falsey
+    end
+
+    it 'returns false if container is stopped without error message' do
+      service_container = spy(:service_container,
+        state: {'Running' => false, 'Error' => ''}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_falsey
+    end
+
+    it 'returns true if container is stopped with error message' do
+      service_container = spy(:service_container,
+        running?: false,
+        state: {'Running' => false, 'Error' => 'oh noes'}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_truthy
+    end
+  end
+end

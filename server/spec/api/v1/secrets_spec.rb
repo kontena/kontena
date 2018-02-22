@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe 'secrets' do
 
@@ -58,7 +57,7 @@ describe 'secrets' do
     it 'returns error if user has no access to grid' do
       data = {name: 'PASSWD', value: 'secretzz'}
       post "/v1/grids/#{another_grid.to_path}/secrets", data.to_json, request_headers
-      expect(response.status).to eq(404)
+      expect(response.status).to eq(403)
     end
   end
 
@@ -124,11 +123,20 @@ describe 'secrets' do
 
     it 'returns secrets array' do
       grid.grid_secrets.create(name: 'foo', value: 'supersecret')
+      grid.grid_services.create!(
+        name: 'app',
+        image_name: 'my/app:latest',
+        stateful: false,
+        secrets: [
+          secret: 'foo',
+          name: 'bar'
+        ]
+      )
       get "/v1/grids/#{grid.to_path}/secrets", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['secrets'].size).to eq(1)
       secret = json_response['secrets'][0]
-      expect(secret.keys.sort).to eq(%w(id name created_at updated_at).sort)
+      expect(secret.keys.sort).to eq(%w(id name created_at updated_at services).sort)
     end
   end
 
@@ -138,6 +146,32 @@ describe 'secrets' do
       get "/v1/secrets/#{secret.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['value']).to eq(secret.value)
+    end
+
+    it 'returns related services' do
+      secret = grid.grid_secrets.create(name: 'foo', value: 'supersecret')
+      service = grid.grid_services.create!(
+        name: 'app',
+        image_name: 'my/app:latest',
+        stateful: false,
+        secrets: [
+          secret: 'foo',
+          name: 'bar'
+        ]
+      )
+      grid.grid_services.create!(
+        name: 'worker',
+        image_name: 'my/app:latest',
+        stateful: false,
+        secrets: [
+          secret: 'foo2',
+          name: 'bar'
+        ]
+      )
+      get "/v1/secrets/#{secret.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['services'].count).to eq(1)
+      expect(json_response['services']).to eq([{'id' => service.to_path, 'name' => 'app' }])
     end
 
     it 'creates an audit entry' do

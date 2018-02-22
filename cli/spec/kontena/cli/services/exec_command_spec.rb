@@ -1,25 +1,8 @@
-require_relative "../../../spec_helper"
 require 'kontena/cli/services/exec_command'
 
 describe Kontena::Cli::Services::ExecCommand do
   include ClientHelpers
   include OutputHelpers
-
-  let :exec_ok do
-    [
-      ["ok\n"],
-      [],
-      0, # exit
-    ]
-  end
-
-  let :exec_fail do
-    [
-      [],
-      ["error\n"],
-      1, # exit
-    ]
-  end
 
   context "For a service with one running instance" do
     let :service_containers do
@@ -38,17 +21,16 @@ describe Kontena::Cli::Services::ExecCommand do
     end
 
     it "Executes on the running container by default" do
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
-
-      expect{subject.run(['test-service', 'test'])}.to return_and_output true, [
-        'ok',
-      ]
+      expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+      ).and_return(0)
+      expect{subject.run(['test-service', 'test'])}.to_not exit_with_error
     end
   end
 
   context "For a service with multiple running instances" do
     let :service_containers do
-      { 'containers' => [
+       [
         {
           'id' => 'test-grid/host/test-service.container-1',
           'name' => 'test-service.container-1',
@@ -67,74 +49,108 @@ describe Kontena::Cli::Services::ExecCommand do
           'instance_number' => 3,
           'status' => 'running',
         },
-      ] }
+      ]
     end
 
     it "Executes on the first running container by default" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
+      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return('containers' => service_containers)
 
-      expect{subject.run(['test-service', 'test'])}.to output_lines ["ok"]
+      expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+      ) do
+        puts 'ok 1'
+        0
+      end
+
+      expect{
+        subject.run(['test-service', 'test'])
+      }.to output_lines [ 'ok 1' ]
     end
 
     it "Executes on the first running container, even if they are ordered differently" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return({'containers' => service_containers['containers'].reverse })
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
+      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return('containers' => service_containers.reverse)
 
-      expect{subject.run(['test-service', 'test'])}.to output_lines ["ok"]
+      expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+      ).and_return(0)
+      expect{subject.run(['test-service', 'test'])}.to_not exit_with_error
     end
 
-    it "Executes on the first running container if given" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
+    context do
+      before do
+        expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return('containers' => service_containers)
+      end
 
-      expect{subject.run(['--instance=1', 'test-service', 'test'])}.to output_lines ["ok"]
-    end
+      it "Executes on the first running container if given" do
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+        ).and_return(0)
+        expect{subject.run(['--instance=1', 'test-service', 'test'])}.to_not exit_with_error
+      end
 
-    it "Executes on the second running container if given" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(exec_ok)
+      it "Executes on the second running container if given" do
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-2', ['test'],
+        interactive: false, shell: false, tty: false,
+        ).and_return(0)
+        expect{subject.run(['--instance=2', 'test-service', 'test'])}.to_not exit_with_error
+      end
 
-      expect{subject.run(['--instance=2', 'test-service', 'test'])}.to output_lines ["ok"]
-    end
+      it "Errors on a nonexistant container if given" do
+        expect{subject.run(['--instance=4', 'test-service', 'test'])}.to exit_with_error.and output(/Service test-service does not have container instance 4/).to_stderr
+      end
 
-    it "Errors on a nonexistant container if given" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
+      it "Executes on each running container" do
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+        ).and_return(0)
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-2', ['test'],
+        interactive: false, shell: false, tty: false,
+        ).and_return(0)
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-3', ['test'],
+        interactive: false, shell: false, tty: false,
+        ).and_return(0)
 
-      expect{subject.run(['--instance=4', 'test-service', 'test'])}.to exit_with_error.and output(/Service test-service does not have container instance 4/).to_stderr
-    end
+        subject.run(['--silent', '--all', 'test-service', 'test'])
+      end
 
-    it "Executes on each running container" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(exec_ok)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-3/exec', { cmd: ['test'] }).and_return(exec_ok)
+      it "Stops if the first container fails" do
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+        ) { $stderr << 'error'; 1 }
 
-      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to output_lines ["ok", "ok", "ok"]
-    end
+        expect {
+          subject.run(['--silent', '--all', 'test-service', 'test'])
+        }.to exit_with_error.and output("error").to_stderr
+      end
 
-    it "Stops if the first container fails" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_fail)
+      it "Stops if the second container fails" do
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+        ) { $stdout << 'ok 1'; 0 }
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-2', ['test'],
+        interactive: false, shell: false, tty: false,
+        ) { $stderr << 'error 2'; 1 }
 
-      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to exit_with_error.and output("error\n").to_stderr
-    end
+        expect {
+          subject.run(['--silent', '--all', 'test-service', 'test'])
+        }.to exit_with_error.and output("ok 1").to_stdout.and output("error 2").to_stderr
+      end
 
-    it "Stops if the second container fails" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(exec_fail)
+      it "Keeps going if the second container fails when using --skip" do
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-1', ['test'],
+        interactive: false, shell: false, tty: false,
+        ) { puts 'ok 1'; 0}
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-2', ['test'],
+        interactive: false, shell: false, tty: false,
+        ) { puts 'err 2'; 2 }
+        expect(subject).to receive(:container_exec).with('test-grid/host/test-service.container-3', ['test'],
+        interactive: false, shell: false, tty: false,
+        ) { puts 'ok 3'; 0 }
 
-      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to exit_with_error.and output("ok\n").to_stdout.and output("error\n").to_stderr
-    end
-
-    it "Keeps going if the second container fails when using --skip" do
-      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(exec_fail)
-      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-3/exec', { cmd: ['test'] }).and_return(exec_ok)
-
-      expect{subject.run(['--silent', '--all', '--skip', 'test-service', 'test'])}.to exit_with_error.and output("ok\nok\n").to_stdout.and output("error\n").to_stderr
+        expect {
+          subject.run(['--silent', '--all', '--skip', 'test-service', 'test'])
+        }.to exit_with_error.and output_lines ['ok 1', 'err 2', 'ok 3']
+      end
     end
   end
 end

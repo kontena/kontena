@@ -6,22 +6,28 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include StacksHelper
 
-    banner "Deploys all services of a stack that has been installed in a grid on Kontena Master"
+    banner "Deploys all services of a stack"
 
-    parameter "NAME", "Stack name"
+    parameter "NAME ...", "Stack name", attribute_name: :names
+
+    option '--[no-]wait', :flag, 'Wait for deployment to finish', default: true
 
     requires_current_master
     requires_current_master_token
 
     def execute
-      deployment = nil
-      spinner "Triggering deployment of stack #{pastel.cyan(name)}" do
-        deployment = deploy_stack(name)
+      names.each do |name|
+        deployment = nil
+        spinner "Triggering deployment of stack #{pastel.cyan(name)}" do
+          deployment = deploy_stack(name)
+        end
+        if wait?
+          spinner "Waiting for deployment to start" do
+            wait_for_deployment_to_start(deployment)
+          end
+          wait_for_deploy_to_finish(deployment)
+        end
       end
-      spinner "Waiting for deployment to start" do
-        wait_for_deployment_to_start(deployment)
-      end
-      wait_for_deploy_to_finish(deployment)
     end
 
     def deploy_stack(name)

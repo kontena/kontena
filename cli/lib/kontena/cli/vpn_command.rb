@@ -1,12 +1,8 @@
-require_relative 'vpn/create_command'
-require_relative 'vpn/config_command'
-require_relative 'vpn/remove_command'
-
 class Kontena::Cli::VpnCommand < Kontena::Command
 
-  subcommand "create", "Create VPN service", Kontena::Cli::Vpn::CreateCommand
-  subcommand "config", "Show/Export VPN config", Kontena::Cli::Vpn::ConfigCommand
-  subcommand ["remove", "rm"], "Remove VPN service", Kontena::Cli::Vpn::RemoveCommand
+  subcommand "create", "Create VPN service", load_subcommand('vpn/create_command')
+  subcommand "config", "Show/Export VPN config", load_subcommand('vpn/config_command')
+  subcommand ["remove", "rm"], "Remove VPN service", load_subcommand('vpn/remove_command')
 
   def execute
   end

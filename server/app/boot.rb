@@ -7,15 +7,18 @@ end
 ENV['RACK_ENV'] = 'development' unless ENV['RACK_ENV']
 
 require 'eventmachine'
-require 'celluloid'
+require 'celluloid/current'
 require 'roda'
 require 'mongoid'
 require 'json'
 require 'mutations'
+require_relative '../lib/mutations/command_errors'
 require 'logger'
 require 'msgpack'
 require 'tilt/jbuilder.rb'
 require 'mongoid/enum'
+require 'json_serializer'
+require 'lru_redux'
 
 def require_glob(glob)
   Dir.glob(glob).sort.each do |path|
@@ -30,3 +33,4 @@ require_glob __dir__ + '/helpers/*.rb'
 require_glob __dir__ + '/mutations/**/*.rb'
 require_glob __dir__ + '/jobs/**/*.rb'
 require_glob __dir__ + '/services/**/*.rb'
+require_glob __dir__ + '/serializers/**/*.rb'

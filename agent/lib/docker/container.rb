@@ -29,15 +29,16 @@ module Docker
       self.json['State']
     end
 
-    # @return [Hash]
-    def restart_policy
-      self.host_config['RestartPolicy']
-    end
-
     # @return [String] Stack aware name of the containers service
     def service_name_for_lb
       return self.labels['io.kontena.service.name'] if self.default_stack?
       "#{self.labels['io.kontena.stack.name']}-#{self.labels['io.kontena.service.name']}"
+    end
+
+    # @return [String] Stack aware name
+    def name_for_humans
+      return self.name if self.default_stack?
+      self.name.sub('.', '/')
     end
 
     # @return [Boolean]
@@ -45,11 +46,6 @@ module Docker
       return false if self.labels['io.kontena.service.id'].nil?
 
       self.labels['io.kontena.stack.name'].nil? || self.labels['io.kontena.stack.name'].to_s == 'null'.freeze
-    end
-
-    # @return [Boolean]
-    def autostart?
-      return ['always', 'unless-stopped'].include?(self.host_config.dig('RestartPolicy', 'Name'))
     end
 
     # @return [Boolean]
@@ -80,6 +76,11 @@ module Docker
       false
     end
 
+    # @return [DateTime]
+    def started_at
+      DateTime.parse(cached_json['State']['StartedAt'])
+    end
+
     # @return [Boolean]
     def finished?
       DateTime.parse(self.state['FinishedAt']).year > 1
@@ -108,6 +109,11 @@ module Docker
       false
     end
 
+    # @return [Boolean]
+    def autostart?
+      ['always'.freeze, 'unless-stopped'.freeze].include?(self.host_config.dig('RestartPolicy', 'Name'))
+    end
+
     # @return [String]
     def service_id
       self.labels['io.kontena.service.id'].to_s
@@ -116,6 +122,19 @@ module Docker
     # @return [Integer]
     def instance_number
       self.labels['io.kontena.service.instance_number'].to_i
+    end
+
+    def service_name
+      (self.labels['io.kontena.service.name'] || self.name).to_s
+    end
+
+    # @return [Integer]
+    def service_revision
+      self.labels['io.kontena.container.service_revision'].to_i
+    end
+
+    def stack_name
+      (self.labels['io.kontena.stack.name'] || 'system').to_s
     end
 
     # @return [Hash]
@@ -200,6 +219,24 @@ module Docker
     # @return [String, NilClass]
     def overlay_suffix
       self.overlay_cidr.split('/')[1] if self.overlay_cidr
+    end
+
+    # How long to wait when attempting to stop a container if it doesn’t handle
+    # SIGTERM (or whatever stop signal has been specified with stop_signal), before sending SIGKILL
+    #
+    # @return [Integer]
+    def stop_grace_period
+      (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
+    # @return [Boolean]
+    def health_check?
+      !!self.labels['io.kontena.health_check.protocol']
+    end
+
+    def reload
+      @cached_json = nil
+      cached_json
     end
 
     private

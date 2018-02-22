@@ -1,4 +1,3 @@
-require 'celluloid'
 require 'httpclient'
 require 'digest'
 require_relative '../helpers/config_helper'

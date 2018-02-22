@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative '../services/logging'
 
 class LeaderElectorJob

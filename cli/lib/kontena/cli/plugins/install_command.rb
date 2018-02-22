@@ -1,41 +1,32 @@
-require 'open3'
+require 'kontena/plugin_manager'
 
 module Kontena::Cli::Plugins
   class InstallCommand < Kontena::Command
     include Kontena::Util
     include Kontena::Cli::Common
+    include Kontena::PluginManager::Common
 
     parameter 'NAME', 'Plugin name'
 
     option ['-v', '--version'], 'VERSION', 'Specify version of plugin to install'
     option '--pre', :flag, 'Allow pre-release of a plugin to be installed', default: false
 
-    def execute
-      installed_version = Kontena::PluginManager.instance.installed(name)
+    def installer
+      Kontena::PluginManager::Installer.new(name, pre: pre?, version: version)
+    end
 
-      if installed_version
-        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do |spin|
-          begin
-            Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
-          rescue => ex
-            puts Kontena.pastel.red(ex.message)
-            ENV["DEBUG"] && puts(ex.backtrace.join("\n  "))
-            spin.fail!
-          end
+    def execute
+      if installed?(name)
+        installed = spinner "Upgrading plugin #{pastel.cyan(name)}" do
+          installer.upgrade
         end
 
         spinner "Running cleanup" do |spin|
-          Kontena::PluginManager.instance.cleanup_plugin(name)
+          Kontena::PluginManager::Cleaner.new(name).cleanup
         end
       else
-        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
-          begin
-            Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
-          rescue => ex
-            puts Kontena.pastel.red(ex.message)
-            ENV["DEBUG"] && puts(ex.backtrace.join("\n  "))
-            spin.fail!
-          end
+        installed = spinner "Installing plugin #{pastel.cyan(name)}" do
+          installer.install
         end
       end
 

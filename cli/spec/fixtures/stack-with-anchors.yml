@@ -1,0 +1,13 @@
+stack: user/stackname
+version: 0.1.1
+data:
+  with_affinity: &with_affinity
+    affinity:
+      - abc==dfg
+services:
+  wordpress:
+    <<: *with_affinity
+    image: wordpress
+  mysql:
+    <<: *with_affinity
+    image: mysql

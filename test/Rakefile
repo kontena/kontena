@@ -40,20 +40,28 @@ namespace :vagrant  do
 end
 
 namespace :compose do
+  task :build => [:build_master, :build_agent]
+  task :build_master do
+    sh "docker-compose build api"
+  end
+  task :build_agent do
+    sh "docker-compose build agent"
+  end
+
   desc "setup compose"
   task :setup => [:setup_master, :setup_grid]
 
-  desc "setup vagrant master"
+  desc "setup compose master"
   task :setup_master do
-    sh "docker-compose up --build -d api"
+    sh "docker-compose up -d api"
     sleep 20
     sh "kontena master login --code initialadmincode --name compose-e2e http://localhost:9292"
   end
 
-  desc "setup vagrant grid"
+  desc "setup compose grid"
   task :setup_grid do
     sh "kontena grid create --token e2etoken e2e"
-    sh "docker-compose up --build -d agent"
+    sh "docker-compose up -d agent"
     sleep 30
     sh "kontena node ls"
   end
@@ -63,13 +71,18 @@ namespace :compose do
 
   task :teardown_master do
     sh "docker-compose stop api mongodb"
-    sh "docker-compose rm --force api mongodb"
+    sh "docker-compose rm -v --force api mongodb"
+    sh "kontena master remove --force compose-e2e"
   end
 
   task :teardown_grid do
     sh "docker-compose stop agent"
-    sh "docker-compose rm --force agent"
-    sh "kontena node rm --force moby"
+    # Workaround https://github.com/docker/compose/issues/4548
+    #   The agent service must be stopped before using docker-compose run
+    # Workaround https://github.com/docker/compose/issues/4550
+    #   Strip trailing CR from the docker-compose run output
+    sh "kontena node rm --force $(docker-compose run --rm agent hostname | tr -d $'\r')"
+    sh "docker-compose rm -v --force agent"
     sh "kontena grid rm --force e2e"
   end
 end

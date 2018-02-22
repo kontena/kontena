@@ -1,7 +1,7 @@
-require_relative '../spec_helper'
 
 describe User do
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:email)}
 
   it { should have_and_belong_to_many(:grids) }
@@ -46,4 +46,27 @@ describe User do
       expect(user.reload.accessible_grids.count).to eq(2)
     end
   end
+
+  describe '#has_access' do
+    context 'when user is master_admin' do
+      it 'returns all grids' do
+        grid1 = Grid.create(name: 'test')
+        grid2 = Grid.create(name: 'test2')
+        allow(subject).to receive(:master_admin?).and_return(true)
+        expect(subject.has_access?(grid1)).to be_truthy
+        expect(subject.has_access?(grid2)).to be_truthy
+      end
+    end
+    it 'return true only for users grids' do
+      user = User.create(email: 'john.doe@example.org')
+      user.grids << Grid.create(name: 'test')
+      user.grids << Grid.create(name: 'test2')
+      Grid.create(name: 'test3')
+      user.reload
+      expect(user.has_access?(Grid.find_by(name: 'test'))).to be_truthy
+      expect(user.has_access?(Grid.find_by(name: 'test2'))).to be_truthy
+      expect(user.has_access?(Grid.find_by(name: 'test3'))).to be_falsey
+    end
+  end
+
 end

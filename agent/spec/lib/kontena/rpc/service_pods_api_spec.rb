@@ -1,74 +1,16 @@
-require_relative '../../../spec_helper'
-
-describe Kontena::Rpc::ServicePodsApi do
-
-  let(:data) do
-    {
-      'service_id' => 'aaaaaaaaa',
-      'service_name' => 'redis',
-      'instance_number' => 2,
-      'deploy_rev' => Time.now.utc.to_s,
-      'updated_at' => Time.now.utc.to_s,
-      'labels' => {
-        'io.kontena.service.name' => 'redis-cache',
-        'io.kontena.container.overlay_cidr' => '10.81.23.2/19'
-      },
-      'stateful' => true,
-      'image_name' => 'redis:3.0',
-      'user' => nil,
-      'cmd' => nil,
-      'entrypoint' => nil,
-      'memory' => nil,
-      'memory_swap' => nil,
-      'cpu_shares' => nil,
-      'privileged' => false,
-      'cap_add' => nil,
-      'cap_drop' => nil,
-      'devices' => [],
-      'ports' => [],
-      'env' => [
-        'KONTENA_SERVICE_NAME=redis-cache'
-      ],
-      'volumes' => nil,
-      'volumes_from' => nil,
-      'net' => 'bridge',
-      'log_driver' => nil
-    }
-  end
-
-  let(:executor) do
-    double(:executor)
-  end
-
-  describe '#create' do
-    it 'calls service pod creator' do
-      expect(Kontena::ServicePods::Creator).to receive(:new).and_return(executor)
-      expect(executor).to receive(:perform)
-      subject.create(data)
-    end
-  end
-
-  describe '#start' do
-    it 'calls service pod starter' do
-      expect(Kontena::ServicePods::Starter).to receive(:new).and_return(executor)
-      expect(executor).to receive(:perform)
-      subject.start('service_id', 2)
-    end
-  end
-
-  describe '#stop' do
-    it 'calls service pod stopper' do
-      expect(Kontena::ServicePods::Stopper).to receive(:new).and_return(executor)
-      expect(executor).to receive(:perform)
-      subject.stop('service_id', 2)
-    end
-  end
-
+describe Kontena::Rpc::ServicePodsApi, :celluloid => true do
   describe '#restart' do
     it 'calls service pod restarter' do
-      expect(Kontena::ServicePods::Restarter).to receive(:new).and_return(executor)
-      expect(executor).to receive(:perform)
+      expect(Celluloid::Notifications).to receive(:publish).with('service_pod:restart', {service_id: 'service_id', instance_number: 2})
+
       subject.restart('service_id', 2)
+    end
+  end
+
+  describe '#notify_update' do
+    it 'notifies service_pod:update' do
+      expect(Celluloid::Notifications).to receive(:publish).with('service_pod:update', 'stopped')
+      subject.notify_update('stopped')
     end
   end
 end

@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Grids::Delete do
   let(:user) { User.create!(email: 'joe@domain.com')}
@@ -13,7 +12,7 @@ describe Grids::Delete do
   }
 
   let(:node) {
-    grid.host_nodes.create!(node_id: 'abc')
+    grid.host_nodes.create!(node_id: 'abc', name: 'node-1', node_number: 1)
   }
 
   describe '#run' do

@@ -1,20 +1,16 @@
-require_relative 'nodes/list_command'
-require_relative 'nodes/remove_command'
-require_relative 'nodes/show_command'
-require_relative 'nodes/update_command'
-require_relative 'nodes/ssh_command'
-require_relative 'nodes/label_command'
-require_relative 'nodes/health_command'
-
 class Kontena::Cli::NodeCommand < Kontena::Command
 
-  subcommand ["list","ls"], "List grid nodes", Kontena::Cli::Nodes::ListCommand
-  subcommand "show", "Show node", Kontena::Cli::Nodes::ShowCommand
-  subcommand "ssh", "Ssh into node", Kontena::Cli::Nodes::SshCommand
-  subcommand "update", "Update node", Kontena::Cli::Nodes::UpdateCommand
-  subcommand ["remove","rm"], "Remove node", Kontena::Cli::Nodes::RemoveCommand
-  subcommand "label", "Node label specific commands", Kontena::Cli::Nodes::LabelCommand
-  subcommand "health", "Check node health", Kontena::Cli::Nodes::HealthCommand
+  subcommand ["list","ls"], "List grid nodes", load_subcommand('nodes/list_command')
+  subcommand "show", "Show node", load_subcommand('nodes/show_command')
+  subcommand "ssh", "Ssh into node", load_subcommand('nodes/ssh_command')
+  subcommand "create", "Create node", load_subcommand('nodes/create_command')
+  subcommand "update", "Update node", load_subcommand('nodes/update_command')
+  subcommand "reset-token", "Reset node token for agent websocket connection", load_subcommand('nodes/reset_token_command')
+  subcommand ["remove","rm"], "Remove node", load_subcommand('nodes/remove_command')
+  subcommand "label", "Node label specific commands", load_subcommand('nodes/label_command')
+  subcommand "health", "Check node health", load_subcommand('nodes/health_command')
+  subcommand "env", "Generate kontena-agent.env configuration", load_subcommand('nodes/env_command')
+
 
   def execute
   end

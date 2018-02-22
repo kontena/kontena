@@ -1,5 +1,3 @@
-require_relative "../../../../spec_helper"
-require "kontena/cli/grid_options"
 require "kontena/cli/services/secrets/link_command"
 
 describe Kontena::Cli::Services::Secrets::LinkCommand do

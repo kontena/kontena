@@ -6,7 +6,7 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
 
-    attr_reader :queue, :etcd, :workers
+    attr_reader :etcd, :workers
 
     finalizer :terminate_workers
 
@@ -14,11 +14,8 @@ module Kontena::Workers
     STOP_EVENTS = ['die', 'kill']
     ETCD_PREFIX = '/kontena/log_worker/containers'
 
-    ##
-    # @param [Queue] queue
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
+    def initialize(autostart = true)
       @queue_processing = false
       @workers = {}
       subscribe('container:event', :on_container_event)
@@ -43,11 +40,11 @@ module Kontena::Workers
 
     # @param [Docker::Container] container
     def start_container_check(container)
-      return if container.nil? || container.labels['io.kontena.health_check.uri'].nil?
+      return unless container && container.health_check?
 
       exclusive {
         unless workers[container.id]
-          workers[container.id] = ContainerHealthCheckWorker.new(container, queue)
+          workers[container.id] = ContainerHealthCheckWorker.new(container)
           workers[container.id].async.start
         end
       }
@@ -59,8 +56,7 @@ module Kontena::Workers
     def stop_container_check(container_id)
       worker = workers.delete(container_id)
       if worker
-        # we have to use kill because worker is blocked by log stream
-        Celluloid::Actor.kill(worker) if worker.alive?
+        worker.terminate if worker.alive?
       end
     end
 

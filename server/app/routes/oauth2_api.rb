@@ -24,14 +24,15 @@ module OAuth2Api
        params =
          case request_content_type
          when JSON_MIME then JSON.parse(request.body.read)
-         when FORM_MIME then URI.decode_www_form(request.body.read)
+         when FORM_MIME then Hash[URI.decode_www_form(request.body.read)]
          else
            request.params
          end
        params.each { |k,v| params[k] = nil if v.to_s.strip == BLANK}
        params
     rescue
-      debug "Param decoding exception: #{$!} - #{$!.message}"
+      debug "Param decoding exception"
+      debug $!
       mime_halt(400, INVALID_REQUEST, INVALID_PARAMS)
       nil
     end

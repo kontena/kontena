@@ -5,26 +5,24 @@ module GridServices
     end
 
     def execute
-      prev_state = self.grid_service.state
-      Celluloid::Future.new{
-        begin
-          self.grid_service.set_state('stopping')
-          self.stop_service_instances
-          self.grid_service.set_state('stopped')
-        rescue => exc
-          self.grid_service.set_state(prev_state)
-          raise exc
-        end
-      }
+      self.grid_service.set_state('stopped')
+      self.stop_service_instances
+    rescue => exc
+      add_error(:stop, :error, exc.message)
     end
 
     def stop_service_instances
-      self.grid_service.containers.each do |container|
-        if container.running?
-          Docker::ServiceStopper.new(container.host_node).stop_service_instance(
-            self.grid_service, container.instance_number
-          )
-        end
+      self.grid_service.grid_service_instances.each do |i|
+        i.set(desired_state: 'stopped')
+        notify_service_instance(i, 'stop')
+      end
+    end
+
+    # @param node [HostNode]
+    # @param action [String]
+    def notify_service_instance(service_instance, action)
+      if service_instance.host_node
+        service_instance.host_node.rpc_client.notify('/service_pods/notify_update', action)
       end
     end
   end

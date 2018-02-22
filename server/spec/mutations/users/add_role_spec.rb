@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Users::AddRole do
   let(:user) {User.create!(email: 'joe@domain.com')}
@@ -54,6 +53,16 @@ describe Users::AddRole do
       outcome = subject.run
       john.reload
       expect(john.roles.include?(grid_admin_role)).to be_truthy
+    end
+
+    it 'publishes update event for user' do
+      allow(RoleAuthorizer).to receive(:assignable_by?).with(user).and_return(true)
+      expect(john).to receive(:publish_update_event).once
+      outcome = described_class.new(
+          current_user: user,
+          user: john,
+          role: grid_admin_role.name
+      ).run
     end
   end
 end

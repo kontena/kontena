@@ -1,27 +1,41 @@
-require_relative '../../../spec_helper'
 
-describe Kontena::Workers::ContainerInfoWorker do
+describe Kontena::Workers::ContainerInfoWorker, celluloid: true do
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
+  let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
+  let(:subject) { described_class.new(node_id, false) }
 
   before(:each) do
-    Celluloid.boot
-    allow(Docker).to receive(:info).and_return({
-      'Name' => 'node-1',
-      'Labels' => nil,
-      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
-    })
-  end
-
-  after(:each) do
-    Celluloid.shutdown
+    mock_rpc_client
   end
 
   describe '#start' do
-    it 'calls #publish_all_containers' do
-      allow(subject.wrapped_object).to receive(:publish_all_containers)
+    it 'calls #publish_all_containers if rpc client is connected' do
+      allow(rpc_client).to receive(:connected?).and_return(true)
+      expect(subject.wrapped_object).to receive(:publish_all_containers)
       subject.start
+    end
+
+    it 'does not call #publish_all_containers if rpc client is not connected' do
+      allow(rpc_client).to receive(:connected?).and_return(false)
+      expect(subject.wrapped_object).not_to receive(:publish_all_containers)
+      subject.start
+    end
+  end
+
+  describe '#on_websocket_connected' do
+    let(:coroner) do
+      double(:coroner)
+    end
+
+    before(:each) do
+      allow(coroner).to receive(:start)
+      allow(subject.wrapped_object).to receive(:publish_all_containers)
+    end
+
+    it 'calls #publish_all_containers' do
+      expect(subject.wrapped_object).to receive(:publish_all_containers)
+      subject.on_websocket_connected('websocket:connected', nil)
     end
   end
 
@@ -50,60 +64,23 @@ describe Kontena::Workers::ContainerInfoWorker do
     it 'logs error on unknown exception' do
       event = double(:event, status: 'start', id: 'foo')
       expect(Docker::Container).to receive(:get).once.and_raise(StandardError)
-      expect(subject.wrapped_object.logger).to receive(:error).twice
-      subject.on_container_event('topic', event)
-    end
-
-    it 'notifies coroner if container is dead' do
-      event = double(:event, status: 'die', id: 'foo')
-      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => true)
-      allow(Docker::Container).to receive(:get).once.and_return(container)
-      expect(subject.wrapped_object).to receive(:notify_coroner).with(container)
-      subject.on_container_event('topic', event)
-    end
-
-    it 'does not notify coroner if container is alive' do
-      event = double(:event, status: 'start', id: 'foo')
-      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => false)
-      allow(Docker::Container).to receive(:get).once.and_return(container)
-      expect(subject.wrapped_object).not_to receive(:notify_coroner).with(container)
+      expect(subject.wrapped_object).to receive(:error).twice
       subject.on_container_event('topic', event)
     end
   end
 
   describe '#publish_info' do
     it 'publishes event to queue' do
+      expect(rpc_client).to receive(:request).once
       subject.publish_info(spy(:container, json: {'Config' => {}}))
-      expect(queue.length).to eq(1)
     end
 
     it 'publishes valid message' do
       container = double(:container, json: {'Config' => {}})
-      allow(subject.wrapped_object).to receive(:node_info).and_return({'ID' => 'host_id'})
+      expect(rpc_client).to receive(:request).once.with(
+        '/containers/save', [hash_including(node: node_id, container: Hash)]
+      )
       subject.publish_info(container)
-      valid_event = {
-          event: 'container:info',
-          data: {
-              node: 'host_id',
-              container: {
-                  'Config' => {}
-              }
-          }
-      }
-      expect(queue.length).to eq(1)
-      item = queue.pop
-      expect(item).to eq(valid_event)
-    end
-  end
-
-  describe '#notify_coroner' do
-    let(:container) do
-      double(:container, id: 'dead-id', name: '/dead')
-    end
-
-    it 'creates a coroner actor' do
-      coroner = subject.notify_coroner(container)
-      expect(coroner).to be_an_instance_of(Kontena::Actors::ContainerCoroner)
     end
   end
 end

@@ -8,24 +8,19 @@
 # the first value it finds.
 #
 # When redirecting a user to auth provider's authorization url, use:
-#   Location: AuthProvider.authorize_url(state: <app_generated_state>)
+#   Location: auth_provider.authorize_url(state: <app_generated_state>)
 #
 # When you want to fetch the userinfo for this user from the auth provider,
 # use:
-#   AuthProvider.get_userinfo(<access_token_of_the_user>)
+#   auth_provider.get_userinfo(<access_token_of_the_user>)
 #
 # To exchange an authorization_code to a real actual access token, use
-#   AuthProvider.get_token(<auth_code>)
-require 'singleton'
+#   auth_provider.get_token(<auth_code>)
 require 'uri'
 require 'jsonpath'
 require 'httpclient'
 
-require_relative '../helpers/config_helper'
-
-class AuthProvider < OpenStruct
-  include Singleton
-  include ConfigHelper # adds a .config method
+class AuthProvider
   include Logging
 
   # Minimum fields for authentication to work if by luck the defaults are ok
@@ -35,36 +30,55 @@ class AuthProvider < OpenStruct
       :root_url
   ]
 
-  def self.reset_instance
-    Singleton.send :__init__, self
-    self
+  attr_accessor :client_id
+  attr_accessor :client_secret
+  attr_accessor :authorize_endpoint
+  attr_accessor :code_requires_basic_auth
+  attr_accessor :token_endpoint
+  attr_accessor :token_method
+  attr_accessor :token_post_content_type
+  attr_accessor :userinfo_scope
+  attr_accessor :userinfo_endpoint
+  attr_accessor :userinfo_requires_basic_auth
+  attr_accessor :userinfo_username_jsonpath
+  attr_accessor :userinfo_email_jsonpath
+  attr_accessor :userinfo_user_id_jsonpath
+  attr_accessor :root_url
+  attr_accessor :cloud_api_url
+  attr_accessor :ignore_invalid_ssl
+  attr_accessor :provider_is_kontena
+  attr_accessor :uuid
+
+  def self.instance
+    new(Configuration.decrypt_all)
   end
 
   # Initializes a new auth provider instance.
-  def initialize
-    # The table syntax is for initializing an OpenStruct.
-    @table = {}
-    @table[:client_id] = config['oauth2.client_id']
-    @table[:client_secret] = config['oauth2.client_secret']
-    @table[:authorize_endpoint] = config['oauth2.authorize_endpoint']
-    @table[:code_requires_basic_auth] = config['oauth2.code_requires_basic_auth'] || false
-    if @table[:code_requires_basic_auth].kind_of?(String)
-      @table[:code_requires_basic_auth] = @table[:code_requires_basic_auth] == "true"
-    end
-    @table[:token_endpoint] = config['oauth2.token_endpoint']
-    @table[:token_method] = config['oauth2.token_method'] || 'post'
-    @table[:token_post_content_type] = config['oauth2.token_post_content_type'] || 'application/json'
-    @table[:userinfo_scope] = config['oauth2.userinfo_scope'] || 'user:email'
-    @table[:userinfo_endpoint] = config['oauth2.userinfo_endpoint']
-    @table[:userinfo_username_jsonpath] = config['oauth2.userinfo_username_jsonpath'] || '$..username;$..login'
-    @table[:userinfo_email_jsonpath] = config['oauth2.userinfo_email_jsonpath'] || '$..email;$..emails;$..primary_email'
-    @table[:userinfo_user_id_jsonpath] = config['oauth2.userinfo_user_id_jsonpath'] || '$..id;$..uid;$..userid,$..user_id'
-    @table[:root_url] = config['server.root_url']
+  def initialize(config)
+    @client_id = config['oauth2.client_id']
+    @client_secret = config['oauth2.client_secret']
+    @authorize_endpoint = config['oauth2.authorize_endpoint']
+    @code_requires_basic_auth = config['oauth2.code_requires_basic_auth'].to_s == 'true'
+    @token_endpoint = config['oauth2.token_endpoint']
+    @token_method = config['oauth2.token_method'] || 'post'
+    @token_post_content_type = config['oauth2.token_post_content_type'] || 'application/json'
+    @userinfo_scope = config['oauth2.userinfo_scope'] || 'user:email'
+    @userinfo_endpoint = config['oauth2.userinfo_endpoint']
+    @userinfo_requires_basic_auth = config['oauth2.userinfo_requires_basic_auth'].to_s == 'true'
+    @userinfo_username_jsonpath = config['oauth2.userinfo_username_jsonpath'] || '$..username;$..login'
+    @userinfo_email_jsonpath = config['oauth2.userinfo_email_jsonpath'] || '$..email;$..emails;$..primary_email'
+    @userinfo_user_id_jsonpath = config['oauth2.userinfo_user_id_jsonpath'] || '$..id;$..uid;$..userid,$..user_id'
+    @root_url = config['server.root_url']
+    @cloud_api_url = config['cloud.api_url'] || 'https://cloud-api.kontena.io'
+    @ignore_invalid_ssl = config['cloud.ignore_invalid_ssl'].to_s == 'true'
+    @provider_is_kontena = config['cloud.provider_is_kontena'].to_s == "true"
+    @uuid = config['server.uuid']
   end
 
   def is_kontena?
-    return false unless self[:authorize_endpoint]
-    config['cloud.provider_is_kontena'].to_s == "true" || URI.parse(self[:authorize_endpoint]).host.end_with?('kontena.io')
+    return true if self.provider_is_kontena
+    uri = URI.parse(self.authorize_endpoint) rescue nil
+    uri && uri.host.end_with?('kontena.io')
   end
 
   def update_kontena
@@ -72,11 +86,15 @@ class AuthProvider < OpenStruct
     return unless valid?
     return unless master_access_token
 
-    uri = URI.parse(config['cloud.api_url'] || "https://cloud-api.kontena.io")
+    debug { "Updating master information to Kontena Cloud" }
+
+    uri = URI.parse(self.cloud_api_url) rescue nil
+    return unless uri
+
     uri.path = '/master'
 
-    client = HTTPClient.new
-    if config['cloud.ignore_invalid_ssl'].to_s == 'true'
+    client = http_client
+    if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
 
@@ -84,10 +102,12 @@ class AuthProvider < OpenStruct
       data: {
         attributes: {
           'redirect-uri' => callback_url,
-          'url'          => self.root_url
+          'url'          => self.root_url,
+          'uuid'         => self.uuid
         }
       }
     }
+    debug { "Master info: #{body[:attributes].inspect}" }
     response = client.request(
       :put,
       uri.to_s,
@@ -98,26 +118,40 @@ class AuthProvider < OpenStruct
       },
       body: body.to_json
     )
+  rescue => ex
+    ex.message.gsub!(master_access_token, '<master_access_token>')
+    error ex
   end
 
   def master_access_token
     unless @master_access_token
       response = request_master_access_token
       if response.status == 200
-        json_response = JSON.parse(response.body) rescue nil
+        json_response = JSON.parse(response.body)
         @master_access_token = json_response['access_token'] if json_response
       end
     end
     @master_access_token
+  rescue => ex
+    error ex
+  end
+
+  def http_client
+    if ENV['DEBUG']
+      HTTPClient.class_exec { def debug_dev; STDOUT; end }
+    end
+    HTTPClient.new
   end
 
   def request_master_access_token
-    client = HTTPClient.new
+    client = http_client
+
     body = {
       grant_type: 'client_credentials',
       client_id: self.client_id,
       client_secret: self.client_secret
     }
+    debug { "Requesting master access token from Kontena Cloud" }
     client.request(
       :post,
       self.token_endpoint,
@@ -125,17 +159,22 @@ class AuthProvider < OpenStruct
         'Content-Type' => 'application/x-www-form-urlencoded',
         'Accept' => 'application/json'
       },
-      body: body)
+      body: body
+    )
+  rescue => ex
+    error ex
   end
 
   def missing_fields
-    REQUIRED_FIELDS.select { |field| self[field].nil? || self[field].strip == "" }
+    REQUIRED_FIELDS.select { |field| self.send(field).nil? || self.send(field).strip == "" }
   end
 
   # Returns true when all required fields have values. These are the minimum settings that
   # are required for the module to work.
   def valid?
-    missing_fields.empty?
+    return true if missing_fields.empty?
+    debug { "Auth provider not valid, missing fields: #{missing_fields.join(',')}" }
+    false
   end
 
   def callback_url
@@ -144,7 +183,7 @@ class AuthProvider < OpenStruct
 
   # URL to the authentication provider authorization endpoint
   def authorize_url(state: nil, scope: nil)
-    uri = URI.parse(self[:authorize_endpoint])
+    uri = URI.parse(self.authorize_endpoint)
     uri.query = URI.encode_www_form(
       {
         response_type: 'code',
@@ -155,6 +194,8 @@ class AuthProvider < OpenStruct
       }.reject {|_,v| v.nil? }
     )
     uri.to_s
+  rescue => ex
+    error ex
   end
 
   # Exchange an authorization code for an access_token and usually refresh_token + expires_in
@@ -168,7 +209,8 @@ class AuthProvider < OpenStruct
       grant_type: 'authorization_code',
       code: code,
       client_id: self.client_id,
-      client_secret: self.client_secret
+      client_secret: self.client_secret,
+      redirect_uri:  callback_url
     }
 
     if token_method == :post
@@ -179,8 +221,8 @@ class AuthProvider < OpenStruct
       query = URI.encode_www_form(request_params)
     end
 
-    client = HTTPClient.new
-    if config['oauth2.ignore_invalid_ssl'].to_s == 'true'
+    client = http_client
+    if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
 
@@ -189,14 +231,14 @@ class AuthProvider < OpenStruct
       client.force_basic_auth = true
     end
 
+    headers = { 'Accept' => 'application/json' }
+    headers['Content-Type'] = self.token_post_content_type unless token_method == :get
+
     response = client.request(
       token_method,
       self.token_endpoint,
       follow_redirect: false,
-      header: {
-        'Accept' => 'application/json',
-        'Content-Type' => self.token_post_content_type
-      },
+      header: headers,
       body: body,
       query: query
     )
@@ -211,8 +253,10 @@ class AuthProvider < OpenStruct
     else
       nil
     end
-  rescue
-    debug "#{$!} #{$!.message}"
+  rescue => ex
+    ex.message.gsub!(self.client_secret, '<client_secret>') if self.client_secret
+    ex.message.gsub!(code, '<authorization_code>') if code
+    error ex
     nil
   end
 
@@ -223,18 +267,29 @@ class AuthProvider < OpenStruct
   def get_userinfo(access_token)
     uri = URI.parse(self.userinfo_endpoint)
     uri.path = uri.path.gsub(/\:access\_token/, access_token)
-    client = HTTPClient.new
-    if config['oauth2.ignore_invalid_ssl'].to_s == 'true'
+    client = http_client
+    if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
+
+    if userinfo_requires_basic_auth
+      client.set_auth(nil, self.client_id, self.client_secret)
+      client.force_basic_auth = true
+      auth_header = {}
+    else
+      auth_header = { 'Authorization' => "Bearer #{access_token}" }
+    end
+
     response = client.request(
       :get,
       uri.to_s,
       header: {
-        'Accept' => 'application/json',
-        'Authorization' => "Bearer #{access_token}"
-      }
+        'Accept' => 'application/json'
+      }.merge(auth_header)
     )
+
+    client.set_auth(nil, nil, nil)
+    client.force_basic_auth = false
 
     result = {}
 
@@ -245,8 +300,9 @@ class AuthProvider < OpenStruct
     end
 
     result
-  rescue
-    debug "#{$!} #{$!.message}"
+  rescue => ex
+    ex.message.gsub!(access_token, '<access_token>') if access_token
+    error ex
     nil
   end
 
@@ -263,14 +319,8 @@ class AuthProvider < OpenStruct
       end
     end
     nil
-  rescue
-    debug "#{$!} #{$!.message}"
+  rescue => ex
+    error ex
     nil
-  end
-
-  # Defines forwarders for instance methods, so you can call AuthProvider.x instead of AuthProvider.instance.x
-  class << self
-    extend Forwardable
-    def_delegators :instance, *AuthProvider.instance_methods(false)
   end
 end

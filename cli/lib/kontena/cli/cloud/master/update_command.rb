@@ -25,7 +25,7 @@ module Kontena::Cli::Cloud::Master
     def execute
       attrs = get_attributes
       unless attrs
-        puts "Failed to obtain master credentials".colorize(:red)
+        puts pastel.red("Failed to obtain master credentials")
         exit 1
       end
 
@@ -37,7 +37,7 @@ module Kontena::Cli::Cloud::Master
       attrs["owner"]        = self.owner        if self.owner
 
       response = cloud_client.put(
-        "master",
+        "user/masters/#{master_id}",
         { data: { attributes: attrs.reject{ |k, _| ['client-id', 'client-secret'].include?(k) } } }
       )
 

@@ -1,17 +1,17 @@
 module Kontena::Cli::Grids::TrustedSubnets
   class AddCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
-    parameter "NAME", "Grid name"
     parameter "SUBNET", "Trusted subnet"
 
+    requires_current_master
+
     def execute
-      require_api_url
-      token = require_token
-      grid = client(token).get("grids/#{name}")
+      grid = client.get("grids/#{current_grid}")
       data = {trusted_subnets: grid['trusted_subnets'] + [self.subnet]}
-      spinner "Adding #{subnet.colorize(:cyan)} as a trusted subnet in #{name.colorize(:cyan)} grid " do
-        client(token).put("grids/#{name}", data)
+      spinner "Adding #{pastel.cyan(subnet)} as a trusted subnet in #{pastel.cyan(current_grid)} grid " do
+        client.put("grids/#{current_grid}", data)
       end
     end
   end

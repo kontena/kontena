@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe DistributedLock do
   it { should have_fields(:name, :lock_id, :created_at)}
@@ -25,11 +24,11 @@ describe DistributedLock do
     it 'returns false if getting lock timeouts' do
       threads = []
       threads << Thread.new {
-        described_class.with_lock('foo1') { sleep 0.1 }
+        expect(described_class.with_lock('foo1') { sleep 0.1; "thread A got lock" }).to eq("thread A got lock")
       }
       threads << Thread.new {
         sleep 0.01
-        expect(described_class.with_lock('foo1', 0.01) { true }).to eq(false)
+        expect(described_class.with_lock('foo1', 0.01) { "thread B got lock" }).to eq(false)
       }
       threads.each(&:join)
     end

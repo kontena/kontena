@@ -5,6 +5,7 @@ module OutputHelpers
     supports_block_expectations
 
     match do |block|
+      @expected = expected
       stdout = lines.flatten.join("\n") + "\n"
 
       begin
@@ -14,7 +15,7 @@ module OutputHelpers
 
         return false
       else
-        return values_match? expected, @return
+        return values_match? @expected, @return
       end
     end
 
@@ -22,7 +23,7 @@ module OutputHelpers
       if @error
         return @error
       else
-        return "expected #{block} to return #{expected}, but returned #{@return}"
+        return "expected #{block} to return #{@expected}, but returned #{@return}"
       end
     end
   end
@@ -31,22 +32,57 @@ module OutputHelpers
     supports_block_expectations
 
     match do |block|
-      stdout = Regexp.new('^' + lines.map{|fields| fields.join('\s+')}.join('\n') + '\n$', Regexp::MULTILINE)
+      @errors = []
 
-
+      @expected = lines
       begin
-        expect{@return = block.call}.to output(stdout).to_stdout
+        @real = CaptureStdoutLines.capture(block)
       rescue Exception => error
-        @error = error
-
+        @errors = [error.to_s]
         return false
-      else
-        return true
       end
+
+      if @expected_header
+        @expected.unshift(@expected_header)
+      elsif @no_header
+        nil
+      else
+        @real.shift
+      end
+
+      if @expected.size == @real.size
+        line = 0
+        @real.zip(@expected) do |real, expected|
+          line += 1
+          fields = real.split(/\s{2,}/)
+          unless values_match?(expected, fields)
+            @errors << [
+              "on line #{line}:",
+              " expected: #{expected}",
+              " received: #{fields}",
+            ].join("\n")
+          end
+        end
+      else
+        @errors << [
+          "expected #{@expected.size} lines but got #{@real.size} lines instead:",
+          " Expected:", @expected.map{|l| l.inspect},
+          " Received:", @real.map{|l| l.split(/\s{2,}/).inspect},
+        ].join("\n")
+      end
+      @errors.empty?
     end
 
     failure_message do |block|
-      return @error
+      @errors.join "\n"
+    end
+
+    chain :with_header do |header|
+      @expected_header = header
+    end
+
+    chain :without_header do
+      @no_header = true
     end
   end
 
@@ -54,21 +90,60 @@ module OutputHelpers
     supports_block_expectations
 
     match do |block|
-      stdout = lines.flatten.join("\n") + "\n"
+      @expected = lines.flatten
+      @actual = CaptureStdoutLines.capture(block)
 
-      begin
-        expect{@return = block.call}.to output(stdout).to_stdout
-      rescue Exception => error
-        @error = error
+      values_match?(@expected, @actual)
+    end
+  end
 
-        return false
-      else
-        return true
-      end
+  matcher :output_yaml do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      actual = ::YAML.safe_load(output)
+
+      values_match?(expected, actual)
+    end
+  end
+
+  matcher :output_json do |expected|
+    supports_block_expectations
+
+    match do |block|
+      output = CaptureStdout.capture(block)
+      @actual = JSON.parse(output)
+
+      values_match?(expected,   @actual)
     end
 
     failure_message do |block|
-      return @error
+      return "expected block to return #{expected}, but returned #{@actual}"
+    end
+  end
+
+  module CaptureStdout
+    def self.capture(block)
+      capture = StringIO.new
+      original = $stdout
+      $stdout = capture
+      block.call
+      capture.string
+    ensure
+      $stdout = original
+    end
+  end
+
+  module CaptureStdoutLines
+    def self.capture(block)
+      capture = StringIO.new
+      original = $stdout
+      $stdout = capture
+      block.call
+      capture.string.split(/[\r\n]/)
+    ensure
+      $stdout = original
     end
   end
 end

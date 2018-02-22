@@ -11,7 +11,7 @@ module Kontena::Cli::Master::Config
     parameter "KEY_VALUE_PAIR ...", "Key/value pair, for example server.root_url=http://example.com", required: true
 
     def execute
-      data = Hash[*self.key_value_pair_list.flat_map{ |p| p.split('=') }]
+      data = self.key_value_pair_list.map{ |p| p.split('=') }.to_h
       client.patch('config', data)
     end
   end

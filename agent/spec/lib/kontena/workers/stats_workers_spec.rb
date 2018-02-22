@@ -1,32 +1,34 @@
-require_relative '../../../spec_helper'
 require_relative '../../helpers/fixtures_helpers'
 
-describe Kontena::Workers::StatsWorker do
+describe Kontena::Workers::StatsWorker, :celluloid => true do
   include FixturesHelpers
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
-
+  let(:subject) { described_class.new(false) }
   let(:container) { spy(:container, id: 'foo', labels: {}) }
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
-  describe '#initialize' do
-    it 'subscribes to agent:node_info channel' do
-      expect(subject.wrapped_object).to receive(:on_node_info)
-      Celluloid::Notifications.publish('agent:node_info')
-      sleep 0.01
-    end
+  let(:node) do
+    Node.new(
+      'id' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+      'instance_number' => 1,
+      'grid' => {}
+    )
   end
 
-  describe '#collect_stats' do
+  before(:each) do
+    mock_rpc_client
+  end
+
+  describe '#publish_stats' do
+    before do
+      allow(subject.wrapped_object).to receive(:cadvisor_running?).and_return(true)
+    end
+
     it 'loops through all containers' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return([
         { namespace: 'docker', id: 'id', name: '/docker/id' },
       ])
       expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id' }
-      subject.collect_stats
+      subject.publish_stats
     end
 
     it 'ignores systemd mount cgroups' do
@@ -35,19 +37,19 @@ describe Kontena::Workers::StatsWorker do
         { namespace: 'docker', id: 'id2', name: '/system.slice/var-lib-docker-containers-id-shm.mount' },
       ])
       expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id1' }
-      subject.collect_stats
+      subject.publish_stats
     end
 
     it 'does nothing on get error' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return(nil)
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
-      subject.collect_stats
+      subject.publish_stats
     end
 
     it 'does not call send_stats if no container stats found' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return({})
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
-      subject.collect_stats
+      subject.publish_stats
     end
   end
 
@@ -83,9 +85,9 @@ describe Kontena::Workers::StatsWorker do
 
   end
 
-  describe '#on_node_info' do
+  describe '#configure_statsd' do
     it 'initializes statsd client if node has statsd config' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {
             'statsd' => {
@@ -94,20 +96,37 @@ describe Kontena::Workers::StatsWorker do
             }
           }
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.configure_statsd(node)
       expect(subject.statsd).not_to be_nil
     end
 
     it 'does not initialize statsd if no statsd config exists' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {}
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.configure_statsd(node)
+      expect(subject.statsd).to be_nil
+    end
+
+    it 'does not crash the worker if statsd config fails' do
+      node = Node.new(
+        'grid' => {
+          'stats' => {
+            'statsd' => {
+              'server' => '192.168.24.33',
+              'port' => 8125
+            }
+          }
+        }
+      )
+      expect(subject.statsd).to be_nil
+      expect(Statsd).to receive(:new).and_raise("Boom")
+      subject.configure_statsd(node)
       expect(subject.statsd).to be_nil
     end
   end
@@ -134,17 +153,18 @@ describe Kontena::Workers::StatsWorker do
     end
 
     let(:statsd) do
-      spy(:statsd)
+      instance_double(Statsd)
     end
 
     it 'sends statsd metrics' do
       allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
-      expect(statsd).to receive(:gauge)
+      expect(statsd).to receive(:gauge).with('services.foobar.cpu.usage', 12.32)
+      expect(statsd).to receive(:gauge).with('services.foobar.memory.usage', 24 * 1024 * 1024)
       subject.send_statsd_metrics('foobar', event)
     end
   end
 
-describe '#send_container_stats' do
+  describe '#send_container_stats' do
     let(:event) do
       JSON.parse(fixture('container_stats.json'), symbolize_names: true)
     end
@@ -163,12 +183,28 @@ describe '#send_container_stats' do
           },
           filesystem: event.dig(:stats, -1, :filesystem),
           diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          network: {
+            internal: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            },
+            external: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            }
+          }
         }
       ))
-      expect {
-        subject.send_container_stats(event)
-      }.to change{ queue.length }.by(1)
+      expect(rpc_client).to receive(:notification).with(
+        '/containers/stat', [hash_including(id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e')]
+      )
+      subject.send_container_stats(event)
     end
 
     it 'does not fail on missing cpu stats' do
@@ -186,13 +222,57 @@ describe '#send_container_stats' do
           },
           filesystem: event.dig(:stats, -1, :filesystem),
           diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          network: {
+            internal: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            },
+            external: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            }
+          }
         }
       ))
-      expect {
-        subject.send_container_stats(event)
-      }.to change{ queue.length }.by(1)
+      expect(rpc_client).to receive(:notification).with(
+        '/containers/stat', [hash_including(id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e')]
+      )
+      subject.send_container_stats(event)
     end
   end
 
+  describe '#send_container_stats' do
+    it 'sends stats via rpc' do
+      expect(rpc_client).to receive(:notification).once.with('/containers/stat', [hash_including(time: String)])
+
+      container = {
+        aliases: [],
+        stats: [
+          {
+            timestamp: "2017-03-01 00:00:00",
+            cpu: {
+              usage: {
+                total: 1
+              }
+            }
+          },
+          {
+            timestamp: "2017-03-01 00:00:01",
+            cpu: {
+              usage: {
+                total: 1
+              }
+            }
+          }
+        ]
+      }
+      subject.send_container_stats(container)
+    end
+  end
 end

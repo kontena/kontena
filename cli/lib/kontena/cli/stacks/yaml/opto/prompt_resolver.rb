@@ -1,5 +1,4 @@
-require 'kontena/cli/stacks/yaml/opto'
-require 'kontena/cli/common'
+require_relative '../opto'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -50,7 +49,7 @@ module Kontena::Cli::Stacks
       end
 
       def bool
-        prompt.yes?(question_text, default: option.default == false ? false : true)
+        prompt.yes?(question_text, default: option.default.nil? || option.default)
       end
 
       def echo?

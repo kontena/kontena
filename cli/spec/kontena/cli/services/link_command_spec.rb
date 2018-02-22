@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/services/link_command"
 
 describe Kontena::Cli::Services::LinkCommand do

@@ -1,9 +1,10 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Models::ServicePod do
 
   let(:data) do
     {
+      'id' => 'aaaaaaa/2',
+      'desired_state' => 'running',
       'service_id' => 'aaaaaaa',
       'service_name' => 'redis',
       'instance_number' => 2,
@@ -32,7 +33,6 @@ describe Kontena::Models::ServicePod do
       'secrets' => [
           {'name' => 'PASSWD', 'value' => 'secret123', 'type' => 'env'}
       ],
-      'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
       'hostname' => 'redis-2',
@@ -100,6 +100,62 @@ describe Kontena::Models::ServicePod do
     end
   end
 
+  describe '#lb_name' do
+    it 'returns correct name for default stack' do
+      subject.labels['io.kontena.stack.name'] = nil
+      expect(subject.lb_name).to eq('redis-cache')
+    end
+
+    it 'returns correct name for non-default stack' do
+      subject.labels['io.kontena.stack.name'] = 'foobar'
+      expect(subject.lb_name).to eq('foobar-redis-cache')
+    end
+  end
+
+  describe '#running?' do
+    it 'returns true if desired_state running' do
+      allow(subject).to receive(:desired_state).and_return('running')
+      expect(subject.running?).to be_truthy
+    end
+
+    it 'returns true if desired_state is not running' do
+      allow(subject).to receive(:desired_state).and_return('stopped')
+      expect(subject.running?).to be_falsey
+    end
+  end
+
+  describe '#stopped?' do
+    it 'returns true if desired_state stopped' do
+      allow(subject).to receive(:desired_state).and_return('stopped')
+      expect(subject.stopped?).to be_truthy
+    end
+
+    it 'returns true if desired_state is not stopped' do
+      allow(subject).to receive(:desired_state).and_return('running')
+      expect(subject.stopped?).to be_falsey
+    end
+  end
+
+  describe '#terminated?' do
+    it 'returns true if desired_state terminated' do
+      allow(subject).to receive(:desired_state).and_return('terminated')
+      expect(subject.terminated?).to be_truthy
+    end
+
+    it 'returns true if desired_state is not terminated' do
+      allow(subject).to receive(:desired_state).and_return('running')
+      expect(subject.terminated?).to be_falsey
+    end
+  end
+
+  describe '#mark_as_terminated' do
+    it 'sets desired_state to terminated' do
+      expect {
+        subject.mark_as_terminated
+      }.to change{ subject.desired_state }.from('running').to('terminated')
+    end
+  end
+
   describe '#service_config' do
     let(:service_config) { subject.service_config }
 
@@ -139,6 +195,18 @@ describe Kontena::Models::ServicePod do
       expect(subject.service_config['Env'].last).to eq("SSL_CERTS=foo\nbar")
     end
 
+    it 'fails if the service env is too large' do
+      data['secrets'] = (1..128).map{|i|
+        {
+          'name' => "SSL_CERTS",
+          'type' => 'env',
+          'value' => 'A' * 1024,
+        }
+      }
+
+      expect{subject.service_config}.to raise_error(Kontena::Models::ServicePod::ConfigError, 'Env SSL_CERTS is too large at 131209 bytes')
+    end
+
     it 'does not include user if nil' do
       expect(subject.service_config['User']).to be_nil
     end
@@ -161,9 +229,18 @@ describe Kontena::Models::ServicePod do
       expect(service_config['Entrypoint']).to be_nil
     end
 
-    it 'does not include Entrypoint if nil' do
+    it 'includes Entrypoint if set' do
       data['entrypoint'] = ['/bin/sh']
       expect(service_config['Entrypoint']).to eq(['/bin/sh'])
+    end
+    
+    it 'does not include StopSignal if nil' do
+      expect(service_config['StopSignal']).to be_nil
+    end
+
+    it 'includes StopSignal if set' do
+      data['stop_signal'] = 'SIGQUIT'
+      expect(service_config['StopSignal']).to eq('SIGQUIT')
     end
 
     it 'includes empty ExposedPorts if no ports are defined' do
@@ -213,8 +290,8 @@ describe Kontena::Models::ServicePod do
   describe '#service_host_config' do
     let(:host_config) { subject.service_host_config }
 
-    it 'sets RestartPolicy' do
-      expect(host_config['RestartPolicy']['Name']).to eq('unless-stopped')
+    it 'does not set RestartPolicy' do
+      expect(host_config['RestartPolicy']).to be_nil
     end
 
     it 'does not include Binds if no volumes are defined' do
@@ -222,7 +299,7 @@ describe Kontena::Models::ServicePod do
     end
 
     it 'does include Binds if binded volumes are defined' do
-      data['volumes'] = ['/data:/data']
+      data['volumes'] = [{'bind_mount' => '/data', 'path' => '/data'}]
       expect(host_config['Binds']).not_to be_nil
     end
 
@@ -265,9 +342,24 @@ describe Kontena::Models::ServicePod do
       expect(host_config['CpuShares']).to eq(500)
     end
 
+    it 'does not include CpuQuota if cpus not defined' do
+      expect(host_config['CpuShares']).to be_nil
+    end
+
+    it 'includes CpuPeriod & CpuQuota if cpus is defined' do
+      data['cpus'] = 1.5
+      expect(host_config['CpuPeriod']).to eq(100_000)
+      expect(host_config['CpuQuota']).to eq(150_000)
+    end
+
     it 'sets PidMode if set' do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
+    end
+
+    it 'sets ShmSize if set' do
+      data['shm_size'] = 64 * 1024 * 1024
+      expect(host_config['ShmSize']).to eq(data['shm_size'])
     end
   end
 
@@ -319,7 +411,11 @@ describe Kontena::Models::ServicePod do
 
   describe '#build_volumes' do
     let(:volumes) do
-      ['/proc:/host/proc:ro', '/data']
+      [
+        {'name' => 'app.someVol', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}},
+        {'bind_mount' => '/proc', 'path' => '/host/proc', 'flags' => 'ro'},
+        {'name' => nil, 'bind_mount' => nil, 'path' => '/data'}
+      ]
     end
 
     it 'returns empty hash when no volumes are defined' do
@@ -336,7 +432,11 @@ describe Kontena::Models::ServicePod do
 
   describe '#build_bind_volumes' do
     let(:volumes) do
-      ['/proc:/host/proc:ro', '/data']
+      [
+        {'name' => 'app.someVol', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}},
+        {'bind_mount' => '/proc', 'path' => '/host/proc', 'flags' => 'ro'},
+        {'name' => nil, 'bind_mount' => nil, 'path' => '/data'}
+      ]
     end
 
     it 'returns empty array when no volumes are defined' do
@@ -345,9 +445,10 @@ describe Kontena::Models::ServicePod do
 
     it 'returns correct array when volumes are defined' do
       data['volumes'] = volumes
-      bind_vols = subject.build_bind_volumes
-      expect(bind_vols.size).to eq(1)
-      expect(bind_vols[0]).to eq('/proc:/host/proc:ro')
+      expect(subject.build_bind_volumes).to eq([
+        'app.someVol:/data',
+        '/proc:/host/proc:ro'
+      ])
     end
   end
 

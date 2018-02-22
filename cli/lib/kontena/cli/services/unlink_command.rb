@@ -1,4 +1,3 @@
-require_relative '../grid_options'
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
@@ -23,7 +22,7 @@ module Kontena::Cli::Services
       end
       links.delete_if { |l| l['id'] == target_id }
       data = {links: links}
-      spinner "Unlinking #{name.colorize(:cyan)} from #{target.colorize(:cyan)} " do
+      spinner "Unlinking #{pastel.cyan(name)} from #{pastel.cyan(target)} " do
         update_service(token, name, data)
       end
     end

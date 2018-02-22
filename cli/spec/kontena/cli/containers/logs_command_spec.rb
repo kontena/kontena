@@ -1,5 +1,3 @@
-require_relative "../../../spec_helper"
-require 'kontena/cli/grid_options'
 require "kontena/cli/containers/logs_command"
 
 describe Kontena::Cli::Containers::LogsCommand do
@@ -27,10 +25,6 @@ describe Kontena::Cli::Containers::LogsCommand do
           'data' => "mysql log message 3",
         },
       ]
-    end
-
-    before(:each) do
-      Kontena.pastel.resolver.color.disable!
     end
 
     it "shows all logs" do

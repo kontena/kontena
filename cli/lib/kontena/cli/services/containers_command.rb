@@ -7,12 +7,19 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
+    option ['-q', '--quiet'], :flag, "Output the identifying column only"
 
     def execute
       require_api_url
       token = require_token
 
       result = client(token).get("services/#{parse_service_id(name)}/containers")
+
+      if quiet?
+        puts result['containers'].map { |c| "#{c['node']['name']}/#{c['name']}" }.join("\n")
+        exit 0
+      end
+
       result['containers'].each do |container|
         puts "#{container['name']}:"
         puts "  rev: #{container['deploy_rev']}"
@@ -21,7 +28,7 @@ module Kontena::Cli::Services
         puts "  ip: #{container['ip_address']}"
         puts "  public ip: #{container['node']['public_ip']}"
         if container['status'] == 'unknown'
-          puts "  status: #{container['status'].colorize(:yellow)}"
+          puts "  status: #{pastel.yellow(container['status'])}"
         else
           puts "  status: #{container['status']}"
         end

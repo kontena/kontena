@@ -1,8 +1,5 @@
-require_relative '../spec_helper'
 
-describe RpcClient do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe RpcClient, celluloid: true do
   let(:node_id) { SecureRandom.hex(32) }
   let(:subject) { RpcClient.new(node_id, 1) }
   let(:channel) { RpcClient::RPC_CHANNEL }
@@ -12,7 +9,7 @@ describe RpcClient do
   end
 
   def publish_error(id, error)
-    MongoPubsub.publish(channel, {message: [1, id, error, nil]})
+    MongoPubsub.publish("#{channel}:#{id}", {message: [1, id, error, nil]})
   end
 
   def fake_server(type = 'request')
@@ -31,7 +28,8 @@ describe RpcClient do
         publish_response(resp['message'][1], response)
       }
       resp = subject.request('/hello/service', :foo, :bar)
-      expect(resp).to eq(['/hello/service', :foo, :bar])
+      # Msgpack serializes symbols into strings
+      expect(resp).to eq(['/hello/service', 'foo', 'bar'])
 
       server.terminate
     end
@@ -65,15 +63,50 @@ describe RpcClient do
       server.terminate
     end
 
+    it 'raises a timeout' do
+      subject = RpcClient.new(node_id, 0.001)
+      expect {
+        subject.request('/hello/service', :foo, :bar)
+      }.to raise_error(RpcClient::TimeoutError, "Connection timeout (0.001s)")
+    end
+
     it 'raises error from rpc server' do
       server = fake_server {|resp|
         response = resp['message'][3]
         response.unshift(resp['message'][2])
-        publish_error(resp['message'][1], 'error!')
+        publish_error(resp['message'][1], {'code' => 500, 'message' => "test error", 'backtrace' => [
+          "/foo/bar.rb:1:in `foo'",
+        ]})
       }
       expect {
         subject.request('/hello/service', :foo, :bar)
-      }.to raise_error(RpcClient::Error)
+      }.to raise_error(RpcClient::Error, "test error")
+
+      server.terminate
+    end
+
+    it 'can be used to log an error message with a formatted backtrace' do
+      server = fake_server {|resp|
+        response = resp['message'][3]
+        response.unshift(resp['message'][2])
+        publish_error(resp['message'][1], {'code' => 500, 'message' => "test error", 'backtrace' => [
+          "/foo/bar.rb:1:in `foo'",
+        ]})
+      }
+      expect {
+        begin
+          subject.request('/hello/service', :foo, :bar)
+        rescue => exc
+          $stderr.puts "#{exc.class}: #{exc}"
+          $stderr.puts exc.backtrace.join("\n")
+        end
+      }.to output(Regexp.new('^' + [
+        "RpcClient::Error: test error",
+        "agent:/foo/bar.rb:1:in `foo'",
+        "<RPC>",
+        "/.*/app/services/rpc_client.rb:\\d+:in `request'",
+        ""
+      ].join("\n"), Regexp::MULTILINE)).to_stderr
 
       server.terminate
     end
@@ -85,7 +118,8 @@ describe RpcClient do
       server = fake_server('notify') {|resp|
         receiver.handle(resp['message'][2])
       }
-      expect(receiver).to receive(:handle).with([:foo, :bar])
+      # Msgpack serializes symbols into strings
+      expect(receiver).to receive(:handle).with(['foo', 'bar'])
       subject.notify('/hello/service', :foo, :bar)
       sleep 0.05
       server.terminate

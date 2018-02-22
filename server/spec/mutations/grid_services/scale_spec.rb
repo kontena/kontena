@@ -1,9 +1,5 @@
-require_relative '../../spec_helper'
 
-describe GridServices::Scale do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
+describe GridServices::Scale, celluloid: true do
   let(:host_node) { HostNode.create(node_id: 'aa')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid', initial_size: 1)

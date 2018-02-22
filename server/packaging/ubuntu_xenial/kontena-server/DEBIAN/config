@@ -6,9 +6,12 @@ set -e
 
 if [ -e /etc/kontena-server.env ]; then
   . /etc/kontena-server.env
+fi
 
-  db_set kontena-server/initial_admin_code "${INITIAL_ADMIN_CODE:-}"
+if [ -n "$INITIAL_ADMIN_CODE" ]; then
+  db_set kontena-server/initial_admin_code "$INITIAL_ADMIN_CODE"
 else
+  # do not re-prompt, because we do not support re-configuring the INITIAL_ADMIN_CODE
   db_input high kontena-server/initial_admin_code || true
   db_go || true
 fi

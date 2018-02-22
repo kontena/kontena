@@ -1,50 +1,60 @@
+require 'msgpack'
 require_relative 'logging'
 require_relative 'rpc_server'
+require_relative 'rpc_client'
 
+# Celluloid::Notifications:
+#   websocket:connect [nil] connecting, not yet connected
+#   websocket:open [nil] connected, websocket open
+#   websocket:connected [nil] received /agent/master_info from server
+#   websocket:disconnected [nil] websocket disconnected
 module Kontena
   class WebsocketClient
+    include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
 
-    KEEPALIVE_TIME = 30
+    STRFTIME = '%F %T.%NZ'
 
-    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
-      # use a slightly longer timeout as a fallback
-      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
-    else
-      CLOSE_TIMEOUT = 30
-    end
-
-    attr_reader :api_uri,
-                :api_token,
-                :ws,
-                :rpc_server,
-                :ping_timer
-
-    delegate :on, to: :ws
+    CONNECT_INTERVAL = 1.0
+    RECONNECT_BACKOFF = 90.0
+    CONNECT_TIMEOUT = 10.0
+    OPEN_TIMEOUT = 10.0
+    PING_INTERVAL = 30.0 # seconds
+    PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5.0)
+    CLOSE_TIMEOUT = 10.0
+    WRITE_TIMEOUT = 10.0 # this one is a little odd
 
     # @param [String] api_uri
-    # @param [String] api_token
-    def initialize(api_uri, api_token)
+    # @param [String] node_id
+    # @param [String] node_name
+    # @param [String] grid_token
+    # @param [String] node_token
+    # @param [Array<String>] node_labels
+    # @param [Hash] ssl_params
+    # @param [String] ssl_hostname
+      def initialize(api_uri, node_id, node_name:, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
       @api_uri = api_uri
-      @api_token = api_token
-      @rpc_server = Kontena::RpcServer.pool
-      @abort = false
-      @connected = false
-      @connecting = false
-      @ping_timer = nil
-      @close_timer = nil
-      info "initialized with token #{@api_token[0..10]}..."
-    end
+      @node_id = node_id
+      @node_name = node_name
+      @grid_token = grid_token
+      @node_token = node_token
+      @node_labels = node_labels
+      @ssl_params = ssl_params
+      @ssl_hostname = ssl_hostname
 
-    def ensure_connect
-      EM::PeriodicTimer.new(1) {
-        connect unless connected?
-      }
-      EM::PeriodicTimer.new(KEEPALIVE_TIME) {
-        if connected?
-          EM.next_tick { verify_connection }
-        end
-      }
+      @connected = false
+      @reconnect_attempt = 0
+
+      if @node_token
+        info "initialized with node token #{@node_token[0..8]}..., node ID #{@node_id}"
+      elsif @grid_token
+        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{@node_id}"
+      else
+        fail "Missing grid, node token"
+      end
+
+      async.start if autostart
     end
 
     # @return [Boolean]
@@ -53,110 +63,310 @@ module Kontena
     end
 
     # @return [Boolean]
-    def connecting?
-      @connecting
+    def reconnecting?
+      @reconnect_attempt > 0
     end
 
-    def connect
-      return if connecting?
-      @connected = false
-      @connecting = true
-      info "connecting to master at #{api_uri}"
+    def rpc_server
+      Celluloid::Actor[:rpc_server]
+    end
+    def rpc_client
+      Celluloid::Actor[:rpc_client]
+    end
+
+    def start
+      after(CONNECT_INTERVAL) do
+        connect!
+      end
+    end
+
+    # Using randomized full jitter to spread reconnect attempts across clients and reduce server contention
+    # See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+    #
+    # @param attempt [Integer]
+    # @return [Float]
+    def reconnect_backoff(attempt)
+      if attempt > 16
+        backoff = RECONNECT_BACKOFF
+      else
+        backoff = [RECONNECT_BACKOFF, CONNECT_INTERVAL * 2 ** attempt].min
+      end
+
+      backoff *= rand
+    end
+
+    def reconnect!
+      backoff = reconnect_backoff(@reconnect_attempt)
+
+      @reconnect_attempt += 1
+
+      info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
+
+      after(backoff) do
+        connect!
+      end
+    end
+
+    # Connect to server, and start connect_client task
+    #
+    # Calls reconnect! on errors
+    def connect!
+      info "connecting to master at #{@api_uri}"
       headers = {
-          'Kontena-Grid-Token' => self.api_token.to_s,
-          'Kontena-Node-Id' => host_id.to_s,
+          'Kontena-Node-Id' => @node_id.to_s,
+          'Kontena-Node-Name' => @node_name,
           'Kontena-Version' => Kontena::Agent::VERSION,
-          'Kontena-Node-Labels' => labels
+          'Kontena-Node-Labels' => @node_labels.join(','),
+          'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
-      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
-      notify_actors('websocket:connect', self)
+      if @node_token
+        headers['Kontena-Node-Token'] = @node_token.to_s
+      elsif @grid_token
+        headers['Kontena-Grid-Token'] = @grid_token.to_s
+      else
+        fail "Missing grid, node token"
+      end
 
-      @ws.on :open do |event|
-        on_open(event)
-      end
-      @ws.on :message do |event|
-        on_message(event)
-      end
-      @ws.on :close do |event|
-        on_close(event)
-      end
-      @ws.on :error do |event|
-        error "connection closed with error: #{event.message}"
-      end
+      @ws = Kontena::Websocket::Client.new(@api_uri,
+        headers: headers,
+        ssl_params: @ssl_params,
+        ssl_hostname: @ssl_hostname,
+        connect_timeout: CONNECT_TIMEOUT,
+        open_timeout: OPEN_TIMEOUT,
+        ping_interval: PING_INTERVAL,
+        ping_timeout: PING_TIMEOUT,
+        close_timeout: CLOSE_TIMEOUT,
+      )
+
+      async.connect_client @ws
+
+      publish('websocket:connect', nil)
+
+    rescue => exc
+      error exc
+      reconnect!
     end
 
-    ##
-    # @param [String, Array] msg
-    def send_message(msg)
-      EM.next_tick {
-        begin
-          @ws.send(msg) if @ws
-        rescue
-          error "failed to send message"
+    # Connect the websocket client, and read messages.
+    #
+    # Keeps running as a separate defer thread as long as the websocket client is connected.
+    #
+    # Calls disconnected! -> reconnect! when done.
+    #
+    # @param ws [Kontena::Websocket::Client]
+    def connect_client(ws)
+      actor = Actor.current
+
+      # run the blocking websocket client connect+read in a separate thread
+      defer {
+        ws.on_pong do |delay|
+          # XXX: called with the client mutex locked, do not block
+          actor.async.on_pong(delay)
+        end
+
+        # blocks until open, raises on errors
+        ws.connect
+
+        # These are called from the read_ws -> defer thread, proxy back to actor
+        actor.on_open
+
+        ws.read do |message|
+          actor.on_message(message)
         end
       }
+
+    rescue Kontena::Websocket::CloseError => exc
+      # server closed connection
+      on_close(exc.code, exc.reason)
+      disconnected!
+
+    rescue Kontena::Websocket::Error => exc
+      # handle known errors, will reconnect or shutdown
+      on_error exc
+      disconnected!
+
     rescue => exc
-      error "failed to send message: #{exc.message}"
+      # XXX: crash instead of reconnecting on unknown errors?
+      error exc
+      disconnected!
+
+    else
+      # impossible: agent closed connection?!
+      info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
+      disconnected!
+
+    ensure
+      ws.disconnect # close socket
     end
 
+    # Websocket handshake complete.
+    def on_open
+      ssl_verify = ws.ssl_verify?
+
+      begin
+        ssl_cert = ws.ssl_cert!
+        ssl_error = nil
+      rescue Kontena::Websocket::SSLVerifyError => exc
+        ssl_cert = exc.cert
+        ssl_error = exc
+      end
+
+      if ssl_error
+        if ssl_cert
+          warn "insecure connection established with SSL errors: #{ssl_error}: #{ssl_cert.subject} (issuer #{ssl_cert.issuer})"
+        else
+          warn "insecure connection established with SSL errors: #{ssl_error}"
+        end
+      elsif ssl_cert
+        if !ssl_verify
+          warn "secure connection established without KONTENA_SSL_VERIFY=true: #{ssl_cert.subject} (issuer #{ssl_cert.issuer})"
+        else
+          info "secure connection established with KONTENA_SSL_VERIFY: #{ssl_cert.subject} (issuer #{ssl_cert.issuer})"
+        end
+      else
+        info "unsecure connection established without SSL"
+      end
+
+      connected!
+    end
+
+    # The websocket is connected: @ws is now valid and wen can send message
+    def connected!
+      @connected = true
+      @reconnect_attempt = 0
+
+      # NOTE: the server may still reject the websocket connection by closing it after the open handshake
+      #       wait for the /agent/master_info RPC before emitting websocket:connected
+      publish('websocket:open', nil)
+    end
+
+    def ws
+      fail "not connected" unless @ws
+
+      @ws
+    end
+
+    # The websocket is disconnected: @ws is invalid and we can no longer send messages
+    def disconnected!
+      @ws = nil # prevent further send_message calls until reconnected
+      @connected = false
+
+      # any queued up send_message calls will fail
+      publish('websocket:disconnected', nil)
+
+      reconnect!
+    end
+
+    # Called from RpcServer, does not crash the Actor on errors.
+    #
+    # @param [String, Array] msg
+    # @raise [RuntimeError] not connected
+    def send_message(msg)
+      ws.send(msg)
+    rescue => exc
+      warn exc
+      abort exc
+    end
+
+    # Called from RpcClient, does not crash the Actor on errors.
+    #
     # @param [String] method
     # @param [Array] params
+    # @raise [RuntimeError] not connected
     def send_notification(method, params)
       data = MessagePack.dump([2, method, params]).bytes
-      send_message(data)
+      ws.send(data)
     rescue => exc
-      error "failed to send notification: #{exc.message}"
+      warn exc
+      abort exc
     end
 
-    # @param [Faye::WebSocket::API::Event] event
-    def on_open(event)
-      ping_timer.cancel if ping_timer
-      info 'connection established'
-      @connected = true
-      @connecting = false
-      notify_actors('websocket:open', event)
+    # Called from RpcClient, does not crash the Actor on errors.
+    #
+    # @param [Integer] id
+    # @param [String] method
+    # @param [Array] params
+    # @raise [RuntimeError] not connected
+    def send_request(id, method, params)
+      data = MessagePack.dump([0, id, method, params]).bytes
+      ws.send(data)
+    rescue => exc
+      warn exc
+      abort exc
     end
 
-    # @param [Faye::WebSocket::API::Event] event
-    def on_message(event)
-      data = MessagePack.unpack(event.data.pack('c*'))
+    # @param [String] message
+    def on_message(message)
+      data = MessagePack.unpack(message.pack('c*'))
       if request_message?(data)
-        rpc_server.async.handle_request(self, data)
+        rpc_server.async.handle_request(Actor.current, data)
+      elsif response_message?(data)
+        rpc_client.async.handle_response(data)
       elsif notification_message?(data)
         rpc_server.async.handle_notification(data)
       end
-    rescue => exc
-      error exc.message
     end
 
-    # @param [Faye::WebSocket::API::Event] event
-    def on_close(event)
-      @ping_timer = nil
-      @close_timer.cancel if @close_timer
-      @close_timer = nil
-      @connected = false
-      @connecting = false
-      @ws = nil
-      if event.code == 4001
-        handle_invalid_token
-      elsif event.code == 4010
-        handle_invalid_version
+    # Websocket connection failed
+    #
+    # @param exc [Kontena::Websocket::Error]
+    def on_error(exc)
+      case exc
+      when Kontena::Websocket::SSLVerifyError
+        if exc.cert
+          error "unable to connect to SSL server with KONTENA_SSL_VERIFY=true: #{exc} (subject #{exc.subject}, issuer #{exc.issuer})"
+        else
+          error "unable to connect to SSL server with KONTENA_SSL_VERIFY=true: #{exc}"
+        end
+
+      when Kontena::Websocket::SSLConnectError
+        error "unable to connect to SSL server: #{exc}"
+
+      when Kontena::Websocket::ConnectError
+        error "unable to connect to server: #{exc}"
+
+      when Kontena::Websocket::ProtocolError
+        error "unexpected response from server, check url: #{exc}"
+
+      else
+        error "websocket error: #{exc}"
       end
-      info "connection closed with code: #{event.code}"
-    rescue => exc
-      error exc.message
+    end
+
+    # Server closed websocket connection
+    #
+    # @param code [Integer]
+    # @param reason [String]
+    def on_close(code, reason)
+      debug "Server closed connection with code #{code}: #{reason}"
+
+      case code
+      when 4001
+        handle_invalid_token
+      when 4010
+        handle_invalid_version(reason)
+      when 4040, 4041
+        handle_invalid_connection(reason)
+      else
+        warn "connection closed with code #{code}: #{reason}"
+      end
     end
 
     def handle_invalid_token
       error 'master does not accept our token, shutting down ...'
-      EM.next_tick { abort('Shutting down ...') }
+      Kontena::Agent.shutdown
     end
 
-    def handle_invalid_version
+    def handle_invalid_version(reason)
       agent_version = Kontena::Agent::VERSION
-      error "master does not accept our version (#{agent_version}), shutting down ..."
-      EM.next_tick { abort("Shutting down ...") }
+      error "master does not accept our version (#{agent_version}): #{reason}"
+      Kontena::Agent.shutdown
+    end
+
+    def handle_invalid_connection(reason)
+      error "master indicates that this agent should not reconnect: #{reason}"
+      Kontena::Agent.shutdown
     end
 
     # @param [Array] msg
@@ -171,59 +381,19 @@ module Kontena
       msg.is_a?(Array) && msg.size == 3 && msg[0] == 2
     end
 
-    # @return [String]
-    def host_id
-      Docker.info['ID']
+    # @param [Array] msg
+    # @return [Boolean]
+    def response_message?(msg)
+      msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
     end
 
-    # @return [Array<String>]
-    def labels
-      Docker.info['Labels'].to_a.join(',')
-    end
-
-    def verify_connection
-      return unless @ping_timer.nil?
-
-      @ping_timer = EM::Timer.new(2) do
-        # @ping_timer remains nil until re-connected to prevent further keepalives while closing
-        if @connected
-          info 'did not receive pong, closing connection'
-          close
-        end
+    # @param delay [Float]
+    def on_pong(delay)
+      if delay > PING_TIMEOUT / 2
+        warn "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
+      else
+        debug "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
       end
-      ws.ping {
-        @ping_timer.cancel
-        @ping_timer = nil
-      }
-    rescue => exc
-      error exc.message
-    end
-
-    # Abort the connection, closing the websocket, with a timeout
-    def close
-      return if @close_timer
-
-      # stop sending messages, queue them up until reconnected
-      notify_actors('websocket:disconnect', nil)
-
-      # send close frame; this will get stuck if the server is not replying
-      ws.close(1000)
-
-      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        if ws
-          warn "Hit close timeout, abandoning existing websocket connection"
-
-          # ignore events from the abandoned connection
-          ws.remove_all_listeners
-
-          # fake it
-          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
-        end
-      end
-    end
-
-    def notify_actors(event, value)
-      Celluloid::Notifications.publish(event, value)
     end
   end
 end

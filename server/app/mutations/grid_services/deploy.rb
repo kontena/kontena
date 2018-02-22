@@ -1,9 +1,11 @@
+require_relative 'helpers'
+
 module GridServices
   class Deploy < Mutations::Command
     include Workers
+    include Helpers
 
-    class ExecutionError < StandardError
-    end
+    ExecutionError = Class.new(StandardError)
 
     VALID_STATES = %w(initialized running deploying stopped)
 
@@ -22,11 +24,12 @@ module GridServices
     end
 
     def execute
-      attrs = { deploy_requested_at: Time.now.utc }
-      attrs[:state] = 'running' unless grid_service.deploying?
-      attrs[:updated_at] = Time.now.utc if force
-      grid_service.set(attrs)
-      GridServiceDeploy.create(grid_service: grid_service)
+      grid_service.deploy_requested_at = Time.now.utc
+      grid_service.state = :running
+
+      if self.force ? update_grid_service(grid_service, force: true) : save_grid_service(grid_service)
+        GridServiceDeploy.create(grid_service: grid_service)
+      end
     end
   end
 end

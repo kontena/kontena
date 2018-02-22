@@ -38,10 +38,10 @@ module Kontena::LoadBalancers
     def on_container_event(topic, event)
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
-        if container && container.load_balanced?
+        if container && container.service_container? && container.load_balanced?
           self.register_container(container)
         end
-      elsif event.status == 'die'
+      elsif event.status == 'die' || event.status == 'kill'
         self.unregister_container(event.id)
       end
     rescue => exc

@@ -6,7 +6,7 @@ module GridSecrets
 
     required do
       model :grid, class: Grid
-      string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :name, matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
       string :value
     end
 

@@ -6,26 +6,30 @@ module Kontena::Cli::Grids
     include Common
 
     parameter "NAME", "Grid name"
-    option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
-    option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+
+    include Common::Parameters
+
+    option "--no-default-affinity", :flag, "Unset grid default affinity"
+    option "--no-statsd-server", :flag, "Unset statsd server setting"
+
+    requires_current_master_token
 
     def execute
-      require_api_url
-      token = require_token
+      validate_grid_parameters
+
       payload = {}
-      if statsd_server
-        server, port = statsd_server.split(':')
-        payload[:stats] = {
-          statsd: {
-            server: server,
-            port: port || 8125
-          }
-        }
+
+      build_grid_parameters(payload)
+
+      if no_statsd_server?
+        payload[:stats] = { statsd:  nil }
       end
-      if default_affinity_list
-        payload[:default_affinity] = default_affinity_list
+
+      if no_default_affinity?
+        payload[:default_affinity] = []
       end
-      client(token).put("grids/#{name}", payload)
+
+      client.put("grids/#{name}", payload)
     end
   end
 end

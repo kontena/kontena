@@ -10,7 +10,12 @@ module Stacks
       model :stack_instance, class: Stack
     end
 
+    optional do
+      model :grid, class: Grid
+    end
+
     def validate
+      self.grid = self.stack_instance.grid
       if stack_instance.name == Stack::NULL_STACK
         add_error(:stack, :access_denied, "Cannot update null stack")
         return
@@ -19,9 +24,10 @@ module Stacks
         add_error(:services, :empty, "stack does not specify any services")
         return
       end
+      validate_volumes
       sort_services(self.services).each do |s|
         service = s.dup
-        validate_service_links(service)
+        service[:links] = select_external_service_links(service)
         existing_service = self.stack_instance.grid_services.where(:name => service[:name]).first
         if existing_service
           service[:grid_service] = existing_service
@@ -33,9 +39,22 @@ module Stacks
         end
 
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
+
+      removed_services = self.stack_instance.grid_services.reject{ |grid_service| self.services.any? {|s| s[:name] == grid_service.name} }
+      removed_services.each do |grid_service|
+        outcome = GridServices::Delete.validate(grid_service: grid_service)
+
+        unless outcome.success?
+          handle_service_outcome_errors(grid_service.name, outcome.errors)
+        end
+      end
+    rescue MissingLinkError => error
+      add_error("services.#{error.service}.links", :missing, error.message)
+    rescue RecursiveLinkError => error
+      add_error("services.#{error.service}.links", :recursive, error.message)
     end
 
     def execute
@@ -47,7 +66,8 @@ module Stacks
         variables: self.variables,
         version: self.version,
         registry: self.registry,
-        services: sort_services(self.services)
+        services: sort_services(self.services),
+        volumes: self.volumes
       }
       if latest_rev.changed?
         new_rev = latest_rev.dup
@@ -69,10 +89,11 @@ module Stacks
           service[:stack] = stack
           outcome = GridServices::Create.run(service)
           unless outcome.success?
-            handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+            handle_service_outcome_errors(service[:name], outcome.errors)
           end
         end
       end
     end
+
   end
 end

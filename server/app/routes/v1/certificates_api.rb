@@ -11,14 +11,6 @@ module V1
       validate_access_token
       require_current_user
 
-      ##
-      # @param [String] name
-      # @return [Grid]
-      def load_grid(name)
-        @grid = current_user.accessible_grids.find_by(name: name)
-        halt_request(404, {error: 'Not found'}) unless @grid
-      end
-
       def authorize_domain(data)
         data[:grid] = @grid
         outcome = GridCertificates::AuthorizeDomain.run(data)
@@ -30,7 +22,7 @@ module V1
             'record_type' => @authorization.challenge_opts['record_type'],
             'record_content' => @authorization.challenge_opts['record_content']
           }
-          
+
         else
           response.status = 422
           {error: outcome.errors.message}
@@ -43,7 +35,7 @@ module V1
         if outcome.success?
           @cert_secrets = outcome.result
           response.status = 201
-          
+
           @cert_secrets.collect { |s| s.name}
         else
           response.status = 422
@@ -65,16 +57,17 @@ module V1
 
       # /v1/certificates/:grid/
       r.on ':grid' do |grid|
-        
         load_grid(grid)
 
+        # Have the post endpoints first, otherwise Roda is too greedy with "r.on ':subject'" route
         r.post do
 
+          # DEPRECATED
           r.on 'authorize' do
             data = parse_json_body
             authorize_domain(data)
           end
-
+          # DEPRECATED
           r.on 'certificate' do
             data = parse_json_body
             get_certificate(data)
@@ -85,8 +78,60 @@ module V1
             register(data)
           end
         end
+
+        r.on ':subject' do |subject|
+
+          @certificate = @grid.certificates.find_by(subject: subject)
+
+          r.get do
+            halt_request(404, {error: 'Not found'}) unless @certificate
+
+            r.is do
+              response.status = 200
+              render('certificates/show')
+            end
+
+            r.is 'export' do
+              audit_event(r, @grid, @certificate, 'export')
+              response.status = 200
+              render('certificates/export')
+            end
+          end
+
+          r.put do
+            r.is do
+              outcome = GridCertificates::Import.run(parse_json_body.merge(grid: @grid, subject: subject))
+
+              if outcome.success?
+                response.status = 201
+                @certificate = outcome.result
+                audit_event(r, @grid, @certificate, 'create', @certificate)
+                render('certificates/show')
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+          end
+
+          r.delete do
+            halt_request(404, {error: 'Not found'}) unless @certificate
+
+            r.is do
+              outcome = GridCertificates::RemoveCertificate.run(certificate: @certificate)
+              if outcome.success?
+                response.status = 200
+                {}
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+          end
+        end
+
       end
-      
+
     end
   end
 end

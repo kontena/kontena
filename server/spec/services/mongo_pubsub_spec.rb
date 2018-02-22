@@ -1,6 +1,18 @@
-require_relative '../spec_helper'
+class MongoPubsub
+  def crash!
+    fail 'test'
+  end
 
-describe MongoPubsub do
+  def ping
+    :pong
+  end
+
+  def subscriptions?
+    !subscriptions.empty?
+  end
+end
+
+describe MongoPubsub, :celluloid => true do
 
   describe '.publish' do
     it 'sends message to channel subscribers' do
@@ -23,10 +35,27 @@ describe MongoPubsub do
       described_class.publish('channel1', channel1_msg)
       described_class.publish('channel2', channel2_msg)
 
-      Timeout::timeout(5) do
-        sleep 0.01 until messages.size == 2
-      end
+      WaitHelper.wait_until!(timeout: 5) { messages.size == 2 }
+
       subs.each(&:terminate)
+    end
+
+    it 'supports hash keys with mixed symbols and strings' do
+      messages = []
+
+      sub =  described_class.subscribe('test') {|msg|
+        messages << msg
+      }
+
+      described_class.publish('test', {'foo' => 'bar 1'})
+      described_class.publish('test', {foo: 'bar 2'})
+
+      WaitHelper.wait_until!(timeout: 5) { messages.size == 2 }
+
+      expect(messages.map{|m| m[:foo]}).to eq ['bar 1', 'bar 2']
+      expect(messages.map{|m| m['foo']}).to eq ['bar 1', 'bar 2']
+
+      sub.terminate
     end
 
     it 'quarantees message ordering' do
@@ -49,6 +78,27 @@ describe MongoPubsub do
       expect(mailbox2).to eq(expected_mailbox)
       sub1.terminate
       sub2.terminate
+    end
+
+    it 'handles subscribers that crash' do
+      @crash = false
+      @done = false
+      sub1 = described_class.subscribe('test') do |msg|
+        if msg[:crash]
+          @crash = true
+          fail msg[:crash]
+        elsif msg[:done]
+          @done = true
+        end
+      end
+
+      described_class.publish('test', crash: false)
+      described_class.publish('test', crash: 'test')
+      WaitHelper.wait_until!("crashed", interval: 0.05) { @crash }
+      described_class.publish('test', done: true)
+      WaitHelper.wait_until!("done", interval: 0.05) { @done }
+
+      sub1.terminate
     end
 
     it 'cleanups threads' do
@@ -92,6 +142,40 @@ describe MongoPubsub do
       duration = end_time - start_time
       expect(responses.size).to eq(rounds)
       expect(duration <= 2.0).to be_truthy
+    end
+  end
+
+  context 'with existing subscriptions' do
+    let!(:test1_msgs) { [] }
+    let!(:test1_subscriber) {
+      described_class.subscribe('test1') do |msg|
+        test1_msgs << msg
+      end
+    }
+
+    describe 'after crashing' do
+      before do
+        described_class.actor.async.crash!
+        WaitHelper.wait_until!("restarted", timeout: 1.0) { (actor = described_class.actor) && actor.alive? && (actor.ping rescue nil)}
+      end
+
+      it 'is able to restart and process messages' do
+        described_class.actor.queue_message('test1', BSON::Binary.new(MessagePack.pack({'test' => 1})))
+
+        test1_subscriber.terminate
+        test1_subscriber.wait
+
+        expect(test1_msgs).to eq [{'test' => 1}]
+      end
+
+      it 'is still able to stop restored subscribers' do
+        test1_subscriber.terminate
+        test1_subscriber.wait
+
+        described_class.actor.ping
+
+        expect(described_class.actor.subscriptions).to be_empty
+      end
     end
   end
 end

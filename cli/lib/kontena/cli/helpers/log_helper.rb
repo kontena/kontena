@@ -3,8 +3,8 @@ module Kontena::Cli::Helpers
 
     def self.included(base)
       if base.respond_to?(:option)
-        base.option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
-        base.option "--lines", "LINES", "Number of lines to show from the end of the logs", default: 100 do |s|
+        base.option ["-f", "--follow"], :flag, "Follow log output", :attribute_name => :tail, default: false
+        base.option ['--tail', '--lines'], "LINES", "Number of lines to show from the end of the logs", :attribute_name => :lines, default: 100 do |s|
           Integer(s)
         end
         base.option "--since", "SINCE", "Show logs since given timestamp"
@@ -52,7 +52,7 @@ module Kontena::Cli::Helpers
 
       begin
         query_params[:from] = last_seen if last_seen
-        result = client(token).get_stream(url, streamer, query_params)
+        client(token).get_stream(url, streamer, query_params)
       rescue => exc
         retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
         raise
@@ -74,7 +74,7 @@ module Kontena::Cli::Helpers
         end
         @buffer = ''
         log
-      rescue => exc
+      rescue
         @buffer << orig_chunk
         nil
       end
@@ -84,7 +84,7 @@ module Kontena::Cli::Helpers
       color = color_for_container(log['name'])
       prefix = "#{log['created_at']} #{log['name']}:"
 
-      puts "#{prefix.colorize(color)} #{log['data']}"
+      puts "#{pastel.send(color, prefix)} #{log['data']}"
     end
 
     # @param [String] container_id

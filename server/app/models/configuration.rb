@@ -49,7 +49,7 @@ class Configuration
       if value.nil?
         delete(key)
       else
-        where(key: key).find_and_modify({key: key, value: { VALUE => encrypt(key, value) }}, {upsert: true})
+        where(key: key).find_one_and_update({key: key, value: { VALUE => encrypt(key, value) }}, {upsert: true})
       end
     end
 

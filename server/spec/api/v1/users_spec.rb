@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe '/v1/users' do
 
@@ -14,6 +13,10 @@ describe '/v1/users' do
 
   let(:master_admin) do
     Role.create!(name: 'master_admin', description: 'Master admin')
+  end
+
+  let(:user_admin) do
+    Role.create!(name: 'user_admin', description: 'Users admin')
   end
 
   let(:grid_admin) do
@@ -116,23 +119,42 @@ describe '/v1/users' do
       john
     end
 
-    it 'allows to remove user if master admin' do
-      john.roles << master_admin
-      expect {
+    context 'for a user with the master_admin role' do
+      before do
+        john.roles << master_admin
+      end
+
+      it 'allows to remove other user' do
+        expect {
+          delete "/v1/users/#{jane.email}", nil, request_headers
+          expect(response.status).to eq(200)
+        }.to change{ User.count }.by(-1)
+      end
+
+      it 'does not allow to remove self' do
+        delete "/v1/users/#{john.email}", nil, request_headers
+        expect(response.status).to eq(400)
+      end
+    end
+
+    context 'for a user with the user_admin role' do
+      before do
+        john.roles << user_admin
+      end
+
+      it 'allows to remove other user' do
+        expect {
+          delete "/v1/users/#{jane.email}", nil, request_headers
+          expect(response.status).to eq(200)
+        }.to change{ User.count }.by(-1)
+      end
+    end
+
+    context 'for a user without any roles' do
+      it 'does not allow to remove user' do
         delete "/v1/users/#{jane.email}", nil, request_headers
-        expect(response.status).to eq(200)
-      }.to change{ User.count }.by(-1)
-    end
-
-    it 'does not allow to remove user if not master admin' do
-      delete "/v1/users/#{jane.email}", nil, request_headers
-      expect(response.status).to eq(400)
-    end
-
-    it 'does not allow to remove self' do
-      john.roles << master_admin
-      delete "/v1/users/#{john.email}", nil, request_headers
-      expect(response.status).to eq(400)
+        expect(response.status).to eq(400)
+      end
     end
 
     it 'required authenticated user' do

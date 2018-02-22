@@ -94,6 +94,7 @@ docker-compose down
 docker ps -aq -f name=kontena- | xargs docker rm -f
 docker ps -aq -f name=weave | xargs docker rm -f
 dontena cloud master rm
+dontena master rm
 ```
 
 and start from the beginning.

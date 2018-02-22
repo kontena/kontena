@@ -5,9 +5,13 @@
 #
 
 name "kontena"
+package_name "kontena-cli"
 friendly_name "Kontena CLI"
+description "Command-line tool for the Kontena Platform"
 maintainer "Kontena, Inc."
 homepage "https://kontena.io"
+
+override :ruby, version: "2.5.0"
 
 # Defaults to C:/kontena on Windows
 # and /opt/kontena on all other platforms
@@ -20,7 +24,7 @@ build_iteration 1
 dependency "preparation"
 
 # kontena dependencies/components
-dependency "kontena"
+dependency "kontena-cli"
 
 # Version manifest file
 dependency "version-manifest"
@@ -29,5 +33,10 @@ exclude "**/.git"
 exclude "**/bundler/git"
 
 package :pkg do
-  identifier "io.kontena.pkg.cli"
+  identifier "io.kontena.cli.pkg.kontena"
+  signing_identity "Developer ID Installer: Kontena Oy (JJ22T2W355)"
+end
+
+package :deb do
+  vendor "Kontena, Inc <info@kontena.io>"
 end

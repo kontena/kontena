@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe AuditLog do
   it { should be_timestamped_document }
@@ -7,4 +6,6 @@ describe AuditLog do
   it { should belong_to(:grid) }
   it { should belong_to(:user) }
   it { should belong_to(:grid_service) }
+
+  it { should have_index_for(grid_id: 1).with_options(background: true) }
 end

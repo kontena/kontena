@@ -1,12 +1,16 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::ContainerHealthCheckWorker do
+  include RpcClientMocks
 
-  let(:container) { double(:container, id: '1234', name: 'test') }
-  let(:queue) { Queue.new }
-  subject { described_class.new(container, queue) }
+  let(:container) do
+    double(:container, id: '1234', name: 'test', service_container?: true, service_id: 'abc', instance_number: 1)
+  end
+  subject { described_class.new(container) }
 
-  before(:each) { Celluloid.boot }
+  before(:each) do
+    Celluloid.boot
+    mock_rpc_client
+  end
   after(:each) { Celluloid.shutdown }
 
   describe '#start' do
@@ -24,16 +28,15 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
           overlay_ip: '1.2.3.4',
         )
       end
-      subject { described_class.new(container, queue) }
+      subject { described_class.new(container) }
 
       it 'checks http status' do
         expect(subject.wrapped_object).to receive(:every).with(30).and_yield
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_http_status).with('1.2.3.4', 8080, '/', 10).twice.and_return({})
-      expect(subject.wrapped_object).to receive(:handle_action).twice
-        expect {
-          subject.start
-        }.to change {queue.size}.by (2) # runs check after initial delay and once within the every block
+        expect(subject.wrapped_object).to receive(:handle_action).twice
+        expect(rpc_client).to receive(:request).twice
+        subject.start
       end
     end
 
@@ -50,34 +53,29 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
           overlay_ip: '1.2.3.4',
         )
       end
-      subject { described_class.new(container, queue) }
+      subject { described_class.new(container) }
 
       it 'checks tcp status' do
         expect(subject.wrapped_object).to receive(:every).with(30).and_yield
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_tcp_status).with('1.2.3.4', 1234, 10).twice.and_return({})
         expect(subject.wrapped_object).to receive(:handle_action).twice
-        expect {
-          subject.start
-        }.to change {queue.size}.by (2) # runs check after initial delay and once within the every block
+        expect(rpc_client).to receive(:request).twice
+        subject.start
       end
     end
   end
 
   describe '#handle_action' do
     it 'does nothing when healthy' do
-      expect(Kontena::ServicePods::Restarter).not_to receive(:perform_async)
-      subject.handle_action({data: {'status' => 'healthy'}})
+      expect(subject.wrapped_object).not_to receive(:restart_container)
+      subject.handle_action({'status' => 'healthy'})
     end
 
     it 'restarts container when unhealthy' do
-      expect(Kontena::ServicePods::Restarter).to receive(:perform_async).with('foo', '1')
+      expect(subject.wrapped_object).to receive(:restart_container)
       expect(container).to receive(:labels).and_return({})
-      expect(container).to receive(:service_id).and_return('foo')
-      expect(container).to receive(:instance_number).and_return('1')
-      expect {
-        subject.handle_action({data: {'status' => 'unhealthy'}})
-      }.to change {queue.size}.by (1)
+      subject.handle_action({'status' => 'unhealthy'})
     end
   end
 
@@ -87,34 +85,61 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
       {"User-Agent"=>"Kontena-Agent/#{Kontena::Agent::VERSION}"}
     }
 
-    it 'returns healthy status' do
+    it 'returns healthy status when http status is 200' do
       response = double
       allow(response).to receive(:status).and_return(200)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
-      expect(health_status[:data]['status']).to eq('healthy')
-      expect(health_status[:data]['status_code']).to eq(200)
+      expect(health_status['status']).to eq('healthy')
+      expect(health_status['status_code']).to eq(200)
     end
 
-    it 'returns unhealthy status when response status not 200' do
+    it 'returns healthy status when http status is 299' do
+      response = double
+      allow(response).to receive(:status).and_return(299)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status['status']).to eq('healthy')
+      expect(health_status['status_code']).to eq(299)
+    end
+
+    it 'returns healthy status when http status is 302' do
+      response = double
+      allow(response).to receive(:status).and_return(302)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status['status']).to eq('healthy')
+      expect(health_status['status_code']).to eq(302)
+    end
+
+    it 'returns unhealthy status when response status is 4xx' do
+      response = double
+      allow(response).to receive(:status).and_return(400)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status['status']).to eq('unhealthy')
+      expect(health_status['status_code']).to eq(400)
+    end
+
+    it 'returns unhealthy status when response status is 5xx' do
       response = double
       allow(response).to receive(:status).and_return(500)
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
-      expect(health_status[:data]['status']).to eq('unhealthy')
-      expect(health_status[:data]['status_code']).to eq(500)
+      expect(health_status['status']).to eq('unhealthy')
+      expect(health_status['status_code']).to eq(500)
     end
 
     it 'returns unhealthy status when connection timeouts' do
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_raise(Excon::Errors::Timeout)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_raise(Excon::Errors::Timeout)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
-      expect(health_status[:data]['status']).to eq('unhealthy')
+      expect(health_status['status']).to eq('unhealthy')
     end
 
     it 'returns unhealthy status when connection fails with weird error' do
-      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_raise(Excon::Errors::Error)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers, :middlewares => Array}).and_raise(Excon::Errors::Error)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
-      expect(health_status[:data]['status']).to eq('unhealthy')
+      expect(health_status['status']).to eq('unhealthy')
     end
 
   end
@@ -125,29 +150,28 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
       socket = spy
       expect(TCPSocket).to receive(:new).with('1.2.3.4', 3306).and_return(socket)
       health_status = subject.check_tcp_status('1.2.3.4', 3306, 10)
-      expect(health_status[:data]['status']).to eq('healthy')
-      expect(health_status[:data]['status_code']).to eq('open')
+      expect(health_status['status']).to eq('healthy')
+      expect(health_status['status_code']).to eq('open')
     end
 
     it 'returns unhealthy status when cannot open socket' do
       expect(TCPSocket).to receive(:new).with('1.2.3.4', 3306).and_raise(Errno::ECONNREFUSED)
       health_status = subject.check_tcp_status('1.2.3.4', 3306, 10)
-      expect(health_status[:data]['status']).to eq('unhealthy')
-      expect(health_status[:data]['status_code']).to eq('closed')
+      expect(health_status['status']).to eq('unhealthy')
+      expect(health_status['status_code']).to eq('closed')
     end
 
     it 'returns unhealthy status when connection timeouts' do
       expect(TCPSocket).to receive(:new).with('1.2.3.4', 3306) {sleep 1.5}
       health_status = subject.check_tcp_status('1.2.3.4', 3306, 1)
-      expect(health_status[:data]['status']).to eq('unhealthy')
-      expect(health_status[:data]['status_code']).to eq('closed')
+      expect(health_status['status']).to eq('unhealthy')
+      expect(health_status['status_code']).to eq('closed')
     end
 
     it 'returns unhealthy status when connection fails with weird error' do
       expect(TCPSocket).to receive(:new).with('1.2.3.4', 3306).and_raise(Excon::Errors::Error)
       health_status = subject.check_tcp_status('1.2.3.4', 3306, 10)
-      expect(health_status[:data]['status']).to eq('unhealthy')
+      expect(health_status['status']).to eq('unhealthy')
     end
-
   end
 end

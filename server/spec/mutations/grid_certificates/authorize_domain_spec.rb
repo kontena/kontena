@@ -1,9 +1,8 @@
-require_relative '../../spec_helper'
 
 describe GridCertificates::AuthorizeDomain do
 
   let(:subject) { described_class.new(grid: grid, domain: 'example.com') }
-  
+
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid
@@ -17,7 +16,7 @@ describe GridCertificates::AuthorizeDomain do
     authz = GridDomainAuthorization.create(grid: grid, domain: 'example.com', challenge: {}, challenge_opts: challenge_opts)
     authz
   }
-  
+
   describe '#validate' do
 
   end
@@ -36,9 +35,21 @@ describe GridCertificates::AuthorizeDomain do
       expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
 
       expect {
-        subject.execute  
+        subject.execute
       }.to change{GridDomainAuthorization.count}.by(1)
-      
+
+    end
+
+    it 'fails gracefully if no LE registration' do
+      acme = double
+      allow(subject).to receive(:acme_client).and_return(acme)
+      expect(acme).to receive(:authorize).and_raise(Acme::Client::Error::Unauthorized)
+
+      expect {
+        outcome = subject.run
+        expect(outcome.success?).to be_falsey
+      }.not_to change{GridDomainAuthorization.count}
+
     end
 
     it 'sends verification request and updates authorization' do
@@ -54,9 +65,9 @@ describe GridCertificates::AuthorizeDomain do
       expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
 
       expect {
-        subject.execute  
+        subject.execute
       }.to change{authz.reload.updated_at}
-      
+
     end
   end
 

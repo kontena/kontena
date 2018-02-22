@@ -1,19 +1,12 @@
-require_relative '../spec_helper'
 
-describe LeaderElectorJob do
-  before(:each) {
-    Celluloid.boot
-    DistributedLock.delete_all
-  }
-  after(:each) { Celluloid.shutdown }
+describe LeaderElectorJob, celluloid: true do
+  before(:each) { DistributedLock.delete_all }
 
   describe '#elect' do
     it 'elects only one candidate' do
       candidate1 = LeaderElectorJob.new
       candidate2 = LeaderElectorJob.new
-      Timeout.timeout(5) do
-        sleep 0.1 until candidate1.leader? || candidate2.leader?
-      end
+      WaitHelper.wait_until!(timeout: 5) { candidate1.leader? || candidate2.leader? }
       expect(candidate1.leader? != candidate2.leader?).to be_truthy
     end
   end

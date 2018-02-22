@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe GridSecrets::Create do
 
@@ -20,6 +19,28 @@ describe GridSecrets::Create do
     service
   }
 
+  it "rejects invalid name with special chars" do
+    outcome = described_class.run(
+      grid: grid,
+      name: 'foo/bar',
+      value: 'asdf',
+    )
+
+    expect(outcome).to_not be_success
+    expect(outcome.errors.symbolic).to eq 'name' => :matches
+  end
+
+  it "rejects invalid name with newlines" do
+    outcome = described_class.run(
+      grid: grid,
+      name: "foo\nbar",
+      value: 'asdf',
+    )
+
+    expect(outcome).to_not be_success
+    expect(outcome.errors.symbolic).to eq 'name' => :matches
+  end
+
   describe '#run' do
     it 'creates a new grid secret' do
       expect {
@@ -36,14 +57,6 @@ describe GridSecrets::Create do
       subject.run
       expect(web.reload.updated_at.to_s).not_to eq(hour_ago.to_s)
       expect(db.reload.updated_at.to_s).to eq(hour_ago.to_s)
-    end
-
-    it 'schedules deploy for related grid services' do
-      web # create
-      db # create
-      expect {
-        subject.run
-      }.to change{ web.grid_service_deploys.count }.by(1)
     end
   end
 end

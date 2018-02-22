@@ -10,6 +10,8 @@ module GridSecrets
     end
 
     def execute
+      return grid_secret if grid_secret.value == value
+
       grid_secret.value = value
       grid_secret.save
       if grid_secret.errors.size > 0

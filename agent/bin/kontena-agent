@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'rbtrace' if ENV['RBTRACE'].to_s == 'true'
 require_relative '../lib/kontena-agent'
 
 Docker.options[:read_timeout] = (60*60)
@@ -9,17 +10,19 @@ Docker.validate_version!
 $stdout.sync = true
 $0 = 'kontena-agent'
 
-api_token = ENV['KONTENA_TOKEN']
-api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
+api_uri = ENV['KONTENA_URI']
+grid_token = ENV['KONTENA_TOKEN']
+node_token = ENV['KONTENA_NODE_TOKEN']
 
-if !api_token
-  exit('KONTENA_TOKEN is required')
-end
-if !api_uri
-  exit('KONTENA_URI is required')
+if api_uri.nil? || api_uri.empty?
+  abort('Configuration error: The KONTENA_URI env is required')
 end
 if api_uri.match(/^http.*/)
   api_uri = api_uri.sub('http', 'ws')
+end
+
+unless (grid_token && !grid_token.empty?) || (node_token && !node_token.empty?)
+  abort('Configuration error: The KONTENA_TOKEN or KONTENA_NODE_TOKEN env is required')
 end
 
 if ENV['LOG_LEVEL']
@@ -29,8 +32,15 @@ else
 end
 Kontena::Logging.initialize_logger(STDOUT, log_level)
 
-agent = Kontena::Agent.new(
+agent = Kontena::Agent.instance
+agent.configure(
   api_uri: api_uri,
-  api_token: api_token
+  node_id: ENV['KONTENA_NODE_ID'],
+  node_name: ENV['KONTENA_NODE_NAME'],
+  grid_token: grid_token,
+  node_token: node_token,
+  node_labels: ENV['KONTENA_NODE_LABELS'],
+  ssl_verify: ENV['KONTENA_SSL_VERIFY'],
+  ssl_hostname: ENV['KONTENA_SSL_HOSTNAME'],
 )
 agent.run!

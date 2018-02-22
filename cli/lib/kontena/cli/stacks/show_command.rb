@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'yaml'
 
 module Kontena::Cli::Stacks
   class ShowCommand < Kontena::Command
@@ -13,17 +14,39 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
+    option '--values', :flag, 'Output the variable-value pairs as YAML'
+    include Common::StackValuesToOption
+
     def execute
-      show_stack(name)
+      write_variables if values_to
+      values? ? show_variables : show_stack
     end
 
-    def fetch_stack(name)
-      client.get("stacks/#{current_grid}/#{name}")
+    def variables
+      @variables ||= stack['variables'] || {}
     end
 
-    def show_stack(name)
-      stack = fetch_stack(name)
+    def metadata
+      @metadata ||= stack['metadata'] || {}
+    end
 
+    def stack
+      @stack ||= client.get("stacks/#{current_grid}/#{name}")
+    end
+
+    def show_variables
+      puts variable_yaml
+    end
+
+    def variable_yaml
+      ::YAML.dump(variables)
+    end
+
+    def write_variables
+      File.write(values_to, variable_yaml)
+    end
+
+    def show_stack
       puts "#{stack['name']}:"
       puts "  created: #{stack['created_at']}"
       puts "  updated: #{stack['updated_at']}"
@@ -32,6 +55,27 @@ module Kontena::Cli::Stacks
       puts "  version: #{stack['version']}"
       puts "  revision: #{stack['revision']}"
       puts "  expose: #{stack['expose'] || '-'}"
+
+      puts "  variables:#{' -' if variables.empty?}"
+      variables.each do |var, val|
+        puts "    #{var}: #{val}"
+      end
+
+      puts "  metadata:#{' -' if metadata.empty?}"
+      unless metadata.empty?
+        output_lines = ::YAML.dump(metadata).split(/[\r\n]/)
+        output_lines.shift # get rid of "---"
+        puts output_lines.map { |line| '    %s' % line }.join("\n")
+      end
+
+      puts "  parent: #{stack['parent'] ? stack['parent']['name'] : '-'}"
+      if stack['children'] && !stack['children'].empty?
+        puts "  children:"
+        stack['children'].each do |child|
+          puts "    - #{child['name']}"
+        end
+      end
+
       puts "  services:"
       stack['services'].each do |service|
         show_service(service['id'])
@@ -57,6 +101,7 @@ module Kontena::Cli::Stacks
       puts "#{pad}  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
       puts "#{pad}  scaling: #{service['instances'] }"
       puts "#{pad}  strategy: #{service['strategy']}"
+      puts "#{pad}  read_only: #{service['read_only'] == true ? 'yes' : 'no'}"
       puts "#{pad}  deploy_opts:"
       puts "#{pad}    min_health: #{service['deploy_opts']['min_health']}"
       if service['deploy_opts']['wait_for_port']

@@ -1,4 +1,5 @@
 require_relative '../stacks/stacks_helper'
+require 'securerandom'
 
 module Kontena::Cli::Registry
   class CreateCommand < Kontena::Command
@@ -13,7 +14,7 @@ module Kontena::Cli::Registry
     option '--s3-region', 'S3_REGION', 'S3 region', default: 'eu-west-1'
     option '--s3-encrypt', :flag, 'Encrypt S3 objects', default: false
     option '--s3-secure', :flag, 'Use secure connection in S3', default: true
-    option '--s3-v4auth', :flag, 'Use v4auth on S3', default: false
+    option '--s3-v4auth', :flag, 'Use v4auth on S3', default: true
     option '--azure-account-name', 'AZURE_ACCOUNT_NAME', 'Azure account name'
     option '--azure-container-name', 'AZURE_CONTAINER_NAME', 'Azure container name'
 
@@ -110,7 +111,7 @@ module Kontena::Cli::Registry
 
       client(token).post("grids/#{current_grid}/stacks", data)
       deployment = client(token).post("stacks/#{current_grid}/registry/deploy", {})
-      spinner "Deploying #{data[:name].colorize(:cyan)} stack " do
+      spinner "Deploying #{pastel.cyan(data[:name])} stack " do
         wait_for_deploy_to_finish(deployment)
       end
       puts "\n"

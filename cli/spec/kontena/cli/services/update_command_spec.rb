@@ -1,5 +1,3 @@
-require_relative "../../../spec_helper"
-require "kontena/cli/grid_options"
 require "kontena/cli/services/update_command"
 
 describe Kontena::Cli::Services::UpdateCommand do

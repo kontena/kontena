@@ -1,7 +1,6 @@
-require_relative "../../../spec_helper"
 require 'kontena/cli/cloud/login_command'
 require 'kontena/cli/localhost_web_server'
-require 'launchy'
+require 'kontena/cli/browser_launcher'
 
 describe Kontena::Cli::Cloud::LoginCommand do
 
@@ -21,18 +20,15 @@ describe Kontena::Cli::Cloud::LoginCommand do
   end
 
   it 'should give error if trying to use --code and --force' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(['--code', 'abcd', '--force'])
+    expect{subject.run(['--code', 'abcd', '--force'])}.to exit_with_error
   end
 
   it 'should give error if trying to use --token and --force' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(['--token', 'abcd', '--force'])
+    expect{subject.run(['--token', 'abcd', '--force'])}.to exit_with_error
   end
 
   it 'should give error if trying to use --token and --code' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(['--token', 'abcd', '--code', 'defg'])
+    expect{subject.run(['--token', 'abcd', '--code', 'defg'])}.to exit_with_error
   end
 
   context 'when config has token' do
@@ -119,6 +115,13 @@ describe Kontena::Cli::Cloud::LoginCommand do
       expect(subject).to receive(:finish).and_return(true)
       subject.run([])
     end
+
+    it 'should enter the remote login if --remote given' do
+      expect(client).not_to receive(:authentication_ok?)
+      expect(subject).to receive(:remote_login).and_return(true)
+      expect(subject).to receive(:finish).and_return(true)
+      subject.run(['--remote'])
+    end
   end
 
   context 'when performing web flow' do
@@ -142,7 +145,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
         expect(webserver).to receive(:serve_one).and_return({
           'access_token' => 'abcd'
         })
-        expect(Launchy).to receive(:open).and_return(true)
+        expect(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
         expect(subject).to receive(:finish).and_return(true)
         subject.run([])
         expect(account.token.access_token).to eq 'abcd'
@@ -156,7 +159,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
         expect(webserver).to receive(:serve_one).and_return({
           'code' => 'abcd'
         })
-        expect(Launchy).to receive(:open).and_return(true)
+        expect(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
         expect(client).to receive(:exchange_code).with('abcd').and_return({
           'access_token' => 'abcdefg'
         })
@@ -173,10 +176,44 @@ describe Kontena::Cli::Cloud::LoginCommand do
         expect(webserver).to receive(:serve_one).and_return({
           'error' => 'foo'
         })
-        expect(Launchy).to receive(:open).and_return(true)
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.run([])
+        expect(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
+        expect{subject.run([])}.to exit_with_error.and output(/Authentication failed: foo/).to_stderr
       end
+    end
+  end
+
+  context 'when performing remote login' do
+    let(:account) do
+      account = Kontena::Cli::Config::Account.new(Kontena::Cli::Config.kontena_account_data)
+      account.token = Kontena::Cli::Config::Token.new(access_token: nil, parent_type: :account, parent_name: 'kontena')
+      account.client_id = '1234567890'
+      account
+    end
+
+    before(:each) do
+      expect(subject).to receive(:kontena_account).at_least(:once).and_return(account)
+      allow(subject).to receive(:any_key_to_continue).and_return(true)
+    end
+    it 'creates auth request and exchanges code to access token' do
+      expect(client).to receive(:post).with('/auth_requests',
+        { client_id: '1234567890' }, {}, { 'Content-Type' => 'application/x-www-form-urlencoded' }
+      ).ordered.and_return({
+        'verification_uri' => 'https://cloud.kontena.io/auth_requests/12345',
+        'user_code' => 'tryme',
+        'device_code' => 'devicex'
+        })
+
+      expect(client).to receive(:post).with('/auth_requests/code', {
+          client_id: '1234567890',
+          device_code: 'devicex'
+        }, {}, { 'Content-Type' => 'application/x-www-form-urlencoded'}
+      ).ordered.and_return({ 'code' => 'abcd' })
+
+      expect(client).to receive(:exchange_code).with('abcd').ordered.and_return({
+        'access_token' => 'abcdefg'
+      })
+      expect(subject).to receive(:finish).and_return(true)
+      subject.run(['--remote'])
     end
   end
 
@@ -242,14 +279,12 @@ describe Kontena::Cli::Cloud::LoginCommand do
 
       it 'should exit with error if cloud responds with error' do
         expect(client).to receive(:get).and_return('error' => 'foo')
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.update_userinfo
+        expect{subject.update_userinfo}.to exit_with_error
       end
 
       it 'should exit with error if cloud responds with something silly' do
         expect(client).to receive(:get).and_return('foo')
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.update_userinfo
+        expect{subject.update_userinfo}.to exit_with_error
       end
     end
 
@@ -272,8 +307,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
       end
 
       it 'should give error when response has error' do
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.update_token('error' => 'fail!')
+        expect{subject.update_token('error' => 'fail!')}.to exit_with_error
       end
 
       it 'should raise if response is not a hash' do

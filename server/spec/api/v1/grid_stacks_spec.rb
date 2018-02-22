@@ -1,9 +1,5 @@
-require_relative '../../spec_helper'
 
-describe '/v1/grids/:grid/stacks' do
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe '/v1/grids/:grid/stacks', celluloid: true do
 
   let(:request_headers) do
     {
@@ -43,6 +39,20 @@ describe '/v1/grids/:grid/stacks' do
     }
   end
 
+  let(:stack_with_volumes) do
+    {
+      name: 'test-stack',
+      stack: 'my/test-stack',
+      version: '0.1.0',
+      registry: 'file://',
+      source: '..',
+      services: services,
+      volumes: [
+        { name: 'vol1', external: 'someVolume'}
+      ]
+    }
+  end
+
   describe 'POST' do
     it 'creates new stack' do
       data = {
@@ -67,6 +77,21 @@ describe '/v1/grids/:grid/stacks' do
         post "/v1/grids/#{grid.name}/stacks", valid_stack.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ StackRevision.count }.by(1)
+    end
+
+    it 'creates new stack with volumes' do
+      volume = Volume.create(name: 'someVolume', grid: grid, scope: 'grid')
+      expect {
+        post "/v1/grids/#{grid.name}/stacks", stack_with_volumes.to_json, request_headers
+        expect(response.status).to eq(201)
+      }.not_to change{ Volume.count }
+    end
+
+    it 'fails to create new stack with volumes when external volume does not exist' do
+      expect {
+        post "/v1/grids/#{grid.name}/stacks", stack_with_volumes.to_json, request_headers
+        expect(response.status).to eq(422)
+      }.to change{ Volume.count }.by(0)
     end
 
     it 'returns 422 error if services is empty' do

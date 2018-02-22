@@ -2,6 +2,8 @@ require_relative 'rpc/docker_container_api'
 require_relative 'rpc/agent_api'
 require_relative 'rpc/etcd_api'
 require_relative 'rpc/service_pods_api'
+require_relative 'rpc/lb_api'
+require_relative 'rpc/volumes_api'
 require_relative 'logging'
 
 module Kontena
@@ -12,21 +14,25 @@ module Kontena
     HANDLERS = {
         'containers' => Kontena::Rpc::DockerContainerApi,
         'service_pods' => Kontena::Rpc::ServicePodsApi,
+        'volumes' => Kontena::Rpc::VolumesApi,
         'agent' => Kontena::Rpc::AgentApi,
-        'etcd' => Kontena::Rpc::EtcdApi
+        'etcd' => Kontena::Rpc::EtcdApi,
+        'load_balancers' => Kontena::Rpc::LbApi
     }
 
     class Error < StandardError
-      attr_accessor :code, :message, :backtrace
+      attr_reader :code
 
-      def initialize(code, message, backtrace = nil)
-        self.code = code
-        self.message = message
-        self.backtrace = backtrace
+      def initialize(code, message)
+        @code = code
+        super(message)
       end
     end
 
+    exclusive :handle_notification
+
     ##
+    # @param ws_client [Kontena::WebsocketClient] celluloid actor proxy
     # @param [Array] message msgpack-rpc request array
     # @return [Array]
     def handle_request(ws_client, message)
@@ -53,7 +59,7 @@ module Kontena
     # @param [WebsocketClient] ws_client
     # @param [Array, Hash] msg
     def send_message(ws_client, msg)
-      ws_client.send_message(MessagePack.dump(msg).bytes)
+      ws_client.async.send_message(MessagePack.dump(msg).bytes)
     end
 
     ##

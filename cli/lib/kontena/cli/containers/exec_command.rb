@@ -1,23 +1,31 @@
-require_relative '../grid_options'
+require_relative '../helpers/exec_helper'
 
 module Kontena::Cli::Containers
   class ExecCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::Helpers::ExecHelper
+
+    usage "[OPTIONS] [CONTAINER_ID] -- [CMD] ..."
 
     parameter "CONTAINER_ID", "Container id"
     parameter "CMD ...", "Command"
 
+    option ["--shell"], :flag, "Execute as a shell command", default: false
+    option ["-i", "--interactive"], :flag, "Keep stdin open", default: false
+    option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY", default: false
+
+    requires_current_master
+    requires_current_grid
+
     def execute
-      require_api_url
-      token = require_token
+      exit_status = container_exec("#{current_grid}/#{self.container_id}", self.cmd_list,
+        interactive: interactive?,
+        shell: shell?,
+        tty: tty?,
+      )
 
-      payload = {cmd: ["sh", "-c", Shellwords.join(cmd_list)]}
-      result = client(token).post("containers/#{current_grid}/#{container_id}/exec", payload)
-
-      puts result[0].join(" ") unless result[0].size == 0
-      STDERR.puts result[1].join(" ") unless result[1].size == 0
-      exit result[2]
+      exit exit_status unless exit_status.zero?
     end
   end
 end

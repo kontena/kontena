@@ -1,8 +1,5 @@
-require_relative '../spec_helper'
 
-describe TelemetryJob do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe TelemetryJob, celluloid: true do
 
   let(:grid) { Grid.create!(name: 'test-grid', overlay_cidr: '10.81.0.0/23') }
 

@@ -4,6 +4,7 @@ module Kontena::Cli::Stacks
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::TableGenerator::Helper
     include Common
 
     banner "Lists all installed stacks on a grid in Kontena Master"
@@ -11,44 +12,83 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
-    def execute
-      list_stacks
+    HEALTH_ICONS = {
+      unhealthy: Kontena.pastel.red('⊗').freeze,
+      partial:   Kontena.pastel.yellow('⊙').freeze,
+      healthy:   Kontena.pastel.green('⊛').freeze,
+      default:   Kontena.pastel.dim('⊝').freeze
+    }
+
+    def stacks_by_names(stacks, name_list)
+      name_list.map { |name| stacks.find { |stack| stack['name'] == name } }.compact
     end
 
-    def list_stacks
-      response = client.get("grids/#{current_grid}/stacks")
-
-      titles = ['NAME', 'STACK', 'SERVICES', 'STATE', 'EXPOSED PORTS']
-      puts "%-30s %-40s %-10s %-10s %-50s" % titles
-
-      response['stacks'].each do |stack|
-        ports = stack_ports(stack)
-        health = stack_health(stack)
-        if health == :unhealthy
-          icon = '⊗'.freeze
-          color = :red
-        elsif health == :partial
-          icon = '⊙'.freeze
-          color = :yellow
-        elsif health == :healthy
-          icon = '⊛'.freeze
-          color = :green
-        else
-          icon = '⊝'.freeze
-          color = :dim
+    def build_depths(stacks)
+      stacks.sort_by { |s| s['name'] }.each do |stack|
+        stack['depth'] += 1
+        stacks_by_names(stacks, stack['children'].map { |n| n['name'] }).each do |child_stack|
+          child_stack['depth'] += stack['depth']
         end
-
-        vars = [
-          icon.colorize(color),
-          "#{stack['name']}",
-          "#{stack['stack']}:#{stack['version']}",
-          stack['services'].size,
-          stack['state'],
-          ports.join(",")
-        ]
-
-        puts "%s %-28s %-40s %-10s %-10s %-50s" % vars
       end
+      stacks
+    end
+
+    def get_stacks
+      client.get("grids/#{current_grid}/stacks")['stacks'].tap { |stacks| stacks.map { |stack| stack['depth'] = 0 } }
+    end
+
+    def fields
+      return ['name'] if quiet?
+      {
+        name: 'name',
+        stack: 'stack',
+        services: 'services_count',
+        state: 'state',
+        'exposed ports' => 'ports'
+      }
+    end
+
+    def execute
+    stacks = build_depths(get_stacks)
+
+    print_table(stacks) do |row|
+        next if quiet?
+        row['name'] = health_icon(stack_health(row)) + " " + tree_icon(row) + " " + row['name']
+        row['stack'] = "#{row['stack']}:#{row['version']}"
+        row['services_count'] = row['services'].size
+        row['ports'] = stack_ports(row).join(',')
+        row['state'] = pastel.send(state_color(row['state']), row['state'])
+      end
+    end
+
+    def state_color(state)
+      case state
+      when 'running' then :green
+      when 'deploying', 'initialized' then :blue
+      when 'stopped' then :red
+      when 'partially_running' then :yellow
+      else :clear
+      end
+    end
+
+    def health_icon(health)
+      HEALTH_ICONS.fetch(health) { HEALTH_ICONS[:default] }
+    end
+
+    def tree_icon(row)
+      return '' unless $stdout.tty?
+      parent = row['parent']
+      children = row['children'] || []
+      if parent.nil? && children.empty?
+        # solo
+        char = ''
+      elsif parent.nil? && !children.empty?
+        char = ''
+      elsif !parent.nil?
+        char = '┗━'
+      end
+      left_pad = ' ' * (2 * (row['depth'] - 1))
+      left_pad + char
     end
 
     # @param [Hash] stack

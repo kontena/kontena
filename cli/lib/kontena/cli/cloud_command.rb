@@ -1,12 +1,13 @@
-require_relative 'cloud/login_command'
-require_relative 'cloud/logout_command'
-require_relative 'cloud/master_command'
 
 class Kontena::Cli::CloudCommand < Kontena::Command
-  subcommand "login", "Authenticate to Kontena Cloud", Kontena::Cli::Cloud::LoginCommand
-  subcommand "logout", "Logout from Kontena Cloud", Kontena::Cli::Cloud::LogoutCommand
-  subcommand "master", "Master specific commands", Kontena::Cli::Cloud::MasterCommand
+  include Kontena::Cli::Common
 
-  def execute
+  subcommand "login", "Authenticate to Kontena Cloud", load_subcommand('cloud/login_command')
+  subcommand "logout", "Logout from Kontena Cloud", load_subcommand('cloud/logout_command')
+  subcommand "master", "Master specific commands", load_subcommand('cloud/master_command')
+
+  def subcommand_missing(name)
+    return super(name) unless %w(platform node org organization image-repository ir region token).include?(name)
+    exit_with_error "The #{pastel.cyan('cloud')} plugin has not been installed. Use: #{pastel.cyan('kontena plugin install cloud')}"
   end
 end

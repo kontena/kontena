@@ -1,3 +1,5 @@
+require_relative '../helpers/wait_helper'
+
 class DistributedLock
   include Mongoid::Document
 
@@ -13,17 +15,16 @@ class DistributedLock
     lock_id = nil
     begin
       if timeout.to_f > 0.0
-        Timeout.timeout(timeout) do
-          sleep 0.01 until lock_id = self.obtain_lock(name)
-        end
+        lock_id = WaitHelper.wait_until("lock #{name} is available", timeout: timeout, interval: 0.05) { self.obtain_lock(name) }
       else
         lock_id = self.obtain_lock(name)
       end
+
       if lock_id
         return yield
+      else
+        return false
       end
-    rescue Timeout::Error
-      return false
     ensure
       self.release_lock(name, lock_id) if lock_id
     end
@@ -37,8 +38,8 @@ class DistributedLock
     modify = {'$set' => {name: name, lock_id: lock_id, created_at: Time.now.utc}}
     lock = nil
     begin
-      lock = where(query).find_and_modify(modify, {upsert: true, new: true})
-    rescue Moped::Errors::OperationFailure
+      lock = where(query).find_one_and_update(modify, {upsert: true, return_document: :after})
+    rescue Mongo::Error::OperationFailure
     end
     if lock && lock.lock_id == lock_id
       lock_id

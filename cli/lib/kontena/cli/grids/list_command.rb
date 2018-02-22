@@ -3,14 +3,25 @@ require_relative 'common'
 module Kontena::Cli::Grids
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::TableGenerator::Helper
     include Common
 
     option ['-u', '--use'], :flag, 'Automatically use first available grid sorted by user count', hidden: true
     option ['-v', '--verbose'], :flag, 'Use a more verbose output', hidden: true
 
+    requires_current_master
+    requires_current_master_token
+
+    def fields
+      { name: 'name', nodes: 'node_count', services: 'service_count', users: 'user_count' }
+    end
+
     def execute
-      require_api_url
-      require_token
+      if quiet?
+        puts grids['grids'].map { |grid| grid['name'] }.join("\n")
+        exit 0
+      end
+
       vputs
 
       gridlist = []
@@ -21,22 +32,19 @@ module Kontena::Cli::Grids
 
       if gridlist.size == 0
         self.verbose? && puts
-        puts "Kontena Master #{config.current_master.name} doesn't have any grids yet. Create one now using 'kontena grid create' command".colorize(:yellow)
+        puts pastel.yellow("Kontena Master #{config.current_master.name} doesn't have any grids yet. Create one now using 'kontena grid create' command")
         self.verbose? && puts
       else
         vputs
         vputs "You have access to the following grids:"
         vputs
 
-        puts '%-30.30s %-8s %-12s %-10s' % ['Name', 'Nodes', 'Services', 'Users']
-        gridlist.each do |grid|
-          if grid['name'] == config.current_master.grid
-            name = "#{grid['name']} *"
-          else
-            name = grid['name']
-          end
-          puts '%-30.30s %-8s %-12s %-10s' % [name, grid['node_count'], grid['service_count'], grid['user_count']]
+        if current_grid
+          current_grid_entry = gridlist.find { |grid| grid['name'] == current_grid }
+          current_grid_entry['name'] += pastel.yellow(' *') if current_grid_entry
         end
+
+        print_table(gridlist)
 
         if self.use?
           vputs

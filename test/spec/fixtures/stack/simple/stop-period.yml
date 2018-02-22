@@ -1,0 +1,6 @@
+stack: test/simple
+version: 0.1.0
+services:
+  redis:
+    image: redis:3-alpine
+    stop_grace_period: 23s

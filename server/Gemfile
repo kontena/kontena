@@ -1,15 +1,16 @@
 source 'https://rubygems.org'
 
-gem 'rack', '~> 1.6.4'
-gem 'roda', '~> 2.5.0'
-gem 'celluloid', '~> 0.16.0'
+gem 'rack', '~> 2.0.0'
+gem 'roda', '~> 2.26.0'
+gem 'celluloid', '~> 0.17.3'
 gem 'tilt-jbuilder'
 gem 'mutations'
-gem 'mongoid', '~> 4.0.0'
-gem 'symmetric-encryption'
-gem 'activesupport', '~> 4.1.14'
-gem 'faye-websocket', '~> 0.10.0'
+gem 'mongoid', '~> 5.2.1'
+gem 'symmetric-encryption', '~> 3.9.1'
+gem 'activesupport', '~> 4.2'
+gem 'faye-websocket', '~> 0.10.7'
 gem 'websocket-driver', '~> 0.6.2'
+gem 'kontena-websocket-client', '~> 0.1.1'
 gem 'puma'
 gem 'random_token'
 gem 'msgpack'
@@ -17,16 +18,20 @@ gem 'httpclient', '~> 2.3'
 gem 'authority'
 gem 'mongoid-enum'
 gem 'rollbar', require: false
+gem 'rbtrace', require: false
 gem 'acme-client'
 gem 'json-jwt', '= 1.5.2'
 gem 'jsonpath'
+gem 'json-serializer'
 gem 'bcrypt'
 gem 'rack-attack'
+gem 'lru_redux', '~> 1.1.0'
+gem 'hkdf', '~> 0.3.0'
 
 group :development, :test do
   gem 'dotenv'
-  gem 'rspec', '~> 3.1.0', require: false
-  gem 'mongoid-rspec', '~> 2.2.0', require: false
+  gem 'rspec', '~> 3.3.0', require: false
+  gem 'mongoid-rspec', '~> 3.0.0', require: false
   gem 'rack-test', require: false
   gem 'rerun', require: false
   gem 'simplecov', require: false

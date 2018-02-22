@@ -1,10 +1,27 @@
-require_relative '../../../spec_helper'
 
-describe Kontena::Workers::ImagePullWorker do
+describe Kontena::Workers::ImagePullWorker, celluloid: true do
 
   let(:subject) { described_class.new }
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+
+  describe '#pull_image' do
+    it 'pulls docker image' do
+      expect(Docker::Image).to receive(:create).once.and_return(true)
+      subject.pull_image('redis:latest', 'rev', nil)
+      expect(subject.fresh_pull?('redis:latest:rev')).to be_truthy
+    end
+
+    it 'aborts if docker image is not found' do
+      allow(subject.wrapped_object).to receive(:sleep).with(0.1).at_least(1).times
+      expect(Docker::Image).to receive(:create).exactly(10).times do
+        raise Docker::Error::NotFoundError.new('not found')
+      end
+      expect {
+        subject.pull_image('redis:latest', 'rev', nil)
+      }.to raise_error(Docker::Error::NotFoundError)
+      expect(subject.alive?).to be_truthy
+      expect(subject.fresh_pull?('redis:latest:rev')).to be_falsey
+    end
+  end
 
   describe '#fresh_pull?' do
     it 'returns false if image has not been pulled' do
@@ -12,7 +29,7 @@ describe Kontena::Workers::ImagePullWorker do
     end
 
     it 'returns true if image is just pulled' do
-      subject.update_image_cache('redis:latest')
+      subject.image_cache['redis:latest'] = Time.now.utc
       expect(subject.fresh_pull?('redis:latest')).to be_truthy
     end
 

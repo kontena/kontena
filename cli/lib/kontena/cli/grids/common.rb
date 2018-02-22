@@ -41,6 +41,13 @@ module Kontena::Cli::Grids
         puts "  exports:"
         puts "    statsd: #{statsd['server']}:#{statsd['port']}"
       end
+      if logs = grid.dig('logs')
+        puts "logs:"
+        puts "  forwarder: #{logs['forwarder']}"
+        logs['opts'].each do |k,v|
+          puts "  #{k}: #{v}"
+        end
+      end
     end
 
     def grids
@@ -108,6 +115,67 @@ module Kontena::Cli::Grids
         client(require_token).get("grids/#{current_grid}")
       else
         exit_with_error "No grid given or selected"
+      end
+    end
+
+    module Parameters
+      def self.included(base)
+        base.option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+        base.option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
+        base.option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder" do |log_forwarder|
+          if log_forwarder == 'none'
+            warn "[DEPRECATED] --log-forwarder none will be replaced with --no-log-forwarder"
+          end
+          log_forwarder
+        end
+        base.option "--no-log-forwarder", :flag, "Disable log forwarding"
+        base.option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
+      end
+
+      def validate_log_opts
+        if !log_opt_list.empty? && (log_forwarder.nil? || no_log_forwarder?)
+          raise Kontena::Errors::StandardError.new(1, "Need to specify --log-forwarder when using --log-opt")
+        end
+
+        if no_log_forwarder? && !log_forwarder.nil? && log_forwarder != "none"
+          exit_with_error "Can't use --log-forwarder and --no-log-forwarder together"
+        end
+      end
+
+      def parse_log_opts
+        opts = {}
+        log_opt_list.each do |opt|
+          key, value = opt.split('=')
+          opts[key.to_sym] = value
+        end
+        opts
+      end
+
+      def validate_grid_parameters
+        validate_log_opts
+      end
+
+      def build_grid_parameters(payload)
+        if statsd_server
+          server, port = statsd_server.split(':')
+          payload[:stats] = {
+            statsd: {
+              server: server,
+              port: port || 8125
+            }
+          }
+        end
+
+        if log_forwarder || no_log_forwarder?
+          payload[:logs] = {
+            forwarder: no_log_forwarder? ? 'none' : log_forwarder,
+            opts: parse_log_opts
+          }
+        end
+
+        unless default_affinity_list.empty?
+          payload[:default_affinity] = default_affinity_list
+        end
       end
     end
   end

@@ -1,8 +1,56 @@
 module Kontena
   module Util
     def self.included(base)
-        base.extend(ClassMethods)
+      base.extend(ClassMethods)
     end
+
+    def symbolize_keys(obj)
+      case obj
+      when Hash
+        obj.map { |k,v| [k.to_sym, symbolize_keys(v)] }.to_h
+      when Array
+        obj.map { |v| symbolize_keys(v) }
+      else
+        obj
+      end
+    end
+    module_function :symbolize_keys
+
+    def symbolize_keys!(obj)
+      case obj
+      when Hash
+        obj.keys.each { |k| obj[k.to_sym] = symbolize_keys!(obj.delete(k)) }
+      when Array
+        obj.map! { |v| symbolize_keys!(v) }
+      else
+      end
+      obj
+    end
+    module_function :symbolize_keys!
+
+    def stringify_keys(obj)
+      case obj
+      when Hash
+        obj.map { |k,v| [k.to_s, stringify_keys(v)] }.to_h
+      when Array
+        obj.map { |v| stringify_keys(v) }
+      else
+        obj
+      end
+    end
+    module_function :stringify_keys
+
+    def stringify_keys!(obj)
+      case obj
+      when Hash
+        obj.keys.each { |k| obj[k.to_s] = stringify_keys!(obj.delete(k)) }
+      when Array
+        obj.map! { |v| stringify_keys!(v) }
+      else
+      end
+      obj
+    end
+    module_function :stringify_keys!
 
     # @param [String] cmd
     def which(cmd)
@@ -30,26 +78,30 @@ module Kontena
 
     def time_ago(time)
       now = Time.now.to_i
-      time = DateTime.parse(time).to_time.to_i
+      time = time.kind_of?(Integer) ? time : DateTime.parse(time).to_time.to_i
       diff = now - time
-      if diff > 60 * 60 * 24
-        "#{diff / 60 / 60 / 24} days"
-      elsif diff > 60 * 60
-        "#{diff / 60 / 60} hours"
-      elsif diff > 60
-        "#{diff / 60} minutes"
+      seconds_to_human(diff) + ' ago'
+    end
+
+    def time_until(seconds)
+      'in ' + seconds_to_human(seconds)
+    end
+
+    def seconds_to_human(seconds)
+      if seconds > 60 * 60 * 24
+        result = "#{seconds / 60 / 60 / 24} days"
+      elsif seconds > 60 * 60
+        result = "#{seconds / 60 / 60} hours"
+      elsif seconds > 60
+        result = "#{seconds / 60} minutes"
       else
-        "#{diff} seconds"
+        result = "#{seconds} seconds"
       end
+      result.start_with?('1 ') ? result[0..-2] : result
     end
 
     def longest_string_in_array(array)
-      longest = 0
-      array.each do |item|
-        longest = item.length if item.length > longest
-      end
-
-      longest
+      array.max_by(&:length).length
     end
 
     module_function(:which)

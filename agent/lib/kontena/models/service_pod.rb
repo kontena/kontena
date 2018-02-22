@@ -1,8 +1,16 @@
 module Kontena
   module Models
     class ServicePod
+      # Additionally, the limit per string is 32 pages (the kernel constant MAX_ARG_STRLEN)
+      ENV_MAX_STRLEN = 32 * 4096
 
-      attr_reader :service_id,
+      class ConfigError < StandardError
+
+      end
+
+      attr_reader :id,
+                  :desired_state,
+                  :service_id,
                   :service_name,
                   :instance_number,
                   :deploy_rev,
@@ -13,10 +21,10 @@ module Kontena
                   :image_name,
                   :image_credentials,
                   :user,
-                  :cmd,
-                  :entrypoint,
                   :memory,
                   :memory_swap,
+                  :shm_size,
+                  :cpus,
                   :cpu_shares,
                   :privileged,
                   :pid,
@@ -38,10 +46,17 @@ module Kontena
                   :hooks,
                   :secrets,
                   :networks,
-                  :wait_for_port
+                  :wait_for_port,
+                  :volume_specs,
+                  :read_only,
+                  :stop_signal,
+                  :stop_grace_period
+      attr_accessor :entrypoint, :cmd
 
       # @param [Hash] attrs
       def initialize(attrs = {})
+        @id = attrs['id']
+        @desired_state = attrs['desired_state']
         @service_id = attrs['service_id']
         @service_name = attrs['service_name']
         @instance_number = attrs['instance_number'] || 1
@@ -57,6 +72,8 @@ module Kontena
         @entrypoint = attrs['entrypoint']
         @memory = attrs['memory']
         @memory_swap = attrs['memory_swap']
+        @shm_size = attrs['shm_size']
+        @cpus = attrs['cpus']
         @cpu_shares = attrs['cpu_shares']
         @privileged = attrs['privileged'] || false
         @cap_add = attrs['cap_add']
@@ -77,6 +94,14 @@ module Kontena
         @secrets = attrs['secrets'] || []
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
+        @read_only = attrs['read_only']
+        @stop_signal = attrs['stop_signal']
+        @stop_grace_period = attrs['stop_grace_period']
+      end
+
+      # @return [String]
+      def to_s
+        self.name_for_humans
       end
 
       # @return [Boolean]
@@ -94,9 +119,35 @@ module Kontena
         !self.stateless?
       end
 
+      def running?
+        self.desired_state == 'running'
+      end
+
+      def stopped?
+        self.desired_state == 'stopped'
+      end
+
+      def terminated?
+        self.desired_state == 'terminated'
+      end
+
+      def desired_state_unknown?
+        self.desired_state.nil? || self.desired_state == 'unknown'
+      end
+
+      def mark_as_terminated
+        @desired_state = 'terminated'
+      end
+
       # @return [String]
       def name
         "#{self.service_name}-#{self.instance_number}"
+      end
+
+      # @return [String]
+      def name_for_humans
+        return self.name if self.default_stack?
+        self.name.sub('.', '/')
       end
 
       # @return [String]
@@ -109,6 +160,18 @@ module Kontena
         self.labels['io.kontena.stack.name']
       end
 
+      # @return [String]
+      def lb_name
+        return self.labels['io.kontena.service.name'] if self.default_stack?
+        "#{self.stack_name}-#{self.labels['io.kontena.service.name']}"
+      end
+
+      # @return [Boolean]
+      def default_stack?
+        self.stack_name.nil? || self.stack_name.to_s == 'null'.freeze
+      end
+
+      # @raise [ConfigError]
       # @return [Hash]
       def service_config
         docker_opts = {
@@ -123,6 +186,7 @@ module Kontena
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
         docker_opts['Entrypoint'] = self.entrypoint if self.entrypoint
+        docker_opts['StopSignal'] = self.stop_signal if self.stop_signal
 
         if self.can_expose_ports? && self.ports
           docker_opts['ExposedPorts'] = self.build_exposed_ports
@@ -139,6 +203,7 @@ module Kontena
         labels['io.kontena.container.service_revision'] = self.service_revision.to_s
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
         labels['io.kontena.service.exposed'] = '1' if self.exposed
+        labels['io.kontena.container.stop_grace_period'] = self.stop_grace_period.to_s
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
         #docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
@@ -147,11 +212,7 @@ module Kontena
 
       # @return [Hash]
       def service_host_config
-        host_config = {
-          'RestartPolicy' => {
-            'Name' => 'unless-stopped'
-          }
-        }
+        host_config = {}
         bind_volumes = self.build_bind_volumes
         if bind_volumes.size > 0
           host_config['Binds'] = bind_volumes
@@ -162,16 +223,22 @@ module Kontena
         if self.can_expose_ports? && self.ports
           host_config['PortBindings'] = self.build_port_bindings
         end
+        if self.cpus
+          host_config['CpuPeriod'] = 100000
+          host_config['CpuQuota'] = (host_config['CpuPeriod'] * self.cpus).to_i
+        end
 
         host_config['NetworkMode'] = self.net
         host_config['DnsSearch'] = [self.domainname, self.domainname.split('.', 2)[1]]
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
+        host_config['ShmSize'] = self.shm_size if self.shm_size
         host_config['Privileged'] = self.privileged if self.privileged
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0
         host_config['PidMode'] = self.pid if self.pid
+        host_config['ReadonlyRootfs'] = true if self.read_only
 
         log_opts = self.build_log_opts
         host_config['LogConfig'] = log_opts unless log_opts.empty?
@@ -232,12 +299,7 @@ module Kontena
       def build_volumes
         volumes = {}
         self.volumes.each do |vol|
-          path1, path2, _ = vol.split(':')
-          if path2.nil?
-            volumes[path1] = {}
-          else
-            volumes[path2] = {}
-          end
+          volumes[vol['path']] = {}
         end
         volumes
       end
@@ -247,7 +309,11 @@ module Kontena
       def build_bind_volumes
         volumes = []
         self.volumes.each do |vol|
-          volumes << vol if vol.include?(':')
+          if vol['bind_mount'] || vol['name']
+            volume = "#{vol['bind_mount'] || vol['name']}:#{vol['path']}"
+            volume << ":#{vol['flags']}" if vol['flags'] && !vol['flags'].empty?
+            volumes << volume
+          end
         end
         volumes
       end
@@ -294,6 +360,10 @@ module Kontena
         end
         secrets_hash.each do |name, value|
           env << "#{name}=#{value}"
+        end
+        env.each do |envstr|
+          name, value = envstr.split('=', 2)
+          raise ConfigError, "Env #{name} is too large at #{envstr.bytesize} bytes" if envstr.bytesize > ENV_MAX_STRLEN
         end
         env
       end

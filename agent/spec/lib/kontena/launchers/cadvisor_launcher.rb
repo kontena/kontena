@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Launchers::Cadvisor do
 
@@ -27,6 +26,14 @@ describe Kontena::Launchers::Cadvisor do
         raise Docker::Error::ServerError
       end
       expect(subject.wrapped_object).to receive(:start_cadvisor).exactly(5).times
+      subject.start
+      sleep 0.01
+    end
+
+    it 'does not start if cadvisor is disabled' do
+      allow(ENV).to receive(:[]).with('CADVISOR_DISABLED').and_return('true')
+      expect(subject.wrapped_object).not_to receive(:pull_image)
+      expect(subject.wrapped_object).not_to receive(:create_container)
       subject.start
       sleep 0.01
     end
@@ -62,6 +69,17 @@ describe Kontena::Launchers::Cadvisor do
         labels: { 'io.kontena.agent.version' => "#{Kontena::Agent::VERSION}-special-edition" }
       )
       expect(subject.config_changed?(container)).to be_truthy
+    end
+  end
+
+  describe '#cadvisor_enabled?' do
+    it 'returns true by default' do
+      expect(subject.cadvisor_enabled?).to be_truthy
+    end
+
+    it 'returns false if disabled by env variable' do
+      allow(ENV).to receive(:[]).with('CADVISOR_DISABLED').and_return('true')
+      expect(subject.cadvisor_enabled?).to be_falsey
     end
   end
 end

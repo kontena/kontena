@@ -55,10 +55,32 @@ RSpec.configure do |config|
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
   include Shell
+  include ContainerHelper
+
+  config.before :context, :subcommand => :app do
+    version = Kommando.run("kontena --version").out[/kontena-cli (\d+.+?) /, 1]
+    if Gem::Version.new(version) >= Gem::Version.new('1.4.0')
+      k = Kommando.run "kontena plugin install app-command"
+    else
+      k = Kommando.run "kontena plugin install --version 0.1.0.rc1 app-command"
+    end
+
+    unless k.code == 0
+      STDERR.puts(k.out)
+      fail "Unable to install app-command plugin"
+    end
+  end
+
+  config.after :context, :subcommand => :app do
+    k = Kommando.run "kontena plugin uninstall app-command"
+  end
 
   config.before :each do
     k = Kommando.run "kontena grid use e2e"
-    abort "e2e grid does not exist" unless k.code == 0
+    unless k.code == 0
+      STDERR.puts(k.out)
+      fail "e2e grid does not exist"
+    end
   end
 
 # The settings below are suggested to provide a good initial experience

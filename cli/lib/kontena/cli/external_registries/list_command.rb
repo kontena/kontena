@@ -2,16 +2,22 @@ module Kontena::Cli::ExternalRegistries
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::TableGenerator::Helper
+
+    requires_current_master
+    requires_current_master_token
+    requires_current_grid
+
+    def fields
+      quiet? ? %w(name) : %w(name username email)
+    end
+
+    def external_registries
+      client.get("grids/#{current_grid}/external_registries")['external_registries']
+    end
 
     def execute
-      require_api_url
-      require_current_grid
-      token = require_token
-      result = client(token).get("grids/#{current_grid}/external_registries")
-      puts "%-30s %-20s %-30s" % ['Name', 'Username', 'Email']
-      result['external_registries'].each { |r|
-        puts "%-30.30s %-20.20s %-30.30s" % [r['name'], r['username'], r['email']]
-      }
+      print_table(external_registries)
     end
   end
 end

@@ -3,12 +3,18 @@ require 'timeout'
 require_relative 'common'
 require_relative '../../services/logging'
 
+# DEPRECATED
+#
+# This mutation deals with the "legacy" mode of operation and stores certs as secrets.
+# As the old API will still be around for some time so will this mutation.
+#
 module GridCertificates
   class GetCertificate < Mutations::Command
     include Common
     include Logging
+    include WaitHelper
 
-    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze    
+    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
 
     required do
       model :grid, class: Grid
@@ -17,20 +23,23 @@ module GridCertificates
       array :domains do
         string
       end
-      string :cert_type, matches: /^(cert|chain|fullchain)$/, default: 'fullchain'
+      string :cert_type, in: ['cert', 'chain', 'fullchain'], default: 'fullchain'
     end
 
     def validate
       self.domains.each do |domain|
         domain_authz = get_authz_for_domain(self.grid, domain)
 
-        if domain_authz
+        unless domain_authz
+          add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
+          return # No point to continue validations
+        end
+
+        if domain_authz.authorization_type == 'dns-01'
           # Check that the expected DNS record is already in place
           unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
             add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
           end
-        else
-          add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
         end
 
       end
@@ -54,13 +63,21 @@ module GridCertificates
           end
         end
 
-        Timeout::timeout(30) {
-          info 'waiting for DNS validation...'
-          sleep 1 until challenge.verify_status == 'valid'
-          info 'DNS validation complete'
+
+        wait_until!("domain verification for #{domain} is valid", interval: 1, timeout: 30, threshold: 10) {
+          challenge.verify_status != 'pending'
         }
 
-        domain_authz.state = :validated
+        domain_authz.expires_at = nil # XXX: old version of acme-client does not update authorization expiration
+
+        case challenge.verify_status
+        when 'valid'
+          domain_authz.state = :validated
+        when 'invalid'
+          domain_authz.state = :error
+          add_error(:challenge, :invalid, challenge.error['detail'])
+        end
+
         domain_authz.save
 
       end
@@ -76,7 +93,7 @@ module GridCertificates
         when 'cert'
           cert = certificate.to_pem
       end
-      
+
 
       secrets = []
       secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
@@ -106,16 +123,6 @@ module GridCertificates
         return
       end
       outcome.result
-    end
-
-    def validate_dns_record(domain, expected_record)
-      resolv = Resolv::DNS.new()
-      info "validating domain:_acme-challenge.#{domain}"
-      resource = resolv.getresource("_acme-challenge.#{domain}", Resolv::DNS::Resource::IN::TXT)
-      info "got record: #{resource.strings}, expected: #{expected_record}"
-      expected_record == resource.strings[0]
-    rescue
-      false
     end
   end
 end

@@ -1,12 +1,9 @@
 require 'spec_helper'
 
 describe 'vpn remove' do
-  it 'removes the vpn stack' do
-    run 'kontena vpn create'
-    k = run 'kontena stack rm --force vpn'
-    expect(k.code).to eq(0)
-    k = run 'kontena stack show vpn'
-    expect(k.code).not_to eq(0)
+  before(:each) do
+    # Due to async nature of stack/service removals, need to wait until possible previous vpn containers have gone
+    wait_until_container_gone('vpn.server-1')
   end
 
   it 'returns error if vpn does not exist' do

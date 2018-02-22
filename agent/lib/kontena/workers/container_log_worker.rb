@@ -4,13 +4,19 @@ module Kontena::Workers
     include Kontena::Logging
 
     CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
-    EVENT_NAME = 'container:log'
 
     # @param [Docker::Container] container
     # @param [Queue] queue
     def initialize(container, queue)
       @container = container
       @queue = queue
+      @dropped = 0
+      every(60) {
+        if @dropped > 0
+          warn "dropped #{@dropped} log lines because queue was full"
+        end
+        @dropped = 0
+      }
     end
 
     # @param [Integer] since unix timestamp
@@ -38,7 +44,9 @@ module Kontena::Workers
       }
     rescue Excon::Errors::SocketError => exc
       since = Time.now.to_f
-      error "log socket error: #{@container.id}"
+      error "log socket error for container: #{@container.id}"
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
       retry
     rescue Docker::Error::TimeoutError
       since = Time.now.to_f
@@ -55,18 +63,31 @@ module Kontena::Workers
     def on_message(id, stream, chunk)
       match = chunk.match(CHUNK_REGEX)
       return unless match
-      time = DateTime.parse(match[1])
+      time = match[1]
       data = match[2]
       msg = {
-          event: EVENT_NAME,
-          data: {
-              id: id,
-              time: time.utc.xmlschema,
-              type: stream,
-              data: data
-          }
+        id: id,
+        service: @container.service_name,
+        stack: @container.stack_name,
+        instance: @container.instance_number,
+        time: time,
+        type: stream,
+        data: data
       }
-      @queue << msg
+      publish_log(msg)
+      if @queue.size > LogWorker::QUEUE_MAX_SIZE
+        @dropped += 1
+      elsif @queue.size > LogWorker::QUEUE_THROTTLE
+        @queue << msg
+        sleep 0.0001
+      else
+        @queue << msg
+      end
+    end
+
+    def publish_log(log)
+      Actor[:fluentd_worker].async.on_log_event(log)
+    rescue Celluloid::DeadActorError
     end
   end
 end

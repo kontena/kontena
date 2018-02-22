@@ -12,28 +12,33 @@ module Kontena::Cli::Master::Token
     option '--token', :flag, "Only output access token"
     option '--refresh-token', :flag, "Only output refresh token"
     option '--expires-in', :flag, "Only output expires in seconds"
+    option '--id', :flag, "Only output access token id"
 
     def execute
       if self.token?
         puts current_master.token.access_token
-        exit 0
+        return
       end
 
       if self.refresh_token?
         if current_master.token.refresh_token
           puts current_master.token.refresh_token
         end
-        exit 0
+        return
       end
 
       if self.expires_in?
         if current_master.token.expires_at.to_i > 0
-          puts Time.now.utc.to_i - current_master.token.expires_at
+          puts current_master.token.expires_at - Time.now.utc.to_i
         end
-        exit 0
+        return
       end
 
-      Kontena.run("master token show #{current_master.token.access_token}")
+      if self.id?
+        Kontena.run!(['master', 'token', 'show',  '--id', current_master.token.access_token])
+      else
+        Kontena.run!(['master', 'token', 'show',  current_master.token.access_token])
+      end
     end
   end
 end

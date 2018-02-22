@@ -63,10 +63,9 @@ module V1
         user.update_attribute(:external_id, nil)
       end
     end
-    
+
     def update_kontena
-      AuthProvider.reset_instance
-      AuthProvider.update_kontena
+      AuthProvider.instance.update_kontena
     end
 
     def is_auth_key?(key)
@@ -107,7 +106,7 @@ module V1
           params = request.params
           if params['filter']
             if params['filter'].end_with?('*')
-              regex = /^#{Regexp.escape(params['filter'].gsub(/\*/, ''))}/
+              regex = /\A#{Regexp.escape(params['filter'].gsub(/\*/, ''))}/
             else
               regex = Regexp.new(Regexp.escape(params['filter']))
             end
@@ -182,4 +181,3 @@ module V1
     end
   end
 end
-

@@ -1,7 +1,6 @@
-require_relative "../../../spec_helper"
 require 'kontena/cli/master/login_command'
 require 'kontena/cli/localhost_web_server'
-require 'launchy'
+require 'kontena/cli/browser_launcher'
 require 'ostruct'
 
 describe Kontena::Cli::Master::LoginCommand do
@@ -15,23 +14,19 @@ describe Kontena::Cli::Master::LoginCommand do
   let(:client) { double(:client) }
 
   it 'should exit with error if --code and --token both given' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(%w(--code abcd --token defg))
+    expect{subject.run(%w(--code abcd --token defg))}.to exit_with_error
   end
 
   it 'should exit with error if --code and --join both given' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(%w(--code abcd --join defg))
+    expect{subject.run(%w(--code abcd --join defg))}.to exit_with_error
   end
 
   it 'should exit with error if --code and --force both given' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(%w(--code abcd --force))
+    expect{subject.run(%w(--code abcd --force))}.to exit_with_error
   end
 
   it 'should exit with error if --token and --force both given' do
-    expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-    subject.run(%w(--token abcd --force))
+    expect{subject.run(%w(--token abcd --force))}.to exit_with_error
   end
 
   describe '#select_a_server' do
@@ -50,8 +45,7 @@ describe Kontena::Cli::Master::LoginCommand do
 
       it 'exits with error if current_master not set' do
         expect(config).to receive(:current_master).and_return(nil)
-        expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-        subject.select_a_server(nil, nil)
+        expect{subject.select_a_server(nil, nil)}.to exit_with_error
       end
     end
 
@@ -89,8 +83,7 @@ describe Kontena::Cli::Master::LoginCommand do
         it 'should exit with error if a server with that name is found but it does not have an url' do
           server.url = nil
           expect(config).to receive(:find_server).with('foo').and_return(server)
-          expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-          subject.select_a_server('foo', nil)
+          expect{subject.select_a_server('foo', nil)}.to exit_with_error
         end
       end
     end
@@ -120,14 +113,12 @@ describe Kontena::Cli::Master::LoginCommand do
         it 'should exit with error if a server with that name is found but it does not have an url' do
           server.url = nil
           expect(config).to receive(:find_server).with('foo').and_return(server)
-          expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-          subject.select_a_server(nil, 'foo')
+          expect{subject.select_a_server(nil, 'foo')}.to exit_with_error
         end
 
         it 'should exit with error if a server with that name is not found' do
           expect(config).to receive(:find_server).with('foo').and_return(nil)
-          expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-          subject.select_a_server(nil, 'foo')
+          expect{subject.select_a_server(nil, 'foo')}.to exit_with_error
         end
       end
     end
@@ -156,7 +147,7 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(File).to receive(:exist?).and_return(true)
       allow(File).to receive(:readable?).and_return(true)
       allow(Kontena::Client).to receive(:new).and_return(client)
-      allow(Launchy).to receive(:open).and_return(true)
+      allow(Kontena::Cli::BrowserLauncher).to receive(:open).and_return(true)
       allow(Kontena::LocalhostWebServer).to receive(:port).and_return(12345)
       allow(Kontena::LocalhostWebServer).to receive(:serve_one).and_return(
         { 'code' => 'abcd1234' }
@@ -263,7 +254,7 @@ describe Kontena::Cli::Master::LoginCommand do
         expect(opts[:path]).to eq "/authenticate?redirect_uri=http%3A%2F%2Flocalhost%3A12345%2Fcb&expires_in=7200"
         expect(opts[:http_method]).to eq :get
       end.and_return({})
-      expect(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
+      expect(Kontena::Cli::BrowserLauncher).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
       expect(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
       subject.run(%w(--no-remote --skip-grid-auto-select http://foobar.example.com))
       expect(subject.config.servers.size).to eq 1
@@ -337,7 +328,7 @@ describe Kontena::Cli::Master::LoginCommand do
     it 'changes current master to created master' do
       allow(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 302, headers: { 'Location' => 'http://authprovider.example.com/authplz' }))
       allow(client).to receive(:request).and_return({})
-      allow(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
+      allow(Kontena::Cli::BrowserLauncher).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
       allow(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
       subject.config.current_master = 'fooserver'
       subject.config.current_master
@@ -351,24 +342,21 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(Kontena::Client).to receive(:new).and_return(client)
       expect(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 400, headers: {}))
       expect(client).to receive(:request).and_return('error' => 'no good')
-      expect(subject).to receive(:exit_with_error).with(/no good/).and_throw(:exit_with_error)
-      subject.authentication_url_from_master('https://foo.example.com', remote: true)
+      expect{subject.authentication_url_from_master('https://foo.example.com', remote: true)}.to exit_with_error
     end
 
     it 'should exit with error if master returns text' do
       allow(Kontena::Client).to receive(:new).and_return(client)
       expect(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 400, headers: {}))
       expect(client).to receive(:request).and_return('Fail!')
-      expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-      subject.authentication_url_from_master('https://foo.example.com', remote: true)
+      expect{subject.authentication_url_from_master('https://foo.example.com', remote: true)}.to exit_with_error
     end
 
     it 'should exit with error if master returns nil' do
       allow(Kontena::Client).to receive(:new).and_return(client)
       expect(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 400, headers: {}))
       expect(client).to receive(:request).and_return(nil)
-      expect(subject).to receive(:exit_with_error).with(/Invalid.+?400/).and_throw(:exit_with_error)
-      subject.authentication_url_from_master('https://foo.example.com', remote: true)
+      expect{subject.authentication_url_from_master('https://foo.example.com', remote: true)}.to exit_with_error
     end
   end
 
@@ -400,8 +388,7 @@ describe Kontena::Cli::Master::LoginCommand do
     end
 
     it 'should exit with error if response has error' do
-      expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
-      subject.update_server_token(server, "error" => "abcd")
+      expect{subject.update_server_token(server, "error" => "abcd")}.to exit_with_error
     end
 
     it 'should update the token if all is good' do

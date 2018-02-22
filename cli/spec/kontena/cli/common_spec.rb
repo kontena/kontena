@@ -1,4 +1,3 @@
-require_relative "../../spec_helper"
 require "kontena/cli/common"
 
 describe Kontena::Cli::Common do
@@ -138,8 +137,15 @@ describe Kontena::Cli::Common do
       it 'returns true if input matches' do
         allow(subject).to receive(:ask).and_return('name-to-confirm')
 
-        expect(subject.confirm_command('name-to-confirm')).to be_truthy
         expect{subject.confirm_command('name-to-confirm')}.to_not raise_error
+        expect(subject.confirm_command('name-to-confirm')).to be_truthy
+      end
+
+      it 'returns true if input matches and param is not a string' do
+        allow(subject).to receive(:ask).and_return('123')
+
+        expect{subject.confirm_command(123)}.to_not raise_error
+        expect(subject.confirm_command(123)).to be_truthy
       end
 
       it 'raises error unless input matches' do
@@ -168,14 +174,15 @@ describe Kontena::Cli::Common do
   end
 
   describe '#use_refresh_token' do
+    let(:token) { double }
     let(:server) do
-      spy
-    end
-
-    let(:token) do
-      token = double
-      allow(server).to receive(:token).and_return(token)
-      token
+      double(:server,
+        name: 'example',
+        url: 'http://www.example.org',
+        token: token,
+        ssl_cert_path: nil,
+        ssl_subject_cn: nil,
+      )
     end
 
     let(:client) do
@@ -204,8 +211,7 @@ describe Kontena::Cli::Common do
       end
 
       it 'creates refresh_token request to given server' do
-        allow(server).to receive(:url).and_return('http://www.example.org')
-        expect(Kontena::Client).to receive(:new).with('http://www.example.org', token).and_return(client)
+        expect(Kontena::Client).to receive(:new).with('http://www.example.org', token, ssl_cert_path: nil, ssl_subject_cn: nil).and_return(client)
         expect(client).to receive(:refresh_token).once
         subject.use_refresh_token(server)
       end

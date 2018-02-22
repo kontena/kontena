@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/stacks/service_generator_v2"
 require 'ruby_dig'
 

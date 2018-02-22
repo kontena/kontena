@@ -2,11 +2,11 @@ module Kontena
   module Callbacks
     class BeforeDeployConfigurationWizard < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create'
 
       def after_load
+        extend Kontena::Cli::Common
+
         command.class_eval do
           option ['--no-prompt'], :flag, "Don't ask questions"
           option ['--skip-auth-provider'], :flag, "Skip auth provider configuration (single user mode)"
@@ -39,7 +39,7 @@ module Kontena
         puts
         puts "You don't seem to be logged in to Kontena Cloud"
         puts
-        Kontena.run("cloud login --verbose")
+        Kontena.run!(%w(cloud login --verbose))
         config.reset_instance
         reset_cloud_client
         result = false
@@ -50,6 +50,7 @@ module Kontena
       end
 
       def before
+        extend Kontena::Cli::Common
         unless_param(:name) do
           if command.cloud_master_id
             response = spinner "Receiving Master information from Kontena Cloud" do

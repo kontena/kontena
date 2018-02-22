@@ -1,61 +1,97 @@
 require_relative '../helpers/health_helper'
+require_relative '../helpers/time_helper'
 
 module Kontena::Cli::Nodes
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
+    include Kontena::Cli::Helpers::TimeHelper
+    include Kontena::Cli::TableGenerator::Helper
 
-    option ["--all"], :flag, "List nodes for all grids", default: false
+    option ['-a', '--all'], :flag, 'List nodes for all grids', default: false
 
-    def node_initial(node, grid)
-      if node['initial_member']
-        return "#{node['node_number']} / #{grid['initial_size']}"
+    requires_current_master
+    requires_current_master_token
+    requires_current_grid
+
+    def node_name(node, grid)
+      return node['name'] unless all?
+      "#{grid['name']}/#{node['name']}"
+    end
+
+    def node_status(node)
+      case node_status = node['status']
+      when 'created'
+        "#{pastel.dark('created')} #{time_since(node['created_at'], terse: true)}"
+      when 'connecting'
+        "#{pastel.cyan('connecting')} #{time_since(node['connected_at'], terse: true)}"
+      when 'online'
+        "#{pastel.green('online')} #{time_since(node['connected_at'], terse: true)}"
+      when 'drain'
+        "#{pastel.yellow('drain')}"
+      when 'offline'
+        "#{pastel.red('offline')} #{time_since(node['disconnected_at'], terse: true)}"
       else
-        return "-"
+        pastel.white(node_status.to_s)
       end
     end
 
-    def node_labels(node)
-      (node['labels'] || ['-']).join(",")
+    def node_initial(node, grid)
+      return '-' unless node['initial_member']
+      "#{node['node_number']} / #{grid['initial_size']}"
     end
 
-    def show_grid_nodes(grid, nodes, multi: false)
-      grid_health = grid_health(grid, nodes)
+    def node_labels(node)
+      (node['labels'] || ['-']).join(',')
+    end
 
-      nodes = nodes.sort_by{|n| n['node_number'] }
-      nodes.each do |node|
-        puts [
-          "%s" % health_icon(node_health(node, grid_health)),
-          "%-70.70s" % [multi ? "#{grid['name']}/#{node['name']}" : node['name']],
-          "%-10s" % node['agent_version'],
-          "%-10s" % (node['connected'] ? "online" : "offline"),
-          "%-10s" % node_initial(node, grid),
-          "%s" % [node_labels(node)],
-        ].join ' '
+    def fields
+      return ['name'] if quiet?
+      {
+        name:    'name',
+        version: 'agent_version',
+        status:  'status',
+        initial: 'initial',
+        labels:  'labels',
+      }
+    end
+
+    def grids
+      all? ? client.get("grids")['grids'] : [client.get("grids/#{current_grid}")]
+    end
+
+    def grid_nodes(grid_name)
+      client.get("grids/#{grid_name}/nodes")['nodes']
+    end
+
+    def node_data
+      grids.flat_map do |grid|
+        grid_nodes = []
+
+        grid_nodes(grid['id']).each do |node|
+          node['name'] = node_name(node, grid)
+          grid_nodes << node
+          next if quiet?
+          node['agent_version'] ||= '-'
+          node['initial'] = node_initial(node, grid)
+          node['status'] = node_status(node)
+          node['labels'] = node_labels(node)
+        end
+
+        unless quiet?
+          grid_health = grid_health(grid, grid_nodes)
+          grid_nodes.each do |node|
+            node['name'] = health_icon(node_health(node, grid_health)) + " " + (node['name'] || node['node_id'])
+          end
+        end
+
+        grid_nodes.sort_by { |n| n['node_number'] }
       end
     end
 
     def execute
-      require_api_url
-      require_current_grid
-      token = require_token
-
-      puts "%s %-70s %-10s %-10s %-10s %-s" % [health_icon(nil), "Name", "Version", "Status", "Initial", "Labels"]
-
-      if all?
-        grids = client(token).get("grids")
-        grids['grids'].each do |grid|
-          nodes = client(require_token).get("grids/#{grid['id']}/nodes")['nodes']
-
-          show_grid_nodes(grid, nodes, multi: true)
-        end
-      else
-        grid = client(token).get("grids/#{current_grid}")
-        nodes = client(require_token).get("grids/#{current_grid}/nodes")['nodes']
-
-        show_grid_nodes(grid, nodes)
-      end
+      print_table(node_data)
     end
   end
 end

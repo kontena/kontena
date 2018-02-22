@@ -8,7 +8,16 @@ module Stacks
 
     required do
       model :grid, class: Grid
-      string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :name, matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
+    end
+
+    optional do
+      hash :parent do
+        required do
+          string :name
+        end
+      end
+      string :parent_name # DEPRECATED
     end
 
     def validate
@@ -21,25 +30,31 @@ module Stacks
         return
       end
       validate_expose
+      validate_volumes
       validate_services
     end
 
     def validate_services
       sort_services(self.services).each do |s|
         service = s.dup
-        validate_service_links(service)
+        service[:links] = select_external_service_links(service)
         service[:grid] = self.grid
         outcome = GridServices::Create.validate(service)
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :validate)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
+    rescue MissingLinkError => error
+      add_error("services.#{error.service}.links", :missing, error.message)
+    rescue RecursiveLinkError => error
+      add_error("services.#{error.service}.links", :recursive, error.message)
     end
 
     def execute
       attributes = self.inputs.clone
+      %w( parent parent_name ).each { |k| attributes.delete(k.to_sym)}
       grid = attributes.delete(:grid)
-      stack = Stack.create(name: self.name, grid: grid)
+      stack = Stack.create(name: self.name, grid: grid, parent_name: resolve_parent_name)
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)
@@ -49,12 +64,18 @@ module Stacks
 
       services = sort_services(attributes.delete(:services))
       attributes[:services] = services
+      attributes[:volumes] = self.volumes
       attributes[:stack_name] = attributes.delete(:stack)
       stack.stack_revisions.create!(attributes)
 
       create_services(stack, services)
 
       stack
+    end
+
+    # @return [String]
+    def resolve_parent_name
+      self.inputs.has_key?(:parent) ? self.parent[:name] : self.parent_name
     end
 
     # @param [Stack] stack
@@ -66,7 +87,7 @@ module Stacks
         service[:stack] = stack
         outcome = GridServices::Create.run(service)
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
     end

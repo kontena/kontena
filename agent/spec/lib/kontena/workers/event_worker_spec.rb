@@ -1,10 +1,8 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::EventWorker do
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
-  let(:network_adapter) { spy(:network_adapter) }
+  let(:subject) { described_class.new(false) }
   let(:event) {
     {
       'Action' => 'start',
@@ -26,9 +24,7 @@ describe Kontena::Workers::EventWorker do
 
   before(:each) {
     Celluloid.boot
-    allow(network_adapter).to receive(:adapter_image?).and_return(false)
-    allow(Celluloid::Actor).to receive(:[])
-    allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
+    mock_rpc_client
   }
   after(:each) { Celluloid.shutdown }
 
@@ -42,6 +38,7 @@ describe Kontena::Workers::EventWorker do
 
     it 'streams and processes events' do
       times = 100
+      expect(rpc_client).to receive(:request).exactly(times).times
       subject
       allow(Docker::Event).to receive(:stream) {|params, &block|
         times.times {
@@ -50,9 +47,8 @@ describe Kontena::Workers::EventWorker do
         sleep 0.1
         subject.stop_processing
       }
-      subject.async.start
-      sleep 0.1 #until !subject.instance_variable_get('@processing')
-      expect(queue.size).to eq(times)
+      subject.start
+      sleep 0.01 until !subject.processing?
     end
   end
 
@@ -77,7 +73,7 @@ describe Kontena::Workers::EventWorker do
         subject.stop_processing
       }
       subject.async.stream_events
-      sleep 0.01
+      sleep 0.01 until !subject.processing?
       expect(subject.event_queue.size).to eq(1000)
     end
 
@@ -93,7 +89,7 @@ describe Kontena::Workers::EventWorker do
       }
       expect(spy).to receive(:check).exactly(2).times
       subject.async.stream_events
-      sleep 0.01
+      sleep 0.01 until !subject.processing?
     end
 
     it 'retries if stream finishes' do
@@ -107,7 +103,7 @@ describe Kontena::Workers::EventWorker do
       }
       expect(spy).to receive(:check).exactly(2).times
       subject.async.stream_events
-      sleep 0.01
+      sleep 0.01 until !subject.processing?
     end
 
     it 'does not retry after exception if processing has stopped' do
@@ -119,34 +115,27 @@ describe Kontena::Workers::EventWorker do
       }
       expect(spy).to receive(:check).once
       subject.async.stream_events
-      sleep 0.01
+      sleep 0.01 until !subject.processing?
     end
   end
 
   describe '#publish_event' do
-    it 'adds event to queue' do
-      expect {
-        subject.publish_event(spy)
-      }.to change{ subject.queue.length }.by(1)
+    it 'sends event via rpc' do
+      expect(rpc_client).to receive(:request).with('/containers/event', [anything])
+      subject.publish_event(spy)
     end
 
     it 'publishes event' do
+      expect(rpc_client).to receive(:request)
       event = spy(:event)
       expect(subject.wrapped_object).to receive(:publish).with(described_class::EVENT_NAME, event)
       subject.publish_event(event)
     end
 
-    it 'does not add event to queue if source is from network adapter' do
-      event = spy(:event)
-      allow(network_adapter).to receive(:adapter_image?).and_return(true)
-      expect {
-        subject.publish_event(event)
-      }.not_to change{ subject.queue.length }
-    end
-
     it 'does not publish event if source is from network adapter' do
       event = spy(:event)
-      allow(network_adapter).to receive(:adapter_image?).and_return(true)
+      allow(subject.wrapped_object).to receive(:adapter_image?).and_return(true)
+      expect(rpc_client).not_to receive(:request)
       expect(subject.wrapped_object).not_to receive(:publish)
       subject.publish_event(event)
     end

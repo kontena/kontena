@@ -1,21 +1,38 @@
-require_relative '../../../spec_helper'
+describe Kontena::Workers::NodeInfoWorker, celluloid: true do
+  include RpcClientMocks
 
-describe Kontena::Workers::NodeInfoWorker do
+  let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
+  let(:node_name) { 'test-1' }
+  let(:subject) { described_class.new(node_id, node_name: node_name, autostart: false) }
+  let(:node) do
+    Node.new(
+      'id' => node_id,
+      'instance_number' => 1,
+      'grid' => {
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
+      }
+    )
+  end
+  let(:docker_info) { {
+    'Name' => 'node-1',
+    'Labels' => nil,
+    'ID' => '44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7',
+    'Plugins' => {
+      'Network' => ['bridge', 'host'],
+      'Volume' => ['local']
+    },
+  }}
 
-  before(:each) {
-    Celluloid.boot
-    allow(Docker).to receive(:info).and_return({
-      'Name' => 'node-1',
-      'Labels' => nil,
-      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
-    })
+  before(:each) do
+    mock_rpc_client
+    allow(Docker).to receive(:info).and_return(docker_info)
+    allow(subject.wrapped_object).to receive(:plugins).and_return([
+      { 'Name' => 'foo:latest', 'Enabled' => true, 'Config' => { 'Interface' => { 'Types' => ['docker.volumedriver/1.0']} } }
+    ])
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
-    allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
-  }
-  after(:each) { Celluloid.shutdown }
+    allow(rpc_client).to receive(:request)
+    allow(rpc_client).to receive(:notification)
+  end
 
   describe '#initialize' do
     it 'subscribes to websocket:connected channel' do
@@ -26,49 +43,15 @@ describe Kontena::Workers::NodeInfoWorker do
   end
 
   describe '#start' do
+    before(:each) { allow(rpc_client).to receive(:request) }
+
     it 'calls #publish_node_info' do
       stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
+      allow(subject.wrapped_object).to receive(:fetch_node).and_return(node)
       expect(subject.wrapped_object).to receive(:publish_node_info).at_least(:once)
       subject.async.start
       sleep 0.1
       subject.terminate
-    end
-
-    it 'calls #publish_node_info' do
-      stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
-      expect(subject.wrapped_object).to receive(:publish_node_stats).at_least(:once)
-      subject.async.start
-      sleep 0.1
-      subject.terminate
-    end
-  end
-
-  describe '#on_node_info' do
-    it 'initializes statsd client if node has statsd config' do
-      info = {
-        'grid' => {
-          'stats' => {
-            'statsd' => {
-              'server' => '192.168.24.33',
-              'port' => 8125
-            }
-          }
-        }
-      }
-      expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
-      expect(subject.statsd).not_to be_nil
-    end
-
-    it 'does not initialize statsd if no statsd config exists' do
-      info = {
-        'grid' => {
-          'stats' => {}
-        }
-      }
-      expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
-      expect(subject.statsd).to be_nil
     end
   end
 
@@ -77,112 +60,64 @@ describe Kontena::Workers::NodeInfoWorker do
       allow(subject.wrapped_object).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
     end
 
-    it 'adds node info to queue' do
-      expect {
-        subject.publish_node_info
-      }.to change{ subject.queue.length }.by(1)
+    it 'sends node info via rpc' do
+      expect(rpc_client).to receive(:request).once
+      subject.publish_node_info
     end
 
-    it 'contains docker id' do
+    it 'contains node id' do
+      expect(rpc_client).to receive(:request).once.with(
+        '/nodes/update', [node_id, hash_including('ID' => '44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7')]
+      )
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['ID']).to eq('U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')
+    end
+
+    it 'contains node name' do
+      expect(rpc_client).to receive(:request).once.with(
+        '/nodes/update', [node_id, hash_including('Name' => 'test-1')]
+      )
+      subject.publish_node_info
     end
 
     it 'contains public ip' do
+      expect(rpc_client).to receive(:request).once.with(
+        '/nodes/update', [node_id, hash_including('PublicIp' => '8.8.8.8')]
+      )
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['PublicIp']).to eq('8.8.8.8')
     end
 
     it 'contains private ip' do
+      expect(rpc_client).to receive(:request).once.with(
+        '/nodes/update', [node_id, hash_including('PrivateIp' => '192.168.66.2')]
+      )
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['PrivateIp']).to eq('192.168.66.2')
     end
 
     it 'contains agent_version' do
+      expect(rpc_client).to receive(:request).once do |key, msg|
+        expect(msg['AgentVersion']).to match(/\d+\.\d+\.\d+/)
+      end
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['AgentVersion']).to match(/\d+\.\d+\.\d+/)
     end
   end
 
-  describe '#publish_node_stats' do
-    it 'adds node stats to queue' do
-      expect {
-        subject.publish_node_stats
-      }.to change{ subject.queue.length }.by(1)
+  describe '#network_drivers' do
+    it 'returns array of drivers' do
+      expect(subject.network_drivers(docker_info)).to match [
+        {name: 'bridge'},
+        {name: 'host'},
+      ]
     end
   end
 
-  describe '#calculate_container_time' do
-    context 'container is running' do
-      it 'calculates container time since last check' do
-        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 30)
-        container = double(:container, state: {
-          'StartedAt' => (Time.now - 300).to_s,
-          'Running' => true
-        })
-        time = subject.calculate_container_time(container)
-        expect(time).to eq(30)
-      end
-
-      it 'calculates container time since container is started' do
-        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
-        container = double(:container, state: {
-          'StartedAt' => (Time.now - 50).to_s,
-          'Running' => true
-        })
-        time = subject.calculate_container_time(container)
-        expect(time).to eq(50)
-      end
-    end
-
-    context 'container is not running' do
-      it 'calculates partial container time since last check' do
-        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
-        container = double(:container, state: {
-          'StartedAt' => (Time.now - 300).to_s,
-          'FinishedAt' => (Time.now - 2).to_s,
-          'Running' => false
-        })
-        time = subject.calculate_container_time(container)
-        expect(time).to eq(58)
-      end
-
-      it 'calculates partial container time since container is started' do
-        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
-        container = double(:container, state: {
-          'StartedAt' => (Time.now - 50).to_s,
-          'FinishedAt' => (Time.now - 2).to_s,
-          'Running' => false
-        })
-        time = subject.calculate_container_time(container)
-        expect(time).to eq(48)
-      end
+  describe '#volume_drivers' do
+    it 'returns array of drivers' do
+      expect(subject.volume_drivers(docker_info)).to match [
+        {name: 'foo', version: 'latest'},
+        {name: 'local'},
+      ]
     end
   end
-
-  describe '#on_container_event' do
-    context 'die' do
-      it 'calculates container time if container is found' do
-        event = double(:event, status: 'die', id: 'aaa')
-        container = double(:container, id: 'aaa')
-        allow(Docker::Container).to receive(:get).and_return(container)
-        expect(subject.wrapped_object).to receive(:calculate_container_time).and_return(1)
-        subject.on_container_event('on_container_event', event)
-      end
-
-      it 'does not calculate container time if container does not exist' do
-        event = double(:event, status: 'die', id: 'aaa')
-        allow(Docker::Container).to receive(:get).and_return(nil)
-        expect(subject.wrapped_object).not_to receive(:calculate_container_time)
-        subject.on_container_event('on_container_event', event)
-      end
-    end
-  end
-
 
   describe '#public_ip' do
     it 'returns ip from env if set' do

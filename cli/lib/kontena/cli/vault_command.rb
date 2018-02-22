@@ -1,20 +1,12 @@
-require_relative 'vault/export_command'
-require_relative 'vault/import_command'
-require_relative 'vault/list_command'
-require_relative 'vault/read_command'
-require_relative 'vault/remove_command'
-require_relative 'vault/update_command'
-require_relative 'vault/write_command'
-
 class Kontena::Cli::VaultCommand < Kontena::Command
 
-  subcommand ["list", "ls"], "List secrets", Kontena::Cli::Vault::ListCommand
-  subcommand "write", "Write a secret", Kontena::Cli::Vault::WriteCommand
-  subcommand "read", "Read secret", Kontena::Cli::Vault::ReadCommand
-  subcommand "update", "Update secret", Kontena::Cli::Vault::UpdateCommand
-  subcommand ["remove", "rm"], "Remove secret", Kontena::Cli::Vault::RemoveCommand
-  subcommand "export", "Export secrets to STDOUT", Kontena::Cli::Vault::ExportCommand
-  subcommand "import", "Import secrets from a file or STDIN", Kontena::Cli::Vault::ImportCommand
+  subcommand ["list", "ls"], "List secrets", load_subcommand('vault/list_command')
+  subcommand "write", "Write a secret", load_subcommand('vault/write_command')
+  subcommand "read", "Read secret", load_subcommand('vault/read_command')
+  subcommand "update", "Update secret", load_subcommand('vault/update_command')
+  subcommand ["remove", "rm"], "Remove secret", load_subcommand('vault/remove_command')
+  subcommand "export", "Export secrets to STDOUT", load_subcommand('vault/export_command')
+  subcommand "import", "Import secrets from a file or STDIN", load_subcommand('vault/import_command')
 
   def execute
   end

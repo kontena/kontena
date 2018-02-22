@@ -1,0 +1,6 @@
+stack: test/links-broken
+services:
+  a:
+    image: redis
+    links:
+      - nope

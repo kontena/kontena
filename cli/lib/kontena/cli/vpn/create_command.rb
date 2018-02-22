@@ -53,7 +53,7 @@ module Kontena::Cli::Vpn
       spinner "Generating #{pastel.cyan(name)} keys (this will take a while) " do
         wait_for_configuration_to_finish(token)
       end
-      puts "#{name.colorize(:cyan)} service is now started (udp://#{vpn_ip}:1194)."
+      puts "#{pastel.cyan(name)} service is now started (udp://#{vpn_ip}:1194)."
       puts "use 'kontena vpn config' to fetch OpenVPN client config to your machine."
     end
 

@@ -1,9 +1,18 @@
 require 'clamp'
+require 'kontena/cli/subcommand_loader'
+require 'kontena/util'
+require 'kontena/cli/bytes_helper'
+require 'kontena/cli/grid_options'
+require 'excon/error'
+
+Clamp.allow_options_after_parameters = true
 
 class Kontena::Command < Clamp::Command
-
-  option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
-    ENV['DEBUG'] ||= 'true'
+  option ['-D', '--[no-]debug'], :flag, "Enable debug", environment_variable: 'DEBUG', attribute_name: :debug_option do |debug|
+    unless debug.kind_of?(String)
+      ENV['DEBUG'] = debug.to_s
+      Kontena.reset_logger
+    end
   end
 
   option '--master-url', '[URL]', 'Set master url (default: config or $KONTENA_URL)', hidden: true do |master_url|
@@ -75,6 +84,10 @@ class Kontena::Command < Clamp::Command
         end
       end
     end
+  end
+
+  def self.load_subcommand(path)
+    Kontena::Cli::SubcommandLoader.new(path)
   end
 
   def self.inherited(where)
@@ -169,9 +182,10 @@ class Kontena::Command < Clamp::Command
     retried ||= false
     Kontena::Cli::Config.instance.require_current_master_token
   rescue Kontena::Cli::Config::TokenExpiredError
-    success = Kontena::Client.new(
-      Kontena::Cli::Config.instance.current_master.url,
-      Kontena::Cli::Config.instance.current_master.token
+    server = Kontena::Cli::Config.instance.current_master
+    success = Kontena::Client.new(server.url, server.token,
+      ssl_cert_path: server.ssl_cert_path,
+      ssl_subject_cn: server.ssl_subject_cn,
     ).refresh_token
     if success && !retried
       retried = true
@@ -187,8 +201,19 @@ class Kontena::Command < Clamp::Command
     false
   end
 
+  # Returns an instance of the command, just like with Kontena.run! but before calling "execute"
+  # You can use it for specs or reuse of instancemethods.
+  # Example:
+  #   cmd = Kontena::FooCommand.instance(['-n', 'foo'])
+  #   cmd.fetch_stuff
+  def instance(arguments)
+    @arguments = arguments
+    parse @arguments
+    self
+  end
+
   def run(arguments)
-    ENV["DEBUG"] && STDERR.puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
+    Kontena.logger.debug { "Running #{self.class.name} with #{arguments.inspect} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'" }
     @arguments = arguments
 
     run_callbacks :before_parse unless help_requested?
@@ -212,30 +237,30 @@ class Kontena::Command < Clamp::Command
     run_callbacks :after unless help_requested?
     exit(@exit_code) if @exit_code.to_i > 0
     @result
-  rescue Excon::Errors::SocketError => exc
-    if exc.message.include?('Unable to verify certificate')
+  rescue Excon::Error::Socket => ex
+    if ex.message.include?('Unable to verify certificate')
       $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
       $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"
+      $stderr.puts "         If kontena cannot find your system ca bundle, you can set #{Kontena.pastel.yellow('SSL_CERT_DIR=/etc/ssl/certs')} env variable to load them from another location."
       $stderr.puts "         Protip: you can bypass the certificate check by setting #{Kontena.pastel.yellow('SSL_IGNORE_ERRORS=true')} env variable, but any data you send to the server could be intercepted by others."
       abort
     else
-      abort(exc.message)
+      abort(ex.message)
     end
-  rescue Kontena::Errors::StandardError => exc
-    raise exc if ENV['DEBUG']
-    puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
-    abort
+  rescue Kontena::Errors::StandardError => ex
+    raise ex if Kontena.debug?
+    Kontena.logger.error(ex)
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.status} : #{ex.message}")
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
     abort
   rescue Clamp::HelpWanted, Clamp::UsageError
     raise
-  rescue => exc
-    raise exc if ENV['DEBUG']
-    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
-    $stderr.puts "         Rerun the command with environment DEBUG=true set to get the full exception"
-    abort
+  rescue => ex
+    raise ex if Kontena.debug?
+    Kontena.logger.error(ex)
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{Kontena.log_target} or run the command again with environment DEBUG=true set to see the full exception")
   end
 end
 
-require_relative 'callback'
+require 'kontena/callback'
