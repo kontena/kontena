@@ -28,6 +28,8 @@ Gem::Specification.new do |spec|
     "source_code_uri"   => "https://github.com/kontena/kontena"
   }
 
+  spec.add_development_dependency "bundler", "~> 1.7"
+  spec.add_development_dependency "rake", "~> 10.0"
   spec.add_runtime_dependency "excon", "0.60.0"
   spec.add_runtime_dependency "tty-prompt", "0.14.0"
   spec.add_runtime_dependency "clamp", "~> 1.2.1"
@@ -40,6 +42,4 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "tty-table", "~> 0.9.0"
   spec.add_runtime_dependency "kontena-websocket-client", "~> 0.1.1"
 
-  spec.add_development_dependency "bundler", "~> 1.7"
-  spec.add_development_dependency "rake", "~> 10.0"
 end
