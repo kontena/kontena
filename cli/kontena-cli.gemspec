@@ -41,5 +41,4 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "liquid", "~> 4.0.0"
   spec.add_runtime_dependency "tty-table", "~> 0.9.0"
   spec.add_runtime_dependency "kontena-websocket-client", "~> 0.1.1"
-
 end
