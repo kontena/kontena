@@ -20,6 +20,8 @@ module Kontena::Cli::Stacks
     option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
 
+    option "--force", :flag, "Force install", default: false, attribute_name: :forced
+
     requires_current_master
     requires_current_master_token
 
@@ -29,6 +31,15 @@ module Kontena::Cli::Stacks
       set_env_variables(stack_name, current_grid)
 
       stack # runs validations
+
+      kontena_requirement = stack.dig('metadata', 'required_kontena_version')
+      unless kontena_requirement.nil?
+        master_version = Gem::Version.new(client.server_version)
+        unless Gem::Requirement.new(kontena_requirement).satisfied_by?(master_version)
+          puts "#{pastel.red("Warning: ")} Stack requires kontena version #{kontena_requirement} but Master version is #{master_version}"
+          confirm("Are you sure? You can skip this prompt by running this command with --force option") unless forced?
+        end
+      end
 
       hint_on_validation_notifications(reader.notifications)
       abort_on_validation_errors(reader.errors)

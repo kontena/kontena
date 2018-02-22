@@ -66,6 +66,7 @@ module Stacks
           string :registry
           model :variables, class: Hash
           array :labels
+          model :metadata, class: Hash
           array :volumes do
             model :object, class: Hash
           end

@@ -16,6 +16,7 @@ json.labels latest_rev.labels
 json.services stack.grid_services.to_a do |grid_service|
   json.partial! 'app/views/v1/grid_services/grid_service', grid_service: grid_service
 end
+json.metadata latest_rev.metadata
 
 if stack.has_parent?
   json.parent do
