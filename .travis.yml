@@ -4,7 +4,8 @@ cache:
   bundler: true
   directories:
     - $TEST_DIR/vendor/bundle
-    - $HOME/.gems
+    - /home/travis/.gems/
+    - /home/travis/.rvm/
 services:
   - docker
 
