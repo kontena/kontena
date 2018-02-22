@@ -4,13 +4,15 @@ cache:
   bundler: true
   directories:
     - $TEST_DIR/vendor/bundle
+    - $HOME/.gems
 services:
   - docker
 
+before_cache:
+  # Remove any versions of kontena-cli gem before caching $HOME/.gems
+  - GEM_HOME=$HOME/.gems gem uninstall -I -a -x kontena-cli
+
 before_install:
-  # Pull images to get layers
-  - if [[ "$TEST_DIR" = "test" ]]; then docker pull kontena/agent:latest; docker pull kontena/server:latest; docker pull kontena/cli:latest; docker pull mongo:3.4; fi
-  # Run before_install script
   - ./build/travis/before_install.sh
 
 bundler_args: --without development
