@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.4.3](https://github.com/kontena/kontena/releases/tag/v1.4.3) (2017-12-20)
+
+The 1.4.3 release fixes regressions in the 1.4 releases, as well as some other issues.
+
+### Fixed issues
+
+* Volume create fails if driver-opt contains dots #3125
+* Stack depends mutates ${STACK} #3144
+* Service instances resolver throws error #3145
+* Kontena stack registry push prompts for variable values #3102
+* Kontena master token current --expires-in shows negative number for still valid token #3153
+* Server rejects TTY exec with zero console width or height, breaking e2e specs and the Kontena Cloud Terminal #3060
+* Container exec with TTY fails with Celluloid::TaskTerminated on tty resize #3140
+* CLI plugin loading is broken with DEBUG=plugins #3149
+* CLI: cloud subcommand error message unclear without plugin #3097
+* CLI exec fails with ERROR undefined method 'raw' for #<IO:<STDIN>> (NoMethodError) #3160
+
+### Changes
+
+#### Agent
+
+* Fix agent ContainerExec to handle any kind of docker error during tty resize (#3141)
+
+#### Server
+
+* Allow to pass dotted volume driver-opt keys (#3126)
+* Relax server exec API to accept tty_resize with zero width/height (#3147)
+
+#### CLI
+
+* Fix CLI exec to use TTY::Screen.size (#3139)
+* Fix DEBUG=plugin Kontena::PluginManager::Loader#report_tracking (#3150)
+* CLI: Mark certificate get as deprecated in certificate sub-command list (#3131)
+* Fix stack commands not to modify STACK/GRID env of parent when installing child stacks (#3146)
+* Fix stack yaml from: service_instances resolver (#3157)
+* Remove --values-from and prompts from kontena stack registry push (#3158)
+* Fix negative number in kontena master token current --expires-in (#3154)
+* Suggest plugin install when using known cloud plugin subcommands (#3098)
+* Fix missing require for cli exec use of STDIN.raw (#3161)
+
 ## [1.4.2](https://github.com/kontena/kontena/releases/tag/v1.4.2) (2017-12-08)
 
 The 1.4.2 release fixes regressions in the 1.4.0 and 1.4.1 releases, as well as some other issues.
