@@ -12,8 +12,6 @@ The Kontena Vault secrets are now encrypted using a random AES-CBC Initializatio
 
 A potential XSS vulnerability in the "kontena master login --remote" code display has been fixed. ([#3223](https://github.com/kontena/kontena/pull/3223))
 
-The master OAuth2 access tokens can now have a description. ([#3211](https://github.com/kontena/kontena/pull/3211))
-
 #### Options After Parameters
 
 Commands that accept parameters now accept options also after the parameter. For example,
@@ -122,6 +120,10 @@ Node|All Online  |Node 2 Offline Before 1.5|Node 2 Offline With Kontena 1.5
  2  | instance-2 |                         | 
  3  | instance-3 | instance-2              | instance-3
  4  | instance-4 | instance-3              | instance-2
+
+#### Let's Encrypt Certificate Challenges
+
+The Kontena Let's Encrypt certificate integration now supports http-01 challenges as a replacement for the disabled tls-sni-01 challenges. (PR [#3212](https://github.com/kontena/kontena/pull/3212) / Issue [#3209](https://github.com/kontena/kontena/issues/3209))
 
 ### Changes
 
