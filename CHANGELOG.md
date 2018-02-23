@@ -117,6 +117,7 @@ ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       
 * Enable server API gzip encoding when KONTENA_SERVER_GZIP=true (#3241)
 * Server: Derive stronger SymmetricEncryption key from the configured VAULT_KEY (#3248)
 * Change GridService.stop_grace_period to Integer (#3275)
+* Upgrade server api-docs build system nokogiri to 1.8.2 (#3309)
 
 #### Server + CLI
 * Make --email optional in external-registry add (#3055)
