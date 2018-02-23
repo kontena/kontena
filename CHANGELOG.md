@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.5.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.5.0.rc1) (2018-02-22)
+## [1.5.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.5.0.rc1) (2018-02-23)
 
 ### Version 1.5 Highlights
 
