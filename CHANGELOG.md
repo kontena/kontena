@@ -150,6 +150,7 @@ $ kontena vault rm --force $(kontena vault ls -q)
 * Drop CLI Ruby 2.1.0 support, upgrade installer embedded Ruby to 2.5.0 (#3272)
 * Fix stack / service deploy --no-wait description (#3290)
 * Add kontena service scale missing --no-wait flag (#3298)
+* Fix CLI master deploy wizard auth provider help links (#3308)
 
 #### Test suite
 * Fix remaining plugin uninstall --force usages in tests (#2935)
