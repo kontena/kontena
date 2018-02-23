@@ -78,7 +78,7 @@ You can now add descriptions to the master authentication tokens:
 $ kontena master token create -e 0 --description "deploy key"
 $ kontena master token ls
 ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       DESCRIPTION
-5a8c275351d1a1001566a4ef   bearer       f539          never        user         deploy key
+5a8c275351d1a1001566a4ef   bearer       f539          never        user         deploy key
 ```
 
 ### Changes
