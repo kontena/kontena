@@ -94,19 +94,21 @@ Example configuration:
 
 The health check will now consider HTTP 3XX status codes as healthy. (PR [#3265](https://github.com/kontena/kontena/pull/3265) / Issue [#1790](https://github.com/kontena/kontena/issues/1790))
 
-#### Logging Container Crashes
+#### Logging Service Instance Crash Events
 
-It was previously not possible to see if a container restarted because it crashed or if it was intentional and caused by for example a deploy or a manual restart. ([#3286](https://github.com/kontena/kontena/pull/3286))
+The kontena service events now include an `instance_crash` event for service containers that exit unexpectedly. Compared to the existing `start_instance` events, these events do not get logged for service deploys or manual service restarts. ([#3286](https://github.com/kontena/kontena/pull/3286))
 
 ```
-2018-02-16T14:43:26.731698302Z container die 9d21e309419ffbd32d75ab4bf544baf4deefb491934a762fc88b5c34a3071a52 (exitCode=137...)
+TIME                      TYPE                 MESSAGE
+...
+2018-02-16T12:38:38.583Z  instance_crash       service test/client-1 instance exited with code 1, restarting (delay: 0s) (core-01)
 ```
 
 #### Service Affinities
 
 When scheduling a service with an affinity like `service==api` affinity, only the bare service names were previously matched without considering their stack scope. If multiple stacks had identically named services that match the affinity filter, then all of those external services would have been considered as matching candidates. (PR [#2967](https://github.com/kontena/kontena/pull/2967) / Issue [#2911](https://github.com/kontena/kontena/issues/2961))
 
-You can now set the stack scoped affinity as `service==stack/api`.
+You can define a stack scoped affinity rule that matches a service in another stack as `service==stack-b/api`. A service affinity filter such as `service==api` will now only match a service named `api` within the same stack. 
 
 The affinity filters can now also include regular expressions such as `node!=/^node-(2|3)$/`. (PR [#3099](https://github.com/kontena/kontena/pull/3099) / Issue [#2909](https://github.com/kontena/kontena/issues/2909))
  
