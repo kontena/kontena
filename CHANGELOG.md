@@ -9,7 +9,6 @@
 * The vault encryption key used by master was truncated and only 32 bytes of it was actually being used. PR #3248 / issue #3247
 * The vault was using a static intitialization vector configured by using the VAULT_IV. It's now using a random IV. PR #3184 / issue #3183
 * A potential XSS vulnerability in the "kontena master login --remote" code display has been fixed. PR #3223
-* Basic support for Let's Encrypt http-01 certificate / domain authorizations has been added. PR #3212 / issue #3209
 * The oauth2 access tokens can now have a description. PR #3211
 
 #### CLI
