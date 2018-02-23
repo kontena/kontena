@@ -6,9 +6,9 @@
 
 #### Security Improvements
 
-The Kontena Vault now uses a stronger key derived from the configured VAULT_KEY for encrypting vault secrets. The configured VAULT_KEY was previously truncated to the first 32 bytes, limiting the effective AES-CBC key strength to 128 bits for hexadecimal values, or 192 bits for base64-encoded values. Existing vault secrets will be re-encrypted using the stronger key on upgrade. (PR [#3248](https://github.com/kontena/kontena/pull/3248) / Issue [#3247](https://github.com/kontena/kontena/issues/3247])
+The Kontena Vault now uses a stronger key derived from the configured `VAULT_KEY` for encrypting vault secrets. The configured `VAULT_KEY` was previously truncated to the first 32 bytes, limiting the effective AES-CBC key strength to 128 bits for hexadecimal values, or 192 bits for base64-encoded values. Existing vault secrets will be re-encrypted using the stronger key on upgrade. (PR [#3248](https://github.com/kontena/kontena/pull/3248) / Issue [#3247](https://github.com/kontena/kontena/issues/3247])
 
-The Kontena Vault secrets are now encrypted using a random AES-CBC Initialization Vector (IV) that is randomized for each secret. The configured VAULT_IV was previously used as a static IV shared across all encrypted secrets, but is no longer required. Existing vault secrets will be re-encrypted using randomized IVs on upgrade. (PR [#3184](https://github.com/kontena/kontena/pull/3184) / Issue [#3183](https://github.com/kontena/kontena/issues/3183)
+The Kontena Vault secrets are now encrypted using a random AES-CBC Initialization Vector (IV) that is randomized for each secret. The configured `VAULT_IV` was previously used as a static IV shared across all encrypted secrets, but is no longer required. Existing vault secrets will be re-encrypted using randomized IVs on upgrade. (PR [#3184](https://github.com/kontena/kontena/pull/3184) / Issue [#3183](https://github.com/kontena/kontena/issues/3183)
 
 A potential XSS vulnerability in the "kontena master login --remote" code display has been fixed. ([#3223](https://github.com/kontena/kontena/pull/3223))
 
