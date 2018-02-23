@@ -13,12 +13,10 @@ class StackRevision
   field :services, type: Array, default: []
   field :volumes, type: Array, default: []
   field :metadata, type: Hash, default: {}
-  field :labels, type: Array, default: []
 
   belongs_to :stack
 
   index({ stack_id: 1 })
-  index({ labels: 1 })
 
   before_create :increase_version
 

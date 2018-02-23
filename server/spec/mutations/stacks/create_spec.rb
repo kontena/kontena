@@ -114,7 +114,7 @@ describe Stacks::Create do
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome).to be_success
-      expect(outcome.result.latest_rev.labels).to eq(['fqdn=about.me'])
+      expect(outcome.result.labels).to eq(['fqdn=about.me'])
     end
 
     it 'creates stack services' do

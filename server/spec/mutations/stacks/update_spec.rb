@@ -34,7 +34,7 @@ describe Stacks::Update do
       outcome = subject.run
       expect(outcome.success?).to be_truthy
       expect(outcome.result.stack_revisions.count).to eq(2)
-      expect(outcome.result.latest_rev.labels).to eq(['foo=bar'])
+      expect(outcome.result.labels).to eq(['foo=bar'])
       expect(stack.reload.grid_services.first.image_name).to eq('redis:2.8')
     end
 
@@ -87,7 +87,40 @@ describe Stacks::Update do
 
       outcome = subject.run
       expect(outcome.success?).to be_truthy
-      expect(outcome.result.latest_rev.labels).to eq(['fqdn=about.me'])
+      expect(outcome.result.labels).to eq(['fqdn=about.me'])
+    end
+
+    it 'updates and keeps existing labels' do
+      services = [{name: 'redis', image: 'redis:3.0'}]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
+
+      outcome = subject.run
+      expect(outcome.success?).to be_truthy
+      expect(outcome.result.labels).to eq(["foo=bar"])
+    end
+
+    it 'updates and clears existing labels' do
+      services = [{name: 'redis', image: 'redis:3.0'}]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services,
+        labels: []
+      )
+
+      outcome = subject.run
+      expect(outcome.success?).to be_truthy
+      expect(outcome.result.labels).to eq([])
     end
 
     it 'fails to create new volumes' do

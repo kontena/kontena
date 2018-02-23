@@ -6,6 +6,7 @@ class Stack
 
   field :name, type: String
   field :parent_name, type: String
+  field :labels, type: Array, default: []
 
   belongs_to :grid
 
@@ -16,6 +17,7 @@ class Stack
   index({ grid_id: 1 })
   index({ name: 1 })
   index({ parent_name: 1 })
+  index({ labels: 1 })
 
   validates_presence_of :name
   validates_uniqueness_of :name, scope: [:grid_id]

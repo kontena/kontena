@@ -52,9 +52,14 @@ module Stacks
 
     def execute
       attributes = self.inputs.clone
-      %w( parent parent_name ).each { |k| attributes.delete(k.to_sym)}
+      # filter out some attributes and ensure StackRevision receives only
+      # ones that are supported to avoid Mongoid::Errors::UnknownAttribute error
+      %w( parent parent_name labels ).each { |k| attributes.delete(k.to_sym)}
       grid = attributes.delete(:grid)
       stack = Stack.create(name: self.name, grid: grid, parent_name: resolve_parent_name)
+
+      # set labels only if assigned
+      stack.labels = self.labels if self.labels
 
       unless stack.save
         stack.errors.each do |key, message|
@@ -67,8 +72,6 @@ module Stacks
       attributes[:services] = services
       attributes[:volumes] = self.volumes
       attributes[:stack_name] = attributes.delete(:stack)
-      # set labels only if assigned
-      attributes[:labels] = self.labels if self.labels
       stack.stack_revisions.create!(attributes)
 
       create_services(stack, services)

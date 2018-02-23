@@ -18,6 +18,7 @@ module Kontena::Cli::Stacks
         description
         expose
         depends
+        labels
       )
 
       def initialize

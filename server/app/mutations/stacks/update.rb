@@ -58,6 +58,10 @@ module Stacks
     end
 
     def execute
+      # update labels only if assigned, empty array removes existing labels
+      stack_instance.labels = self.labels if self.labels
+      stack_instance.save if stack_instance.changed?
+      # update stack revision & its attributes
       latest_rev = self.stack_instance.latest_rev || self.stack_instance.stack_revisions.build
       latest_rev.attributes = {
         stack_name: self.stack,
@@ -69,8 +73,6 @@ module Stacks
         services: sort_services(self.services),
         volumes: self.volumes
       }
-      # update labels only if assigned
-      latest_rev.attributes[:labels] = self.labels if self.labels
 
       if latest_rev.changed?
         new_rev = latest_rev.dup

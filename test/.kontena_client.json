@@ -1,0 +1,24 @@
+{
+  "current_server": "compose-e2e",
+  "current_account": "kontena",
+  "servers": [
+    {
+      "name": "compose-e2e",
+      "url": "http://localhost:9292",
+      "username": "admin",
+      "grid": "e2e",
+      "token": "50f480e2c6a62dc54ba4aeb219c447329e5634a5e9fb9582e994d94ae113ac16",
+      "token_expires_at": 0,
+      "refresh_token": null
+    }
+  ],
+  "accounts": [
+    {
+      "name": "kontena",
+      "username": "pabloduo",
+      "token": "0bd4d4155c364de79ef264089a3e8d0f",
+      "token_expires_at": 1515819209,
+      "refresh_token": "af02543a31cd4ec0b5371d45792049ca"
+    }
+  ]
+}

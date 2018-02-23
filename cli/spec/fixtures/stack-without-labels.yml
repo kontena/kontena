@@ -1,10 +1,10 @@
-stack: user/stackname
+stack: user/nolabels
 version: 0.1.1
 services:
-  wordpress_stateful:
+  wordpress-stateful:
     image: image
     stateful: true
 
-  wordpress_stateless:
+  wordpress-stateless:
     image: image
     stateful: false

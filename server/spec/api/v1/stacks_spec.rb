@@ -243,7 +243,7 @@ describe '/v1/stacks', celluloid: true do
       expect {
         put "/v1/stacks/#{stack.to_path}", data.to_json, request_headers
         expect(response.status).to eq(200)
-        expect(stack.reload.latest_rev.labels).to eq(['foo=1', 'bar=2'])
+        expect(stack.reload.labels).to eq(['foo=1', 'bar=2'])
       }.to change{ stack.stack_revisions.count }.by(1)
     end
 

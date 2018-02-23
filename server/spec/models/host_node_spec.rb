@@ -68,11 +68,11 @@ describe HostNode do
     end
 
     it 'does not allow duplicate names' do
-      expect{HostNode.create!(grid: grid, node_number: 2, name: 'node-1')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
+      expect{HostNode.create!(grid: grid, node_number: 2, name: 'node-1')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error collection/)
     end
 
     it 'does not allow duplicate node numbers' do
-      expect{HostNode.create!(grid: grid, node_number: 1, name: 'node-2')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
+      expect{HostNode.create!(grid: grid, node_number: 1, name: 'node-2')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error collection/)
     end
   end
 
@@ -390,14 +390,14 @@ describe HostNode do
       end
 
       it 'does not allow multiple nodes to share the same token' do
-        expect{HostNode.create!(grid: grid, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_(test|development).host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
+        expect{HostNode.create!(grid: grid, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error collection: kontena_(test|development).host_nodes index: token_1 dup key: { : "asdfasdfasdfasdf" }/)
       end
 
       context 'with a second grid' do
         let(:grid2) { Grid.create!(name: 'test2') }
 
         it 'does not allow nodes to share the same token' do
-          expect{HostNode.create!(grid: grid2, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_(test|development).host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
+          expect{HostNode.create!(grid: grid2, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error collection: kontena_(test|development).host_nodes index: token_1 dup key: { : "asdfasdfasdfasdf" }/)
         end
       end
     end

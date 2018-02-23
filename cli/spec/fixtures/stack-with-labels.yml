@@ -1,11 +1,11 @@
-stack: user/stackname
+stack: user/labels
 version: 0.1.1
-labels: ['fqdn=about.wp.com']
+labels: ['fqdn=about.wp.com', 'about.wp.com']
 services:
-  wordpress_stateful:
+  wordpress-stateful:
     image: image
     stateful: true
 
-  wordpress_stateless:
+  wordpress-stateless:
     image: image
     stateful: false
