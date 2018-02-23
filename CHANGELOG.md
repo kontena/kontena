@@ -4,7 +4,7 @@
 
 ### Version 1.5 Highlights
 
-#### Security
+#### Security Improvements
 
 The Kontena Vault now uses a stronger key derived from the configured VAULT_KEY for encrypting vault secrets. The configured VAULT_KEY was previously truncated to the first 32 bytes, limiting the effective AES-CBC key strength to 128 bits for hexadecimal values, or 192 bits for base64-encoded values. Existing vault secrets will be re-encrypted using the stronger key on upgrade. (PR [#3248](https://github.com/kontena/kontena/pull/3248) / Issue [#3247](https://github.com/kontena/kontena/issues/3247])
 
@@ -80,6 +80,48 @@ $ kontena master token ls
 ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       DESCRIPTION
 5a8c275351d1a1001566a4ef   bearer       f539          never        user         deploy key
 ```
+
+#### Health Check
+
+The agent now uses the port in health check definition when configuring the load balancer. (PR [#3113](https://github.com/kontena/kontena/pull/) / Issue [#1709](https://github.com/kontena/kontena/issues/1709))
+
+Example configuration: 
+
+```
+    health_check:
+      protocol: http
+      uri: /
+      port: 8000
+```
+
+The health check will now consider HTTP 3XX status codes as healthy. (PR [#3265](https://github.com/kontena/kontena/pull/3265) / Issue [#1790](https://github.com/kontena/kontena/issues/1790))
+
+#### Logging Container Crashes
+
+It was previously not possible to see if a container restarted because it crashed or if it was intentional and caused by for example a deploy or a manual restart. ([#3286](https://github.com/kontena/kontena/pull/3286))
+
+```
+2018-02-16T14:43:26.731698302Z container die 9d21e309419ffbd32d75ab4bf544baf4deefb491934a762fc88b5c34a3071a52 (exitCode=137...)
+```
+
+#### Service Affinities
+
+When scheduling a service with an affinity like `service==api` affinity, only the bare service names were previously matched without considering their stack scope. If multiple stacks had identically named services that match the affinity filter, then all of those external services would have been considered as matching candidates. (PR [#2967](https://github.com/kontena/kontena/pull/2967) / Issue [#2911](https://github.com/kontena/kontena/issues/2961))
+
+You can now set the stack scoped affinity as `service==stack/api`.
+
+The affinity filters can now also include regular expressions such as `node!=/^node-(2|3)$/`. (PR [#3099](https://github.com/kontena/kontena/pull/3099) / Issue [#2909](https://github.com/kontena/kontena/issues/2909))
+ 
+#### Daemon Strategy Node Stickiness
+
+When a service has been deployed using the daemon strategy and a node goes offline, the scheduler now keeps the existing instances on the nodes they were running on already. ([#3137](https://github.com/kontena/kontena/pull/3137))
+
+Node|All Online  |Node 2 Offline Before 1.5|Node 2 Offline With Kontena 1.5
+----|------------|-------------------------|-----------------------------------
+ 1  | instance-1 | instance-1              | instance-1
+ 2  | instance-2 |                         | 
+ 3  | instance-3 | instance-2              | instance-3
+ 4  | instance-4 | instance-3              | instance-2
 
 ### Changes
 
