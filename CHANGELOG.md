@@ -14,9 +14,7 @@ A potential XSS vulnerability in the "kontena master login --remote" code displa
 
 The master OAuth2 access tokens can now have a description. (#3211)
 
-#### CLI
-
-##### Options After Parameters
+#### Options After Parameters
 
 Commands that accept parameters now accept options also after the parameter. For example,
 these commands did not work before:
@@ -38,7 +36,7 @@ $ kontena master ssh -- ls -al
 $ kontena vault write -- SECRET --secret-password--
 ```
 
-##### Kontena Stack Registry V2 API And The New 'meta' Fields
+#### Kontena Stack Registry V2 API And The New 'meta' Fields
 
 While mostly invisible to the end-user, the CLI stack registry API client is now using
 the completely rewritten stack registry and the V2 JSON-API it offers. The registry
@@ -53,7 +51,7 @@ As the CLI HTTP client now supports gzip compressed responses, we have also adde
 to enable compression in the Kontena Master API. To enable, set `KONTENA_SERVER_GZIP=true`
 in the Master environment.
 
-##### Drop Support For Ruby 2.1, Build Installer With Embedded Ruby 2.5.0
+#### Drop Support For Ruby 2.1, Build Installer With Embedded Ruby 2.5.0
 
 As Ruby 2.1 branch has been out of development for almost a year now, it's time to upgrade
 if you already didn't.
@@ -62,7 +60,7 @@ The MacOS Kontena CLI installation package is now bundled with Ruby version 2.5.
 
 Ruby 2.2 is nearing its EOL at the end of March 2018.
 
-##### Process Multiple Items In One Command
+#### Process Multiple Items In One Command
 
 Many of the subcommands can now accept a list of items instead of just one. This is handy in
 shell scripts and one-liners, for example:
@@ -70,6 +68,17 @@ shell scripts and one-liners, for example:
 ```
 $ kontena vault ls -q | xargs kontena vault rm --force
 $ kontena vault rm --force $(kontena vault ls -q)
+```
+
+#### Master Authentication Token Descriptions
+
+You can now add descriptions to the master authentication tokens:
+
+```
+$ kontena master token create -e 0 --description "deploy key"
+$ kontena master token ls
+ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       DESCRIPTION
+5a8c275351d1a1001566a4ef   bearer       f539          never        user         deploy key
 ```
 
 ### Changes
