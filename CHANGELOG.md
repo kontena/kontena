@@ -1,5 +1,178 @@
 # Changelog
 
+## [1.5.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.5.0.rc1) (2018-02-22)
+
+### Version 1.5 Highlights
+
+#### Security
+
+* The vault encryption key used by master was truncated and only 32 bytes of it was actually being used. PR #3248 / issue #3247
+* The vault was using a static intitialization vector configured by using the VAULT_IV. It's now using a random IV. PR #3184 / issue #3183
+* A potential XSS vulnerability in the "kontena master login --remote" code display has been fixed. PR #3223
+* Basic support for Let's Encrypt http-01 certificate / domain authorizations has been added. PR #3212 / issue #3209
+* The oauth2 access tokens can now have a description. PR #3211
+
+#### CLI
+
+##### Options After Parameters
+
+Commands that accept parameters now accept options also after the parameter. For example,
+these commands did not work before:
+
+```
+$ kontena stack deploy example-stack --help
+ERROR: too many arguments
+$ kontena stack rm example-stack --force
+ERROR: too many arguments
+```
+
+Note that if you need to use something that looks like an option as a parameter you need to use the
+common double dash `--` option break indicator:
+
+```
+$ kontena master ssh -- ls -al
+ERROR: Unrecognised option '-l'
+$ kontena master ssh -- ls -al
+$ kontena vault write -- SECRET --secret-password--
+```
+
+##### Kontena Stack Registry V2 API And The New 'meta' Fields
+
+While mostly invisible to the end-user, the CLI stack registry API client is now using
+the completely rewritten stack registry and the V2 JSON-API it offers. The registry
+supports GZip responses, private stacks, server-side stack YAML validation and parsing
+of the new top level 'meta:' fields.
+
+The meta fields can be used to add extra information to stacks published in the registry.
+
+You can find the full set of accepted metadata fields in the pull request #3219 description.
+
+As the CLI HTTP client now supports gzip compressed responses, we have also added the option
+to enable compression in the Kontena Master API. To enable, set `KONTENA_SERVER_GZIP=true`
+in the Master environment.
+
+##### Drop Support For Ruby 2.1, Build Installer With Embedded Ruby 2.5.0
+
+As Ruby 2.1 branch has been out of development for almost a year now, it's time to upgrade
+if you already didn't.
+
+The MacOS Kontena CLI installation package is now bundled with Ruby version 2.5.0
+
+Ruby 2.2 is nearing its EOL at the end of March 2018.
+
+##### Process Multiple Items In One Command
+
+Many of the subcommands can now accept a list of items instead of just one. This is handy in
+shell scripts and one-liners, for example:
+
+```
+$ kontena vault ls -q | xargs kontena vault rm --force
+$ kontena vault rm --force $(kontena vault ls -q)
+```
+
+### Changes
+
+#### Agent
+* Add health check port to LB configs (#3113)
+* Add Agent Watchdog supervisor to agent (#3135)
+* Fix agent ServicePodWorker to ignore stale container events (#3259)
+* Change agent health check to accept HTTP 3xx as healthy (#3265)
+* Log container healthcheck errors (#3284)
+* Log service:instance_exit event on container crashes (#3286)
+* Fix agent to unregister LB service backends earlier during container shutdown (#3287)
+* Fix agent container log dropping entries when queue size exactly matches the throttle limit (#3288)
+
+#### Agent + Server
+* Use GridService revision for service/container updates (#2371)
+* Improve agent ServicePodWorker container restart handling (#2780)
+
+#### Server
+* Remove server AsyncHelper#async_thread (#2786)
+* Fix service affinity filters to be stack-scoped (#2967)
+* Cap stack/service deploy collections (#3041)
+* Deploy tls-sni challenge certs as separate SSL_CERT_acme_challenge_* envs (#3076)
+* Support regex in affinity filters (#3099)
+* Remove dependant service logic (#3100)
+* Less shuffling when nodes missing with daemon strategy (#3124)
+* Validate tls-sni domain authorization linked service port (#3132)
+* Enhance daemon strategy to implement node stickiness (#3137)
+* Use random initialization vector (#3184)
+* Fix server certificate domain verification request error handling (#3186)
+* Add cleaner job for old deployments (#3191)
+* Remove deprecated GridServiceHealthMonitorJob (#3202)
+* Resolve notification message receivers properly when grid is deleted (#3214)
+* Fix server Celluloid::Proxy::Async<MongoPubsub> leak from RPC /container/health handler (#3217)
+* Fix server MongoPubsub to restart subscriptions after crashing (#3218)
+* Fix potential XSS vulnerability in master remote login code display (#3223)
+* Enable server API gzip encoding when KONTENA_SERVER_GZIP=true (#3241)
+* Server: Derive stronger SymmetricEncryption key from the configured VAULT_KEY (#3248)
+* Change GridService.stop_grace_period to Integer (#3275)
+
+#### Server + CLI
+* Make --email optional in external-registry add (#3055)
+* Add description field to master authentication access tokens (#3211)
+* Basic support for Let's Encrypt http-01 certificate / domain authorizations (#3212)
+* Send and return stack metadata to/from master (#3281)
+
+#### CLI
+* Add "kontena plugin upgrade" to upgrade all plugins (#2952)
+* Set master name from KONTENA_MASTER when configuring from ENV (#3009)
+* Require --force if some items in node label rm list are missing (#3065)
+* Use --no-log-forwarder instead of --log-forwarder none in grid update (#3095)
+* Add --id to "kontena master token current" (#3096)
+* Stack inspect command (#3123)
+* Make kontena master token show output consistent with other show commands (#3156)
+* Fix confirmation dialog in stack related commands (#3169)
+* Update CLI image docker client to 17.06 (#3177)
+* Remove deprecated "kontena master users" subcommand (#3182)
+* Refactor stack change resolving (#3185)
+* Fix stack list tree icon (#3187)
+* Improve stack install deps handling (#3188)
+* Don't warn about deps if --keep-dependencies is given in stack rm (#3189)
+* Allow to command multiple items via CLI (#3193)
+* Remove deprecated app subcommand from CLI completions (#3195)
+* Fix and enhance stack command CLI autocompletions (#3197)
+* Upgrade CLI tty-prompt dependency to 0.14.0 (#3203)
+* Upgrade CLI excon dependency to 0.60.0 (#3204)
+* Upgrade CLI hash_validator dependency to 0.8.0 (#3205)
+* Drop CLI launchy dependency (#3208)
+* Switch to Stack registry V2 API and add support the new stack YAML metadata fields (#3219)
+* Enable gzip response parsing in CLI API client where supported (#3222)
+* Fix cli plugin uninstall (#3230)
+* Add missing cli etcd remove alias (#3235)
+* Fix client to not ignore invalid response JSON (#3240)
+* Fix to not accept gzip responses for streaming get requests (#3242)
+* Fix API client to ignore empty response JSON body (#3252)
+* Fix stack service extends: from registry stacks (#3258)
+* Fix grid remove parameter attribute conflict (#3263)
+* Upgrade CLI clamp dependency to 1.2.1 (#3267)
+* Allow CLI --options after parameters (#3268)
+* Drop CLI Ruby 2.1.0 support, upgrade installer embedded Ruby to 2.5.0 (#3272)
+* Fix stack / service deploy --no-wait description (#3290)
+* Add kontena service scale missing --no-wait flag (#3298)
+
+#### Test suite
+* Fix remaining plugin uninstall --force usages in tests (#2935)
+* Fix e2e stack validate entrypoint spec to use --format=api-json (#3163)
+* Fix e2e broken stack remove spec after hook (#3164)
+* Fix e2e test spec helpers to fail instead of aborting (#3165)
+* Fix e2e test container to use bundle exec (#3170)
+* Fix e2e stack validate entrypoint spec (#3172)
+* Test cli with ruby-2.5.0 (#3175)
+* Add --profile to e2e suite .rspec (#3198)
+* Fix travis e2e allow_failures clause (#3199)
+* Optimize e2e vpn specs (#3200)
+* Fix e2e stack install spec stack conflicts (#3201)
+* Fix e2e remove specs to not use unsupported shell syntax (#3227)
+* Fix e2e specs to run! (some of) the things (#3229)
+* Require travis e2e specs to pass (#3232)
+* E2E: Add spec for master token remove (#3233)
+* E2E: Use run! where applicable (#3236)
+* Fix hanging stack upgrade e2e spec (#3244)
+* Fix e2e app remove spec race on terminating service (#3245)
+* Fix CLI travis to bundle install --without development (#3221)
+* Fix flaky agent EventWorker#start spec (#3305)
+
 ## [1.4.3](https://github.com/kontena/kontena/releases/tag/v1.4.3) (2017-12-20)
 
 The 1.4.3 release fixes regressions in the 1.4 releases, as well as some other issues.
