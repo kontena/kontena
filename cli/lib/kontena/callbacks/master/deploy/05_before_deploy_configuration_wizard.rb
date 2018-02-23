@@ -83,13 +83,13 @@ module Kontena
               command.skip_auth_provider = false
             when :custom
               puts
-              puts 'Learn how to configure custom user authentication provider after installation at: www.kontena.io/docs/using-kontena/authentication'
+              puts 'Learn how to configure custom user authentication provider after installation at: www.kontena.io/docs/advanced/authentication'
               puts
               command.cloud_master_id = nil
               command.skip_auth_provider = true
             when :none
               puts
-              puts "You have selected to use Kontena Master in single user mode. You can configure an authentication provider later. For more information, see here: www.kontena.io/docs/using-kontena/authentication"
+              puts "You have selected to use Kontena Master in single user mode. You can configure an authentication provider later. For more information, see here: www.kontena.io/docs/advanced/authentication"
               puts
               command.cloud_master_id = nil
               command.skip_auth_provider = true
