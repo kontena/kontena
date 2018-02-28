@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.5.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.5.0.rc1) (2018-02-23)
+## [1.5.0](https://github.com/kontena/kontena/releases/tag/v1.5.0) (2018-02-28)
 
 ### Version 1.5 Highlights
 
@@ -83,7 +83,7 @@ ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       
 
 The agent now uses the port in health check definition when configuring the load balancer. (PR [#3113](https://github.com/kontena/kontena/pull/) / Issue [#1709](https://github.com/kontena/kontena/issues/1709))
 
-Example configuration: 
+Example configuration:
 
 ```
     health_check:
@@ -108,10 +108,10 @@ TIME                      TYPE                 MESSAGE
 
 When scheduling a service with an affinity like `service==api` affinity, only the bare service names were previously matched without considering their stack scope. If multiple stacks had identically named services that match the affinity filter, then all of those external services would have been considered as matching candidates. (PR [#2967](https://github.com/kontena/kontena/pull/2967) / Issue [#2911](https://github.com/kontena/kontena/issues/2961))
 
-You can define a stack scoped affinity rule that matches a service in another stack as `service==stack-b/api`. A service affinity filter such as `service==api` will now only match a service named `api` within the same stack. 
+You can define a stack scoped affinity rule that matches a service in another stack as `service==stack-b/api`. A service affinity filter such as `service==api` will now only match a service named `api` within the same stack.
 
 The affinity filters can now also include regular expressions such as `node!=/^node-(2|3)$/`. (PR [#3099](https://github.com/kontena/kontena/pull/3099) / Issue [#2909](https://github.com/kontena/kontena/issues/2909))
- 
+
 #### Daemon Strategy Node Stickiness
 
 When a service has been deployed using the daemon strategy and a node goes offline, the scheduler now keeps the existing instances on the nodes they were running on already. ([#3137](https://github.com/kontena/kontena/pull/3137))
@@ -119,7 +119,7 @@ When a service has been deployed using the daemon strategy and a node goes offli
 Node|All Online  |Node 2 Offline Before 1.5|Node 2 Offline With Kontena 1.5
 ----|------------|-------------------------|-----------------------------------
  1  | instance-1 | instance-1              | instance-1
- 2  | instance-2 |                         | 
+ 2  | instance-2 |                         |
  3  | instance-3 | instance-2              | instance-3
  4  | instance-4 | instance-3              | instance-2
 
