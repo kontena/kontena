@@ -45,13 +45,13 @@ The meta fields can be used to add extra information to stacks published in the 
 
 You can find the full set of accepted metadata fields in the pull request #3219 description.
 
-As the CLI HTTP client now supports gzip compressed responses, we have also added the option
+As the CLI HTTP client now supports GZip compressed responses, we have also added the option
 to enable compression in the Kontena Master API. To enable, set `KONTENA_SERVER_GZIP=true`
 in the Master environment.
 
 #### Drop Support For Ruby 2.1, Build Installer With Embedded Ruby 2.5.0
 
-As Ruby 2.1 branch has been out of development for almost a year now, it's time to upgrade
+As the Ruby 2.1 branch has been out of development for almost a year now, it's time to upgrade
 if you already didn't.
 
 The MacOS Kontena CLI installation package is now bundled with Ruby version 2.5.0
@@ -96,7 +96,7 @@ The health check will now consider HTTP 3XX status codes as healthy. (PR [#3265]
 
 #### Logging Service Instance Crash Events
 
-The kontena service events now include an `instance_crash` event for service containers that exit unexpectedly. Compared to the existing `start_instance` events, these events do not get logged for service deploys or manual service restarts. ([#3286](https://github.com/kontena/kontena/pull/3286))
+The Kontena service events now include an `instance_crash` event for service containers that exit unexpectedly. Compared to the existing `start_instance` events, these events do not get logged for service deploys or manual service restarts. ([#3286](https://github.com/kontena/kontena/pull/3286))
 
 ```
 TIME                      TYPE                 MESSAGE
