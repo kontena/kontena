@@ -110,6 +110,16 @@ describe ReencryptVaultSecrets do
         expect(grid_secret.value).to eq 'foobar'
       end
     end
+
+    context 'for a deleted grid' do
+      before do
+        grid.delete
+      end
+
+      it 'does not crash' do
+        expect{described_class.up}.to_not raise_error
+      end
+    end
   end
 
   context 'with certificates' do
@@ -138,9 +148,9 @@ describe ReencryptVaultSecrets do
       end
     end
 
-    context 'for a deleted grid' do
+    context 'for a missing grid' do
       before do
-        grid.destroy!
+        grid.collection.delete_one({_id: grid.id})
       end
 
       it 'does not crash' do
