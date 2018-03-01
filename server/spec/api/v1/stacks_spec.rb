@@ -222,6 +222,22 @@ describe '/v1/stacks', celluloid: true do
     end
   end
 
+  describe 'PATCH /:name' do
+    it 'saves non-empty stack labels' do
+      labels = ['foo=bar', 'timezone=PDT']
+      patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(stack.reload.labels).to eq(labels)
+    end
+
+    it 'saves empty stack labels' do
+      labels = []
+      patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(stack.reload.labels).to be_empty
+    end
+  end
+
   describe 'PUT /:name' do
     it 'updates stack' do
       data = {
