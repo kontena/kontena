@@ -90,7 +90,7 @@ ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       
 
 #### Health Check
 
-The agent now uses the port in health check definition when configuring the load balancer. (PR [#3113](https://github.com/kontena/kontena/pull/) / Issue [#1709](https://github.com/kontena/kontena/issues/1709))
+The agent now uses the port in health check definition when configuring the load balancer. (PR [#3113](https://github.com/kontena/kontena/pull/3113) / Issue [#1709](https://github.com/kontena/kontena/issues/1709))
 
 Example configuration:
 
