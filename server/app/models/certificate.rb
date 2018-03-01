@@ -19,7 +19,7 @@ class Certificate
   index({ grid_id: 1, subject: 1 }, {unique: true})
 
   def to_path
-    "#{self.grid.name}/#{self.subject}"
+    "#{self.grid.try(:name)}/#{self.subject}"
   end
 
   # @return [String] Actual certificate and the trust chain bundled together

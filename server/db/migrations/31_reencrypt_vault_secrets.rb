@@ -8,7 +8,7 @@ class ReencryptVaultSecrets < Mongodb::Migration
       secret.save
     end
 
-    Certificate.each do |cert|
+    Certificate.all.reject { |c| c.grid.nil? }.each do |cert|
       info "Re-encrypting Certificate #{cert.to_path}..."
       cert.private_key = cert.private_key
       cert.save
@@ -47,7 +47,7 @@ class ReencryptVaultSecrets < Mongodb::Migration
       end
     end
 
-    Certificate.each do |cert|
+    Certificate.all.reject { |c| c.grid.nil? }.each do |cert|
       info "Rollback Certificate #{cert.to_path}..."
       cert.set(encrypted_private_key: legacy_cipher.encrypt(cert.private_key))
     end
