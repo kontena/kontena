@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.1](https://github.com/kontena/kontena/releases/tag/v1.5.0) (2018-03-01)
+
+Upgrade to 1.5.0 caused a crash loop if a grid with certificates was ever deleted. ([#3312](https://github.com/kontena/kontena/issues/3312))
+
+### Changes
+
+#### Master
+ * Remove orphaned certificates and fix crashing migration ([#3313](https://github.com/kontena/kontena/pull/3313))
+
 ## [1.5.0](https://github.com/kontena/kontena/releases/tag/v1.5.0) (2018-02-28)
 
 ### Version 1.5 Highlights
@@ -81,7 +90,7 @@ ID                         TOKEN_TYPE   TOKEN_LAST4   EXPIRES_IN   SCOPES       
 
 #### Health Check
 
-The agent now uses the port in health check definition when configuring the load balancer. (PR [#3113](https://github.com/kontena/kontena/pull/) / Issue [#1709](https://github.com/kontena/kontena/issues/1709))
+The agent now uses the port in health check definition when configuring the load balancer. (PR [#3113](https://github.com/kontena/kontena/pull/3113) / Issue [#1709](https://github.com/kontena/kontena/issues/1709))
 
 Example configuration:
 
