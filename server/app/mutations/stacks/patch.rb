@@ -10,7 +10,9 @@ module Stacks
 
     optional do
       model :grid, class: Grid
-      array :labels
+      array :labels do
+        string
+      end
     end
 
     def validate
