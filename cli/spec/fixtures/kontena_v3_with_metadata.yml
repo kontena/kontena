@@ -1,0 +1,28 @@
+stack: user/stackname
+version: 0.1.1
+services:
+  wordpress:
+    extends:
+      file: docker-compose_v2.yml
+      service: wordpress
+    stateful: true
+    environment:
+      WORDPRESS_DB_PASSWORD: ${STACK}_secret
+    instances: 2
+    deploy:
+      strategy: ha
+  mysql:
+    extends:
+      file: docker-compose_v2.yml
+      service: mysql
+    stateful: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=${STACK}_secret
+meta:
+  tags:
+    - tag1
+    - tag2
+  readme: |
+    Text goes
+    here
+  required_kontena_version: ">= 0.5.0"

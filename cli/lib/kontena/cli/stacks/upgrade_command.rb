@@ -33,6 +33,15 @@ module Kontena::Cli::Stacks
         gather_master_data(stack_name)
       end
 
+      kontena_requirement = loader.yaml.dig('meta', 'required_kontena_version')
+      unless kontena_requirement.nil?
+        master_version = Gem::Version.new(client.server_version)
+        unless Gem::Requirement.new(kontena_requirement).satisfied_by?(master_version)
+          puts "#{pastel.red("Warning: ")} Stack requires kontena version #{kontena_requirement} but Master version is #{master_version}"
+          confirm("Are you sure? You can skip this prompt by running this command with --force option") unless force?
+        end
+      end
+
       new_data = spinner "Parsing #{pastel.cyan(source)}" do
         loader.flat_dependencies(
           stack_name,

@@ -4,7 +4,7 @@
 This is a command line tool for [Kontena](http://www.kontena.io).
 
 ## Installation
-> Prerequisities: [Ruby](https://www.ruby-lang.org/en/) version 2.1.0 or greater.
+> Prerequisities: [Ruby](https://www.ruby-lang.org/en/) version 2.2.0 or greater.
 
 Install it yourself as:
 

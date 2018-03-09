@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'service list' do
   it 'shows empty list by default' do
     k = run("kontena service ls")
-    expect(k.out.split("\r\n").size).to eq(1)
+    expect(k.out.lines.size).to eq(1)
   end
 
   it 'lists created services' do

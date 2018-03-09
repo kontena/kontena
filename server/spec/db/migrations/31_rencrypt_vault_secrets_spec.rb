@@ -70,7 +70,6 @@ describe ReencryptVaultSecrets do
     let(:decoded_value) { SymmetricEncryption.cipher.decode(encrypted_value) }
 
     context 'before migration' do
-
       it 'does not have a header' do
         expect(SymmetricEncryption::Cipher.has_header?(decoded_value)).to be false
       end
@@ -109,6 +108,53 @@ describe ReencryptVaultSecrets do
 
       it 'is decryptable via the model' do
         expect(grid_secret.value).to eq 'foobar'
+      end
+    end
+
+    context 'for a deleted grid' do
+      before do
+        grid.delete
+      end
+
+      it 'does not crash' do
+        expect{described_class.up}.to_not raise_error
+      end
+    end
+  end
+
+  context 'with certificates' do
+    let!(:certificate) { Certificate.create!(grid: grid, subject: 'test.example.com',
+      valid_until: Time.now + 3600,
+      certificate: "placeholder that is not a PEM certificate\n",
+      encrypted_private_key: legacy_cipher.encrypt("placeholder that is not a PEM private key\n", false),
+    ) }
+    let(:encrypted_value) { certificate.reload.encrypted_private_key }
+
+    it 'is decryptable via the model' do
+      expect(certificate.reload.private_key).to eq "placeholder that is not a PEM private key\n"
+    end
+
+    context 'after migration' do
+      before do
+        described_class.up
+      end
+
+      it 'decrypts with the primary cipher' do
+        expect(primary_cipher.decrypt(encrypted_value)).to eq "placeholder that is not a PEM private key\n"
+      end
+
+      it 'is decryptable via the model' do
+        expect(certificate.reload.private_key).to eq "placeholder that is not a PEM private key\n"
+      end
+    end
+
+    context 'for a missing grid' do
+      before do
+        grid.collection.delete_one({_id: grid.id})
+      end
+
+      it 'does not crash' do
+        expect{described_class.up}.to_not raise_error
       end
     end
   end
