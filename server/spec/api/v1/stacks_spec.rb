@@ -225,16 +225,18 @@ describe '/v1/stacks', celluloid: true do
   describe 'PATCH /:name' do
     it 'saves non-empty stack labels' do
       labels = ['foo=bar', 'timezone=PDT']
-      patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
-      expect(response.status).to eq(200)
-      expect(stack.reload.labels).to eq(labels)
+      expect{
+        patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ stack.reload.labels }.from(['fqdn=about.me']).to(['foo=bar', 'timezone=PDT'])
     end
 
     it 'saves empty stack labels' do
       labels = []
-      patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
-      expect(response.status).to eq(200)
-      expect(stack.reload.labels).to be_empty
+      expect {
+        patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ stack.reload.labels }.from(["fqdn=about.me"]).to([])
     end
   end
 
@@ -259,8 +261,8 @@ describe '/v1/stacks', celluloid: true do
       expect {
         put "/v1/stacks/#{stack.to_path}", data.to_json, request_headers
         expect(response.status).to eq(200)
-        expect(stack.reload.labels).to eq(['foo=1', 'bar=2'])
       }.to change{ stack.stack_revisions.count }.by(1)
+        .and change{ stack.reload.labels }.from(["fqdn=about.me"]).to(['foo=1', 'bar=2'])
     end
 
     it 'returns 404 for unknown stack' do

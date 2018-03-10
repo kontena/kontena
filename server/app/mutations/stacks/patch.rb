@@ -9,7 +9,6 @@ module Stacks
     end
 
     optional do
-      model :grid, class: Grid
       array :labels do
         string
       end
@@ -26,8 +25,8 @@ module Stacks
       # update labels only if assigned, empty array removes existing labels
       stack_instance.labels = self.labels if self.labels
       stack_instance.save if stack_instance.changed?
-      # reload changes (if any)
-      self.stack_instance.reload
+      # return stack instance updates
+      self.stack_instance
     end
   end
 end
