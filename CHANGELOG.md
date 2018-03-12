@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.2](https://github.com/kontena/kontena/releases/tag/v1.5.2) (2018-03-12)
+
+### Changes
+
+#### Master
+ * Fix service scale to set service running state ([#3299](https://github.com/kontena/kontena/pull/3299))
+ * Fix server RpcServer to not hang the actor thread ([#3276](https://github.com/kontena/kontena/pull/3276))
+
+#### CLI
+* Fix cli certificate authorize --help for http-01 ([#3318](https://github.com/kontena/kontena/pull/3318))
+* Clean CLI stacks cache debug puts ([#3319](https://github.com/kontena/kontena/pull/3319))
+
 ## [1.5.1](https://github.com/kontena/kontena/releases/tag/v1.5.1) (2018-03-01)
 
 Upgrade to 1.5.0 caused a crash loop if a grid with certificates was ever deleted. ([#3312](https://github.com/kontena/kontena/issues/3312))
