@@ -26,11 +26,6 @@ class WebsocketBackend
 
   attr_reader :logger
 
-  # @return [SizedQueue]
-  def rpc_queue
-    RpcServer.queue
-  end
-
   def initialize(app)
     @app     = app
     @clients = []
