@@ -82,12 +82,12 @@ describe Stacks::Update do
         registry: 'file://',
         source: '...',
         services: services,
-        labels: ['fqdn=about.me']
+        labels: ['fqdn=noname.ibs']
       )
 
       outcome = subject.run
       expect(outcome.success?).to be_truthy
-      expect(outcome.result.labels).to eq(['fqdn=about.me'])
+      expect(outcome.result.labels).to eq(['fqdn=noname.ibs'])
     end
 
     it 'updates and keeps existing labels' do

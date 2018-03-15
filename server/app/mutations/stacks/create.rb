@@ -54,7 +54,7 @@ module Stacks
       attributes = self.inputs.clone
       # filter out some attributes and ensure StackRevision receives only
       # ones that are supported to avoid Mongoid::Errors::UnknownAttribute error
-      %w( parent parent_name labels ).each { |k| attributes.delete(k.to_sym)}
+      %i( parent parent_name labels ).each { |k| attributes.delete(k)}
       grid = attributes.delete(:grid)
       stack = Stack.create(name: self.name, grid: grid, parent_name: resolve_parent_name)
 

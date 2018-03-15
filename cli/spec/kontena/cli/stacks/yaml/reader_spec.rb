@@ -541,7 +541,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     it "defines labels" do
-      expect(subject.execute['labels']).to match array_including(['fqdn=about.wp.com'])
+      expect(subject.execute['labels']).to match array_including(['fqdn=oobe.broom.def'])
     end
   end
 

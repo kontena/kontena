@@ -64,33 +64,13 @@ describe Kontena::Cli::Stacks::ListCommand do
 
   context "command output layout" do
     before do
-      allow(client).to receive(:get).with('grids/test-grid/stacks').and_return({
-        'stacks' => []
-      })
+      allow(client).to receive(:get).with('grids/test-grid/stacks').and_return('stacks' => [])
     end
 
-    it "renders NAME as 1st column" do
-      expect{subject.run([])}.to output_lines [/^NAME/]
-    end
-
-    it "renders STACK as 2nd column" do
-      expect{subject.run([])}.to output_lines [/STACK/]
-    end
-
-    it "renders SERVICES_COUNT as 3rd column" do
-      expect{subject.run([])}.to output_lines [/SERVICES_COUNT/]
-    end
-
-    it "renders STATE as 4th column" do
-      expect{subject.run([])}.to output_lines [/STATE/]
-    end
-
-    it "renders PORTS as 5th column" do
-      expect{subject.run([])}.to output_lines [/PORTS/]
-    end
-
-    it "renders LABELS as 6th column" do
-      expect{subject.run([])}.to output_lines [/LABELS$/]
+    it "renders expected columns layout" do
+      expect{subject.run([])}.to output_table([]).with_header(
+        %w(NAME STACK SERVICES_COUNT STATE PORTS LABELS)
+      )
     end
   end
 
@@ -103,14 +83,14 @@ describe Kontena::Cli::Stacks::ListCommand do
           'services' => [],
           'variables' => { 'foo' => 'bar' },
           'children' => [],
-          'labels' => ['fqdn=about.me']
+          'labels' => ['fqdn=fence.gru']
         }]
       })
     end
 
     it "outputs stack labels" do
       expect{subject.run([])}.to output_table [
-        ["\e[2m\u229D\e[0m", 'stack-a', 'foo/stack-a:', '0', 'fqdn=about.me'],
+        [anything, 'stack-a', 'foo/stack-a:', '0', 'fqdn=fence.gru'],
       ]
     end
   end
@@ -130,7 +110,38 @@ describe Kontena::Cli::Stacks::ListCommand do
 
     it "outputs stack and dash" do
       expect{subject.run([])}.to output_table [
-        ["\e[2m\u229D\e[0m", 'stack-a', 'foo/stack-a:', '0', '-'],
+        [anything, 'stack-a', 'foo/stack-a:', '0', '-'],
+      ]
+    end
+  end
+
+  context "with stack and excessively lengthy labels" do
+    before do
+      allow(client).to receive(:get).with('grids/test-grid/stacks').and_return({
+        'stacks' => [{
+          'name' => 'stack-a',
+          'stack' => 'foo/stack-a',
+          'services' => [],
+          'variables' => { 'foo' => 'bar' },
+          'children' => [],
+          'labels' => ['noop=first', 'loop=second', 'xor=bitwise', 'and=bitwise']
+        }]
+      })
+    end
+
+    it "outputs stack and ellipsis in tty" do
+      # stub stdin to emulate kontena stack ls
+      allow($stdin).to receive(:tty?).and_return(true)
+      expect{subject.run([])}.to output_table [
+        [anything, 'stack-a', 'foo/stack-a:', '0', 'noop=first,loop=se...'],
+      ]
+    end
+
+    it "outputs stack and labels in non-tty" do
+      # stub stdin to emulate kontena stack ls | grep xyz
+      allow($stdin).to receive(:tty?).and_return(false)
+      expect{subject.run([])}.to output_table [
+        [anything, 'stack-a', 'foo/stack-a:', '0', 'noop=first,loop=second,xor=bitwise,and=bitwise'],
       ]
     end
   end

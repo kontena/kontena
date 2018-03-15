@@ -72,24 +72,24 @@ describe Stack do
 
     it 'create should assign labels' do
       # define stack labels
-      create_args = args.merge(labels: ['fqdn=about.me'])
+      create_args = args.merge(labels: ['fqdn=seed.xpo'])
       # assert stack has been created with expected labels
       stack = Stacks::Create.run(create_args).result
-      expect(stack.labels).to eq(['fqdn=about.me'])
+      expect(stack.labels).to eq(['fqdn=seed.xpo'])
     end
 
     it 'update should not increase revision' do
       # define stack labels
-      create_args = args.merge(labels: ['fqdn=about.us'])
+      create_args = args.merge(labels: ['fqdn=dvorak.xcv'])
       # assert prerequisites - original revision starts with 1
       stack = Stacks::Create.run(create_args).result
-      expect(stack.labels).to eq(['fqdn=about.us'])
+      expect(stack.labels).to eq(['fqdn=dvorak.xcv'])
       expect(stack.latest_rev.revision).to eq 1
       # update stack labels
-      update_args = args.merge(stack_instance: stack, labels: ['fqdn=noop.io'])
+      update_args = args.merge(stack_instance: stack, labels: ['fqdn=xyz.arg'])
       # assert stack labesl have been updated but revision remains unchanged
       stack = Stacks::Update.run(update_args).result
-      expect(stack.labels).to eq(['fqdn=noop.io'])
+      expect(stack.labels).to eq(['fqdn=xyz.arg'])
       expect(stack.latest_rev.revision).to eq 1
     end
   end

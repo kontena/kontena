@@ -108,13 +108,13 @@ describe Stacks::Create do
         stack: 'foo/bar',
         version: '0.1.0',
         registry: 'file://',
-        labels: ['fqdn=about.me'],
+        labels: ['fqdn=master.ops'],
         source: '...',
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome).to be_success
-      expect(outcome.result.labels).to eq(['fqdn=about.me'])
+      expect(outcome.result.labels).to eq(['fqdn=master.ops'])
     end
 
     it 'creates stack services' do

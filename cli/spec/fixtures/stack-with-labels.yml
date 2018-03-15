@@ -1,6 +1,7 @@
 stack: user/labels
 version: 0.1.1
-labels: ['fqdn=about.wp.com', 'about.wp.com']
+labels:
+  - fqdn=oobe.broom.def
 services:
   wordpress-stateful:
     image: image

@@ -32,7 +32,7 @@ describe '/v1/stacks', celluloid: true do
       source: '...',
       variables: { foo: 'bar' },
       registry: 'file',
-      labels: ['fqdn=about.me'],
+      labels: ['fqdn=spaces.cim'],
       services: [
         { name: 'app', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -51,7 +51,7 @@ describe '/v1/stacks', celluloid: true do
       source: '...',
       variables: { foo: 'bar' },
       registry: 'file',
-      labels: ['fqdn=about.you'],
+      labels: ['fqdn=xyz.yo'],
       services: [
         { name: 'app2', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -87,7 +87,7 @@ describe '/v1/stacks', celluloid: true do
     it 'includes assigned labels' do
       get "/v1/stacks/#{stack.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['labels']).to eq(['fqdn=about.me'])
+      expect(json_response['labels']).to eq(['fqdn=spaces.cim'])
     end
 
     it 'returns 404 for unknown stack' do
@@ -228,7 +228,8 @@ describe '/v1/stacks', celluloid: true do
       expect{
         patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
         expect(response.status).to eq(200)
-      }.to change{ stack.reload.labels }.from(['fqdn=about.me']).to(['foo=bar', 'timezone=PDT'])
+        expect(json_response['labels']).to eq labels
+      }.to change{ stack.reload.labels }.from(['fqdn=spaces.cim']).to(labels)
     end
 
     it 'saves empty stack labels' do
@@ -236,7 +237,8 @@ describe '/v1/stacks', celluloid: true do
       expect {
         patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
         expect(response.status).to eq(200)
-      }.to change{ stack.reload.labels }.from(["fqdn=about.me"]).to([])
+        expect(json_response['labels']).to eq labels
+      }.to change{ stack.reload.labels }.from(["fqdn=spaces.cim"]).to(labels)
     end
   end
 
@@ -262,7 +264,7 @@ describe '/v1/stacks', celluloid: true do
         put "/v1/stacks/#{stack.to_path}", data.to_json, request_headers
         expect(response.status).to eq(200)
       }.to change{ stack.stack_revisions.count }.by(1)
-        .and change{ stack.reload.labels }.from(["fqdn=about.me"]).to(['foo=1', 'bar=2'])
+        .and change{ stack.reload.labels }.from(["fqdn=spaces.cim"]).to(['foo=1', 'bar=2'])
     end
 
     it 'returns 404 for unknown stack' do

@@ -5,18 +5,13 @@ describe Kontena::Cli::Stacks::Labels::AddCommand do
   include ClientHelpers
   include OutputHelpers
 
-  # stack name
-  let :name do
-    'test-stack'
-  end
+  let(:name) { 'test-stack' }
 
   # shared endpoint - the same for all cases
-  let :endpoint do
-    "stacks/test-grid/#{name}"
-  end
+  let(:endpoint) { "stacks/test-grid/#{name}" }
 
-  # scratch stack definition - use it as is, or modify to accomodate specific test case
-  let :scratch do
+  # base stack definition - use it as is, or modify to accomodate specific test case
+  let(:scratch) do
     {
       'name' => name,
       'stack' => "foo/#{name}",
@@ -31,37 +26,27 @@ describe Kontena::Cli::Stacks::Labels::AddCommand do
   end
 
   context "for a stack without labels" do
-    # original stack definition
     let(:stack) { scratch }
+
     it "adds the labels" do
-      # arrange
       expected = { "labels" => ['test=yes'] }
-      # assert
       expect(client).to receive(:patch).with(endpoint, expected)
-      # act
       subject.run([name, 'test=yes'])
     end
   end
 
   context "for a stack with labels" do
-    # update original stack definition
     let(:stack) { scratch.merge("labels" => ['noop=yoop']) }
 
     it "merges original and new labels" do
-      # arrange
       expected = { "labels" => ['noop=yoop', 'loop=maybe'] }
-      # assert
       expect(client).to receive(:patch).with(endpoint, expected)
-      # act
       subject.run([name, 'loop=maybe'])
     end
 
     it "deduplicates labels" do
-      # arrange
       expected = { "labels" => ['noop=yoop'] }
-      # assert
       expect(client).to receive(:patch).with(endpoint, expected)
-      # act
       subject.run([name, 'noop=yoop'])
     end
   end

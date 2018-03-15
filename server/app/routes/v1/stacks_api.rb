@@ -24,7 +24,7 @@ module V1
         if outcome.success?
           audit_event(request, @grid, @stack, 'patch')
           response.status = 200
-          {}
+          render('stacks/show')
         else
           response.status = 422
           {error: outcome.errors.message}
