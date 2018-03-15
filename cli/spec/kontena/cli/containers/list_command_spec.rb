@@ -40,4 +40,19 @@ describe Kontena::Cli::Containers::ListCommand do
       ]).with_header(['CONTAINER_ID', 'IMAGE', 'COMMAND', 'CREATED', 'STATUS'])
     end
   end
+
+  context "with a container for a missing node" do
+    let(:containers) { [
+        JSON.load(<<-EOM
+          {"id":"share_agent_run_1","name":"share_agent_run_1","container_id":"c13f096183e9c7104e9237ddaa8e613e6403c552001ed70e9b5fa9911f3d2157","grid_id":"development","service_id":null,"created_at":"2017-06-20T12:46:01.518Z","updated_at":"2017-06-20T12:46:01.501Z","started_at":"2017-06-20T12:45:29.428Z","finished_at":"0001-01-01T00:00:00.000Z","deleted_at":null,"status":"running","state":{"error":"","exit_code":0,"pid":7958,"oom_killed":false,"paused":false,"restarting":false,"dead":false,"running":true},"deploy_rev":null,"service_rev":null,"instance_number":null,"image":"share_agent","cmd":["/app/bin/kontena-agent"],"env":["KONTENA_URI=ws://192.168.66.1:9292","LOG_LEVEL=0","DEBUG=1","KONTENA_NODE_TOKEN=Eaj...X7OA==","KONTENA_PEER_INTERFACE=eth1","KONTENA_NODE_ID=development/core-02","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],"volumes":[],"ip_address":null,"hostname":"core-02","domainname":"","network_settings":{"bridge":"","gateway":"","ip_address":"","ip_prefix_len":0,"mac_address":"","port_mapping":null,"ports":{}}}
+          EOM
+        )
+    ] }
+
+    it "lists the container" do
+      expect{subject.run([])}.to output_table([
+        ['/share_agent_run_1', 'share_agent', '"/app/bin/kontena-agent"', 'xxx days ago', 'running'],
+      ])
+    end
+  end
 end
