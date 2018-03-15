@@ -132,17 +132,21 @@ describe Kontena::Cli::Stacks::ListCommand do
     it "outputs stack and ellipsis in tty" do
       # stub stdin to emulate kontena stack ls
       allow($stdin).to receive(:tty?).and_return(true)
-      expect{subject.run([])}.to output_table [
+      expect{subject.run([])}.to output_table([
         [anything, 'stack-a', 'foo/stack-a:', '0', 'noop=first,loop=se...'],
-      ]
+      ]).with_header(
+        %w(NAME STACK SERVICES STATE EXPOSED\ PORTS LABELS)
+      )
     end
 
     it "outputs stack and labels in non-tty" do
       # stub stdin to emulate kontena stack ls | grep xyz
       allow($stdin).to receive(:tty?).and_return(false)
-      expect{subject.run([])}.to output_table [
+      expect{subject.run([])}.to output_table([
         [anything, 'stack-a', 'foo/stack-a:', '0', 'noop=first,loop=second,xor=bitwise,and=bitwise'],
-      ]
+      ]).with_header(
+        %w(NAME STACK SERVICES STATE EXPOSED\ PORTS LABELS)
+      )
     end
   end
 end
