@@ -5,10 +5,6 @@ describe Kontena::Cli::Containers::ListCommand do
   include OutputHelpers
 
   before do
-    allow(TTY::Screen).to receive(:width).and_return(1000)
-  end
-
-  before do
     allow(client).to receive(:get).with('containers/test-grid').and_return({'containers' => containers})
 
     # supress spinner output
