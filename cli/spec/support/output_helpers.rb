@@ -1,6 +1,12 @@
 module OutputHelpers
   extend RSpec::Matchers::DSL
 
+  def self.included(base)
+    base.before do
+      allow(TTY::Screen).to receive(:width).and_return(1000)
+    end
+  end
+
   matcher :return_and_output do |expected, *lines|
     supports_block_expectations
 
