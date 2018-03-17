@@ -101,8 +101,8 @@ module Kontena::Cli::Stacks
     # @return [<String>]
     def stack_labels(stack)
       labels = (stack['labels'] || ['-']).join(',')
-      # trim labels to fit viewport when exceed 20 chars
-      labels.length > 20 && $stdin.tty? ? "#{labels[0..17]}..." : labels
+      # trim labels to fit viewport when exceed 43 chars
+      labels.length > 43 && $stdout.isatty ? "#{labels[0..40]}..." : labels
     end
 
     # @param [Hash] stack
