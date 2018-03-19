@@ -10,7 +10,7 @@ module Stacks
 
     optional do
       array :labels do
-        string
+        string matches: /\A[a-z0-9.-]+=/
       end
     end
 

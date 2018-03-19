@@ -63,5 +63,17 @@ describe Stacks::Patch do
       expect(outcome.success?).to be_falsey
       expect(outcome.result).to be_nil
     end
+
+    it 'rejects invalid labels' do
+      subject = described_class.new(
+        stack_instance: stack,
+        name: 'stack',
+        labels: ['foo', 'bar']
+      )
+
+      outcome = subject.run()
+      expect(outcome.success?).to be_falsey
+      expect(outcome.result).to be_nil
+    end
   end
 end
