@@ -123,6 +123,23 @@ describe Stacks::Update do
       expect(outcome.result.labels).to eq([])
     end
 
+    it 'rejects to update using invalid labels' do
+      services = [{name: 'redis', image: 'redis:3.0'}]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services,
+        labels: ['noop']
+      )
+
+      outcome = subject.run
+      expect(outcome.success?).to be_falsey
+      expect(outcome.errors.message.keys).to include('labels')
+    end
+
     it 'fails to create new volumes' do
       services = [
         {name: 'redis', image: 'redis:3.0', volumes: ['vol:/data']},

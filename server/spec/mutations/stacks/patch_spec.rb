@@ -61,7 +61,7 @@ describe Stacks::Patch do
 
       outcome = subject.run()
       expect(outcome.success?).to be_falsey
-      expect(outcome.result).to be_nil
+      expect(outcome.errors.message.keys).to include('stack_instance')
     end
 
     it 'rejects invalid labels' do
@@ -73,7 +73,7 @@ describe Stacks::Patch do
 
       outcome = subject.run()
       expect(outcome.success?).to be_falsey
-      expect(outcome.result).to be_nil
+      expect(outcome.errors.message.keys).to include('labels')
     end
   end
 end
