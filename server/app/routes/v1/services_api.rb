@@ -153,6 +153,20 @@ module V1
               halt_request(422, { error: outcome.errors.message })
             end
           end
+
+          # POST /v1/services/:grid_name/:stack_name/:service_name/terminate
+          r.on('terminate') do
+            outcome = GridServices::Terminate.run(
+                grid_service: @grid_service,
+            )
+            if outcome.success?
+              @grid_service_deploy = outcome.result
+              audit_event(r, @grid_service.grid, @grid_service, 'terminate', @grid_service)
+              render('grid_service_deploys/show')
+            else
+              halt_request(422, { error: outcome.errors.message })
+            end
+          end
         end
 
         # PUT /v1/services/:grid_name/:stack_name/:service_name

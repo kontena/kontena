@@ -150,6 +150,11 @@ class GridService
   end
 
   # @return [Boolean]
+  def terminated?
+    self.state == 'terminated'
+  end
+
+  # @return [Boolean]
   def stack_exposed?
     return false unless self.stack
     self.stack.exposed_service?(self)
