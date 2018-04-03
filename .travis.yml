@@ -7,6 +7,7 @@ cache:
 services:
   - docker
 before_install:
+  - gem install bundler
   - ./build/travis/before_install.sh
 bundler_args: --without development --with test
 env:
