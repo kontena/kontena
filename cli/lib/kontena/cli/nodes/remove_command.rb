@@ -14,10 +14,8 @@ module Kontena::Cli::Nodes
       nodes.each do |node_name|
         node = client(token).get("nodes/#{current_grid}/#{node_name}")
 
-        if node['has_token'] && node['connected']
-          warning "Node #{node['name']} is still connected using a node token, but will be force-disconnected"
-        elsif node['connected']
-          exit_with_error "Node #{node['name']} is still connected using a grid token. You must terminate the node before removing it."
+        if node['connected']
+          exit_with_error "Node #{node['name']} is still connected. You must terminate the node before removing it, for example: kontena cloud node rm"
         end
 
         confirm_command(node_name) unless forced?
