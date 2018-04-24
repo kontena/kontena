@@ -39,6 +39,7 @@ describe Kontena::Cli::Nodes::RemoveCommand do
         "name" => 'node-1',
         "has_token" => false,
         "connected" => true,
+        "labels" => ["provider=kontena"]
       }
     end
 
@@ -49,7 +50,7 @@ describe Kontena::Cli::Nodes::RemoveCommand do
     it 'does not remove the node' do
       expect(client).not_to receive(:delete)
 
-      expect{subject.run(['node-1'])}.to exit_with_error.and output(" [error] Node node-1 is still connected. You must terminate the node before removing it, for example: kontena cloud node rm\n").to_stderr
+      expect{subject.run(['node-1'])}.to exit_with_error.and output(" [error] Node node-1 is still connected. You should terminate the node instead: kontena cloud node terminate node-1\n").to_stderr
     end
   end
 end

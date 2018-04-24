@@ -13,9 +13,14 @@ module Kontena::Cli::Nodes
 
       nodes.each do |node_name|
         node = client(token).get("nodes/#{current_grid}/#{node_name}")
-
-        if node['connected']
-          exit_with_error "Node #{node['name']} is still connected. You must terminate the node before removing it, for example: kontena cloud node rm"
+        provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
+        if node['connected'] && provider
+          plugin = provider == 'kontena' ? 'cloud' : provider
+          exit_with_error "Node #{node['name']} is still connected. You should terminate the node instead: kontena #{plugin} node terminate #{node['name']}"
+        elsif node['connected']
+          exit_with_error "Node #{node['name']} is still connected. You must terminate the node before removing it"
+        else
+          warning "Removing a node from the grid does not terminate the host machine from any cloud provider, so your cloud provider may continue to bill you for the machine until you terminate it"
         end
 
         confirm_command(node_name) unless forced?
