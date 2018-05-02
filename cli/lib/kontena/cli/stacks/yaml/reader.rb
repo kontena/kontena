@@ -197,7 +197,12 @@ module Kontena::Cli::Stacks
         create_parent_variable(parent_name) if parent_name
 
         variables.run
-        raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid? || skip_validation
+
+        if !skip_validation && !variables.valid?
+          stringify_keys(variables.errors).each do |k,v|
+            errors << { 'variables' => { k => v } }
+          end
+        end
 
         validate unless skip_validation
 
@@ -206,6 +211,7 @@ module Kontena::Cli::Stacks
           result['stack']         = raw_yaml['stack']
           result['version']       = loader.stack_name.version || '0.0.1'
           result['name']          = name
+          result['labels']        = fully_interpolated_yaml['labels'] || []
           result['registry']      = loader.registry
           result['expose']        = fully_interpolated_yaml['expose']
           result['services']      = errors.empty? ? parse_services(service_name) : {}
@@ -225,6 +231,7 @@ module Kontena::Cli::Stacks
           result['services'].each do |service|
             errors << { 'services' => { service['name'] => { 'image' => "image is missing" } } } if service['image'].to_s.empty?
           end
+          errors << { file => { 'stack' => 'Required field missing' } } if result['stack'].nil?
         end
         result
       end

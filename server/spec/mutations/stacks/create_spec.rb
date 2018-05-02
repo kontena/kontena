@@ -101,6 +101,38 @@ describe Stacks::Create do
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
+    it 'creates stack labels' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        labels: ['fqdn=master.ops'],
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
+      ).run
+      expect(outcome).to be_success
+      expect(outcome.result.labels).to eq(['fqdn=master.ops'])
+    end
+
+    it 'rejects invalid stack labels' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        labels: ['noop', 'loop'],
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
+      ).run
+      expect(outcome).not_to be_success
+      expect(outcome.errors.message.keys).to include('labels')
+    end
+
     it 'creates stack services' do
       outcome = described_class.new(
         grid: grid,

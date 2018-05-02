@@ -10,8 +10,8 @@ module Kontena::Cli::Certificate
 
     parameter "DOMAIN", "Domain to authorize"
 
-    option '--type', 'AUTHORIZATION_TYPE', 'Authorization type, either tls-sni-01 or dns-01', default: 'dns-01'
-    option '--linked-service', "LINKED_SERVICE", 'A service (usually LB) where the tls-sni-01 challenge certificate is bundled to'
+    option '--type', 'AUTHORIZATION_TYPE', 'Authorization type, either http-01, dns-01 or tls-sni-01 (renewals only)', default: 'http-01'
+    option '--linked-service', "LINKED_SERVICE", 'A service (usually LB) where the http-01/tls-sni-01 challenge is deployed to'
 
     requires_current_master
     requires_current_master_token

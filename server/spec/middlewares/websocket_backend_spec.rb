@@ -3,11 +3,9 @@ require_relative '../../app/middlewares/websocket_backend'
 describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
-  let(:rpc_queue) { instance_double(SizedQueue) }
 
   let(:logger) { instance_double(Logger) }
   before do
-    allow(subject).to receive(:rpc_queue).and_return(rpc_queue)
     allow(subject).to receive(:logger).and_return(logger)
     allow(logger).to receive(:debug)
   end
@@ -524,6 +522,33 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       it "sends version" do
         expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
         subject.send_master_info(client_ws)
+      end
+    end
+
+    describe '#handle_rpc_request' do
+      it "calls RpcServer and sends response" do
+        rpc_request = [0, 100, '/test/test', ['test']]
+        rpc_response = [1, 100, nil, 'ack']
+
+        expect(RpcServer).to receive(:handle_rpc_request).with(grid.id, rpc_request).and_yield(rpc_response)
+        expect(client_ws).to receive(:send) do |bytes|
+          data = MessagePack.unpack(bytes.pack('c*'))
+
+          expect(data).to eq rpc_response
+        end
+
+        subject.handle_rpc_request(client_ws, rpc_request)
+        EM.run_deferred_callbacks
+      end
+    end
+
+    describe '#handle_rpc_notification' do
+      it "calls RpcServer" do
+        rpc_notification = [2, '/test/test', ['test']]
+
+        expect(RpcServer).to receive(:handle_rpc_notification).with(grid.id, rpc_notification)
+
+        subject.handle_rpc_notification(client_ws, rpc_notification)
       end
     end
 

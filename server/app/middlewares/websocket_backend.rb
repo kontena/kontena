@@ -15,8 +15,6 @@ class WebsocketBackend
   CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.seconds)
 
   RPC_MSG_TYPES = %w(request notify)
-  QUEUE_WATCH_PERIOD = 60 # once in a minute
-  QUEUE_DROP_NOTIFICATIONS_LIMIT = (RpcServer::QUEUE_SIZE * 0.8)
 
   class CloseError < StandardError
     attr_reader :code
@@ -28,11 +26,6 @@ class WebsocketBackend
 
   attr_reader :logger
 
-  # @return [SizedQueue]
-  def rpc_queue
-    RpcServer.queue
-  end
-
   def initialize(app)
     @app     = app
     @clients = []
@@ -43,7 +36,6 @@ class WebsocketBackend
     @msg_dropped = 0
     subscribe_to_rpc_channel
     watch_connections
-    watch_queue
     watchdog
   end
 
@@ -293,25 +285,20 @@ class WebsocketBackend
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_request(ws, data)
-    client = client_for_ws(ws)
-    if client
-      self.rpc_queue << [ws, client[:grid_id].to_s, data]
+    if client = client_for_ws(ws)
+      RpcServer.handle_rpc_request(client[:grid_id].to_s, data) do |message|
+        EM.next_tick { # important to push sending back to EM reactor thread
+          send_message(ws, message)
+        }
+      end
     end
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_notification(ws, data)
-    rpc_queue = self.rpc_queue
-
-    if rpc_queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT # too busy to handle notifications
-      @msg_dropped += 1
-      return
-    end
-
-    client = client_for_ws(ws)
-    if client
-      rpc_queue << [client[:grid_id].to_s, data]
+    if client = client_for_ws(ws)
+      RpcServer.handle_rpc_notification(client[:grid_id].to_s, data)
     end
   end
 
@@ -424,18 +411,6 @@ class WebsocketBackend
       @clients.each do |client|
         self.verify_client_connection(client)
       end
-    end
-  end
-
-  def watch_queue
-    EM::PeriodicTimer.new(QUEUE_WATCH_PERIOD) do
-      if (queue_size = self.rpc_queue.size) > QUEUE_DROP_NOTIFICATIONS_LIMIT
-        logger.warn "#{queue_size} messages in queue"
-      end
-      logger.warn "#{@msg_dropped} dropped notifications" if @msg_dropped > 0
-      logger.info "#{@msg_counter / QUEUE_WATCH_PERIOD} messages per second"
-      @msg_counter = 0
-      @msg_dropped = 0
     end
   end
 
