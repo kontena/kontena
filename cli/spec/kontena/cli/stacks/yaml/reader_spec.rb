@@ -65,6 +65,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         stack
         version
         name
+        labels
         registry
         expose
         services
@@ -521,6 +522,26 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it "raises an undefined variable error" do
       expect{subject.execute}.to raise_error(Liquid::UndefinedVariable, /undefined variable asdflol/)
+    end
+  end
+
+  context "for optional labels that are undefined" do
+    subject do
+      described_class.new(fixture_path('stack-without-labels.yml'))
+    end
+
+    it "defines labels" do
+      expect(subject.execute['labels']).to match array_including([])
+    end
+  end
+
+  context "for optional labels that are defined" do
+    subject do
+      described_class.new(fixture_path('stack-with-labels.yml'))
+    end
+
+    it "defines labels" do
+      expect(subject.execute['labels']).to match array_including(['fqdn=oobe.broom.def'])
     end
   end
 

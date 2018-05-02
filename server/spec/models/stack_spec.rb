@@ -3,6 +3,7 @@ describe Stack do
 
   it { should be_timestamped_document }
   it { should have_fields(:name).of_type(String) }
+  it { should have_fields(:labels).of_type(Array) }
   it { should belong_to(:grid) }
   it { should have_many(:stack_revisions)}
   it { should have_many(:grid_services)}
@@ -41,6 +42,55 @@ describe Stack do
       )
       allow(subject).to receive(:grid_services).and_return(services)
       expect(subject.state).to eq(:running)
+    end
+  end
+
+  context 'labels' do
+    let(:david) { User.create!(email: 'david@domain.com', external_id: '123456') }
+    let(:grid) { Grid.create!(name: 'foogrid') }
+    # stack definition
+    let(:args) {
+      {
+        current_user: david,
+        grid: grid,
+        name: 'stack',
+        stack: 'stack',
+        version: '0.1.1',
+        source: '...',
+        variables: { foo: 'bar' },
+        registry: 'file',
+        services: [
+          { name: 'app', image: 'my/app:latest', stateful: false },
+          { name: 'redis', image: 'redis:2.8', stateful: true }
+        ]
+      }
+    }
+
+    it 'returns an empty array by default' do
+      expect(subject.labels).to be_empty
+    end
+
+    it 'create should assign labels' do
+      # define stack labels
+      create_args = args.merge(labels: ['fqdn=seed.xpo'])
+      # assert stack has been created with expected labels
+      stack = Stacks::Create.run(create_args).result
+      expect(stack.labels).to eq(['fqdn=seed.xpo'])
+    end
+
+    it 'update should not increase revision' do
+      # define stack labels
+      create_args = args.merge(labels: ['fqdn=dvorak.xcv'])
+      # assert prerequisites - original revision starts with 1
+      stack = Stacks::Create.run(create_args).result
+      expect(stack.labels).to eq(['fqdn=dvorak.xcv'])
+      expect(stack.latest_rev.revision).to eq 1
+      # update stack labels
+      update_args = args.merge(stack_instance: stack, labels: ['fqdn=xyz.arg'])
+      # assert stack labesl have been updated but revision remains unchanged
+      stack = Stacks::Update.run(update_args).result
+      expect(stack.labels).to eq(['fqdn=xyz.arg'])
+      expect(stack.latest_rev.revision).to eq 1
     end
   end
 
