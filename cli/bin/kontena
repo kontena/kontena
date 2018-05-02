@@ -17,7 +17,7 @@ else
   ENV['DEBUG'] = "true" if ARGV[0..arg_end_idx].any? { |arg| arg == '-D' || arg == '--debug'}
   ENV['DEBUG'] = "false" if ARGV[0..arg_end_idx].any? { |arg| arg == '--no-debug' }
   require 'dotenv'
-  Dotenv.load('.kontena-env')
+  Dotenv.load(*Pathname.new('.').realpath.ascend.map { |p| p.join('.kontena.env') }.map(&:to_s))
   require 'kontena_cli'
   Kontena::PluginManager.init unless ENV['NO_PLUGINS']
   Kontena::MainCommand.run
