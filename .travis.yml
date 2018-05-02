@@ -7,8 +7,9 @@ cache:
 services:
   - docker
 before_install:
+  - gem install bundler
   - ./build/travis/before_install.sh
-bundler_args: --without development
+bundler_args: --without development --with test
 env:
   global:
     - secure: "UyygtUDLvV2+14mEG6Pddo/deLazXc2Hit63KlbZ26Pi8cxbr1FeDUBi4WFVWlFh01smKe5mO+kk/4k06aSdolcTC59QUsltRrsINmsxj/BS66L7JbWP8/yPQP1drE6CH5oh6t1JAchuK19bLUOK9Tycn0J2VufW69ckw3D+rqU=" # DOCKER_HUB_PASSWORD
