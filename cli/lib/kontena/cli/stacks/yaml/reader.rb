@@ -206,6 +206,7 @@ module Kontena::Cli::Stacks
           result['stack']         = raw_yaml['stack']
           result['version']       = loader.stack_name.version || '0.0.1'
           result['name']          = name
+          result['labels']        = fully_interpolated_yaml['labels'] || []
           result['registry']      = loader.registry
           result['expose']        = fully_interpolated_yaml['expose']
           result['services']      = errors.empty? ? parse_services(service_name) : {}

@@ -1,5 +1,7 @@
 stack: user/stackname
 version: 0.1.1
+labels:
+  - fqdn=nist.wer.omg
 services:
   wordpress:
     extends:
