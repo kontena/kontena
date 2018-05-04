@@ -7,7 +7,7 @@ module Kontena::Cli::Nodes
     requires_current_master_token
     requires_current_grid
 
-    parameter "NODE", "Node name"
+    parameter "NODE ...", "Node name", attribute_name: :nodes
 
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
     option "--clear-labels", :flag, "Clear node labels"
@@ -20,8 +20,11 @@ module Kontena::Cli::Nodes
       data[:labels] = [] if self.clear_labels?
 
       data[:availability] = availability if availability
-      spinner "Updating #{pastel.cyan(self.node)} node " do
-        client.put("nodes/#{current_grid}/#{self.node}", data)
+
+      nodes.each do |node_name|
+        spinner "Updating node #{pastel.cyan(node_name)} " do
+          client.put("nodes/#{current_grid}/#{node_name}", data)
+        end
       end
     end
   end
