@@ -10,7 +10,7 @@ services:
   - docker
 
 before_cache:
-  - gem uninstall --user-install -I -a -x kontena-cli
+  - gem uninstall -I --user-install -a -x kontena-cli
 
 before_install:
   - gem install bundler
