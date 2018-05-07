@@ -3,7 +3,7 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand ["ls", "list"], "List installed stacks in a grid", load_subcommand('stacks/list_command')
   subcommand ["remove","rm"], "Remove a deployed stack from a grid", load_subcommand('stacks/remove_command')
   subcommand "show", "Show details about a stack in a grid", load_subcommand('stacks/show_command')
-  subcommand "inspect", "Inspect a stack in a grid", load_subcommand('stacks/inspect_command')
+  subcommand "inspect", "Show the Stack YAML of an installed stack", load_subcommand('stacks/inspect_command')
   subcommand "upgrade", "Upgrade a stack in a grid", load_subcommand('stacks/upgrade_command')
   subcommand ["start", "deploy"], "Deploy an installed stack in a grid", load_subcommand('stacks/deploy_command')
   subcommand "logs", "Show logs from services in a stack", load_subcommand('stacks/logs_command')

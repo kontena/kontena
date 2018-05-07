@@ -3,7 +3,7 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    banner "Inspect a stack"
+    banner "Shows the Stack YAML used to install the stack"
 
     parameter "NAME", "Stack name"
 
