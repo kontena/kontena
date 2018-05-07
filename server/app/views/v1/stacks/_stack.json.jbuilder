@@ -12,6 +12,7 @@ json.revision latest_rev.revision
 json.expose latest_rev.expose
 json.source latest_rev.source
 json.variables latest_rev.variables
+json.labels stack.labels
 json.services stack.grid_services.to_a do |grid_service|
   json.partial! 'app/views/v1/grid_services/grid_service', grid_service: grid_service
 end

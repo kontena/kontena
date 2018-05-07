@@ -1,11 +1,7 @@
 
 describe GridServices::Scale, celluloid: true do
-  let(:host_node) { HostNode.create(node_id: 'aa')}
-  let(:grid) {
-    grid = Grid.create!(name: 'test-grid', initial_size: 1)
-    grid.host_nodes << host_node
-    grid
-  }
+  let(:grid) { Grid.create!(name: 'test-grid', initial_size: 1) }
+  let(:host_node) { grid.create_node!('test-node', node_id: 'aa') }
   let(:redis_service) {
     GridService.create(
       grid: grid, name: 'redis', image_name: 'redis:2.8'
@@ -18,10 +14,16 @@ describe GridServices::Scale, celluloid: true do
   }
 
   describe '#run' do
-    it 'sends deploy call to worker' do
+    it 'creates a grid service deploy' do
       expect {
         subject.run
       }.to change{ redis_service.grid_service_deploys.count }.by(1)
+    end
+
+    it 'does not change service revision' do
+      expect{
+        subject.run!
+      }.to_not change{redis_service.reload.revision}
     end
 
     it 'updates container_count' do

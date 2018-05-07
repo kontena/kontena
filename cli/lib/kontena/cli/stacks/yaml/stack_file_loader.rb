@@ -64,7 +64,7 @@ module Kontena::Cli::Stacks
 
       # @return [StackName] an accessor to StackName for the target file
       def stack_name
-        @stack_name ||= Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
+        @stack_name = Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
       end
 
       # @return [Reader] an accessor to YAML::Reader for the target file

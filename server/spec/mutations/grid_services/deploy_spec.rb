@@ -1,29 +1,11 @@
 
 describe GridServices::Deploy, celluloid: true do
-  let(:host_node) { HostNode.create(node_id: 'aa')}
-  let(:grid) {
-    grid = Grid.create!(name: 'test-grid', initial_size: 1)
-    grid.host_nodes << host_node
-    grid
-  }
+  let(:grid) { Grid.create!(name: 'test-grid', initial_size: 1) }
+  let(:host_node) { grid.create_node!('test-node', node_id: 'aa') }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
-  let(:subject) { described_class.new(grid_service: redis_service, strategy: 'ha')}
+  let(:subject) { described_class.new(grid_service: redis_service)}
 
   describe '#run' do
-    it 'does not allow to deploy service that is starting' do
-      redis_service.set_state('starting')
-      outcome = subject.run
-      expect(outcome.success?).to be_falsey
-      expect(outcome.errors.message['state']).not_to be_nil
-    end
-
-    it 'does not allow to deploy service that is stopping' do
-      redis_service.set_state('stopping')
-      outcome = subject.run
-      expect(outcome.success?).to be_falsey
-      expect(outcome.errors.message['state']).not_to be_nil
-    end
-
     it 'allows to deploy service that is initialized' do
       redis_service.set_state('initialized')
       outcome = subject.run
@@ -52,7 +34,7 @@ describe GridServices::Deploy, celluloid: true do
       expect(redis_service.reload.running?).to be_truthy
     end
 
-    it 'sends deploy call to worker' do
+    it 'creates service deploy' do
       grid
       expect {
         subject.run
@@ -73,7 +55,11 @@ describe GridServices::Deploy, celluloid: true do
 
     it 'sets deploy to result' do
       outcome = subject.run
-      expect(outcome.result).to be_instance_of(GridServiceDeploy)
+      expect(outcome).to be_success
+
+      deploy = outcome.result
+      expect(deploy).to be_instance_of(GridServiceDeploy)
+      expect(deploy.grid_service).to eq redis_service
     end
   end
 end
