@@ -27,6 +27,7 @@ module Kontena::Cli::Stacks
 
     def execute
       set_env_variables(stack_name, current_grid)
+      stack # runs validations
 
       services = stack['services']
 
@@ -35,7 +36,7 @@ module Kontena::Cli::Stacks
       end
 
       if services.none?{ |service| service['build'] }
-        abort pastel.red('Not found any service with a build option')
+        abort pastel.red("Didn't find any services to build")
       end
       build_docker_images(services)
       push_docker_images(services) unless no_push?
