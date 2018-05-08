@@ -32,7 +32,7 @@ describe 'kontena service shutdown' do
         end
       end
     end
-    
+
     context "using graceful shutdown to close the listening socket" do
       before(:all) do
         with_fixture_dir('stack/shutdown-test') do
