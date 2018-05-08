@@ -48,7 +48,7 @@ describe 'kontena service shutdown' do
           run! 'kontena service deploy --force shutdown-test-graceful/server'
         end
 
-        pending "does not result in any client errors" do
+        it "does not result in any client errors" do
           events = service_events('shutdown-test-graceful/client')
 
           expect(events.select{|e| e[:type] == 'instance_crash'}).to eq([]), service_logs('shutdown-test-graceful/client').join
