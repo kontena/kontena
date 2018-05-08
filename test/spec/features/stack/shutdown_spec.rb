@@ -32,7 +32,7 @@ describe 'kontena service shutdown' do
         end
       end
     end
-    
+
     context "using graceful shutdown to close the listening socket" do
       before(:all) do
         with_fixture_dir('stack/shutdown-test') do
@@ -71,7 +71,7 @@ describe 'kontena service shutdown' do
           run! 'kontena service deploy --force shutdown-test-nohealthcheck/server'
         end
 
-        it "does not result in any client errors" do
+        pending "does not result in any client errors" do
           events = service_events('shutdown-test-nohealthcheck/client')
 
           expect(events.select{|e| e[:type] == 'instance_crash'}).to eq([]), service_logs('shutdown-test-nohealthcheck/client').join
