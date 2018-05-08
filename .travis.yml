@@ -39,11 +39,6 @@ jobs:
   include:
     - stage: test
       script: ./build/travis/test.sh
-      rvm: 2.2
-      env: TEST_DIR=cli
-      if: type = pull_request
-    - stage: test
-      script: ./build/travis/test.sh
       rvm: 2.3
       env: TEST_DIR=cli
       if: type = pull_request
