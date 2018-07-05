@@ -22,8 +22,8 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_runtime_dependency "excon", "0.60.0"
-  spec.add_runtime_dependency "tty-prompt", "0.14.0"
+  spec.add_runtime_dependency "excon", "0.62.0"
+  spec.add_runtime_dependency "tty-prompt", "0.16.1"
   spec.add_runtime_dependency "clamp", "~> 1.2.1"
   spec.add_runtime_dependency "ruby_dig", "~> 0.0.2"
   spec.add_runtime_dependency "hash_validator", "0.8.0"
@@ -31,6 +31,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "opto", "1.8.7"
   spec.add_runtime_dependency "semantic", "~> 1.5"
   spec.add_runtime_dependency "liquid", "~> 4.0.0"
-  spec.add_runtime_dependency "tty-table", "~> 0.9.0"
+  spec.add_runtime_dependency "tty-table", "~> 0.10.0"
   spec.add_runtime_dependency "kontena-websocket-client", "~> 0.1.1"
 end
