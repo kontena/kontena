@@ -2,6 +2,8 @@ require 'net/http'
 
 describe 'kontena service health_check' do
   context 'for a http test service' do
+    include DebugHelper
+
     before(:all) do
       with_fixture_dir('stack/healthcheck') do
         run! 'kontena stack build --no-push'
@@ -29,7 +31,7 @@ describe 'kontena service health_check' do
         response = Net::HTTP.get_response(uri)
         status = response.code.to_i
 
-        puts "GET #{uri} => #{status}"
+        debug "GET #{uri} => #{status}"
 
         if status == 503 && ((count += 1) < retry_503)
           # LB can return 503 temporarily during configuration, retry to make sure it's stable before returning it
