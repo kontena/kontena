@@ -15,7 +15,7 @@ module Shell
   # @param [Hash] opts
   # @return [Kommando]
   def run(cmd, opts = {})
-    opts[:output] = debug? unless opts.has_key?(:output)
+    opts[:output] = debug_kommando? unless opts.has_key?(:output)
     Kommando.run(cmd, opts)
   end
 
@@ -33,11 +33,11 @@ module Shell
   # @param [Hash] opts
   # @return [Kommando]
   def kommando(cmd, opts = {})
-    opts[:output] = debug? unless opts.has_key?(:output)
+    opts[:output] = debug_kommando? unless opts.has_key?(:output)
     Kommando.new(cmd, opts)
   end
 
-  def debug?
+  def debug_kommando?
     ENV.has_key?('DEBUG_KOMMANDO')
   end
 
