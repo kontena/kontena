@@ -22,6 +22,21 @@ module V1
 
             render('domain_authorizations/show')
           end
+
+          r.delete do
+            @domain_authorization = load_domain_auth(grid_name, domain)
+            halt_request(404, {error: "Domain authorization not found)"}) unless @domain_authorization
+
+            outcome = GridDomainAuthorizations::RemoveAuthorization.run(domain_authorization: @domain_authorization)
+            if outcome.success?
+              response.status = 200
+              {}
+            else
+              response.status = 422
+              {error: outcome.errors.message}
+            end
+
+          end
         end
       end
     end

@@ -10,6 +10,7 @@ class Kontena::Cli::CertificateCommand < Kontena::Command
   subcommand "get", "Get certificate for domain [DEPRECATED]", load_subcommand('certificate/get_command')
   subcommand "import", "Import certificate from file", load_subcommand('certificate/import_command')
   subcommand ["remove", "rm"], "Remove certificate for domain", load_subcommand('certificate/remove_command')
+  subcommand "domain-authorization", "Domain authorization sub-commands", load_subcommand('certificate/domain_authorize_command')
 
 
   def execute
