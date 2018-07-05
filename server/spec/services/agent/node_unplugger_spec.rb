@@ -14,6 +14,7 @@ describe Agent::NodeUnplugger do
     describe '#unplug!' do
       it 'marks node as disconnected' do
         expect(subject).to receive(:update_node_containers)
+        expect(subject).to receive(:publish_update_event)
 
         expect {
           subject.unplug! connected_at, 1006, "Agent closed connection"
@@ -24,6 +25,21 @@ describe Agent::NodeUnplugger do
         expect(node.websocket_connection.opened).to be true
         expect(node.websocket_connection.close_code).to eq 1006
         expect(node.websocket_connection.close_reason).to eq "Agent closed connection"
+      end
+
+      it 'publishes an update event with connected status' do
+        expect(subject).to receive(:update_node_containers)
+
+        expect(node).to receive(:publish_async).with({
+          event: 'update',
+          type: 'HostNode',
+          object: hash_including(
+            name: 'test-node',
+            connected: false,
+          )
+        })
+
+        subject.unplug! connected_at, 1006, "Agent closed connection"
       end
     end
   end

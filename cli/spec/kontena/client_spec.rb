@@ -233,13 +233,50 @@ describe Kontena::Client do
       end
     end
 
+    context "with empty response JSON" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:delete, 'http://localhost/v1/test').to_return(
+          status: 200,
+          headers: {
+            'Content-Type' => 'application/json',
+          },
+          body: '',
+        )
+      end
+
+      it "returns nil" do
+        expect(subject.delete('test')).to be_nil
+      end
+    end
+
+    context "with invalid response JSON" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:any, 'http://localhost/v1/test').to_return(
+          status: 200,
+          headers: {
+            'Content-Type' => 'application/json',
+          },
+          body: 'this is not valid JSON',
+        )
+      end
+
+      it "raises Kontena::Errors::StandardError with 520" do
+        # XXX: for some reason the response.path is empty?
+        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, /Invalid response JSON from server for : JSON::ParserError/)
+      end
+    end
+
     context "with an empty error response" do
       before :each do
         # workaround https://github.com/bblimke/webmock/issues/653
         expect(http_client).to receive(:request).with(
           hash_including(path: '/v1/coffee', method: :brew)
         ) {
-          raise Excon::Errors::HTTPStatusError.new("I'm a teapot",
+          raise Excon::Error::HTTPStatus.new("I'm a teapot",
             {
               method: 'brew',
               path: '/v1/coffee',

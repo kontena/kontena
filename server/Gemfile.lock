@@ -18,7 +18,7 @@ GEM
       rake (>= 0.8.7)
     bcrypt (3.1.11)
     bindata (2.3.1)
-    bson (4.2.1)
+    bson (4.2.2)
     builder (3.2.3)
     celluloid (0.17.3)
       celluloid-essentials
@@ -54,6 +54,7 @@ GEM
       websocket-driver (>= 0.5.1)
     ffi (1.9.6)
     hitimes (1.2.4)
+    hkdf (0.3.0)
     httpclient (2.8.2.3)
     i18n (0.8.4)
     jbuilder (2.2.5)
@@ -76,7 +77,7 @@ GEM
       rb-inotify (>= 0.9)
     lru_redux (1.1.0)
     minitest (5.10.2)
-    mongo (2.4.1)
+    mongo (2.4.3)
       bson (>= 4.2.1, < 5.0.0)
     mongoid (5.2.1)
       activemodel (~> 4.0)
@@ -136,7 +137,7 @@ GEM
       multi_json (~> 1.0)
       simplecov-html (~> 0.9.0)
     simplecov-html (0.9.0)
-    symmetric-encryption (3.8.2)
+    symmetric-encryption (3.9.1)
       coercible (~> 1.0)
     thread_safe (0.3.6)
     tilt (1.4.1)
@@ -167,6 +168,7 @@ DEPENDENCIES
   celluloid (~> 0.17.3)
   dotenv
   faye-websocket (~> 0.10.7)
+  hkdf (~> 0.3.0)
   httpclient (~> 2.3)
   json-jwt (= 1.5.2)
   json-serializer
@@ -189,10 +191,10 @@ DEPENDENCIES
   rollbar
   rspec (~> 3.3.0)
   simplecov
-  symmetric-encryption
+  symmetric-encryption (~> 3.9.1)
   tilt-jbuilder
   webmock
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.15.3
+   1.16.0

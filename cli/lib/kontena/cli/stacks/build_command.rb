@@ -27,6 +27,7 @@ module Kontena::Cli::Stacks
 
     def execute
       set_env_variables(stack_name, current_grid)
+      stack # runs validations
 
       services = stack['services']
 
@@ -35,7 +36,7 @@ module Kontena::Cli::Stacks
       end
 
       if services.none?{ |service| service['build'] }
-        abort 'Not found any service with a build option'.colorize(:red)
+        abort pastel.red("Didn't find any services to build")
       end
       build_docker_images(services)
       push_docker_images(services) unless no_push?
@@ -49,10 +50,10 @@ module Kontena::Cli::Stacks
           abort("'#{service['image']}' is not valid Docker image name") unless valid_image_name?(service['image'])
           abort("'#{service['build']['context']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build']['context'], dockerfile)
           if service['hooks'] && service['hooks']['pre_build']
-            puts "Running pre_build hook".colorize(:cyan)
+            puts pastel.cyan("Running pre_build hook")
             run_pre_build_hook(service['hooks']['pre_build'])
           end
-          puts "Building image #{service['image'].colorize(:cyan)}"
+          puts "Building image #{pastel.cyan(service['image'])}"
           build_docker_image(service)
         end
       end
@@ -62,7 +63,7 @@ module Kontena::Cli::Stacks
     def push_docker_images(services)
       services.each do |service|
         if service['build']
-          puts "Pushing image #{service['image'].colorize(:cyan)}"
+          puts "Pushing image #{pastel.cyan(service['image'])}"
           push_docker_image(service['image'])
         end
       end
@@ -85,7 +86,7 @@ module Kontena::Cli::Stacks
       end
       cmd << build_context
       ret = system(*cmd.flatten)
-      raise ("Failed to build image #{service['image'].colorize(:cyan)}") unless ret
+      raise ("Failed to build image #{pastel.cyan(service['image'])}") unless ret
       ret
     end
 
@@ -95,7 +96,7 @@ module Kontena::Cli::Stacks
       cmd = ['docker', 'push', image]
       cmd.unshift('sudo') if sudo?
       ret = system(*cmd)
-      raise ("Failed to push image #{image.colorize(:cyan)}") unless ret
+      raise ("Failed to push image #{pastel.cyan(image)}") unless ret
       ret
     end
 

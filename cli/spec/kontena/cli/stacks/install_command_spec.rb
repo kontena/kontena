@@ -10,6 +10,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
   before(:each) do
     ENV['STACK'] = nil
+    allow(client).to receive(:server_version).and_return(Kontena::Cli::VERSION)
   end
 
   describe '#execute' do
@@ -24,8 +25,9 @@ describe Kontena::Cli::Stacks::InstallCommand do
         'volumes' => [],
         'dependencies' => nil,
         'source' => /stack:/,
-        'parent_name' => nil,
-        'expose' => nil
+        'parent' => nil,
+        'expose' => nil,
+        'metadata' => {}
       }
     end
 
@@ -73,12 +75,39 @@ describe Kontena::Cli::Stacks::InstallCommand do
     end
 
     context 'with a stack including dependencies' do
-
       it 'installs all the dependencies' do
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep_1.dep_var=1', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')])
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "-v", "dep_var=1", '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')])
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", "--no-deploy",
+          '-v', 'dep_1.dep_var=1', fixture_path('stack-with-dependencies-dep-1.yml')
+        ])
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", '--no-deploy',
+          "-v", "dep_var=1", fixture_path('stack-with-dependencies-dep-2.yml')])
         expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including('stack' => 'user/depstack1', 'name' => 'deptest'))
         subject.run(['-n', 'deptest', '--no-deploy', '-v', 'dep_1.dep_1.dep_var=1', fixture_path('stack-with-dependencies.yml')])
+      end
+    end
+
+    context 'with a stack including metadata' do
+      let(:stack_meta_expectation) do
+        stack_expectation.merge(
+          'metadata' => hash_including(
+            'tags' => array_including('tag1', 'tag2'),
+            'readme' => /Text goes/,
+            'required_kontena_version' => ">= 0.5.0"
+          )
+        )
+      end
+
+      it 'includes the metadata in the json sent to master' do
+        expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including(stack_meta_expectation))
+        subject.run(['--no-deploy', fixture_path('kontena_v3_with_metadata.yml')])
+      end
+
+      it 'requires force if master version does not match metadata required_kontena_version' do
+        expect(client).to receive(:server_version).and_return('0.2.0')
+        expect(subject).to receive(:confirm).and_call_original
+        expect{subject.run(['--no-deploy', fixture_path('kontena_v3_with_metadata.yml')])}.to exit_with_error.and output(/version/).to_stdout
       end
     end
   end
@@ -143,8 +172,14 @@ describe Kontena::Cli::Stacks::InstallCommand do
           'children' => [ ]
         )
 
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep1var=test', '-v', 'dep_1.dep1dep1var=test11', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')]).and_return(true)
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", '-v', 'dep_var=1', '-v', 'dep2var=test2', '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')]).and_return(true)
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", "--no-deploy",
+          '-v', 'dep1var=test', '-v', 'dep_1.dep1dep1var=test11', fixture_path('stack-with-dependencies-dep-1.yml')
+        ]).and_return(true)
+        expect(Kontena).to receive(:run!).with([
+          "stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "--no-deploy",
+          '-v', 'dep_var=1', '-v', 'dep2var=test2', fixture_path('stack-with-dependencies-dep-2.yml')
+        ]).and_return(true)
 
         allow(client).to receive(:post).and_return({})
 

@@ -15,9 +15,6 @@ class WebsocketBackend
   CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.seconds)
 
   RPC_MSG_TYPES = %w(request notify)
-  QUEUE_SIZE = 1000
-  QUEUE_WATCH_PERIOD = 60 # once in a minute
-  QUEUE_DROP_NOTIFICATIONS_LIMIT = (QUEUE_SIZE * 0.8)
 
   class CloseError < StandardError
     attr_reader :code
@@ -37,12 +34,8 @@ class WebsocketBackend
     @logger.progname = 'WebsocketBackend'
     @msg_counter = 0
     @msg_dropped = 0
-    @queue = SizedQueue.new(QUEUE_SIZE)
-    @rpc_server = RpcServer.new(@queue)
-    @rpc_server.async.process!
     subscribe_to_rpc_channel
     watch_connections
-    watch_queue
     watchdog
   end
 
@@ -111,7 +104,7 @@ class WebsocketBackend
   # @param init_attrs [Hash] initialize attributes on new node
   # @raise [CloseError]
   # @return [HostNode] with node_id set
-  def find_node_by_node_token(node_id, node_token, init_attrs)
+  def find_node_by_node_token(node_id, node_token, labels: [], **init_attrs)
     node = HostNode.find_by(token: node_token.to_s)
 
     raise CloseError.new(4002), "Invalid node token" unless node
@@ -121,7 +114,10 @@ class WebsocketBackend
     if !node_by_id
       # atomically initialize the node_id
       created_node = HostNode.where(:id => node.id, :node_id => nil)
-        .find_one_and_update(:$set => {node_id: node_id, **init_attrs})
+        .find_one_and_update(
+          :$set => {node_id: node_id, **init_attrs},
+          :$addToSet => {labels: { :$each => labels } },
+        )
 
       if created_node
         logger.info "new node #{node} connected using node token with node_id #{node_id}"
@@ -154,7 +150,6 @@ class WebsocketBackend
   def find_node(req)
     node_id = req.env['HTTP_KONTENA_NODE_ID']
     node_name = req.env['HTTP_KONTENA_NODE_NAME']
-    node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
     init_attrs = {
       labels: req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(','),
       agent_version: req.env['HTTP_KONTENA_VERSION'].to_s,
@@ -171,7 +166,7 @@ class WebsocketBackend
       return find_node_by_grid_token(node_id, grid_token, node_name: node_name, **init_attrs)
 
     elsif node_token = req.env['HTTP_KONTENA_NODE_TOKEN']
-      return find_node_by_node_token(node_id, node_token, init_attrs)
+      return find_node_by_node_token(node_id, node_token, **init_attrs)
 
     else
       raise CloseError.new(4004), "Missing token"
@@ -290,23 +285,20 @@ class WebsocketBackend
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_request(ws, data)
-    client = client_for_ws(ws)
-    if client
-      @queue << [ws, client[:grid_id].to_s, data]
+    if client = client_for_ws(ws)
+      RpcServer.handle_rpc_request(client[:grid_id].to_s, data) do |message|
+        EM.next_tick { # important to push sending back to EM reactor thread
+          send_message(ws, message)
+        }
+      end
     end
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_notification(ws, data)
-    if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT # too busy to handle notifications
-      @msg_dropped += 1
-      return
-    end
-
-    client = client_for_ws(ws)
-    if client
-      @queue << [client[:grid_id].to_s, data]
+    if client = client_for_ws(ws)
+      RpcServer.handle_rpc_notification(client[:grid_id].to_s, data)
     end
   end
 
@@ -422,16 +414,6 @@ class WebsocketBackend
     end
   end
 
-  def watch_queue
-    EM::PeriodicTimer.new(QUEUE_WATCH_PERIOD) do
-      logger.warn "#{@queue.size} messages in queue" if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT
-      logger.warn "#{@msg_dropped} dropped notifications" if @msg_dropped > 0
-      logger.info "#{@msg_counter / QUEUE_WATCH_PERIOD} messages per second"
-      @msg_counter = 0
-      @msg_dropped = 0
-    end
-  end
-
   # Start a Watchdog actor, and ping it every interval.
   # It will log warnings and finally abort the EM thread if the timer does not get run on time.
   def watchdog
@@ -505,9 +487,5 @@ class WebsocketBackend
 
     # triggers on :close later, or after 30s timeout, but the client will already be gone
     client[:ws].close(code, reason)
-  end
-
-  def stop_rpc_server
-    Celluloid::Actor.kill(@rpc_server) if @rpc_server.alive?
   end
 end

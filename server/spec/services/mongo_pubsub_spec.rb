@@ -1,3 +1,16 @@
+class MongoPubsub
+  def crash!
+    fail 'test'
+  end
+
+  def ping
+    :pong
+  end
+
+  def subscriptions?
+    !subscriptions.empty?
+  end
+end
 
 describe MongoPubsub, :celluloid => true do
 
@@ -129,6 +142,40 @@ describe MongoPubsub, :celluloid => true do
       duration = end_time - start_time
       expect(responses.size).to eq(rounds)
       expect(duration <= 2.0).to be_truthy
+    end
+  end
+
+  context 'with existing subscriptions' do
+    let!(:test1_msgs) { [] }
+    let!(:test1_subscriber) {
+      described_class.subscribe('test1') do |msg|
+        test1_msgs << msg
+      end
+    }
+
+    describe 'after crashing' do
+      before do
+        described_class.actor.async.crash!
+        WaitHelper.wait_until!("restarted", timeout: 1.0) { (actor = described_class.actor) && actor.alive? && (actor.ping rescue nil)}
+      end
+
+      it 'is able to restart and process messages' do
+        described_class.actor.queue_message('test1', BSON::Binary.new(MessagePack.pack({'test' => 1})))
+
+        test1_subscriber.terminate
+        test1_subscriber.wait
+
+        expect(test1_msgs).to eq [{'test' => 1}]
+      end
+
+      it 'is still able to stop restored subscribers' do
+        test1_subscriber.terminate
+        test1_subscriber.wait
+
+        described_class.actor.ping
+
+        expect(described_class.actor.subscriptions).to be_empty
+      end
     end
   end
 end

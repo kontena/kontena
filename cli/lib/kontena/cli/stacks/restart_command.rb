@@ -8,16 +8,17 @@ module Kontena::Cli::Stacks
 
     banner "Restarts all services of a stack that has been installed in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    parameter "NAME ...", "Stack name", attribute_name: :names
 
     requires_current_master
     requires_current_master_token
 
     def execute
-      spinner "Sending restart signal for stack services" do
-        client.post("stacks/#{current_grid}/#{name}/restart", {})
+      names.each do |name|
+        spinner "Sending restart signal for stack #{name} services" do
+          client.post("stacks/#{current_grid}/#{name}/restart", {})
+        end
       end
     end
-
   end
 end

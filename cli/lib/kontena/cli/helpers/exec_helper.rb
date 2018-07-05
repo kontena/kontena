@@ -1,4 +1,5 @@
 require 'io/console'
+require 'tty-screen'
 require 'kontena-websocket-client'
 
 module Kontena::Cli::Helpers
@@ -6,7 +7,7 @@ module Kontena::Cli::Helpers
 
     websocket_log_level = if ENV["DEBUG"] == 'websocket'
       Logger::DEBUG
-    elsif ENV["DEBUG"]
+    elsif Kontena.debug?
       Logger::INFO
     else
       Logger::WARN
@@ -107,7 +108,7 @@ module Kontena::Cli::Helpers
       Thread.new do
         begin
           if tty
-            console_height, console_width = IO.console.winsize
+            console_height, console_width = TTY::Screen.size
             websocket_exec_write(ws, 'tty_size' => {
               width: console_width, height: console_height
             })

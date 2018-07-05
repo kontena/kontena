@@ -65,6 +65,10 @@ module Stacks
           string :expose
           string :registry
           model :variables, class: Hash
+          array :labels do
+            string matches: /\A[a-z0-9.-]+=/
+          end
+          model :metadata, class: Hash
           array :volumes do
             model :object, class: Hash
           end

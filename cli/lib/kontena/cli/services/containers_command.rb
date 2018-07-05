@@ -28,7 +28,7 @@ module Kontena::Cli::Services
         puts "  ip: #{container['ip_address']}"
         puts "  public ip: #{container['node']['public_ip']}"
         if container['status'] == 'unknown'
-          puts "  status: #{container['status'].colorize(:yellow)}"
+          puts "  status: #{pastel.yellow(container['status'])}"
         else
           puts "  status: #{container['status']}"
         end

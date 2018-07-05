@@ -11,6 +11,9 @@ description "Command-line tool for the Kontena Platform"
 maintainer "Kontena, Inc."
 homepage "https://kontena.io"
 
+override :ruby, version: "2.5.0"
+override :libxml2, version: '2.9.7', source: { url: 'http://xmlsoft.org/sources/libxml2-2.9.7.tar.gz' }
+
 # Defaults to C:/kontena on Windows
 # and /opt/kontena on all other platforms
 install_dir "#{default_root}/#{name}"

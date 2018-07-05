@@ -12,7 +12,12 @@ module Stacks
     end
 
     optional do
-      string :parent_name
+      hash :parent do
+        required do
+          string :name
+        end
+      end
+      string :parent_name # DEPRECATED
     end
 
     def validate
@@ -47,9 +52,15 @@ module Stacks
 
     def execute
       attributes = self.inputs.clone
+      # filter out some attributes and ensure StackRevision receives only
+      # ones that are supported to avoid Mongoid::Errors::UnknownAttribute error
+      %i( parent parent_name labels ).each { |k| attributes.delete(k)}
       grid = attributes.delete(:grid)
-      parent = attributes.delete(:parent_name)
-      stack = Stack.create(name: self.name, grid: grid, parent_name: parent)
+      stack = Stack.create(name: self.name, grid: grid, parent_name: resolve_parent_name)
+
+      # set labels only if assigned
+      stack.labels = self.labels if self.labels
+
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)
@@ -66,6 +77,11 @@ module Stacks
       create_services(stack, services)
 
       stack
+    end
+
+    # @return [String]
+    def resolve_parent_name
+      self.inputs.has_key?(:parent) ? self.parent[:name] : self.parent_name
     end
 
     # @param [Stack] stack

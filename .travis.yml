@@ -1,10 +1,5 @@
 language: ruby
 sudo: required
-rvm:
-  - 2.1.10
-  - 2.2.6
-  - 2.3.3
-  - 2.4.2
 cache: bundler
 cache:
   directories:
@@ -12,7 +7,9 @@ cache:
 services:
   - docker
 before_install:
+  - gem install bundler
   - ./build/travis/before_install.sh
+bundler_args: --without development --with test
 env:
   global:
     - secure: "UyygtUDLvV2+14mEG6Pddo/deLazXc2Hit63KlbZ26Pi8cxbr1FeDUBi4WFVWlFh01smKe5mO+kk/4k06aSdolcTC59QUsltRrsINmsxj/BS66L7JbWP8/yPQP1drE6CH5oh6t1JAchuK19bLUOK9Tycn0J2VufW69ckw3D+rqU=" # DOCKER_HUB_PASSWORD
@@ -22,44 +19,73 @@ env:
     - secure: "kj4oS3to1iKpJBbph2VHSnTauvniP6F/RaN6Smn60ZFJCiJHST+Yq6GHONIxb9aNTpyYJWlYA0A1ReqVurS/T3puIYYZvPW6QQs2llB2I2GwAyPeSJSOX2z0vQtQq6ybdeROUuJLHkGL4zCI4V5QlJgSnmSOjvdiEZPtxWfy384=" # GITHUB_TOKEN
     - DOCS_GA=UA-60024048-1
     - DOCS_HS=2126125
-  matrix:
-    - TEST_DIR=agent
-    - TEST_DIR=cli
-    - TEST_DIR=server
-matrix:
-    exclude:
-    - rvm: 2.1.10
+    - ALLOW_FAILURES=false
+stages:
+  - name: test
+  - name: test e2e
+    if: type = pull_request OR type = cron
+  - name: deploy gem
+    if: tag IS present
+  - name: deploy omnibus
+    if: tag IS present
+  - name: deploy images
+    if: tag IS present
+jobs:
+  fast_finish: true
+  allow_failures:
+    - env:
+      - TEST_DIR=cli
+      - ALLOW_FAILURES=true
+  include:
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.3
+      env: TEST_DIR=cli
+      if: type = pull_request
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.5
+      env: TEST_DIR=cli
+      if: type = pull_request
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4
       env: TEST_DIR=agent
-    - rvm: 2.1.10
+    - stage: test
+      script: ./build/travis/test.sh
+      rvm: 2.4
       env: TEST_DIR=server
-    - rvm: 2.2.6
-      env: TEST_DIR=agent
-    - rvm: 2.2.6
+    - stage: test e2e
+      script: ./build/travis/test_e2e.sh
+      rvm: 2.4
+      env:
+        - TEST_DIR=cli
+    - stage: deploy gem
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.3
+      env: TEST_DIR=cli
+    - stage: deploy omnibus
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: deploy omnibus
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus_macos.sh"
+      tags: true
+      os: osx
+      repo: kontena/kontena
+      rvm: 2.4
+      env: TEST_DIR=cli
+    - stage: deploy images
+      script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
+      tags: true
+      repo: kontena/kontena
+      rvm: 2.4
       env: TEST_DIR=server
-    - rvm: 2.3.3
-      env: TEST_DIR=server
-    - rvm: 2.3.3
-      env: TEST_DIR=agent
-script: ./build/travis/test.sh
-deploy:
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
-      rvm: 2.3.3
-      repo: kontena/kontena
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_omnibus.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
-      rvm: 2.4.2 # separate from deploy_gem, ideally after
-      repo: kontena/kontena
-  - provider: script
-    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
-    on:
-      tags: true
-      condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
-      rvm: 2.4.2
-      repo: kontena/kontena

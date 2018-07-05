@@ -65,11 +65,13 @@ describe Volumes::Create do
           driver: 'local',
           scope: 'instance',
           driver_opts: {
-            foo: 'bar'
+            foo: 'bar',
+            'foo.bar.baz' => 'value'
           }
         )
         expect(outcome.success?).to be_truthy
         expect(outcome.result.driver_opts['foo']).to eq('bar')
+        expect(outcome.result.driver_opts['foo.bar.baz']).to eq('value')
       }.to change {Volume.count}. by 1
     end
 

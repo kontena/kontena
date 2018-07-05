@@ -61,11 +61,11 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'returns result hash' do
       result = subject.execute
-      expect(result).to be_kind_of(Hash)
-      %w(
+      top_level_fields = %w(
         stack
         version
         name
+        labels
         registry
         expose
         services
@@ -73,10 +73,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         dependencies
         source
         variables
-        parent_name
-      ).each do |k|
-        expect(result.key?(k)).to be_truthy
-      end
+        parent
+        metadata
+      )
+      expect(result).to match hash_including(*top_level_fields)
     end
 
     context 'when extending services' do
@@ -112,7 +112,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
               "links"=>[],
               "ports"=>[],
               "stateful"=>true,
-              "name"=>"mysql"
+              "name"=>"mysql",
+              "entrypoint" => "test"
             )
           )
         end
@@ -159,7 +160,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         it 'extends services from the same file' do
           app_svc = subject.execute['services'].find { |s| s['name'] == 'app' }
           expect(app_svc).not_to be_nil
-          puts app_svc.inspect
           expect(app_svc).to match hash_including(
             "image" => "base:latest",
             "instances" => 2,
@@ -168,6 +168,40 @@ describe Kontena::Cli::Stacks::YAML::Reader do
               "TEST2=changed"
             ],
             "stateful" => true
+          )
+        end
+      end
+
+      context 'from a registry stack' do
+        let(:subject) do
+          described_class.new(fixture_path('kontena_v3_with_registry_extends.yml'))
+        end
+
+        it 'extends services from a registry stack' do
+          expect(Kontena::StacksCache).to receive(:pull).at_least(:once) do |stackname|
+            expect(stackname.to_s).to eq 'registrystack/compose:1.0.0'
+          end.and_return(File.read(fixture_path('docker-compose_v2.yml')))
+          expect(subject.execute['services']).to match array_including(
+            hash_including(
+              "instances"=>2,
+              "image"=>"wordpress:4.1",
+              "env"=>["WORDPRESS_DB_PASSWORD=test_secret"],
+              "links"=>[{"name"=>"mysql", "alias"=>"mysql"}],
+              "ports"=>[{"ip"=>"0.0.0.0", "container_port"=>80, "node_port"=>80, "protocol"=>"tcp"}],
+              "stateful"=>true,
+              "strategy"=>"ha",
+              "name"=>"wordpress"
+            ),
+            hash_including(
+              "instances"=>nil,
+              "image"=>"mysql:5.6",
+              "env"=>["MYSQL_ROOT_PASSWORD=test_secret"],
+              "links"=>[],
+              "ports"=>[],
+              "stateful"=>true,
+              "name"=>"mysql",
+              "entrypoint" => "test"
+            )
           )
         end
       end
@@ -300,8 +334,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
         it 'discards empty lines' do
           result = env_file
-          result << '
-    '
+          result << "  \n    \n"
           allow(File).to receive(:readlines).with('.env').and_return(result)
           variables = subject.send(:read_env_file, '.env')
           expect(variables).to eq([
@@ -492,6 +525,26 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
   end
 
+  context "for optional labels that are undefined" do
+    subject do
+      described_class.new(fixture_path('stack-without-labels.yml'))
+    end
+
+    it "defines labels" do
+      expect(subject.execute['labels']).to match array_including([])
+    end
+  end
+
+  context "for optional labels that are defined" do
+    subject do
+      described_class.new(fixture_path('stack-with-labels.yml'))
+    end
+
+    it "defines labels" do
+      expect(subject.execute['labels']).to match array_including(['fqdn=oobe.broom.def'])
+    end
+  end
+
   context "for an optional variable that is not defined" do
     subject do
       described_class.new(fixture_path('stack-with-liquid-optional.yml'))
@@ -525,6 +578,13 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       expect(outcome['services']).to match array_including(
         hash_including('name' => 'test', 'env' => ['ASDF=test'])
       )
+    end
+  end
+
+  context "yaml with anchors" do
+    subject { described_class.new(fixture_path('stack-with-anchors.yml')) }
+    it 'parses correctly' do
+      expect(subject.execute['services'].all? { |svc| svc['affinity'] == ['abc==dfg']}).to be_truthy
     end
   end
 end

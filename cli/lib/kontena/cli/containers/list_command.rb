@@ -31,7 +31,11 @@ module Kontena::Cli::Containers
     end
 
     def container_id(row)
-      "#{row['node']['name']}/#{row['name']}"
+      if row['node']
+        "#{row['node']['name']}/#{row['name']}"
+      else
+        "/#{row['name']}"
+      end
     end
 
     def truncate_cmd(row)

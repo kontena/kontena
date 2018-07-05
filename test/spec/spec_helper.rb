@@ -67,19 +67,19 @@ RSpec.configure do |config|
 
     unless k.code == 0
       STDERR.puts(k.out)
-      abort "Unable to install app-command plugin"
+      fail "Unable to install app-command plugin"
     end
   end
 
   config.after :context, :subcommand => :app do
-    k = Kommando.run "kontena plugin uninstall --force app-command"
+    k = Kommando.run "kontena plugin uninstall app-command"
   end
 
   config.before :each do
     k = Kommando.run "kontena grid use e2e"
     unless k.code == 0
       STDERR.puts(k.out)
-      abort "e2e grid does not exist"
+      fail "e2e grid does not exist"
     end
   end
 

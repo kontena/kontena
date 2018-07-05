@@ -6,6 +6,8 @@ module Kontena
       Gem.autoload :DefaultUserInteraction, 'rubygems/user_interaction'
       Gem.autoload :StreamUI, 'rubygems/user_interaction'
 
+      KONTENA_PLUGIN = 'kontena-plugin-%s'
+
       # @return [Boolean] is the CLI in plugin debugging mode?
       def plugin_debug?
         @plugin_debug ||= ENV['DEBUG'] == 'plugin'
@@ -26,8 +28,9 @@ module Kontena
 
       # Prefix a plugin name into a gem name (hello to kontena-plugin-hello)
       def prefix(plugin_name)
-        return plugin_name if plugin_name.to_s.start_with?('kontena-plugin-')
-        "kontena-plugin-#{plugin_name}"
+        return KONTENA_PLUGIN % nil if plugin_name.nil? || plugin_name.empty?
+        return plugin_name if plugin_name.start_with?('kontena-plugin-') || plugin_name.include?('.')
+        KONTENA_PLUGIN % plugin_name
       end
       module_function :prefix
 

@@ -17,6 +17,22 @@ module V1
 
       # @param [Stack] stack
       # @param [Hash] data
+      def patch_stack(stack, data)
+        data[:stack_instance] = stack
+        outcome = Stacks::Patch.run(data)
+
+        if outcome.success?
+          audit_event(request, @grid, @stack, 'patch')
+          response.status = 200
+          render('stacks/show')
+        else
+          response.status = 422
+          {error: outcome.errors.message}
+        end
+      end
+
+      # @param [Stack] stack
+      # @param [Hash] data
       def update_stack(stack, data)
         data[:grid] = @grid
         data[:stack_instance] = stack
@@ -117,6 +133,14 @@ module V1
           r.is do
             data = parse_json_body
             update_stack(@stack, data)
+          end
+        end
+
+        r.patch do
+          # PATCH /v1/stacks/:grid/:name
+          r.is do
+            data = parse_json_body
+            patch_stack(@stack, data)
           end
         end
 

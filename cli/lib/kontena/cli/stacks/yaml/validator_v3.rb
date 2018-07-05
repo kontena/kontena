@@ -18,6 +18,7 @@ module Kontena::Cli::Stacks
         description
         expose
         depends
+        labels
       )
 
       def initialize
@@ -66,9 +67,18 @@ module Kontena::Cli::Stacks
           end
         end
 
+        if yaml.key?('stack')
+          unless yaml['stack'] =~ /\A(?:.+?\/)?(?!-)[a-z0-9\-]+\z/
+            result[:notifications] << { 'stack' => 'A stack name should only include a-z, 0-9 and - characters and not start with the - character' }
+          end
+        end
+
         if yaml.key?('services')
           if yaml['services'].kind_of?(Hash)
             yaml['services'].each do |service, options|
+              unless service =~ /\A(?!-)[a-z0-9\-]+\z/
+                result[:notifications] << { 'services' => { service => { 'name' => 'A service name should only include a-z, 0-9 and - characters and not start with the - character' } } }
+              end
               unless options.kind_of?(Hash)
                 result[:errors] << { 'services' => { service => { 'options' => "must be a mapping not a #{options.class}"}  } }
                 next

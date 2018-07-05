@@ -80,7 +80,7 @@ module Kontena::Workers
       elsif @queue.size > LogWorker::QUEUE_THROTTLE
         @queue << msg
         sleep 0.0001
-      elsif @queue.size < LogWorker::QUEUE_THROTTLE
+      else
         @queue << msg
       end
     end

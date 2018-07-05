@@ -32,6 +32,7 @@ describe '/v1/stacks', celluloid: true do
       source: '...',
       variables: { foo: 'bar' },
       registry: 'file',
+      labels: ['fqdn=spaces.cim'],
       services: [
         { name: 'app', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -50,6 +51,7 @@ describe '/v1/stacks', celluloid: true do
       source: '...',
       variables: { foo: 'bar' },
       registry: 'file',
+      labels: ['fqdn=xyz.yo'],
       services: [
         { name: 'app2', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -60,8 +62,8 @@ describe '/v1/stacks', celluloid: true do
 
 
   let(:expected_attributes) do
-    %w(id created_at updated_at name stack version revision
-    services state expose source variables registry parent children)
+    %w(id created_at updated_at name stack version revision metadata
+    services state expose source variables registry parent children labels)
   end
 
   describe 'GET /:name' do
@@ -82,9 +84,45 @@ describe '/v1/stacks', celluloid: true do
       expect(json_response['services'][0].keys).to include('id', 'name')
     end
 
+    it 'includes assigned labels' do
+      get "/v1/stacks/#{stack.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['labels']).to eq(['fqdn=spaces.cim'])
+    end
+
     it 'returns 404 for unknown stack' do
       get "/v1/stacks/#{grid.name}/unknown-stack", nil, request_headers
       expect(response.status).to eq(404)
+    end
+
+    context 'stacks with metadata' do
+      let!(:metastack) do
+        outcome = Stacks::Create.run(
+          current_user: david,
+          grid: grid,
+          name: 'metastack',
+          stack: 'metastack',
+          parent_name: nil,
+          version: '0.1.0',
+          source: '...',
+          variables: { foo: 'bar' },
+          registry: 'file',
+          services: [
+            { name: 'redis', image: 'redis:2.8', stateful: false }
+          ],
+          metadata: {
+            tags: %w(tag1 tag2)
+          }
+        )
+        outcome.result
+      end
+
+      it 'returns stack json including metadata' do
+        get "/v1/stacks/#{metastack.to_path}", nil, request_headers
+        expect(json_response['metadata']).to match hash_including(
+          'tags' => array_including('tag1', 'tag2')
+        )
+      end
     end
 
     context 'nested stacks' do
@@ -184,6 +222,26 @@ describe '/v1/stacks', celluloid: true do
     end
   end
 
+  describe 'PATCH /:name' do
+    it 'saves non-empty stack labels' do
+      labels = ['foo=bar', 'timezone=PDT']
+      expect{
+        patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['labels']).to eq labels
+      }.to change{ stack.reload.labels }.from(['fqdn=spaces.cim']).to(labels)
+    end
+
+    it 'saves empty stack labels' do
+      labels = []
+      expect {
+        patch "/v1/stacks/#{stack.to_path}", {labels: labels}.to_json, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['labels']).to eq labels
+      }.to change{ stack.reload.labels }.from(["fqdn=spaces.cim"]).to(labels)
+    end
+  end
+
   describe 'PUT /:name' do
     it 'updates stack' do
       data = {
@@ -193,6 +251,7 @@ describe '/v1/stacks', celluloid: true do
         source: stack.latest_rev.source,
         variables: stack.latest_rev.variables,
         version: stack.latest_rev.version,
+        labels: ['foo=1', 'bar=2'],
         services: [
           {
             name: 'app_xyz',
@@ -205,6 +264,7 @@ describe '/v1/stacks', celluloid: true do
         put "/v1/stacks/#{stack.to_path}", data.to_json, request_headers
         expect(response.status).to eq(200)
       }.to change{ stack.stack_revisions.count }.by(1)
+        .and change{ stack.reload.labels }.from(["fqdn=spaces.cim"]).to(['foo=1', 'bar=2'])
     end
 
     it 'returns 404 for unknown stack' do

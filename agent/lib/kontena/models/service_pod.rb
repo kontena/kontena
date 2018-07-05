@@ -1,6 +1,12 @@
 module Kontena
   module Models
     class ServicePod
+      # Additionally, the limit per string is 32 pages (the kernel constant MAX_ARG_STRLEN)
+      ENV_MAX_STRLEN = 32 * 4096
+
+      class ConfigError < StandardError
+
+      end
 
       attr_reader :id,
                   :desired_state,
@@ -93,6 +99,11 @@ module Kontena
         @stop_grace_period = attrs['stop_grace_period']
       end
 
+      # @return [String]
+      def to_s
+        self.name_for_humans
+      end
+
       # @return [Boolean]
       def can_expose_ports?
         self.net == 'bridge'
@@ -160,6 +171,7 @@ module Kontena
         self.stack_name.nil? || self.stack_name.to_s == 'null'.freeze
       end
 
+      # @raise [ConfigError]
       # @return [Hash]
       def service_config
         docker_opts = {
@@ -348,6 +360,10 @@ module Kontena
         end
         secrets_hash.each do |name, value|
           env << "#{name}=#{value}"
+        end
+        env.each do |envstr|
+          name, value = envstr.split('=', 2)
+          raise ConfigError, "Env #{name} is too large at #{envstr.bytesize} bytes" if envstr.bytesize > ENV_MAX_STRLEN
         end
         env
       end

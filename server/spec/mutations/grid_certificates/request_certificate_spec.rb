@@ -16,11 +16,16 @@ describe GridCertificates::RequestCertificate do
   end
 
   let(:authz) {
-    opts = {
-      'record_name' => '_acme-challenge',
-      'record_content' => '1234567890'
-    }
-    GridDomainAuthorization.create!(grid: grid, domain: 'example.com', authorization_type: 'dns-01', challenge: {}, challenge_opts: opts)
+    GridDomainAuthorization.create!(grid: grid, domain: 'example.com',
+      state: 'created',
+      authorization_type: 'dns-01',
+      expires_at: Time.now + 300,
+      challenge: {},
+      challenge_opts: {
+        'record_name' => '_acme-challenge',
+        'record_content' => '1234567890'
+      },
+    )
   }
 
   describe '#validate' do
@@ -66,25 +71,64 @@ describe GridCertificates::RequestCertificate do
       expect(challenge).to receive(:request_verification).and_return(true)
       expect(challenge).to receive(:verify_status).and_return('valid', 'valid')
 
-      subject.verify_domain('example.com')
+      expect{
+        subject.verify_domain('example.com')
+      }.to change{authz.reload.state}.from(:created).to(:validated)
+
+      expect(authz.expires_at).to be nil
+      expect(authz.status).to eq :validated
+    end
+
+    it 'fails if verify becomes invalid' do
+      expect(challenge).to receive(:request_verification).and_return(true)
+      expect(challenge).to receive(:verify_status).and_return('pending', 'invalid', 'invalid')
+      expect(challenge).to receive(:error).and_return({'detail' => "Testing"})
+      expect(subject).to receive(:add_error).with(:challenge, :invalid, "Testing")
+
+      expect{
+        subject.verify_domain('example.com')
+      }.to change{authz.reload.state}.from(:created).to(:error)
+
+      expect(authz.expires_at).to be nil
+      expect(authz.status).to eq :error
     end
 
     it 'adds error if verification timeouts' do
       expect(challenge).to receive(:request_verification).and_return(true)
-      expect(challenge).to receive(:verify_status).and_raise(Timeout::Error)
+      expect(challenge).to receive(:verify_status).and_raise(Timeout::Error, "timeout after waiting ...")
+      expect(subject).to receive(:add_error).with(:challenge_verify, :timeout, "Challenge verification timeout: timeout after waiting ...")
+
+      expect{
+        subject.verify_domain('example.com')
+      }.to change{authz.reload.state}.from(:created).to(:requested)
+
+      expect(authz.expires_at).to match Time
+      expect(authz.status).to eq :requested
+    end
+
+    it 'adds error if acme server returns an error' do
+      expect(challenge).to receive(:request_verification).and_return(false)
       expect(subject).to receive(:add_error)
 
-      subject.verify_domain('example.com')
+      expect{
+        subject.verify_domain('example.com')
+      }.to_not change{authz.reload.state}.from(:created)
+
+      expect(authz.expires_at).to match Time
+      expect(authz.status).to eq :created
     end
 
     it 'adds error if acme client errors' do
       expect(challenge).to receive(:request_verification).and_raise(Acme::Client::Error)
       expect(subject).to receive(:add_error)
 
-      subject.verify_domain('example.com')
+      expect{
+        subject.verify_domain('example.com')
+      }.to_not change{authz.reload.state}.from(:created)
+
+      expect(authz.expires_at).to match Time
+      expect(authz.status).to eq :created
     end
-
-
   end
 
   describe '#execute' do
@@ -159,7 +203,7 @@ describe GridCertificates::RequestCertificate do
     end
   end
 
-  describe '#refresh_grid_services' do
+  describe '#refresh_certificate_services' do
     let(:service) { GridService.create!(grid: grid, name: 'svc', image_name: 'redis:alpine') }
 
     let(:another_service) { GridService.create!(grid: grid, name: 'another-svc', image_name: 'redis:alpine') }
@@ -171,7 +215,7 @@ describe GridCertificates::RequestCertificate do
       service.save
 
       expect {
-        subject.refresh_grid_services(certificate)
+        subject.refresh_certificate_services(certificate)
       }.to change {service.reload.updated_at}.and not_change{another_service.reload.updated_at}
     end
   end

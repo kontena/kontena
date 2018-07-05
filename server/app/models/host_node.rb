@@ -39,6 +39,7 @@ class HostNode
   field :disconnected_at, type: Time
   field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
   field :availability, type: String, default: Availability::ACTIVE
+  field :latest_stats, type: Hash, default: {}
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
@@ -53,6 +54,7 @@ class HostNode
   has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
+  validates :grid, presence: true
   validates :node_number, presence: true
   validates :name, presence: true
   validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
@@ -229,5 +231,16 @@ class HostNode
   # @return [String] Overlay IP, without subnet mask
   def overlay_ip
     (IPAddr.new(self.grid.subnet) | self.node_number).to_s
+  end
+
+  # @return [Array<String>]
+  def peer_ips
+    self.grid.host_nodes.ne(id: self.id).map{|n|
+      if n.region == self.region
+        n.private_ip
+      else
+        n.public_ip
+      end
+    }.compact.uniq
   end
 end

@@ -19,7 +19,8 @@ class AccessToken
   field :deleted_at, type: BSON::Timestamp, default: nil
   field :token_last_four, type: String
   field :refresh_token_last_four, type: String
-  
+  field :description, type: String
+
   # set to false when storing tokens to external services
   field :internal, type: Boolean, default: true
 
@@ -89,7 +90,8 @@ class AccessToken
         expires_at: Time.now.utc + 7200,
         scopes: old_token.scopes,
         internal: true,
-        user: old_token.user
+        user: old_token.user,
+        description: old_token.description
       )
 
       old_token.destroy
@@ -103,7 +105,7 @@ class AccessToken
         internal: true
       ).find_one_and_update({ '$set' => { updated_at: Time.now.utc } })
     end
-   
+
     # Since we don't know the original saved tokens, we just delete the old one and generate a duplicate with the same scope + user
     #
     # TODO consider hashing codes.
@@ -117,7 +119,8 @@ class AccessToken
         expires_at: coded_token.expires_at,
         scopes: coded_token.scopes,
         internal: true,
-        user: coded_token.user
+        user: coded_token.user,
+        description: coded_token.description
       )
 
       coded_token.destroy
@@ -146,7 +149,7 @@ class AccessToken
     !self[:code].nil?
   end
 
-  # Converts the access token to uri encoded format usable in 
+  # Converts the access token to uri encoded format usable in
   # redirects and as a x-www-form-encoded body response.
   #
   # If uri is not defined, just the parameters will be returned,

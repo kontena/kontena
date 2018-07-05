@@ -3,6 +3,7 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand ["ls", "list"], "List installed stacks in a grid", load_subcommand('stacks/list_command')
   subcommand ["remove","rm"], "Remove a deployed stack from a grid", load_subcommand('stacks/remove_command')
   subcommand "show", "Show details about a stack in a grid", load_subcommand('stacks/show_command')
+  subcommand "inspect", "Inspect a stack in a grid", load_subcommand('stacks/inspect_command')
   subcommand "upgrade", "Upgrade a stack in a grid", load_subcommand('stacks/upgrade_command')
   subcommand ["start", "deploy"], "Deploy an installed stack in a grid", load_subcommand('stacks/deploy_command')
   subcommand "logs", "Show logs from services in a stack", load_subcommand('stacks/logs_command')
@@ -13,6 +14,7 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand "validate", "Process and validate a stack file", load_subcommand('stacks/validate_command')
   subcommand "stop", "Stop stacks services", load_subcommand('stacks/stop_command')
   subcommand "restart", "Restart stacks services", load_subcommand('stacks/restart_command')
+  subcommand "label", "Stack label related commands", load_subcommand('stacks/label_command')
 
   def execute
   end

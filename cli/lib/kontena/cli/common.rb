@@ -40,6 +40,10 @@ module Kontena
         Kontena::Cli::Config.instance
       end
 
+      def debug?
+        Kontena.debug?
+      end
+
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message
       # @param [Symbol] mode (prompt method: :ask, :multiline, etc)
@@ -100,7 +104,7 @@ module Kontena
       def vputs(msg = nil)
         if running_verbose?
           puts msg
-        elsif ENV["DEBUG"] && msg
+        elsif debug? && msg
           logger.debug msg
         end
       end
@@ -150,7 +154,7 @@ module Kontena
           logger.debug { msg }
           return
         end
-        puts " [#{ success ? 'done'.colorize(:green) : 'fail'.colorize(:red)}] #{msg}"
+        puts " [#{ success ? pastel.green('done') : pastel.red('fail')}] #{msg}"
       end
 
       def warning(msg)
@@ -266,7 +270,7 @@ module Kontena
         exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
-        ask("Enter '#{name}' to confirm: ") == name || error("Confirmation did not match #{name}. Aborted command.")
+        ask("Enter '#{name}' to confirm: ") == name.to_s || error("Confirmation did not match #{name}. Aborted command.")
       end
 
       def confirm(message = 'Destructive command. You can skip this prompt by running this command with --force option. Are you sure?')

@@ -1,0 +1,12 @@
+stack: user/labels
+version: 0.1.1
+labels:
+  - fqdn=oobe.broom.def
+services:
+  wordpress-stateful:
+    image: image
+    stateful: true
+
+  wordpress-stateless:
+    image: image
+    stateful: false
