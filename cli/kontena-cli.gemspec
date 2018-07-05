@@ -20,6 +20,14 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.3.0"
 
+  spec.metadata = {
+    "bug_tracker_uri"   => "https://github.com/kontena/kontena/issues",
+    "changelog_uri"     => "https://raw.githubusercontent.com/kontena/kontena/master/CHANGELOG.md",
+    "documentation_uri" => "https://kontena.io/docs/",
+    "homepage_uri"      => "https://kontena.io/",
+    "source_code_uri"   => "https://github.com/kontena/kontena"
+  }
+
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_runtime_dependency "excon", "0.62.0"
