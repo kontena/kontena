@@ -29,8 +29,6 @@ describe 'kontena service health_check' do
         response = Net::HTTP.get_response(uri)
         status = response.code.to_i
 
-        puts "GET #{uri} => #{status}"
-
         if status == 503 && ((count += 1) < retry_503)
           # LB can return 503 temporarily during configuration, retry to make sure it's stable before returning it
           sleep 1
