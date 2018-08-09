@@ -2,12 +2,14 @@ require 'net/http'
 
 describe 'kontena service health_check' do
   context 'for a http test service' do
+    include DebugHelper
+
     before(:all) do
       with_fixture_dir('stack/healthcheck') do
         run! 'kontena stack build --no-push'
       end
     end
-  
+
     def check_service_health(service)
       out = ''
 
@@ -16,10 +18,10 @@ describe 'kontena service health_check' do
         k = run! "kontena service show #{service}"
         out = k.out
       end
-      
+
       match[1]
     end
-    
+
     def check_lb_response_code(url = 'http://localhost/', retry_503: 5)
       uri = URI(url)
       count = 0
@@ -29,7 +31,7 @@ describe 'kontena service health_check' do
         response = Net::HTTP.get_response(uri)
         status = response.code.to_i
 
-        puts "GET #{uri} => #{status}"
+        debug "GET #{uri} => #{status}"
 
         if status == 503 && ((count += 1) < retry_503)
           # LB can return 503 temporarily during configuration, retry to make sure it's stable before returning it
@@ -42,7 +44,7 @@ describe 'kontena service health_check' do
         end
 
         last_status = status
-      end 
+      end
     end
 
     context "returning HTTP 200 for healthchecks" do
@@ -81,7 +83,7 @@ describe 'kontena service health_check' do
       it "has a healthy status" do
         expect(check_service_health('healthcheck-test-302-200/server')).to eq 'healthy'
       end
-      
+
       it "returns HTTP 200 via the LB" do
         expect(check_lb_response_code).to eq 200
       end
@@ -102,7 +104,7 @@ describe 'kontena service health_check' do
       it "has a healthy status" do
         expect(check_service_health('healthcheck-test-302-500/server')).to eq 'healthy'
       end
-      
+
       it "returns HTTP 200 via the LB" do
         expect(check_lb_response_code).to eq 200
       end
@@ -118,7 +120,7 @@ describe 'kontena service health_check' do
       after(:all) do
         run! 'kontena stack rm --force healthcheck-test-500'
       end
- 
+
       it "has an unhealthy status" do
         expect(check_service_health('healthcheck-test-500/server')).to eq 'unhealthy'
       end
