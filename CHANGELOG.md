@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.3](https://github.com/kontena/kontena/releases/tag/v1.5.3) (2018-08-09)
+
+Fixes CLI debian packaging
+
+### Changes
+
+#### CLI
+ * Backport: Build: override libxml2 source to avoid ftp (#3328) ([#3362](https://github.com/kontena/kontena/pull/3362))
+
+#### Test suite
+ * Backport: Ignore CVE-2018-1000539 (#3364) ([#3365](https://github.com/kontena/kontena/pull/3364))
+
 ## [1.5.2](https://github.com/kontena/kontena/releases/tag/v1.5.2) (2018-03-12)
 
 ### Changes
