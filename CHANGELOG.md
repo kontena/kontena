@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.4](https://github.com/kontena/kontena/releases/tag/v1.5.4) (2018-08-10)
+
+Fixes CLI installer build (again)
+
+### Changes
+
+#### CLI
+ * Backport: Build: override libxslt download url (#3367) ([#3368](https://github.com/kontena/kontena/pull/3368))
+
 ## [1.5.3](https://github.com/kontena/kontena/releases/tag/v1.5.3) (2018-08-09)
 
 Fixes CLI debian packaging
