@@ -264,7 +264,7 @@ begin
         end
       when 'service'
         completion.clear
-        sub_commands = %w(containers create delete deploy list logs restart
+        sub_commands = %w(containers create remove deploy list logs restart
                         scale show start stats stop update monitor env
                         secret link unlink)
         if words[1] && sub_commands.include?(words[1])
@@ -282,14 +282,14 @@ begin
         end
       when 'vpn'
         completion.clear
-        completion.push %w(config create delete)
+        completion.push %w(config create remove)
       when 'external-registry'
         completion.clear
-        completion.push %w(add list delete)
+        completion.push %w(add list remove)
       when 'stack'
         completion.clear
         sub_commands = %w(build install upgrade deploy start stop remove restart list
-                          logs monitor show registry inspect)
+                          logs monitor show registry inspect validate)
         if words[1]
           if words[1] == 'registry' || words[1] == 'reg'
             registry_sub_commands = %(push pull search show remove make-public make-private create)
