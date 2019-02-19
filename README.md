@@ -1,6 +1,6 @@
 # Kontena Classic
 
-> The developer friendly container and micro services platform. Works on any cloud, easy to setup, simple to use. https://www.kontena.io/classic/
+> **IMPORTANT!** This project is deprecated. Please see [Kontena Pharos](https://github.com/kontena/pharos-cluster/) - The Simple, Solid, Certifified Kubernetes Distribution That Just Works!
 
 [![Build Status](https://travis-ci.org/kontena/kontena.svg?branch=master)](https://travis-ci.org/kontena/kontena)
 [![Join the chat at https://slack.kontena.io](https://slack.kontena.io/badge.svg)](https://slack.kontena.io)
