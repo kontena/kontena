@@ -14,6 +14,8 @@ module Kontena
     include Celluloid::Notifications
     include Kontena::Logging
 
+    finalizer :finalize
+
     STRFTIME = '%F %T.%NZ'
 
     CONNECT_INTERVAL = 1.0
@@ -44,6 +46,7 @@ module Kontena
       @ssl_hostname = ssl_hostname
 
       @connected = false
+      @closed = false
       @reconnect_attempt = 0
 
       if @node_token
@@ -63,6 +66,11 @@ module Kontena
     end
 
     # @return [Boolean]
+    def closed?
+      @closed
+    end
+
+    # @return [Boolean]
     def reconnecting?
       @reconnect_attempt > 0
     end
@@ -76,7 +84,7 @@ module Kontena
 
     def start
       after(CONNECT_INTERVAL) do
-        connect!
+        connect! unless closed?
       end
     end
 
@@ -103,7 +111,7 @@ module Kontena
       info "reconnect attempt #{@reconnect_attempt} in #{'%.2fs' % backoff}..."
 
       after(backoff) do
-        connect!
+        connect! unless closed?
       end
     end
 
@@ -145,7 +153,7 @@ module Kontena
 
     rescue => exc
       error exc
-      reconnect!
+      reconnect! unless closed?
     end
 
     # Connect the websocket client, and read messages.
@@ -192,7 +200,7 @@ module Kontena
       disconnected!
 
     else
-      # impossible: agent closed connection?!
+      # agent closed connection after close!
       info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
       disconnected!
 
@@ -255,7 +263,13 @@ module Kontena
       # any queued up send_message calls will fail
       publish('websocket:disconnected', nil)
 
-      reconnect!
+      reconnect! unless closed?
+    end
+
+    # Called from close! to prevent reconnect! after client close
+    # May also be called from on_close to prevent reconnect! after server close
+    def closed!
+      @closed = true
     end
 
     # Called from RpcServer, does not crash the Actor on errors.
@@ -343,7 +357,7 @@ module Kontena
 
       case code
       when 4001
-        handle_invalid_token
+        handle_invalid_token(reason)
       when 4010
         handle_invalid_version(reason)
       when 4040, 4041
@@ -353,20 +367,22 @@ module Kontena
       end
     end
 
-    def handle_invalid_token
-      error 'master does not accept our token, shutting down ...'
-      Kontena::Agent.shutdown
+    def handle_invalid_token(reason)
+      shutdown "master does not accept our token: #{reason}"
     end
 
     def handle_invalid_version(reason)
-      agent_version = Kontena::Agent::VERSION
-      error "master does not accept our version (#{agent_version}): #{reason}"
-      Kontena::Agent.shutdown
+      shutdown "master does not accept our version (#{Kontena::Agent::VERSION}): #{reason}"
     end
 
     def handle_invalid_connection(reason)
-      error "master indicates that this agent should not reconnect: #{reason}"
+      shutdown "master indicates that this agent should not reconnect: #{reason}"
+    end
+
+    def shutdown(reason)
+      error "shutting down: #{reason}"
       Kontena::Agent.shutdown
+      closed! # prevent reconnect
     end
 
     # @param [Array] msg
@@ -394,6 +410,30 @@ module Kontena
       else
         debug "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
       end
+    end
+
+    # Close the websocket connection
+    # The connect_client => defer thread will exit once the server acknowledges the close
+    def close!(code: 1000, reason: nil)
+      # prevent reconnects, even if not connected or ws.close fails
+      closed!
+
+      if ws = @ws
+        info "close..."
+        ws.close(code, reason)
+      else
+        debug "close: not connected"
+      end
+    rescue RuntimeError => exc
+      error "close failed: #{exc}"
+    end
+
+    # Actor terminated, disconnect
+    # NOTE: the connect_client task will get Celluloid::TaskTerminated, and will not see the disconnect
+    def finalize
+      close! reason: "Terminated"
+
+      info "terminated"
     end
   end
 end

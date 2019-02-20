@@ -35,7 +35,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     allow(actor).to receive(:async).and_return(async)
   end
 
-
   describe '#initialize' do
     it 'is not connected' do
       expect(subject.connected?).to be false
@@ -126,6 +125,14 @@ describe Kontena::WebsocketClient, :celluloid => true do
     end
   end
 
+  describe '#disconnect' do
+    it 'does nothing if not connected' do
+      expect(subject).to receive(:debug).with('close: not connected')
+
+      actor.close!
+    end
+  end
+
   context 'with an invalid URL' do
     let(:url) { 'http://api.example.com' }
 
@@ -200,6 +207,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     before do
       subject.instance_variable_set('@ws', ws_client)
+    end
+    after do
+      # disable finalizer, or it will touch the rspec double outside of the test lifecycle
+      subject.instance_variable_set('@ws', nil)
     end
 
     it 'is not connected' do
@@ -287,6 +298,27 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject.connected?).to be false
       end
 
+      it 'handles server websocket connection rejections' do
+        expect(ws_client).to receive(:connect)
+        expect(subject).to receive(:on_open)
+
+        expect(ws_client).to receive(:read) do |&block|
+          raise Kontena::Websocket::CloseError.new(4010, 'test version upgrade')
+        end
+        expect(subject).to receive(:on_close).with(4010, 'test version upgrade').and_call_original
+        expect(subject).to receive(:handle_invalid_version).and_call_original
+        expect(Kontena::Agent).to receive(:shutdown)
+        expect(subject).to receive(:closed!).and_call_original
+
+        expect(ws_client).to receive(:disconnect)
+        expect(subject).to_not receive(:reconnect!)
+
+        actor.connect_client(ws_client)
+
+        expect(actor.connected?).to be false
+        expect(actor.closed?).to be true
+      end
+
       it 'handles websocket close' do
         expect(ws_client).to receive(:connect)
         expect(subject).to receive(:on_open)
@@ -334,8 +366,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
         expect(subject).to_not receive(:reconnect!)
 
+        expect(subject).to receive(:close!) # actor crash => finalizer
         expect{actor.connect_client(ws_client)}.to raise_error(RuntimeError)
-        expect(actor).to be_dead
+        expect{actor.ws}.to raise_error(Celluloid::DeadActorError)
+        expect(actor.dead?).to be_truthy
       end
 
       it 'handles websocket pongs as async calls' do
@@ -467,15 +501,28 @@ describe Kontena::WebsocketClient, :celluloid => true do
         subject.on_error(Kontena::Websocket::Error.new('testing')) # XXX: other examples?
       end
     end
+
+    describe '#disconnect' do
+      it 'logs an error if the websocket close fails' do
+        expect(ws_client).to receive(:close).and_raise(RuntimeError, "not connected")
+        expect(subject).to receive(:error).with(/close failed/)
+
+        actor.close!
+      end
+    end
   end
 
   context 'for a connected websocket client' do
     let(:ws_client) { instance_double(Kontena::Websocket::Client) }
 
     before do
-      allow(subject.wrapped_object).to receive(:ws).and_return(ws_client)
+      subject.instance_variable_set('@ws', ws_client)
 
       subject.connected!
+    end
+    after do
+      # disable finalizer, or it will touch the rspec double outside of the test lifecycle
+      subject.instance_variable_set('@ws', nil)
     end
 
     it 'is connected' do
@@ -595,7 +642,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#disconnected!' do
       it "reconnects" do
-        expect(subject.wrapped_object).to receive(:reconnect!)
+        expect(subject).to receive(:reconnect!)
 
         subject.disconnected!
 
@@ -615,6 +662,43 @@ describe Kontena::WebsocketClient, :celluloid => true do
         subject.reconnect!
 
         expect(subject).to be_reconnecting
+      end
+    end
+
+    describe '#close!' do
+      it 'closes the websocket client' do
+        expect(ws_client).to receive(:close).with(1000, "Testing")
+
+        actor.close! reason: "Testing"
+
+        expect(subject).to be_closed
+      end
+    end
+
+    context 'which is closed?' do
+      before do
+        expect(ws_client).to receive(:close)
+
+        actor.close!
+      end
+
+      describe '#disconnected!' do
+        it 'does not reconnect' do
+          expect(subject).to_not receive(:reconnect!)
+
+          actor.disconnected!
+
+          expect(subject).to_not be_connected
+        end
+      end
+
+      describe '#reconnect!' do
+        it 'does not connect' do
+          expect(subject).to receive(:reconnect_backoff).and_return(0)
+          expect(subject).to_not receive(:connect!)
+
+          actor.reconnect!
+        end
       end
     end
   end
