@@ -1,5 +1,7 @@
 
 describe GridServices::Create do
+  include FixturesHelpers
+
   let(:grid) {
     Grid.create!(name: 'test-grid')
   }
@@ -488,17 +490,17 @@ describe GridServices::Create do
     end
 
     context 'with service_certificate' do
-      let :certificate do
-        Certificate.create!(grid: grid,
-          subject: 'kontena.io',
-          valid_until: Time.now + 90.days,
-          private_key: 'private_key',
-          certificate: 'certificate')
-      end
+      let(:ca_pem) { fixture('certificates/test/ca.pem') }
+      let(:cert_pem) { fixture('certificates/test/cert.pem') }
+      let(:key_pem) { fixture('certificates/test/key.pem') }
 
-      before do
-        certificate
-      end
+      let!(:certificate) { Certificate.create!(grid: grid,
+        subject: 'kontena.io',
+        valid_until: Time.now + 90.days,
+        private_key: key_pem,
+        certificate: cert_pem,
+        chain: ca_pem,
+      ) }
 
       it 'saves service cert' do
         outcome = described_class.new(

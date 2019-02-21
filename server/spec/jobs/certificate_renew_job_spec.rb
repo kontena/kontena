@@ -1,5 +1,10 @@
 
 describe CertificateRenewJob, celluloid: true do
+  include FixturesHelpers
+
+  let(:ca_pem) { fixture('certificates/test/ca.pem') }
+  let(:cert_pem) { fixture('certificates/test/cert.pem') }
+  let(:key_pem) { fixture('certificates/test/key.pem') }
 
   let(:subject) { described_class.new(false) }
 
@@ -11,9 +16,10 @@ describe CertificateRenewJob, celluloid: true do
     Certificate.create!(grid: grid,
       subject: 'kontena.io',
       valid_until: Time.now + 90.days,
-      private_key: 'private_key',
-      certificate: 'certificate',
-      chain: 'chain')
+      private_key: key_pem,
+      certificate: cert_pem,
+      chain: ca_pem,
+    )
   }
 
   describe '#renew_certificates' do
@@ -21,9 +27,10 @@ describe CertificateRenewJob, celluloid: true do
       cert2 = Certificate.create!(grid: grid,
           subject: 'www.kontena.io',
           valid_until: Time.now + 5.days,
-          private_key: 'private_key',
-          certificate: 'certificate',
-          chain: 'chain')
+          private_key: key_pem,
+          certificate: cert_pem,
+          chain: ca_pem,
+      )
       expect(subject.wrapped_object).to receive(:renew_certificate).with(cert2)
       subject.renew_certificates
     end

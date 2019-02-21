@@ -13,6 +13,9 @@ class Certificate
 
   validates_presence_of :subject, :valid_until
   validates_uniqueness_of :subject, scope: [:grid_id]
+  validates_format_of :private_key, with: /\n\z/
+  validates_format_of :certificate, with: /\n\z/
+  validates_format_of :chain, with: /\n\z/, allow_blank: true
 
   index({ grid_id: 1 })
   index({ subject: 1 })

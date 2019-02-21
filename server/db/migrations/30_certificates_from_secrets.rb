@@ -47,10 +47,10 @@ class CertificatesFromSecrets < Mongodb::Migration
     bundle_pem.lines.each do |l|
       buffer << l
       if l.match(/-----END CERTIFICATE-----/)
-        certs << buffer.strip
+        certs << buffer
         buffer = ''
       elsif l.match(/-----END (.*)PRIVATE KEY-----/)
-        private_key = buffer.strip
+        private_key = buffer
         buffer = ''
       end
     end

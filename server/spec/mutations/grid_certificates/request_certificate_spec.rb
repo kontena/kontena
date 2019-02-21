@@ -1,5 +1,9 @@
-
 describe GridCertificates::RequestCertificate do
+  include FixturesHelpers
+
+  let(:ca_pem) { fixture('certificates/test/ca.pem') }
+  let(:cert_pem) { fixture('certificates/test/cert.pem') }
+  let(:key_pem) { fixture('certificates/test/key.pem') }
 
   let(:subject) { described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com']) }
 
@@ -136,19 +140,18 @@ describe GridCertificates::RequestCertificate do
       authz
       allow_any_instance_of(described_class).to receive(:verify_domain)
       allow_any_instance_of(described_class).to receive(:validate_dns_record).and_return(true)
-      allow(acme_client).to receive(:new_certificate).and_return(certificate)
+      allow(acme_client).to receive(:new_certificate).and_return(acme_certificate)
     end
 
-    let(:certificate) do
+    let(:acme_certificate) do
       double({
         request: double(
           {
-            private_key: double({to_pem: 'private_key'})
+            private_key: double({to_pem: key_pem})
           }
         ),
-        chain_to_pem: 'chain',
-        fullchain_to_pem: 'fullchain',
-        to_pem: 'certificate_only',
+        chain_to_pem: ca_pem,
+        to_pem: cert_pem,
         x509: double(:not_after => Time.now + 90.days)
       })
     end
@@ -159,20 +162,27 @@ describe GridCertificates::RequestCertificate do
         expect(c.subject).to eq('example.com')
         expect(c.valid_until).not_to be_nil
         expect(c.alt_names).to be_empty
-        expect(c.private_key).to eq('private_key')
-        expect(c.certificate).to eq('certificate_only')
-        expect(c.chain).to eq('chain')
-        expect(c.full_chain).to eq('certificate_onlychain')
-        expect(c.bundle).to eq('certificate_onlychainprivate_key')
+        expect(c.private_key).to eq(key_pem)
+        expect(c.certificate).to eq(cert_pem)
+        expect(c.chain).to eq(ca_pem)
+        expect(c.full_chain).to eq(cert_pem + ca_pem)
+        expect(c.bundle).to eq(cert_pem + ca_pem + key_pem)
       }.to change {grid.certificates.count}.by (1)
     end
 
-    it 'updates cert' do
-      subject = described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com'])
-      certificate = Certificate.create!(grid: grid, subject: 'example.com', valid_until: Time.now)
-      expect {
-        subject.execute
-      }.to not_change{grid.certificates.count}.and change{certificate.reload.updated_at}
+    context 'with an existing certificate' do
+      let!(:certificate) { Certificate.create!(grid: grid, subject: 'example.com',
+        private_key: key_pem,
+        certificate: cert_pem,
+        valid_until: Time.now,
+      ) }
+
+      it 'updates cert' do
+        subject = described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com'])
+        expect {
+          subject.execute
+        }.to not_change{grid.certificates.count}.and change{certificate.reload.updated_at}
+      end
     end
   end
 
@@ -208,7 +218,11 @@ describe GridCertificates::RequestCertificate do
 
     let(:another_service) { GridService.create!(grid: grid, name: 'another-svc', image_name: 'redis:alpine') }
 
-    let(:certificate) { Certificate.create!(grid: grid, subject: 'example.com', valid_until: Time.now) }
+    let(:certificate) { Certificate.create!(grid: grid, subject: 'example.com',
+      private_key: key_pem,
+      certificate: cert_pem,
+      valid_until: Time.now
+    ) }
 
     it 'updates services if needed' do
       service.certificates << GridServiceCertificate.new(subject: certificate.subject)

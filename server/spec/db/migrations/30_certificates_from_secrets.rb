@@ -1,5 +1,4 @@
 require_relative '../../../db/migrations/30_certificates_from_secrets'
-require_relative '../../helpers/fixtures_helpers'
 
 describe CertificatesFromSecrets do
   include FixturesHelpers
@@ -67,15 +66,18 @@ describe CertificatesFromSecrets do
       expect(cert.subject).to eq('kontena.io')
       expect(cert.alt_names).to eq(['www.kontena.io'])
       expect(cert.valid_until).to eq(valid_until)
-      expect(cert.private_key).to eq(key_pem.strip)
-      expect(cert.certificate).to eq(certificate_pem.strip)
+      expect(cert.private_key).to eq(key_pem)
+      expect(cert.certificate).to eq(certificate_pem)
       expect(cert.chain).to eq(nil)
     end
   end
 
   context 'with a real LE certificate' do
+    let(:bundle_pem) {
+      fixture('certificate.pem')
+    }
     let!(:grid_secret) {
-      GridSecret.create!(grid: grid, name: 'LE_CERTIFICATE_test-1_kontena_works_BUNDLE', value: fixture('certificate.pem'))
+      GridSecret.create!(grid: grid, name: 'LE_CERTIFICATE_test-1_kontena_works_BUNDLE', value: bundle_pem)
     }
 
     it 'migrates the secret to a cert' do
@@ -89,8 +91,9 @@ describe CertificatesFromSecrets do
       expect(cert.subject).to eq('test-1.kontena.works')
       expect(cert.alt_names).to eq(['test-2.kontena.works'])
       expect(cert.valid_until).to eq(Time.parse('2017-12-26 06:17:27.000000000 +0000'))
-      expect(cert.private_key).to start_with '-----BEGIN RSA PRIVATE KEY-----'
-      expect(cert.private_key).to end_with '-----END RSA PRIVATE KEY-----'
+      expect(cert.bundle).to eq bundle_pem
+      expect(cert.private_key).to start_with "-----BEGIN RSA PRIVATE KEY-----\n"
+      expect(cert.private_key).to end_with "-----END RSA PRIVATE KEY-----\n"
       expect(OpenSSL::X509::Certificate.new(cert.certificate).subject.to_s).to eq '/CN=test-1.kontena.works'
       expect(OpenSSL::X509::Certificate.new(cert.chain).subject.to_s).to eq '/CN=Fake LE Intermediate X1'
       expect{OpenSSL::PKey::RSA.new(cert.private_key)}.to raise_error(OpenSSL::PKey::RSAError, /nested asn1 error/) # mangled
