@@ -89,8 +89,8 @@ module V1
             data[:grid_service] = @grid_service
             outcome = GridServices::Deploy.run(data)
             if outcome.success?
-              audit_event(r, @grid_service.grid, @grid_service, 'deploy', @grid_service)
               @grid_service_deploy = outcome.result
+              audit_event(r, @grid_service.grid, @grid_service, 'deploy', @grid_service)
               render('grid_service_deploys/show')
             else
               halt_request(422, { error: outcome.errors.message })
@@ -105,8 +105,8 @@ module V1
                 instances: data['instances']
             )
             if outcome.success?
-              audit_event(r, @grid_service.grid, @grid_service, 'scale', @grid_service)
               @grid_service_deploy = outcome.result
+              audit_event(r, @grid_service.grid, @grid_service, 'scale', @grid_service)
               render('grid_service_deploys/show')
             else
               halt_request(422, { error: outcome.errors.message })
@@ -132,8 +132,9 @@ module V1
                 grid_service: @grid_service
             )
             if outcome.success?
+              @grid_service_deploy = outcome.result
               audit_event(r, @grid_service.grid, @grid_service, 'stop', @grid_service)
-              {}
+              render('grid_service_deploys/show')
             else
               halt_request(422, { error: outcome.errors.message })
             end
@@ -145,8 +146,9 @@ module V1
                 grid_service: @grid_service
             )
             if outcome.success?
+              @grid_service_deploy = outcome.result
               audit_event(r, @grid_service.grid, @grid_service, 'start', @grid_service)
-              {}
+              render('grid_service_deploys/show')
             else
               halt_request(422, { error: outcome.errors.message })
             end

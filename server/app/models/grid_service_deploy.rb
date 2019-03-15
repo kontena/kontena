@@ -70,6 +70,12 @@ class GridServiceDeploy
     started? && !finished? && !timeout?
   end
 
+  # GridService has newer deploy
+  # @return [Boolean]
+  def redeployed?
+    self.grid_service.deploy_requested_at > self.created_at
+  end
+
   # @return [Boolean]
   def finished?
     !!finished_at

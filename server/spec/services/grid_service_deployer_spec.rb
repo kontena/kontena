@@ -3,6 +3,7 @@ describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid,
     state: :running,
+    deploy_requested_at: Time.now - 5.0,
   ) }
   let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
   let(:node1) { grid.create_node!('node-1', node_id: SecureRandom.uuid, node_number: 1, mem_total: 1.gigabytes) }
@@ -79,7 +80,7 @@ describe GridServiceDeployer do
         instance_number = 1
 
         expect{
-          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, 'running')
         }.to raise_error(GridServiceDeployer::DeployError, 'Cannot find applicable node for service instance test-grid/null/redis-1: There are no nodes available')
       end
     end
@@ -103,7 +104,7 @@ describe GridServiceDeployer do
           expect(grid_service_instance_deploy.grid_service_deploy).to eq grid_service_deploy
           expect(grid_service_instance_deploy.instance_number).to eq instance_number
 
-          expect(instance_deployer).to receive(:deploy).with(deploy_rev) do
+          expect(instance_deployer).to receive(:deploy).with(deploy_rev, 'running') do
             grid_service_instance_deploy.set(:_deploy_state => :error, :error => "testfail")
           end
 
@@ -111,12 +112,28 @@ describe GridServiceDeployer do
         end
 
         expect{
-          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, 'running')
         }.to raise_error(GridServiceDeployer::DeployError, 'halting deploy of test-grid/null/redis, one or more instances failed')
       end
     end
 
     describe '#deploy' do
+      context "for a service that was re-deployed" do
+        before do
+          grid_service_deploy
+          sleep 0.01
+          GridServices::Deploy.run!(grid_service: grid_service)
+        end
+
+        it "aborts the service deploy", :celluloid => true do
+          subject.deploy
+
+          grid_service_deploy.reload
+
+          expect(grid_service_deploy).to be_error
+          expect(grid_service_deploy.reason).to eq "halting deploy of test-grid/null/redis, service was redeployed"
+        end
+      end
 
       context "for multiple concurrent instance deploys" do
         let(:grid_service) {
@@ -128,6 +145,8 @@ describe GridServiceDeployer do
               min_health: 0.0,
             },
             container_count: 2,
+            deploy_requested_at: Time.now - 5.0,
+            state: 'running',
           )
         }
         let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
@@ -138,7 +157,7 @@ describe GridServiceDeployer do
         end
 
         it "fails the service deploy if one of the concurrent instance deploys fail", :celluloid => true do
-          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, Time) do |total_instances, deploy_futures, instance_number, deploy_rev|
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, Time, 'running') do |total_instances, deploy_futures, instance_number, deploy_rev|
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
 
@@ -149,7 +168,7 @@ describe GridServiceDeployer do
               )
             }
           end
-          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 2, Time) do |total_instances, deploy_futures, instance_number, deploy_rev|
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 2, Time, 'running') do |total_instances, deploy_futures, instance_number, deploy_rev|
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
 
@@ -174,7 +193,7 @@ describe GridServiceDeployer do
         end
 
         it "fails the service deploy if aborted", :celluloid => true do
-          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, Time) do |total_instances, deploy_futures, instance_number, deploy_rev|
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, Time, 'running') do |total_instances, deploy_futures, instance_number, deploy_rev|
             grid_service_deploy.abort! "testing"
 
             deploy_futures << Celluloid::Future.new {

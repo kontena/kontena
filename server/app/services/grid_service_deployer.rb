@@ -42,7 +42,7 @@ class GridServiceDeployer
   end
 
   def deploy
-    info "starting to deploy #{self.grid_service.to_path}"
+    info "starting to deploy #{self.grid_service.state} service #{self.grid_service.to_path}"
     log_service_event("service #{self.grid_service.to_path} deploy started")
     self.grid_service_deploy.set(:_deploy_state => :ongoing)
     deploy_rev = Time.now.utc
@@ -53,15 +53,15 @@ class GridServiceDeployer
     self.grid_service.grid_service_instances.where(:instance_number.gt => total_instances).destroy
     total_instances.times do |i|
       instance_number = i + 1
+      self.grid_service.reload
       self.grid_service_deploy.reload
       unless self.grid_service_deploy.running?
         raise "halting deploy of #{self.grid_service.to_path}, deploy was aborted: #{self.grid_service_deploy.reason}"
       end
-      self.grid_service.reload
-      unless self.grid_service.running?
-        raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
+      if self.grid_service_deploy.redeployed?
+        raise "halting deploy of #{self.grid_service.to_path}, service was redeployed"
       end
-      self.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+      self.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, grid_service.state)
       sleep 0.1
     end
     if deploy_futures.any?{|f| f.value.error?}
@@ -92,12 +92,13 @@ class GridServiceDeployer
     false
   end
 
-  # @param [Integer] total_instances
-  # @param [Array<Celluloid::Future>] deploy_futures
-  # @param [Integer] instance_number
-  # @param [Time] deploy_rev
+  # @param total_instances [Integer]
+  # @param deploy_futures [Array<Celluloid::Future>]
+  # @param instance_number [Integer]
+  # @param deploy_rev [Time]
+  # @param state [String]
   # @raise [DeployError]
-  def deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+  def deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, state)
     begin
       node = self.scheduler.select_node(
           self.grid_service, instance_number, self.nodes
@@ -113,7 +114,7 @@ class GridServiceDeployer
 
     deploy_futures << Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(grid_service_instance_deploy)
-      instance_deployer.deploy(deploy_rev.to_s) # XXX: loss of precision
+      instance_deployer.deploy(deploy_rev.to_s, state) # XXX: loss of precision
     }
     pending_deploys = deploy_futures.select{|f| !f.ready?}
     if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size >= 20

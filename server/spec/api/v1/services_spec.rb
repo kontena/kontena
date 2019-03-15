@@ -356,22 +356,22 @@ describe '/v1/services' do
   end
 
   describe 'POST /:id/stop' do
-    it 'stops service' do
-      expect(GridServices::Stop).to receive(:run)
-        .with(grid_service: redis_service)
-        .and_return(double.as_null_object)
-      post "/v1/services/#{redis_service.to_path}/stop", nil, request_headers
-      expect(response.status).to eq(200)
+    it 'stops service and returns deploy' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/stop", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to match hash_including('id' => String, 'service_id' => redis_service.to_path)
+      }.to change{redis_service.reload.state}.to('stopped')
     end
   end
 
   describe 'POST /:id/start' do
-    it 'starts service' do
-      expect(GridServices::Start).to receive(:run)
-        .with(grid_service: redis_service)
-        .and_return(double.as_null_object)
-      post "/v1/services/#{redis_service.to_path}/start", nil, request_headers
-      expect(response.status).to eq(200)
+    it 'starts service and returns deploy' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/start", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to match hash_including('id' => String, 'service_id' => redis_service.to_path)
+      }.to change{redis_service.reload.state}.to('running')
     end
   end
 

@@ -7,13 +7,15 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME ...", "Service name", attribute_name: :names
+    option '--[no-]wait', :flag, 'Do not wait for service to stop', default: true
 
     def execute
       require_api_url
       token = require_token
       names.each do |name|
-        spinner "Sending stop signal to #{pastel.cyan(name)} service " do
-          stop_service(token, name)
+        spinner "Stopping service #{pastel.cyan(name)}" do
+          deployment = stop_service(token, name)
+          wait_for_deploy_to_finish(token, deployment) if wait?
         end
       end
     end
