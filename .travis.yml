@@ -1,11 +1,17 @@
 language: ruby
 sudo: required
-cache: bundler
 cache:
+  bundler: true
   directories:
-  - $TEST_DIR/vendor/bundle
+    - $TEST_DIR/vendor/bundle
+    - /home/travis/.gem/
+    - /home/travis/.rvm/
 services:
   - docker
+
+before_cache:
+  - gem uninstall -I --user-install -a -x kontena-cli
+
 before_install:
   - gem install bundler
   - ./build/travis/before_install.sh
@@ -63,7 +69,7 @@ jobs:
       script: ./build/travis/test_e2e.sh
       rvm: 2.4
       env:
-        - TEST_DIR=cli
+        - TEST_DIR=test
     - stage: deploy gem
       script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
       tags: true
