@@ -116,8 +116,8 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
       context 'when a dependency has been removed' do
         it 'warns if a stack no longer in the dependency chain would be removed' do
-          expect(subject).to receive(:confirm).and_call_original
-          expect{subject.run(['--no-deploy', 'deptest', fixture_path('stack-with-dependencies-dep_2-removed.yml')])}.to exit_with_error.and output(/- deptest-dep_2.*data will be lost/m).to_stdout
+          expect(subject).to receive(:confirm).with(/data will be lost/).and_call_original
+          expect{subject.run(['--no-deploy', 'deptest', fixture_path('stack-with-dependencies-dep_2-removed.yml')])}.to exit_with_error.and output(/requires --force/).to_stderr
         end
       end
 

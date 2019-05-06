@@ -53,9 +53,9 @@ module Kontena::Cli::Stacks
 
       display_report(changes)
 
-      return if dry_run?
+      return changes if dry_run?
 
-      get_confirmation(changes)
+      confirm("#{pastel.red('Warning:')} This can not be undone, data will be lost.") unless changes.safe?
 
       deployable_stacks = []
       deployable_stacks.concat run_installs(changes)
@@ -63,7 +63,7 @@ module Kontena::Cli::Stacks
 
       run_deploys(deployable_stacks) if deploy?
 
-      run_removes(changes.removed_stacks)
+      run_removes(changes.stacks.removed)
 
       changes
     end
@@ -82,10 +82,10 @@ module Kontena::Cli::Stacks
       result
     end
 
-    # Preprocess data and return a ChangeResolver
+    # Preprocess data and return a ChangeResolver ResultSet
     # @param old_data [Hash] data from master
     # @param new_data [Hash] data from files
-    # @return [Kontena::Cli::Stacks::ChangeRsolver]
+    # @return [Kontena::Cli::Stacks::ChangeRsolver::ResultSet]
     def process_data(old_data, new_data)
       logger.debug { "Master stacks: #{old_data.keys.join(",")} YAML stacks: #{new_data.keys.join(",")}" }
 
@@ -102,7 +102,7 @@ module Kontena::Cli::Stacks
         [old_set, new_set].each(&:remove_dependencies)
       end
       spinner "Analyzing upgrade" do
-        Kontena::Stacks::ChangeResolver.new(old_set, new_set)
+        Kontena::Stacks::ChangeResolver.new(old_set).compare(new_set)
       end
     end
 
@@ -126,7 +126,7 @@ module Kontena::Cli::Stacks
       )
       data[:stack_data] = parsed_stack
     ensure
-      prev_env.each { |k, v| ENV[k] = v }
+      ENV.update(prev_env)
     end
 
     # @param changes [Kontena::Stacks::ChangeResolver]
@@ -134,68 +134,56 @@ module Kontena::Cli::Stacks
       puts
       caret "Calculated changes:", dots: false
 
-      unless changes.removed_stacks.empty?
-        changes.removed_stacks.each { |stack|
-          puts "  #{pastel.red('-')} #{stack}"
-          changes.removed_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.red('-')} #{s}"
-          end
-        }
+      changes.stacks.removed.each do |stack|
+        puts "  #{pastel.red('-')} #{stack}"
+        changes.services[stack].removed.each do |s|
+          puts "    #{pastel.red('-')} #{s}"
+        end
       end
 
-      unless changes.replaced_stacks.empty?
-        changes.replaced_stacks.each { |stack|
+      unless changes.stacks.replaced.empty?
+        changes.stacks.replaced.each do |stack|
           puts "  #{pastel.yellow('-/+')} #{stack}"
-          changes.upgraded_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.cyan('~')} #{s}"
+          changes.services[stack].upgraded.each do |s|
+            puts "    #{pastel.cyan('~')} #{stack}/#{s}"
           end
-          changes.added_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.green('+')} #{s}"
+          changes.services[stack].added.each do |s|
+            puts "    #{pastel.green('+')} #{stack}/#{s}"
           end
-          changes.removed_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.red('-')} #{s}"
+          changes.services[stack].removed.each do |s|
+            puts "    #{pastel.red('-')} #{stack}/#{s}"
           end
-        }
-        changes.replaced_stacks.each do |installed_name, data|
+        end
+        changes.stacks.replaced.each do |installed_name, data|
           puts "- #{pastel.yellow(installed_name)} from #{pastel.cyan(data[:from])} to #{pastel.cyan(data[:to])}"
         end
         puts
       end
 
-      unless changes.added_stacks.empty?
-        changes.added_stacks.each { |stack|
+      unless changes.stacks.added.empty?
+        changes.stacks.added.each do |stack|
           puts "  #{pastel.green('+')} #{stack}"
-          changes.added_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.green('+')} #{s}"
+          changes.services[stack].added.each do |s|
+            puts "    #{pastel.green('+')} #{stack}/#{s}"
           end
-        }
-      end
-
-      unless changes.upgraded_stacks.empty?
-        changes.upgraded_stacks.each { |stack|
-          puts "  #{pastel.cyan('~')} #{stack}"
-          changes.upgraded_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.cyan('~')} #{s}"
-          end
-          changes.added_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.green('+')} #{s}"
-          end
-          changes.removed_services.select { |s| s.split('/')[0] == stack }.each do |s|
-            puts "    #{pastel.red('-')} #{s}"
-          end
-        }
-      end
-      puts
-    end
-
-    # requires heavier confirmation when something very dangerous is going to happen
-    def get_confirmation(changes)
-      unless force?
-        unless changes.safe?
-          puts "#{pastel.red('Warning:')} This can not be undone, data will be lost."
-          confirm
         end
       end
+
+      unless changes.stacks.upgraded.empty?
+        changes.stacks.upgraded.each do |stack|
+          puts "  #{pastel.cyan('~')} #{stack}"
+          changes.services[stack].upgraded.each do |s|
+            puts "    #{pastel.cyan('~')} #{stack}/#{s}"
+          end
+          changes.services[stack].added.each do |s|
+            puts "    #{pastel.green('+')} #{stack}/#{s}"
+          end
+          changes.services[stack].removed.each do |s|
+            puts "    #{pastel.red('-')} #{stack}/#{s}"
+          end
+        end
+      end
+      puts
     end
 
     def deployable_stacks
@@ -213,7 +201,7 @@ module Kontena::Cli::Stacks
     # @return [Array] an array of stack names that have been installed, but not yet deployed
     def run_installs(changes)
       deployable_stacks = []
-      changes.added_stacks.reverse_each do |added_stack|
+      changes.stacks.added.reverse_each do |added_stack|
         data = changes.new_data[added_stack]
         cmd = ['stack', 'install', '--name', added_stack, '--no-deploy']
         cmd.concat ['--parent-name', data.parent] unless data.root?
@@ -232,7 +220,7 @@ module Kontena::Cli::Stacks
     # @return [Array] an array of stack names that have been upgraded, but not yet deployed
     def run_upgrades(changes)
       deployable_stacks = []
-      changes.upgraded_stacks.reverse_each do |upgraded_stack|
+      changes.stacks.upgraded.reverse_each do |upgraded_stack|
         data = changes.new_data[upgraded_stack]
         spinner "Upgrading #{data.root? ? 'stack' : 'dependency'} #{pastel.cyan(upgraded_stack)}" do |spin|
           deployable_stacks << upgraded_stack
