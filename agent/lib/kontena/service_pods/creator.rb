@@ -11,8 +11,8 @@ module Kontena
     class Creator
       include Kontena::Logging
       include Common
-      include Kontena::Helpers::WeaveHelper
       include Kontena::Helpers::RpcHelper
+      include Kontena::Helpers::WaitHelper
 
       attr_reader :service_pod, :image_credentials, :hook_manager
 
@@ -40,7 +40,6 @@ module Kontena
 
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
-        wait_network_ready?
         service_config = config_container(service_pod)
 
         if service_container

@@ -198,8 +198,8 @@ module Kontena
 
     def supervise_launchers
       @supervisor.supervise(
-        type: Kontena::Launchers::IpamPlugin,
-        as: :ipam_plugin_launcher
+        type: Kontena::Launchers::Weave,
+        as: :weave_launcher
       )
       @supervisor.supervise(
         type: Kontena::Launchers::Cadvisor,
@@ -208,6 +208,10 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Launchers::Etcd,
         as: :etcd_launcher
+      )
+      @supervisor.supervise(
+        type: Kontena::Launchers::IpamPlugin,
+        as: :ipam_plugin_launcher
       )
     end
 
@@ -246,7 +250,7 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::WeaveWorker,
-        as: :overlay_worker
+        as: :weave_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::ImageCleanupWorker,
@@ -267,6 +271,10 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Workers::Volumes::VolumeManager,
         as: :volume_manager
+      )
+      @supervisor.supervise(
+        type: Kontena::Workers::IpamCleaner,
+        as: :ipam_cleaner
       )
     end
 

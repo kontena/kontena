@@ -1,24 +1,23 @@
 require_relative '../helpers/event_log_helper'
-require_relative '../helpers/weave_helper'
 
 module Kontena
   module ServicePods
     module Common
       include Kontena::Helpers::EventLogHelper
-      include Kontena::Helpers::WeaveHelper
 
       # Docker create configuration for ServicePod
       # @param [ServicePod] service_pod
       # @raise [Kontena::Models::ServicePod::ConfigError]
       # @return [Hash] Docker create API JSON object
       def config_container(service_pod)
-        service_config = service_pod.service_config
+        opts = service_pod.service_config
 
-        unless service_pod.net == 'host'
-          network_adapter.modify_create_opts(service_config)
+        if service_pod.net == 'bridge'
+          # blocks waiting for network
+          opts = Kontena::NetworkAdapters::ContainerConfigurer.new(opts).configure
         end
 
-        service_config
+        opts
       end
 
       # @param [Hash] opts

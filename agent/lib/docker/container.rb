@@ -24,6 +24,11 @@ module Docker
       cached_json['Config']
     end
 
+    # @return [Array<String>]
+    def cmd
+      config['Cmd']
+    end
+
     # @return [Hash]
     def state
       self.json['State']
@@ -50,6 +55,7 @@ module Docker
 
     # @return [Boolean]
     def running?
+      # XXX: extra API calls
       self.state['Running'] && !self.state['Restarting']
     rescue
       false

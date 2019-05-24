@@ -23,6 +23,16 @@ module Kontena::NetworkAdapters
       @connection = Excon.new(ipam_url || IPAM_URL)
     end
 
+    # Test if /Plugin.Active succeeds
+    # @return [Hash] nil on error
+    def activate?
+      activate
+    rescue Excon::Error::Socket
+      nil
+    rescue IpamError
+      nil
+    end
+
     def activate
       response = @connection.post(:path => '/Plugin.Activate', :headers => HEADERS, :expects => [200])
       JSON.parse(response.body)
@@ -30,14 +40,18 @@ module Kontena::NetworkAdapters
       handle_error_response(error)
     end
 
-    def reserve_pool(name, subnet = nil, iprange = nil)
-      debug "reserving pool #{name} with subnet #{subnet} and iprange #{iprange}"
+    # @param network [String]
+    # @param pool [String]
+    # @param iprange [String]
+    # @return [Hash{'PoolID' => String, 'Pool' => String, 'Data' => Hash{String => String}}]
+    def reserve_pool(network, subnet = nil, iprange = nil)
+      debug "reserving pool for network #{network} with subnet #{subnet} and iprange #{iprange}"
       data = {
         'Pool' => subnet,
         'SubPool' => iprange,
         'V6' => false,
         'Options' => {
-          'network' => name
+          'network' => network
         }
       }.to_json
 
@@ -47,25 +61,30 @@ module Kontena::NetworkAdapters
       handle_error_response(error)
     end
 
-    def reserve_address(network, address = nil)
-      debug "reserving address for network #{network}"
+    # @param pool_id [String]
+    # @param address [String] default dynamic
+    # @return [Hash{'Address' => String, 'Data' => Hash{String => String}}]
+    def reserve_address(pool_id, address = nil)
+      debug "reserving address for pool #{pool_id}"
 
       data = {
-        'PoolID' => network,
+        'PoolID' => pool_id,
         'Address' => address
       }.to_json
 
       response = @connection.post(:path => '/IpamDriver.RequestAddress', :body => data, :headers => HEADERS, :expects => [200, 201])
       debug "response: #{response.status}/#{response.body}"
-      JSON.parse(response.body)['Address']
+      JSON.parse(response.body)
     rescue Excon::Errors::HTTPStatusError => error
       handle_error_response(error)
     end
 
-    def release_address(network, address)
-      debug "releasing address #{address} for network #{network}"
+    # @param pool_id [String]
+    # @param address [String]
+    def release_address(pool_id, address)
+      debug "releasing address #{address} for pool #{pool_id}"
       data = {
-        'PoolID' => network,
+        'PoolID' => pool_id,
         'Address' => address
       }.to_json
 
@@ -76,10 +95,11 @@ module Kontena::NetworkAdapters
       handle_error_response(error)
     end
 
-    def release_pool(network)
-      debug "releasing pool #{network}"
+    # @param pool_id [String]
+    def release_pool(pool_id)
+      debug "releasing pool #{pool_id}"
       data = {
-        'PoolID' => network
+        'PoolID' => pool_id
       }.to_json
       response = @connection.post(:path => '/IpamDriver.ReleasePool', :body => data, :headers => HEADERS, :expects => [200, 201])
       JSON.parse(response.body)
@@ -94,10 +114,10 @@ module Kontena::NetworkAdapters
       handle_error_response(error)
     end
 
-    def cleanup_network(network, known_addresses, since_index)
+    def cleanup_network(pool_id, known_addresses, since_index)
       data = {
         "EtcdIndex": since_index,
-        "PoolID": network,
+        "PoolID": pool_id,
         "Addresses": known_addresses
       }.to_json
 

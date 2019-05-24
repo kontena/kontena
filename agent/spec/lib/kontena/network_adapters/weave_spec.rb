@@ -1,238 +1,125 @@
+describe Kontena::NetworkAdapters::Weave, :celluloid => true do
+  let(:actor) { described_class.new(start: false) }
+  subject { actor.wrapped_object }
+  let(:observable) { instance_double(Kontena::Observable) }
 
-describe Kontena::NetworkAdapters::Weave do
+  let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:node_info_observable) { instance_double(Kontena::Observable) }
+  let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
+  let(:weave_observable) { instance_double(Kontena::Observable) }
+  let(:ipam_plugin_launcher) { instance_double(Kontena::Launchers::IpamPlugin) }
+  let(:ipam_plugin_observable) { instance_double(Kontena::Observable) }
 
-  let(:bridge_ip) { '172.42.1.1' }
-  let(:subject) { described_class.new(false) }
+  let(:weavewait_container) { double(Docker::Container,
 
-  before(:each) do
-    Celluloid.boot
-    allow(subject.wrapped_object).to receive(:ensure_weave_wait).and_return(true)
-    allow(subject.wrapped_object).to receive(:interface_ip).and_return(bridge_ip)
+  )}
+  let(:node_info) { instance_double(Node,
+    grid_subnet: '10.81.0.0/16',
+    grid_iprange: '10.81.128.0/17',
+  )}
+  let(:weave_info) { double() }
+  let(:ipam_info) { double() }
+
+  let(:ipam_client) { instance_double(Kontena::NetworkAdapters::IpamClient) }
+  let(:bridge_ip) { '172.18.42.1' }
+
+  before do
+    stub_const('Kontena::NetworkAdapters::Weave::WEAVE_VERSION', '1.9.3')
+
+    allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_worker)
+    allow(Celluloid::Actor).to receive(:[]).with(:weave_launcher).and_return(weave_launcher)
+    allow(Celluloid::Actor).to receive(:[]).with(:ipam_plugin_launcher).and_return(ipam_plugin_launcher)
+    allow(node_info_worker).to receive(:observable).and_return(node_info_observable)
+    allow(weave_launcher).to receive(:observable).and_return(weave_observable)
+    allow(ipam_plugin_launcher).to receive(:observable).and_return(ipam_plugin_observable)
+
+    allow(subject).to receive(:ipam_client).and_return(ipam_client)
+    allow(subject).to receive(:observable).and_return(observable)
   end
 
-  after(:each) { Celluloid.shutdown }
-
-  describe '#terminate' do
-    it 'terminates also executor pool if it is still alive' do
-      pool = double
-      expect(Kontena::NetworkAdapters::WeaveExecutor).to receive(:pool).and_return(pool)
-      expect(pool).to receive(:alive?).and_return(true)
-      expect(pool).to receive(:terminate)
-      subject = described_class.new(false)
-      subject.terminate
-    end
-
-    it 'does not attempt to terminate dead pool' do
-      pool = double
-      expect(Kontena::NetworkAdapters::WeaveExecutor).to receive(:pool).and_return(pool)
-      expect(pool).to receive(:alive?).and_return(false)
-      expect(pool).not_to receive(:terminate)
-      subject = described_class.new(false)
-      subject.terminate
-    end
-  end
-
-  describe '#adapter_container' do
-    it 'returns true if weave exec container' do
-      container = spy(:container, :config => {'Image' => 'weaveworks/weaveexec:latest'})
-      expect(subject.adapter_container?(container)).to be_truthy
-    end
-
-    it 'returns false if not weave exec container' do
-      container = spy(:container, :config => {'Image' => 'redis:latest'})
-      expect(subject.adapter_container?(container)).to be_falsey
-    end
-  end
-
-  describe '#weave_container_running?' do
-    it 'returns false if weave does not exist' do
-      weave = spy(:weave, :running? => false)
-      allow(Docker::Container).to receive(:get).with('weave') {
-        raise Docker::Error::NotFoundError.new
-      }
-      expect(subject.weave_container_running?).to be_falsey
-    end
-
-    it 'returns false if weave is not running' do
-      weave = spy(:weave, :running? => false)
-      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
-      expect(subject.weave_container_running?).to be_falsey
-    end
-
-    it 'returns true if weave is not running' do
-      weave = spy(:weave, :running? => true)
-      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
-      expect(subject.weave_container_running?).to be_truthy
+  describe '#initialize' do
+    it 'calls #start by default' do
+      expect_any_instance_of(described_class).to receive(:start)
+      described_class.new()
     end
   end
 
-  describe '#running?' do
-    it 'return false if weave container not running' do
-      expect(subject.wrapped_object).to receive(:weave_container_running?).and_return(false)
-      expect(subject.running?).to be_falsey
-    end
+  describe '#start' do
+    it 'ensures weavewait and observes' do
+      expect(subject).to receive(:ensure_weavewait)
 
-    it 'return false if weave container running but weave api not ready' do
-      expect(subject.wrapped_object).to receive(:weave_container_running?).and_return(true)
-      expect(subject.wrapped_object).to receive(:weave_api_ready?).and_return(false)
-      expect(subject.running?).to be_falsey
-    end
+      expect(subject).to receive(:observe).with(node_info_observable, weave_observable, ipam_plugin_observable) do |&block|
+        expect(subject).to receive(:update).with(node_info)
 
+        block.call(node_info, weave_info, ipam_info)
+      end
 
-    it 'return false if weave container and weave api running but weave bridge not configured' do
-      expect(subject.wrapped_object).to receive(:weave_container_running?).and_return(true)
-      expect(subject.wrapped_object).to receive(:weave_api_ready?).and_return(true)
-      expect(subject.wrapped_object).to receive(:interface_ip).and_return(nil)
-      expect(subject.running?).to be_falsey
-    end
-
-    it 'returns true only if all components running' do
-      expect(subject.wrapped_object).to receive(:weave_container_running?).and_return(true)
-      expect(subject.wrapped_object).to receive(:weave_api_ready?).and_return(true)
-      expect(subject.wrapped_object).to receive(:interface_ip).and_return('10.81.0.1')
-      expect(subject.running?).to be_truthy
+      actor.start
     end
   end
 
-  describe '#network_ready?' do
-    let :ipam_plugin_launcher do
-      instance_double(Kontena::Launchers::IpamPlugin)
+  describe '#ensure_weavewait' do
+    it 'recognizes existing container' do
+      expect(subject).to receive(:inspect_container).with('weavewait-1.9.3').and_return(weavewait_container)
+      expect(Docker::Container).to_not receive(:create)
+
+      actor.ensure_weavewait
     end
 
-    before do
-      allow(Celluloid::Actor).to receive(:[]).with(:ipam_plugin_launcher).and_return(ipam_plugin_launcher)
-    end
+    it 'creates new container' do
+      expect(subject).to receive(:inspect_container).with('weavewait-1.9.3').and_return(nil)
 
-    it 'return false is weave not running' do
-      expect(subject.wrapped_object).to receive(:running?).and_return(false)
-      expect(subject.network_ready?).to be_falsey
-    end
-
-    it 'return false is weave running but ipam not' do
-      expect(subject.wrapped_object).to receive(:running?).and_return(true)
-      expect(ipam_plugin_launcher).to receive(:running?).and_return(false)
-      expect(subject.network_ready?).to be_falsey
-    end
-
-    it 'return true is weave and ipam running' do
-      expect(subject.wrapped_object).to receive(:running?).and_return(true)
-      expect(ipam_plugin_launcher).to receive(:running?).and_return(true)
-      expect(subject.network_ready?).to be_truthy
-    end
-  end
-
-  describe '#config_changed?' do
-    let(:valid_image) do
-      "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:#{Kontena::NetworkAdapters::Weave::WEAVE_VERSION}"
-    end
-
-    it 'returns false if config is the same' do
-      node = Node.new(
-        'grid' => {
-          'trusted_subnets' => []
-        }
+      expect(Docker::Container).to receive(:create).with(
+        'name' => 'weavewait-1.9.3',
+        'Image' => 'weaveworks/weaveexec:1.9.3',
+        'Entrypoint' => ['/bin/false'],
+        'Labels' => {
+          'weavevolumes' => ''
+        },
+        'Volumes' => {
+          '/w' => {},
+          '/w-noop' => {},
+          '/w-nomcast' => {}
+        },
       )
-      weave_config = {
-        'Image' => valid_image,
-        'Cmd' => ['--trusted-subnets', '', '--conn-limit', '0']
-      }
-      weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, node)).to be_falsey
-    end
 
-    it 'returns true if image version is not same' do
-      node = Node.new(
-        'grid' => {
-          'trusted_subnets' => []
-        }
-      )
-      weave_config = {
-        'Image' => "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:1.5.0",
-        'Cmd' => ['--trusted-subnets', '']
-      }
-
-      weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, node)).to be_truthy
-    end
-
-    it 'returns true if trusted-subnets is not same' do
-      node = Node.new(
-        'grid' => {
-          'trusted_subnets' => ['10.1.2.0/16']
-        }
-      )
-      weave_config = {
-        'Image' => valid_image,
-        'Cmd' => ['--trusted-subnets', '']
-      }
-
-      weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, node)).to be_truthy
-    end
-
-    it 'returns false if connection limit is same' do
-      node = Node.new(
-        'grid' => {
-          'trusted_subnets' => []
-        }
-      )
-      weave_config = {
-        'Image' => valid_image,
-        'Cmd' => ['--trusted-subnets', '', '--conn-limit', '0']
-      }
-      weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, node)).to be_falsey
-    end
-
-    it 'returns true if connection limit is not used' do
-      node = Node.new(
-        'grid' => {
-          'trusted_subnets' => []
-        }
-      )
-      weave_config = {
-        'Image' => valid_image,
-        'Cmd' => ['--trusted-subnets', '']
-      }
-      weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, node)).to be_truthy
+      actor.ensure_weavewait
     end
   end
 
-  describe '#modify_host_config' do
+  describe '#update' do
+    let(:ensure_state) { double() }
 
-    let(:weavewait) { "weavewait-#{described_class::WEAVE_VERSION}:ro"}
+    it 'ensures and updates observable' do
+      expect(subject).to receive(:ensure).with(node_info).and_return(ensure_state)
+      expect(observable).to receive(:update).with(ensure_state)
 
-    it 'adds weavewait to empty VolumesFrom' do
-      opts = {}
-      subject.modify_host_config(opts)
-      expect(opts['HostConfig']['VolumesFrom']).to include(weavewait)
+      actor.update(node_info)
+      expect(actor).to be_updated
     end
 
-    it 'adds weavewait to non-empty VolumesFrom' do
-      opts = {
-       'VolumesFrom' => ['foobar-data']
-      }
-      subject.modify_host_config(opts)
-      expect(opts['HostConfig']['VolumesFrom']).to include(weavewait)
-    end
+    it 'logs errors and resets observable' do
+      expect(subject).to receive(:ensure).with(node_info).and_raise(RuntimeError, 'test')
+      expect(subject).to receive(:error).with(RuntimeError)
+      expect(observable).to receive(:reset)
 
-    it 'adds dns settings' do
-      opts = {
-        'Domainname' => 'foo.bar.kontena.io'
-      }
-      subject.modify_host_config(opts)
-      expect(opts['HostConfig']['Dns']).to include(bridge_ip)
-    end
+      actor.update(node_info)
 
-    it 'does not add dns settings when NetworkMode=host' do
-      opts = {
-        'HostConfig' => {
-          'NetworkMode' => 'host'
-        }
-      }
-      subject.modify_host_config(opts)
-      expect(opts['HostConfig']['Dns']).to be_nil
+      expect(actor).to_not be_updated
+    end
+  end
+
+  describe '#ensure' do
+    it 'ensures the default ipam pool' do
+      expect(ipam_client).to receive(:reserve_pool).with('kontena', '10.81.0.0/16', '10.81.128.0/17').and_return(
+        'PoolID' => 'kontena',
+        'Pool' => '10.81.0.0/16',
+      )
+
+      expect(subject.ensure(node_info)).to eq(
+        ipam_pool: 'kontena',
+        ipam_subnet: '10.81.0.0/16',
+      )
     end
   end
 end

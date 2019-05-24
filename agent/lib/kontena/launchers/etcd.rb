@@ -1,79 +1,60 @@
 require_relative '../helpers/iface_helper'
+require_relative '../helpers/launcher_helper'
 
 module Kontena::Launchers
   class Etcd
     include Celluloid
-    include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer::Helper
+    include Kontena::Observable::Helper
+    include Kontena::Helpers::LauncherHelper
     include Kontena::Helpers::IfaceHelper
 
     ETCD_VERSION = ENV['ETCD_VERSION'] || '2.3.7'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
+    IMAGE = "#{ETCD_IMAGE}:#{ETCD_VERSION}"
 
     def initialize(autostart = true)
-      @image_pulled = false
-      @running = false
-      @image_name = "#{ETCD_IMAGE}:#{ETCD_VERSION}"
       info 'initialized'
-      subscribe('network_adapter:start', :on_overlay_start)
       async.start if autostart
     end
 
     def start
-      pull_image(@image_name)
-    end
+      ensure_image(IMAGE)
 
-    # @param [String] topic
-    # @param [Node] node
-    def on_overlay_start(topic, node)
-      retries = 0
-      begin
-        self.start_etcd(node)
-      rescue Docker::Error::ServerError => exc
-        log_error(exc)
-        if retries < 4
-          retries += 1
-          sleep 0.25
-          retry
-        end
-      rescue => exc
-        log_error(exc)
+      observe(Actor[:node_info_worker].observable, Actor[:weave_launcher].observable) do |node, weave|
+        # TODO: wait for weave_launcher to update after node_info updates?
+        async.apply(node)
       end
     end
 
+    # @param node [Node]
+    def apply(node)
+      exclusive {
+        self.observable.update(self.ensure(node))
+      }
+    end
+
     # @param [Node] node
-    def start_etcd(node)
-      sleep 1 until image_pulled?
+    # @return [Hash{running: true}]
+    def ensure(node)
+      ensure_data_container(IMAGE)
+      container = ensure_container(IMAGE, node)
 
-      create_data_container(@image_name)
-      create_container(@image_name, node)
+      {
+        container_id: container.id,
+        overlay_ip: node.overlay_ip,
+        dns_name: 'etcd.kontena.local',
+      }
     end
 
     # @param [String] image
-    def pull_image(image)
-      if Docker::Image.exist?(image)
-        @image_pulled = true
-        return
-      end
-      Docker::Image.create('fromImage' => image)
-      sleep 1 until Docker::Image.exist?(image)
-      @image_pulled = true
-    end
+    # @return [Docker::Container]
+    def ensure_data_container(image)
+      unless data_container = inspect_container('kontena-etcd-data')
+        info "creating new etcd data container"
 
-    # @return [Boolean]
-    def image_pulled?
-      @image_pulled == true
-    end
-
-    def running?
-      @running == true
-    end
-
-    # @param [String] image
-    def create_data_container(image)
-      data_container = Docker::Container.get('kontena-etcd-data') rescue nil
-      unless data_container
-        Docker::Container.create(
+        data_container = Docker::Container.create(
           'name' => 'kontena-etcd-data',
           'Image' => image,
           'Volumes' => {'/var/lib/etcd' => {}}
@@ -81,62 +62,86 @@ module Kontena::Launchers
       end
     end
 
+    # TODO: inspect --listen-client-urls and ensure node.overlay_ip, docker_ip matches (#1893)
+    #
     # @param [String] image
     # @param [Node] node
-    # @raise [Docker::Error] Unexpected Docker errors will fall through. Most probably they are
-    #        Docker::ErrorServerError from either trying to get the container or in starting it.
-    def create_container(image, node)
-      cluster_size = node.grid['initial_size']
-      node_number = node.node_number
-      cluster_state = 'new'
-      weave_ip = node.overlay_ip
+    # @raise [Docker::Error]
+    # @return [Docker::Container]
+    def ensure_container(image, node)
+      container = self.inspect_container('kontena-etcd')
 
-      container = self.get_container
+      if container
+        container_image = container.info['Config']['Image']
 
-      if container && container.info['Config']['Image'] != image
-        container.delete(force: true)
-      elsif container && container.running?
-        info 'etcd is already running'
-        @running = true
-        add_dns(container.id, weave_ip)
-        return container
-      elsif container && !container.running?
-        info 'etcd container exists but not running, starting it'
-        container.start!
-        @running = true
-        add_dns(container.id, weave_ip)
-        return container
-      elsif container.nil? && node_number <= cluster_size
+        if container_image != image
+          info "etcd is outdated, upgrading to #{image} from #{container_image}"
+          container.delete(force: true)
+        elsif !container.running?
+          info 'etcd is stopped, starting it'
+          container.start!
+          return container
+        else
+          info 'etcd is already running'
+          return container
+        end
+      else
+        info "etcd does not yet exist"
+      end
+
+      if node.initial_member?
         # No previous container exists, update previous membership info if needed
         cluster_state = update_membership(node)
+
+        info "configuring etcd node as a cluster member with initial state: #{cluster_state}"
+      else
+        info "configuring etcd node as a proxy"
+
+        cluster_state = nil
       end
 
-      name = "node-#{node.node_number}"
-      grid_name = node.grid['name']
-      docker_ip = docker_gateway
-      initial_cluster = initial_cluster(node.grid)
+      info "creating etcd service: #{options.inspect}"
 
+      return create_container(image,
+        cmd: build_cmd(
+          name: "node-#{node.node_number}",
+          overlay_ip: node.overlay_ip,
+          docker_ip: docker_gateway,
+          initial_cluster: initial_cluster(node),
+          cluster_token: node.grid['name'],
+          cluster_state: cluster_state,
+        ),
+      )
+    end
+
+    # @param [Node] node
+    # @return [Array<String>]
+    def build_cmd(name:, overlay_ip:, docker_ip:, initial_cluster:, cluster_state:, cluster_token:)
       cmd = [
         '--name', name, '--data-dir', '/var/lib/etcd',
-        '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
+        '--listen-client-urls', "http://127.0.0.1:2379,http://#{overlay_ip}:2379,http://#{docker_ip}:2379",
         '--initial-cluster', initial_cluster.join(',')
       ]
-      if node_number <= cluster_size
+
+      if cluster_state
         cmd = cmd + [
-          '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
-          '--listen-peer-urls', "http://#{weave_ip}:2380",
-          '--advertise-client-urls', "http://#{weave_ip}:2379",
-          '--initial-advertise-peer-urls', "http://#{weave_ip}:2380",
-          '--initial-cluster-token', grid_name,
-          '--initial-cluster-state', cluster_state
+          '--listen-peer-urls', "http://#{overlay_ip}:2380",
+          '--advertise-client-urls', "http://#{overlay_ip}:2379",
+          '--initial-advertise-peer-urls', "http://#{overlay_ip}:2380",
+          '--initial-cluster-token', cluster_token,
+          '--initial-cluster-state', cluster_state.to_s,
         ]
-        info "starting etcd service as a cluster member with initial state: #{cluster_state}"
       else
         cmd = cmd + ['--proxy', 'on']
-        info "starting etcd service as a proxy"
       end
-      info "cluster members: #{initial_cluster.join(',')}"
 
+      cmd
+    end
+
+    # @param cluster_state [String, nil] proxy if nil, else cluster member
+    # @raise [Docker::Error]
+    # @return [Docker::Container]
+    def create_container(image, cmd:)
       container = Docker::Container.create(
         'name' => 'kontena-etcd',
         'Image' => image,
@@ -148,22 +153,7 @@ module Kontena::Launchers
         }
       )
       container.start!
-      add_dns(container.id, weave_ip)
-      info 'started etcd service'
-      @running = true
       container
-    end
-
-    # Gets kontena-etcd container
-    # @return [Docker::Container, nil] The container or nil if not found
-    # @raise [Docker::Error] Lets unexpected Docker errors fall through
-    def get_container
-      begin
-        Docker::Container.get('kontena-etcd')
-      rescue Docker::Error::NotFoundError
-        info "etcd container does not exist"
-        nil
-      end
     end
 
     # Removes possible previous member with the same IP
@@ -203,30 +193,28 @@ module Kontena::Launchers
     end
 
     ##
-    # Finds a working etcd node from set of initial nodes
+    # Finds a working etcd node from the set of initial grid nodes
     #
-    # @param [Node] node
-    # @return [Hash] The cluster members as given by etcd API
+    # @param [Node] node info
+    # @return [Excon] Client connection
     def find_etcd_node(node)
-      grid_subnet = IPAddr.new(node.grid['subnet'])
-      tries = node.grid['initial_size']
-      begin
-        etcd_host = "http://#{grid_subnet[tries]}:2379/v2/members"
+      node.grid_initial_nodes.reverse_each do |host|
+        begin
+          etcd_host = "http://#{host}:2379/v2/members"
 
-        info "connecting to existing etcd at #{etcd_host}"
-        connection = Excon.new(etcd_host)
-        members = JSON.parse(connection.get.body)
+          info "connecting to existing etcd at #{etcd_host}..."
+          connection = Excon.new(etcd_host)
+          connection.get
 
-        return connection
-      rescue Excon::Errors::Error => exc
-        tries -= 1
-        if tries > 0
-          info 'retrying next etcd host'
-          retry
-        else
-          info 'no online etcd host found, we\'re probably bootstrapping first node'
+          return connection
+        rescue Excon::Errors::Error => exc
+          info "retrying next etcd host on error: #{exc}"
+          next
         end
       end
+
+      info "no working initial nodes found, we're probably bootstrapping the first node"
+
       nil
     end
 
@@ -250,18 +238,11 @@ module Kontena::Launchers
                       :headers => { 'Content-Type' => 'application/json' })
     end
 
-    # @param [String] container_id
-    # @param [String] weave_ip
-    def add_dns(container_id, weave_ip)
-      publish('dns:add', {id: container_id, ip: weave_ip, name: 'etcd.kontena.local'})
-    end
-
-    # @param [Integer] cluster_size
+    # @param node [Node]
     # @return [Array<String>]
-    def initial_cluster(grid_info)
-      grid_subnet = IPAddr.new(grid_info['subnet'])
-      (1..grid_info['initial_size']).map { |i|
-        "node-#{i}=http://#{grid_subnet[i]}:2380"
+    def initial_cluster(node)
+      node.grid_initial_nodes.map.with_index { |host, i|
+        "node-#{i+1}=http://#{host}:2380"
       }
     end
 
@@ -269,12 +250,6 @@ module Kontena::Launchers
     # @return [String, NilClass]
     def docker_gateway
       interface_ip('docker0')
-    end
-
-    # @param [Exception] exc
-    def log_error(exc)
-      error "#{exc.class.name}: #{exc.message}"
-      error exc.backtrace.join("\n")
     end
   end
 end

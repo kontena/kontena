@@ -55,6 +55,14 @@ module Kontena
 
         @observable
       end
+
+      def with_observable(observable)
+        value = yield
+      rescue => exc
+        observable.crash(exc)
+      else
+        observable.update(value)
+      end
     end
 
     # @param subject [Object] used to identify the Observable for logging purposes
