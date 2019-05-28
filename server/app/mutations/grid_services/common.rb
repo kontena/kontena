@@ -223,14 +223,14 @@ module GridServices
 
       def common_validations
         optional do
-          string :strategy
+          string :strategy, nils: true
           integer :instances
           integer :container_count # @todo: deprecated by instances
-          string :user
+          string :user, nils: true
           array :cmd do
             string
           end
-          string :entrypoint
+          string :entrypoint, nils: true
           array :env do
             string matches: /\A[^=]+=/, max_length: 128 * 1024
           end
@@ -284,27 +284,27 @@ module GridServices
           array :volumes_from do
             string
           end
-          float :cpus
-          integer :cpu_shares, min: 0, max: 1024
-          integer :memory
-          integer :memory_swap
-          integer :shm_size
-          boolean :privileged
+          float :cpus, nils: true
+          integer :cpu_shares, min: 0, max: 1024, nils: true
+          integer :memory, nils: true
+          integer :memory_swap, nils: true
+          integer :shm_size, nils: true
+          boolean :privileged, nils: true
           array :cap_add do
             string
           end
           array :cap_drop do
             string
           end
-          string :net, matches: /\A(bridge|host|container:.+)\z/
+          string :net, default: 'bridge', matches: /\A(bridge|host|container:.+)\z/
           hash :log_opts do
             string :*
           end
-          string :log_driver
+          string :log_driver, nils: true
           array :devices do
             string
           end
-          string :pid, in: ['host']
+          string :pid, in: ['host'], nils: true
           boolean :read_only
           hash :hooks do
             optional do
@@ -352,8 +352,8 @@ module GridServices
               integer :initial_delay, default: 10
             end
           end
-          string :stop_signal, matches: /\A((SIG)([A-Z0-9]+|RTMIN\+\d+|RTMAX-\d+)|\d+)\z/i
-          string :stop_grace_period, matches: Duration::VALIDATION_PATTERN
+          string :stop_signal, nils: true, matches: /\A((SIG)([A-Z0-9]+|RTMIN\+\d+|RTMAX-\d+)|\d+)\z/i
+          string :stop_grace_period, nils: true, matches: Duration::VALIDATION_PATTERN
         end
       end
     end

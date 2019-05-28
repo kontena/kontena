@@ -43,7 +43,39 @@ describe GridServices::Update do
       expect {
         described_class.new(
             grid_service: redis_service,
-            env: ['FOO=bar']
+            env: ['FOO=bar'],
+            strategy: nil,
+            links: [],
+            ports: [],
+            memory: nil,
+            memory_swap: nil,
+            shm_size: nil,
+            cpus: nil,
+            cpu_shares: nil,
+            volumes: [],
+            volumes_from: [],
+            cmd: [],
+            entrypoint: nil,
+            affinity: [],
+            user: nil,
+            stateful: true,
+            privileged: false,
+            cap_add: [],
+            cap_drop: [],
+            net: nil,
+            pid: nil,
+            log_driver: nil,
+            log_opts: {},
+            hooks: {},
+            secrets: [],
+            certificates: [],
+            build: nil,
+            health_check: {},
+            stop_signal: nil,
+            stop_grace_period: nil,
+            read_only: false,
+            deploy: {}
+
         ).run
       }.not_to change{ redis_service.reload.revision }
     end
@@ -68,6 +100,27 @@ describe GridServices::Update do
             stop_grace_period: '1m23s'
         ).run
       }.to change{ redis_service.reload.stop_grace_period }.to(83)
+    end
+
+    it 'resets stop_grace_period to default with nil' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service,
+            stop_grace_period: nil
+        ).run
+      }.to change{ redis_service.reload.stop_grace_period }.to(GridService.new.stop_grace_period)
+    end
+
+    it 'does not reset stop_grace_period if key not given' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service
+        ).run
+      }.not_to change{ redis_service.reload.stop_grace_period }
     end
 
     context 'deploy_opts' do

@@ -13,7 +13,7 @@ class GridService
   field :stateful, type: Boolean, default: false
   field :user, type: String
   field :container_count, type: Integer, default: 1
-  field :cmd, type: Array
+  field :cmd, type: Array, default: []
   field :entrypoint, type: String
   field :ports, type: Array, default: []
   field :env, type: Array, default: []

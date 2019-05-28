@@ -52,37 +52,40 @@ module GridServices
 
     def execute
       attributes = {}
-      attributes[:strategy] = self.strategy if self.strategy
-      attributes[:image_name] = self.image if self.image
-      attributes[:container_count] = self.container_count if self.container_count
-      attributes[:container_count] = self.instances if self.instances
-      attributes[:user] = self.user if self.user
-      attributes[:cpus] = self.cpus if self.cpus
-      attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
-      attributes[:memory] = self.memory if self.memory
-      attributes[:memory_swap] = self.memory_swap if self.memory_swap
-      attributes[:shm_size] = self.shm_size if self.shm_size
-      attributes[:privileged] = self.privileged unless self.privileged.nil?
-      attributes[:cap_add] = self.cap_add if self.cap_add
-      attributes[:cap_drop] = self.cap_drop if self.cap_drop
-      attributes[:cmd] = self.cmd if self.cmd
-      attributes[:env] = self.build_grid_service_envs(self.env) if self.env
-      attributes[:net] = self.net if self.net
-      attributes[:ports] = self.ports if self.ports
-      attributes[:affinity] = self.affinity if self.affinity
-      attributes[:log_driver] = self.log_driver if self.log_driver
-      attributes[:log_opts] = self.log_opts if self.log_opts
-      attributes[:devices] = self.devices if self.devices
-      attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
-      attributes[:health_check] = self.health_check if self.health_check
-      attributes[:volumes_from] = self.volumes_from if self.volumes_from
-      attributes[:stop_signal] = self.stop_signal if self.stop_signal
-      attributes[:stop_grace_period] = parse_duration(self.stop_grace_period) if self.stop_grace_period
-      attributes[:read_only] = self.read_only unless self.read_only.nil?
+      attributes[:strategy] = self.strategy if inputs.has_key?('strategy')
+      attributes[:image_name] = self.image if inputs.has_key?('image')
+      attributes[:container_count] = self.container_count if inputs.has_key?('container_count')
+      attributes[:container_count] = self.instances if inputs.has_key?('instances')
+      attributes[:user] = self.user if inputs.has_key?('user')
+      attributes[:cpus] = self.cpus if inputs.has_key?('cpus')
+      attributes[:cpu_shares] = self.cpu_shares if inputs.has_key?('cpu_shares')
+      attributes[:memory] = self.memory if inputs.has_key?('memory')
+      attributes[:memory_swap] = self.memory_swap if inputs.has_key?('memory_swap')
+      attributes[:shm_size] = self.shm_size if inputs.has_key?('shm_size')
+      attributes[:privileged] = self.privileged unless inputs.has_key?('privileged')
+      attributes[:cap_add] = self.cap_add if inputs.has_key?('cap_add')
+      attributes[:cap_drop] = self.cap_drop if inputs.has_key?('cap_drop')
+      attributes[:cmd] = self.cmd if inputs.has_key?('cmd')
+      attributes[:env] = self.build_grid_service_envs(self.env) if inputs.has_key?('env')
+      attributes[:net] = self.net if inputs.has_key?('net')
+      attributes[:ports] = self.ports if inputs.has_key?('ports')
+      attributes[:affinity] = self.affinity if inputs.has_key?('affinity')
+      attributes[:log_driver] = self.log_driver if inputs.has_key?('log_driver')
+      attributes[:log_opts] = self.log_opts if inputs.has_key?('log_opts')
+      attributes[:devices] = self.devices if inputs.has_key?('devices')
+      attributes[:deploy_opts] = self.deploy_opts if inputs.has_key?('deploy_opts')
+      attributes[:health_check] = self.health_check if inputs.has_key?('health_check')
+      attributes[:volumes_from] = self.volumes_from if inputs.has_key?('volumes_from')
+      attributes[:stop_signal] = self.stop_signal if inputs.has_key?('stop_signal')
+      attributes[:read_only] = self.read_only if inputs.has_key?('read_only')
+
+      if inputs.has_key?('stop_grace_period')
+        attributes[:stop_grace_period] = self.stop_grace_period ? parse_duration(self.stop_grace_period) : GridService.new.stop_grace_period
+      end
 
       embeds_changed = false
 
-      if self.links
+      if inputs.has_key?('links')
         attributes[:grid_service_links] = build_grid_service_links(
           self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
@@ -90,22 +93,24 @@ module GridServices
         embeds_changed ||= attributes[:grid_service_links] != self.grid_service.grid_service_links.to_a
       end
 
-      if self.hooks
+      if inputs.has_key?('hooks')
         attributes[:hooks] = self.build_grid_service_hooks(self.grid_service.hooks.to_a)
         embeds_changed ||= attributes[:hooks] != self.grid_service.hooks.to_a
       end
 
-      if self.secrets
+      if inputs.has_key?('secrets')
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
         embeds_changed ||= attributes[:secrets] != self.grid_service.secrets.to_a
       end
-      if self.volumes
+
+      if inputs.has_key?('volumes')
         attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
           self.grid_service.grid, self.grid_service.stack
         )
         embeds_changed ||= attributes[:service_volumes] != self.grid_service.service_volumes.to_a
       end
-      if self.certificates
+
+      if inputs.has_key?('certificates')
         attributes[:certificates] = self.build_grid_service_certificates(self.grid_service.certificates.to_a)
         embeds_changed ||= attributes[:certificates] != self.grid_service.certificates.to_a
       end
