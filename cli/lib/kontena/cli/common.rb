@@ -14,7 +14,7 @@ module Kontena
 
       def_delegators :prompt, :ask, :yes?
       def_delegators :config,
-        :current_grid=, :require_current_grid, :current_master,
+        :current_grid=, :require_current_grid, :current_master, :require_current_master_token,
         :current_master=, :require_current_master, :require_current_account,
         :current_account
       def_delegator :config, :config_filename, :settings_filename
@@ -31,6 +31,7 @@ module Kontena
       def pastel
         Kontena.pastel
       end
+      module_function :pastel
 
       def spinner(msg, &block)
          Kontena::Cli::Spinner.spin(msg, &block)
@@ -170,12 +171,16 @@ module Kontena
       module_function :exit_with_error
 
       def require_api_url
-        config.require_current_master.url
+        require_current_master.url
+      end
+
+      def require_current_master
+        current_master || config.require_current_master
       end
 
       def require_token
         retried ||= false
-        config.require_current_master_token
+        require_current_master_token
       rescue Kontena::Cli::Config::TokenExpiredError
         if retried
           raise ArgumentError, "Current master access token has expired and refresh failed."
@@ -241,7 +246,7 @@ module Kontena
       end
 
       def api_url
-        config.require_current_master.url
+        require_current_master.url
       end
 
       def clear_current_grid
@@ -250,7 +255,7 @@ module Kontena
       end
 
       def current_grid
-        (self.respond_to?(:grid) ? self.grid : nil) || config.current_grid
+        @current_grid ||= (self.respond_to?(:grid) ? self.grid : nil) || config.current_grid
       end
 
       def current_master_index

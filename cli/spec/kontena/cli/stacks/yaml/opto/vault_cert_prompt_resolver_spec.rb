@@ -1,4 +1,6 @@
 require 'opto'
+require 'kontena/cli/stacks'
+require 'kontena/cli/stacks/yaml/opto'
 require 'kontena/cli/stacks/yaml/opto/vault_cert_prompt_resolver'
 
 describe Kontena::Cli::Stacks::YAML::Opto::Resolvers::VaultCertPrompt do

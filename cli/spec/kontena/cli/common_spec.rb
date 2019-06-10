@@ -56,10 +56,10 @@ describe Kontena::Cli::Common do
   end
 
   describe '#api_url' do
-    it 'raises error by default' do
+    it 'exits with error by default' do
       expect {
         subject.api_url
-      }.to raise_error(ArgumentError)
+      }.to raise_error(SystemExit)
     end
 
     it 'return url from env' do
@@ -70,10 +70,10 @@ describe Kontena::Cli::Common do
   end
 
   describe '#require_token' do
-    it 'raises error by default' do
+    it 'exits with error by default' do
       expect {
         subject.require_token
-      }.to raise_error(ArgumentError)
+      }.to raise_error(SystemExit)
     end
   end
 
