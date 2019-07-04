@@ -66,13 +66,18 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    MongoPubsub.start!(PubsubChannel)
-    sleep 0.1 until Mongoid.default_client.database.collection_names.include?(PubsubChannel.collection.name)
+    $mongo_pubsub = MongoPubsub.new(PubsubChannel)
+
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end
 
   config.before(:each) do
-    MongoPubsub.clear!
+    # instead of re-spawning the pubsub actor for each spec,
+    # keep the same actor but reset any subscriptions
+    # otherwise specs will fail with a race on the initialize -> async.tail!
+    $mongo_pubsub.clear!
+
+    allow(MongoPubsub).to receive(:actor).and_return($mongo_pubsub)
   end
 
   config.after(:each) do
@@ -91,8 +96,11 @@ RSpec.configure do |config|
 
   config.around :each, celluloid: true do |ex|
     Celluloid.boot
+
     ex.run
+
     Celluloid.actor_system.group.group.each { |t| t.kill if t.role == :future }
+
     Celluloid.shutdown
   end
 

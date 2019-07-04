@@ -16,8 +16,8 @@ describe MongoPubsub, :celluloid => true do
 
   describe '.publish' do
     it 'sends message to channel subscribers' do
-      david = spy(:david)
-      lisa = spy(:lisa)
+      david = double(:david)
+      lisa = double(:lisa)
       messages = []
       subs = []
       subs << described_class.subscribe('channel1') {|msg|
@@ -109,15 +109,23 @@ describe MongoPubsub, :celluloid => true do
       sub1.terminate
       sub2.terminate
 
-      thread_count = Thread.list.count
+      described_class.publish('test', nil)
+      sleep 0.1
+      GC.start
+
+      thread_list = Thread.list
 
       sub1 = described_class.subscribe('channel1') {|msg| }
       sub2 = described_class.subscribe('channel1') {|msg| }
       sub1.terminate
       sub2.terminate
 
+      # XXX: the Thread.list tends to show some 'dead' threads still hanging around immediately after the terminate
+      described_class.publish('test', nil)
+      sleep 0.1
       GC.start
-      expect(thread_count == Thread.list.count).to be_truthy
+
+      expect(Thread.list).to eq thread_list
     end
 
     it 'should perform', performance: true do
