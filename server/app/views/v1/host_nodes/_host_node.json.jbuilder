@@ -35,7 +35,6 @@ json.grid do
     json.id grid.to_path
     json.name grid.name
     json.initial_size grid.initial_size
-    json.token grid.token
     json.stats do
       json.statsd grid.stats['statsd']
     end

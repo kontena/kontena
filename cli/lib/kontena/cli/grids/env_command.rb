@@ -16,8 +16,8 @@ module Kontena::Cli::Grids
       if name_or_current.nil?
         exit_with_error "No grid selected. Use: kontena grid env <name>, or select a grid with: kontena grid use <name>"
       else
-        grid = find_grid_by_name(name_or_current)
-        exit_with_error("Grid not found") unless grid
+        token = get_grid_token(name_or_current)
+        exit_with_error("Grid not found") unless token
 
         grid_uri = self.current_master['url'].sub('http', 'ws')
 
@@ -25,7 +25,7 @@ module Kontena::Cli::Grids
         prefix = export? ? 'export ' : ''
 
         puts "#{prefix}KONTENA_URI=#{grid_uri}"
-        puts "#{prefix}KONTENA_TOKEN=#{grid['token']}"
+        puts "#{prefix}KONTENA_TOKEN=#{token['token']}"
       end
     end
   end
