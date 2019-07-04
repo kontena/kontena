@@ -388,5 +388,11 @@ describe Kontena::Client do
         expect(subject.get("test")).to eq 'hello'
       end
     end
+
+    context 'user agent' do
+      it 'has version and build tags' do
+        expect(subject.default_headers['User-Agent']).to match(/^kontena-cli\/\d+\.\d+\.\d+.+?\+ruby.+?\+/)
+      end
+    end
   end
 end

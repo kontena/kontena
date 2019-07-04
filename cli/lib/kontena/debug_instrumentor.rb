@@ -25,6 +25,7 @@ module Kontena
         heads << "Content-Encoding: #{params[:headers]['Content-Encoding']}" if params[:headers]['Content-Encoding']
         heads << "Authorization: #{params[:headers]['Authorization'].split(' ', 2).first}" if params[:headers]['Authorization']
         heads << "X-Kontena-Version: #{params[:headers]['X-Kontena-Version']}" if params[:headers]['X-Kontena-Version']
+        heads << "User-Agent: #{params[:headers]['User-Agent']}" if params[:headers]['User-Agent']
         str << heads.join(', ')
         str << "} "
         result << str
